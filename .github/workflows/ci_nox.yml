@@ -1,0 +1,41 @@
+name: CI (nox)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python and Nox
+        uses: wntrblm/nox@2025.05.01
+        with:
+          python-versions: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+        with:
+          version: "latest"
+
+      - name: Run nox sessions
+        run: |
+          nox --sessions "tests-${{ matrix.python-version }}"
+
+      - name: Run quality gates
+        if: ${{ matrix.python-version == '3.12' }}
+        run: |
+          nox -s lint type_check docs docs_linkcheck complexity security pyproject
+
+      - name: Upload coverage to Codecov
+        if: ${{ matrix.python-version == '3.12' }}
+        uses: codecov/codecov-action@v4
