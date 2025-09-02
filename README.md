@@ -28,18 +28,17 @@ Your test suite is a DISASTER! Tests scattered everywhere like a tornado hit you
 
 This pytest plugin will turn your chaotic test mess into a disciplined, well-organized military formation. No mercy. No exceptions. Only QUALITY.
 
-## 🏅 Battle-Tested Statistics
+## 🏅 Live Battle Intelligence (Auto-Updating Intel)
 
-| **Metric** | **Status** | **Achievement** |
-|------------|------------|-----------------|
-| **🧪 Test Coverage** | `87.99%` | Battle-hardened with 40+ comprehensive tests |
-| **⚡ CI Environments** | `6 platforms` | Ubuntu, macOS, Windows × Python 3.12/3.13 |
-| **🎯 Code Quality** | `A+ Grade` | Linting, type checking, complexity under control |
-| **🛡️ Security Audit** | `✅ Clean` | Zero vulnerabilities detected |
-| **📊 Performance** | `<2s local` | Lightning-fast local development |
-| **🔧 Compatibility** | `Python 3.12+` | Modern Python standards enforced |
+| **Metric** | **Live Status** | **Military Assessment** |
+|------------|-----------------|-------------------------|
+| **📦 Codebase Size** | [![Files](https://img.shields.io/github/directory-file-count/jeffrichley/pytest-drill-sergeant/src?label=source%20files&logo=python&color=blue)](https://github.com/jeffrichley/pytest-drill-sergeant) | *"Lean and mean - no bloat allowed!"* |
+| **⭐ Bug Reports** | [![GitHub issues](https://img.shields.io/github/issues/jeffrichley/pytest-drill-sergeant?label=open%20issues&logo=github)](https://github.com/jeffrichley/pytest-drill-sergeant/issues) | *"Zero tolerance for battlefield failures!"* |
+| **📈 Activity Level** | [![Commits](https://img.shields.io/github/commit-activity/m/jeffrichley/pytest-drill-sergeant?label=monthly%20commits&logo=git&color=green)](https://github.com/jeffrichley/pytest-drill-sergeant) | *"Active military operations in progress!"* |
+| **⚡ Response Time** | [![GitHub last commit](https://img.shields.io/github/last-commit/jeffrichley/pytest-drill-sergeant?label=last%20deployment&logo=github-actions)](https://github.com/jeffrichley/pytest-drill-sergeant) | *"Always ready for action!"* |
+| **🎯 Stars Earned** | [![GitHub stars](https://img.shields.io/github/stars/jeffrichley/pytest-drill-sergeant?label=stars&logo=github&color=yellow)](https://github.com/jeffrichley/pytest-drill-sergeant) | *"Recognition from fellow soldiers!"* |
 
-**The Drill Sergeant's Record:** *"40 tests passing, 6 environments conquered, zero compromises on quality!"* 🎖️
+**The Drill Sergeant's Live Record:** *"All systems operational, zero compromises accepted!"* 🎖️
 
 ## 🎯 What This Bad Boy Does
 
