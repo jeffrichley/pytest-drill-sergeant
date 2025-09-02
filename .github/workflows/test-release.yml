@@ -27,7 +27,7 @@ jobs:
 
       - name: 🔧 Install Build Dependencies
         run: |
-          uv pip install build
+          uv pip install --system build
 
       - name: 📦 Build Package for Testing
         run: |
@@ -47,10 +47,8 @@ jobs:
         run: |
           # Wait a moment for TestPyPI to process
           sleep 30
-          # Create a clean environment and test installation
-          uv venv test-install
-          source test-install/bin/activate
-          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pytest-drill-sergeant
+          # Test installation from TestPyPI
+          uv pip install --system --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ pytest-drill-sergeant
           echo "✅ Test installation successful!"
 
       - name: 📋 Deployment Summary
