@@ -61,6 +61,7 @@ def tests(session):
         "tests",
         "--cov=src",
         "--cov-report=term-missing",
+        "--cov-report=xml",  # Generate XML for Codecov
         external=True,
     )
 
