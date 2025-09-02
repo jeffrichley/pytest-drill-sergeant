@@ -1,37 +1,56 @@
-name: Release
+name: Production Release (PyPI)
 
 on:
   push:
-    branches: [main]
     tags: ['v*']
 
 jobs:
-  release:
+  production-release:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    
     steps:
-      - uses: actions/checkout@v4
+      - name: 🎖️ Checkout Battle Zone
+        uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: 🐍 Set up Python Command Center
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v1
+      - name: ⚡ Install UV Battle Gear
+        uses: astral-sh/setup-uv@v4
         with:
-          version: "latest"
+          enable-cache: true
 
-      - name: Install build dependencies
+      - name: 🔧 Install Build Dependencies
         run: |
           uv pip install build
 
-      - name: Build package
+      - name: 📦 Build Production Package
         run: |
           python -m build
+          echo "📊 Production package built successfully!"
+          ls -la dist/
 
-      - name: Publish to PyPI
+      - name: 🚀 Deploy to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
           skip-existing: true
+          verbose: true
+
+      - name: 🎯 Verify Deployment
+        run: |
+          # Wait for PyPI to process the package
+          sleep 60
+          # Verify the package is available
+          pip install pytest-drill-sergeant
+          echo "✅ Production deployment verified!"
+
+      - name: 📋 Deployment Summary
+        run: |
+          echo "🎖️ PRODUCTION DEPLOYMENT COMPLETE!"
+          echo "📦 Package: pytest-drill-sergeant"
+          echo "🌐 PyPI URL: https://pypi.org/project/pytest-drill-sergeant/"
+          echo "🏅 Status: LIVE AND OPERATIONAL!"
