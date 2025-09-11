@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: 🎖️ Checkout Battle Zone
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🐍 Set up Python Command Center
         uses: actions/setup-python@v5
