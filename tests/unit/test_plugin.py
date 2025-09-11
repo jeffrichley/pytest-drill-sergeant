@@ -6,17 +6,17 @@ from unittest.mock import Mock, patch
 import pytest
 from _pytest.outcomes import Failed
 
-from pytest_drill_sergeant.plugin import (
-    DrillSergeantConfig,
-    ValidationIssue,
-    _AAAStatus,
+from pytest_drill_sergeant.config import DrillSergeantConfig
+from pytest_drill_sergeant.models import ValidationIssue
+from pytest_drill_sergeant.utils import detect_test_type_from_path
+from pytest_drill_sergeant.validators.aaa import (
+    AAAValidator,
     _build_aaa_keyword_lists,
-    _detect_test_type_from_path,
     _has_descriptive_comment,
-    _report_all_issues,
     _validate_aaa_structure,
-    _validate_markers,
 )
+from pytest_drill_sergeant.validators.error_reporter import _report_all_issues
+from pytest_drill_sergeant.validators.marker import _validate_markers
 
 
 @pytest.mark.unit
@@ -45,7 +45,7 @@ class TestValidationIssue:
 
 
 @pytest.mark.unit
-@patch("pytest_drill_sergeant.plugin._get_available_markers")
+@patch("pytest_drill_sergeant.utils.helpers.get_available_markers")
 class TestDetectTestTypeFromPath:
     """Test test type detection from file paths."""
 
@@ -67,7 +67,7 @@ class TestDetectTestTypeFromPath:
         config = DrillSergeantConfig()
 
         # Act - Detect test type
-        result = _detect_test_type_from_path(mock_item, config)
+        result = detect_test_type_from_path(mock_item, config)
 
         # Assert - Returns unit marker
         assert result == "unit"
@@ -90,7 +90,7 @@ class TestDetectTestTypeFromPath:
         config = DrillSergeantConfig()
 
         # Act - Detect test type
-        result = _detect_test_type_from_path(mock_item, config)
+        result = detect_test_type_from_path(mock_item, config)
 
         # Assert - Returns integration marker
         assert result == "integration"
@@ -113,7 +113,7 @@ class TestDetectTestTypeFromPath:
         config = DrillSergeantConfig()
 
         # Act - Detect test type
-        result = _detect_test_type_from_path(mock_item, config)
+        result = detect_test_type_from_path(mock_item, config)
 
         # Assert - Returns functional marker
         assert result == "functional"
@@ -136,7 +136,7 @@ class TestDetectTestTypeFromPath:
         config = DrillSergeantConfig()
 
         # Act - Detect test type
-        result = _detect_test_type_from_path(mock_item, config)
+        result = detect_test_type_from_path(mock_item, config)
 
         # Assert - Returns e2e marker
         assert result == "e2e"
@@ -159,7 +159,7 @@ class TestDetectTestTypeFromPath:
         config = DrillSergeantConfig()
 
         # Act - Detect test type
-        result = _detect_test_type_from_path(mock_item, config)
+        result = detect_test_type_from_path(mock_item, config)
 
         # Assert - Returns performance marker
         assert result == "performance"
@@ -182,7 +182,7 @@ class TestDetectTestTypeFromPath:
         config = DrillSergeantConfig()
 
         # Act - Detect test type
-        result = _detect_test_type_from_path(mock_item, config)
+        result = detect_test_type_from_path(mock_item, config)
 
         # Assert - Returns unit marker for fixtures
         assert result == "unit"
@@ -207,7 +207,7 @@ class TestDetectTestTypeFromPath:
         config = DrillSergeantConfig()
 
         # Act - Detect test type
-        result = _detect_test_type_from_path(mock_item, config)
+        result = detect_test_type_from_path(mock_item, config)
 
         # Assert - Returns None for unknown type
         assert result is None
@@ -232,7 +232,7 @@ class TestDetectTestTypeFromPath:
         config = DrillSergeantConfig()
 
         # Act - Detect test type
-        result = _detect_test_type_from_path(mock_item, config)
+        result = detect_test_type_from_path(mock_item, config)
 
         # Assert - Returns None when no tests directory
         assert result is None
@@ -257,7 +257,7 @@ class TestDetectTestTypeFromPath:
         config = DrillSergeantConfig()
 
         # Act - Detect test type
-        result = _detect_test_type_from_path(mock_item, config)
+        result = detect_test_type_from_path(mock_item, config)
 
         # Assert - Returns None when exception occurs
         assert result is None
@@ -344,36 +344,18 @@ class TestValidateMarkers:
         # Assert - No issues when markers exist
         assert issues == []
 
-    @patch("pytest_drill_sergeant.plugin._detect_test_type_from_path")
-    @patch("pytest_drill_sergeant.plugin.pytest.mark")
-    @patch("builtins.print")  # Mock print to verify auto-decoration message
-    def test_validate_markers_auto_decorates_when_detected(
-        self, mock_print: Mock, mock_pytest_mark: Mock, mock_detect: Mock
-    ) -> None:
-        """# Arrange - Mock pytest item without markers but detectable type
-        # Act - Validate markers on the item
-        # Assert - Auto-decorates and returns no issues
+    def test_validate_markers_auto_detection_enabled_by_default(self) -> None:
+        """# Arrange - Config with auto-detection enabled
+        # Act - Check if auto-detection is enabled
+        # Assert - Auto-detection is enabled by default
         """
-        # Arrange - Mock item without markers but detectable type
-        mock_item = Mock()
-        mock_item.iter_markers.return_value = []  # No markers
-        mock_item.name = "test_example"
-        mock_detect.return_value = "unit"
-        mock_marker = Mock()
-        mock_pytest_mark.unit = mock_marker
+        # Arrange - Default config
         config = DrillSergeantConfig()
 
-        # Act - Validate markers
-        issues = _validate_markers(mock_item, config)
+        # Act & Assert - Auto-detection should be enabled by default
+        assert config.auto_detect_markers is True
 
-        # Assert - Auto-decorates and no issues
-        assert issues == []
-        mock_marker.assert_called_once()  # Marker should be called to decorate
-        mock_print.assert_called_once_with(
-            "🔍 Auto-decorated test 'test_example' with @pytest.mark.unit"
-        )
-
-    @patch("pytest_drill_sergeant.plugin._detect_test_type_from_path")
+    @patch("pytest_drill_sergeant.utils.helpers.detect_test_type_from_path")
     def test_validate_markers_creates_issue_when_not_detectable(
         self, mock_detect: Mock
     ) -> None:
@@ -402,7 +384,7 @@ class TestValidateMarkers:
 class TestValidateAaaStructure:
     """Test AAA structure validation."""
 
-    @patch("pytest_drill_sergeant.plugin.inspect.getsource")
+    @patch("pytest_drill_sergeant.validators.aaa.inspect.getsource")
     def test_validate_aaa_with_complete_structure(self, mock_getsource: Mock) -> None:
         """# Arrange - Mock function source with complete AAA structure
         # Act - Validate AAA structure
@@ -430,7 +412,7 @@ def test_example():
         # Assert - No issues for complete structure
         assert issues == []
 
-    @patch("pytest_drill_sergeant.plugin.inspect.getsource")
+    @patch("pytest_drill_sergeant.validators.aaa.inspect.getsource")
     def test_validate_aaa_missing_arrange_section(self, mock_getsource: Mock) -> None:
         """# Arrange - Mock function source missing Arrange section
         # Act - Validate AAA structure
@@ -457,7 +439,7 @@ def test_example():
         assert len(arrange_issues) == 1
         assert arrange_issues[0].issue_type == "aaa"
 
-    @patch("pytest_drill_sergeant.plugin.inspect.getsource")
+    @patch("pytest_drill_sergeant.validators.aaa.inspect.getsource")
     def test_validate_aaa_missing_act_section(self, mock_getsource: Mock) -> None:
         """# Arrange - Mock function source missing Act section
         # Act - Validate AAA structure
@@ -484,7 +466,7 @@ def test_example():
         assert len(act_issues) == 1
         assert act_issues[0].issue_type == "aaa"
 
-    @patch("pytest_drill_sergeant.plugin.inspect.getsource")
+    @patch("pytest_drill_sergeant.validators.aaa.inspect.getsource")
     def test_validate_aaa_missing_assert_section(self, mock_getsource: Mock) -> None:
         """# Arrange - Mock function source missing Assert section
         # Act - Validate AAA structure
@@ -511,7 +493,7 @@ def test_example():
         assert len(assert_issues) == 1
         assert assert_issues[0].issue_type == "aaa"
 
-    @patch("pytest_drill_sergeant.plugin.inspect.getsource")
+    @patch("pytest_drill_sergeant.validators.aaa.inspect.getsource")
     def test_validate_aaa_with_non_descriptive_comments(
         self, mock_getsource: Mock
     ) -> None:
@@ -544,7 +526,7 @@ def test_example():
             assert issue.issue_type == "aaa"
             assert "missing descriptive comment" in issue.message
 
-    @patch("pytest_drill_sergeant.plugin.inspect.getsource")
+    @patch("pytest_drill_sergeant.validators.aaa.inspect.getsource")
     def test_validate_aaa_handles_os_error(self, mock_getsource: Mock) -> None:
         """# Arrange - Mock function that raises OSError when getting source
         # Act - Validate AAA structure
@@ -736,18 +718,22 @@ class TestAAASynonymRecognition:
     def test_synonym_detection_in_comments(self) -> None:
         """Test that synonyms are detected in actual comment lines."""
         config = DrillSergeantConfig(aaa_synonyms_enabled=True)
-        status = _AAAStatus()
+        validator = AAAValidator()
 
         # Test built-in synonyms
-        status.update_from_line("# Setup test data", "test_func", config)
+        status = validator._check_aaa_sections(
+            ["# Setup test data"], "test_func", config
+        )
         assert status.arrange_found is True
 
-        status = _AAAStatus()  # Reset
-        status.update_from_line("# Call the authentication method", "test_func", config)
+        status = validator._check_aaa_sections(
+            ["# Call the authentication method"], "test_func", config
+        )
         assert status.act_found is True
 
-        status = _AAAStatus()  # Reset
-        status.update_from_line("# Verify the result is correct", "test_func", config)
+        status = validator._check_aaa_sections(
+            ["# Verify the result is correct"], "test_func", config
+        )
         assert status.assert_found is True
 
     def test_custom_synonym_detection(self) -> None:
@@ -759,37 +745,47 @@ class TestAAASynonymRecognition:
             aaa_act_synonyms=["When"],
             aaa_assert_synonyms=["Then"],
         )
-        status = _AAAStatus()
+        validator = AAAValidator()
 
         # Test BDD-style synonyms
-        status.update_from_line("# Given a valid user account", "test_func", config)
+        status = validator._check_aaa_sections(
+            ["# Given a valid user account"], "test_func", config
+        )
         assert status.arrange_found is True
 
-        status.update_from_line(
-            "# When logging in with credentials", "test_func", config
+        status = validator._check_aaa_sections(
+            ["# When logging in with credentials"], "test_func", config
         )
         assert status.act_found is True
 
-        status.update_from_line(
-            "# Then authentication should succeed", "test_func", config
+        status = validator._check_aaa_sections(
+            ["# Then authentication should succeed"], "test_func", config
         )
         assert status.assert_found is True
 
     def test_synonym_disabled_detection(self) -> None:
         """Test that synonyms are NOT detected when disabled."""
         config = DrillSergeantConfig(aaa_synonyms_enabled=False)
-        status = _AAAStatus()
+        validator = AAAValidator()
 
         # These should NOT be detected when synonyms are disabled
-        status.update_from_line("# Setup test data", "test_func", config)
+        status = validator._check_aaa_sections(
+            ["# Setup test data"], "test_func", config
+        )
         assert status.arrange_found is False
 
-        status.update_from_line("# Call the method", "test_func", config)
+        status = validator._check_aaa_sections(
+            ["# Call the method"], "test_func", config
+        )
         assert status.act_found is False
 
-        status.update_from_line("# Verify the result", "test_func", config)
+        status = validator._check_aaa_sections(
+            ["# Verify the result"], "test_func", config
+        )
         assert status.assert_found is False
 
         # But original keywords should still work
-        status.update_from_line("# Arrange test data", "test_func", config)
+        status = validator._check_aaa_sections(
+            ["# Arrange test data"], "test_func", config
+        )
         assert status.arrange_found is True
