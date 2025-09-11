@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import configparser
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -30,6 +31,18 @@ def get_bool_option(
         except (ValueError, AttributeError):
             pass
 
+    # Fallback: try to read from ini file directly
+    try:
+        ini_path = getattr(config, "inipath", None)
+        if ini_path and ini_path.exists():
+            parser = configparser.ConfigParser()
+            parser.read(ini_path)
+            if "pytest" in parser and ini_name in parser["pytest"]:
+                value = parser["pytest"][ini_name]
+                return str(value).lower() in ("true", "1", "yes", "on")
+    except Exception:
+        pass
+
     return default
 
 
@@ -53,6 +66,18 @@ def get_int_option(
                 return int(ini_val)
         except (ValueError, AttributeError):
             pass
+
+    # Fallback: try to read from ini file directly
+    try:
+        ini_path = getattr(config, "inipath", None)
+        if ini_path and ini_path.exists():
+            parser = configparser.ConfigParser()
+            parser.read(ini_path)
+            if "pytest" in parser and ini_name in parser["pytest"]:
+                value = parser["pytest"][ini_name]
+                return int(value)
+    except Exception:
+        pass
 
     return default
 

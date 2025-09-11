@@ -20,8 +20,8 @@ class TestPluginIntegration:
         pytester.makepyfile(
             test_dummy="""
             import pytest
-            
-            @pytest.mark.unit 
+
+            @pytest.mark.unit
             def test_dummy():
                 '''# Arrange - Simple test setup
                 # Act - Simple test action
@@ -29,10 +29,10 @@ class TestPluginIntegration:
                 '''
                 # Arrange - Simple test data
                 value = 42
-                
+
                 # Act - Simple operation
                 result = value * 2
-                
+
                 # Assert - Verify result
                 assert result == 84
         """
@@ -74,12 +74,12 @@ markers =
                 """
             def test_auto_decorated():
                 '''Test without explicit marker - should be auto-decorated.'''
-                # Arrange - Simple test data  
+                # Arrange - Simple test data
                 value = 10
-                
+
                 # Act - Simple operation
                 result = value + 5
-                
+
                 # Assert - Verify result
                 assert result == 15
         """
@@ -103,7 +103,7 @@ markers =
         pytester.makepyfile(
             test_bad_structure="""
             import pytest
-            
+
             @pytest.mark.unit
             def test_bad_structure():
                 '''Test without AAA structure.'''
@@ -135,10 +135,10 @@ markers =
                 '''Test without marker in non-detectable location.'''
                 # Arrange - Simple test data
                 value = 10
-                
-                # Act - Simple operation  
+
+                # Act - Simple operation
                 result = value + 5
-                
+
                 # Assert - Verify result
                 assert result == 15
         """
@@ -195,18 +195,18 @@ markers =
         pytester.makepyfile(
             test_exception_handling="""
             import pytest
-            
+
             @pytest.mark.unit
             class TestClass:
                 '''Test class - might cause issues with source inspection.'''
-                
+
                 def test_method(self):
                     # Arrange - Simple test data
                     value = 10
-                    
+
                     # Act - Simple operation
                     result = value + 5
-                    
+
                     # Assert - Verify result
                     assert result == 15
         """
@@ -230,17 +230,17 @@ markers =
         pytester.makepyfile(
             test_valid="""
             import pytest
-            
+
             @pytest.mark.unit
             def test_valid_structure():
                 '''Properly structured test with marker and AAA.'''
                 # Arrange - Set up test data and dependencies
                 input_value = 10
                 expected_result = 20
-                
+
                 # Act - Execute the operation under test
                 actual_result = input_value * 2
-                
+
                 # Assert - Verify the expected outcome
                 assert actual_result == expected_result
         """

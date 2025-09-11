@@ -15,12 +15,14 @@ class ErrorReporter:
         # Categorize issues
         marker_issues = [i for i in issues if i.issue_type == "marker"]
         aaa_issues = [i for i in issues if i.issue_type == "aaa"]
+        file_length_issues = [i for i in issues if i.issue_type == "file_length"]
 
         # Build header
-        self._add_error_header(lines, item.name, marker_issues, aaa_issues, len(issues))
+        issue_groups = (marker_issues, aaa_issues, file_length_issues)
+        self._add_error_header(lines, item.name, issue_groups, len(issues))
 
         # Add specific issue details
-        self._add_issue_details(lines, marker_issues, aaa_issues)
+        self._add_issue_details(lines, marker_issues, aaa_issues, file_length_issues)
 
         # Add footer with requirements explanation
         self._add_error_footer(lines)
@@ -31,16 +33,20 @@ class ErrorReporter:
         self,
         lines: list[str],
         test_name: str,
-        marker_issues: list[ValidationIssue],
-        aaa_issues: list[ValidationIssue],
+        issue_groups: tuple[
+            list[ValidationIssue], list[ValidationIssue], list[ValidationIssue]
+        ],
         total_issues: int,
     ) -> None:
         """Add error message header."""
+        marker_issues, aaa_issues, file_length_issues = issue_groups
         violations = []
         if marker_issues:
             violations.append("missing test annotations")
         if aaa_issues:
             violations.append("missing AAA structure")
+        if file_length_issues:
+            violations.append("excessive file length")
 
         violation_text = " and ".join(violations)
         lines.append(
@@ -56,6 +62,7 @@ class ErrorReporter:
         lines: list[str],
         marker_issues: list[ValidationIssue],
         aaa_issues: list[ValidationIssue],
+        file_length_issues: list[ValidationIssue],
     ) -> None:
         """Add specific issue details to error message."""
         if marker_issues:
@@ -66,6 +73,11 @@ class ErrorReporter:
         if aaa_issues:
             lines.append("📝 MISSING AAA STRUCTURE (Arrange-Act-Assert):")
             lines.extend(f"   • {issue.suggestion}" for issue in aaa_issues)
+            lines.append("")
+
+        if file_length_issues:
+            lines.append("📏 EXCESSIVE FILE LENGTH:")
+            lines.extend(f"   • {issue.suggestion}" for issue in file_length_issues)
             lines.append("")
 
     def _add_error_footer(self, lines: list[str]) -> None:

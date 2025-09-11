@@ -14,6 +14,7 @@ __email__ = "jeffrichley@gmail.com"
 from pytest_drill_sergeant.config import DrillSergeantConfig
 from pytest_drill_sergeant.models import ValidationIssue
 from pytest_drill_sergeant.plugin import pytest_runtest_setup
+from pytest_drill_sergeant.pytest_options import pytest_addoption
 from pytest_drill_sergeant.validators import (
     AAAValidator,
     ErrorReporter,
@@ -29,5 +30,6 @@ __all__ = [
     "__author__",
     "__email__",
     "__version__",
+    "pytest_addoption",
     "pytest_runtest_setup",
 ]

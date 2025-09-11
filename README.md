@@ -43,7 +43,7 @@ This pytest plugin will turn your chaotic test mess into a disciplined, well-org
 ## 🎯 What This Bad Boy Does
 
 - **🏷️ Automatic Marker Detection** - Because apparently you can't be trusted to add `@pytest.mark.unit` yourself
-- **📝 AAA Structure Enforcement** - "Arrange-Act-Assert" not "Arrange-Act-And-Hope-It-Works"  
+- **📝 AAA Structure Enforcement** - "Arrange-Act-Assert" not "Arrange-Act-And-Hope-It-Works"
 - **💥 Comprehensive Error Messages** - So detailed even your manager could understand what you did wrong
 - **🚨 Zero Tolerance Policy** - One violation = one failed test. NO EXCEPTIONS!
 
@@ -101,10 +101,10 @@ def test_addition_with_positive_numbers():
     first_operand = 5
     second_operand = 3
     expected_sum = 8
-    
+
     # Act - Execute the mission!
     actual_sum = calculator.add(first_operand, second_operand)
-    
+
     # Assert - Verify victory conditions!
     assert actual_sum == expected_sum
 ```
@@ -121,11 +121,11 @@ def test_simple_calculation():
     """Test basic arithmetic operation."""
     # Arrange and Act - Set up calculator and perform addition
     result = Calculator().add(2, 3)
-    
+
     # Assert - Verify the calculation is correct
     assert result == 5
 
-@pytest.mark.unit  
+@pytest.mark.unit
 def test_ultra_simple():
     """Test with all AAA in one comment (for the truly lazy)."""
     # Arrange, Act, and Assert - Create, call, and verify in one swift motion
@@ -147,13 +147,13 @@ The Drill Sergeant isn't just here to yell at you - he's here to HELP. Place you
 | `tests/performance/` | `@pytest.mark.performance` | Speed/load tests |
 | `tests/smoke/` | `@pytest.mark.integration` | Quick sanity checks |
 
-**16 built-in mappings** so you don't have to think too hard! 🧠  
+**16 built-in mappings** so you don't have to think too hard! 🧠
 *(I've seen you think, and it ain't pretty!)*
 
 ### How It Works
 
 1. **You write a test** (hopefully)
-2. **Forget to add a marker** (as usual)  
+2. **Forget to add a marker** (as usual)
 3. **Drill Sergeant detects directory** (`tests/unit/test_foo.py`)
 4. **AUTOMATICALLY MODIFIES your test function** to add `@pytest.mark.unit`
 5. **Test passes as if you had added the marker yourself** 🎭
@@ -171,7 +171,7 @@ drill_sergeant_enabled = false
 
 **Drill Sergeant says:** *You're on your own, soldier. Don't come crying when your tests are garbage.*
 
-### Selective Enforcement (Baby Steps)  
+### Selective Enforcement (Baby Steps)
 *When you can't handle the full military experience and need training wheels* 🚲
 
 ```ini
@@ -190,7 +190,7 @@ drill_sergeant_min_description_length = 5  # At least TRY to be descriptive
 [tool:pytest]
 # Format: directory_name=marker_name (maps test directories to pytest markers)
 drill_sergeant_marker_mappings = contract=api,smoke=integration,load=performance
-# Translation for civilians: 
+# Translation for civilians:
 # tests/contract/ → @pytest.mark.api
 # tests/smoke/ → @pytest.mark.integration
 # tests/load/ → @pytest.mark.performance
@@ -201,7 +201,7 @@ Or via environment (because you love complexity):
 ```bash
 # Same format: directory=marker pairs
 export DRILL_SERGEANT_MARKER_MAPPINGS="widget=unit,gizmo=integration"
-# For those who need it spelled out: 
+# For those who need it spelled out:
 # tests/widget/ → @pytest.mark.unit
 # tests/gizmo/ → @pytest.mark.integration
 ```
@@ -290,7 +290,7 @@ export DRILL_SERGEANT_MARKER_MAPPINGS="widgets=unit,chaos=stress"
 
 ### The Problem: "You're Too Good for Military Vocabulary" 😤
 
-Oh, so the Drill Sergeant's perfectly good vocabulary isn't fancy enough for you? You can't be bothered to learn basic military terminology that's been battle-tested across thousands of codebases? 
+Oh, so the Drill Sergeant's perfectly good vocabulary isn't fancy enough for you? You can't be bothered to learn basic military terminology that's been battle-tested across thousands of codebases?
 
 **Let me guess:**
 - "Arrange" is too *corporate* for your hip startup? 🙄
@@ -313,13 +313,13 @@ drill_sergeant_aaa_synonyms_enabled = true  # *Heavy military sighing* 😮‍�
 
 #### Built-in Synonyms (Because I Apparently Have to Do Everything for You):
 
-**Arrange Synonyms:** Setup, Given, Prepare, Initialize, Configure, Create, Build  
+**Arrange Synonyms:** Setup, Given, Prepare, Initialize, Configure, Create, Build
 *"Setup? SETUP?! It's called ARRANGE! But sure, let's use baby words..."*
 
-**Act Synonyms:** Call, Execute, Run, Invoke, Perform, Trigger, When  
+**Act Synonyms:** Call, Execute, Run, Invoke, Perform, Trigger, When
 *"I suppose 'When' is more gentle than 'Act'. Wouldn't want to trigger anyone..."*
 
-**Assert Synonyms:** Verify, Check, Expect, Validate, Confirm, Ensure, Then  
+**Assert Synonyms:** Verify, Check, Expect, Validate, Confirm, Ensure, Then
 *"Oh, we can't 'Assert' things anymore? Too confrontational? My mistake, let's 'gently verify'..."*
 
 #### Now These ALL Work! (God Help Us All) 🎉
@@ -328,25 +328,25 @@ drill_sergeant_aaa_synonyms_enabled = true  # *Heavy military sighing* 😮‍�
 def test_user_authentication():
     # Setup user credentials and mock database
     user = User(username="test_user")
-    
-    # Call the authentication service 
+
+    # Call the authentication service
     result = auth_service.authenticate(user.username, "password123")
-    
+
     # Verify successful authentication
     assert result.success is True
 ```
 
 **Drill Sergeant internal monologue:** *"'Setup'... 'Call'... 'Verify'... What's next, 'Pretty please test my code'? In my day, we had STANDARDS! But nooooo, everyone's a special butterfly with their own vocabulary..."* 🦋
 
-```python  
+```python
 def test_bdd_style():
     # Given a valid shopping cart with items
     cart = ShoppingCart()
     cart.add_item("widget", price=10.00)
-    
+
     # When calculating the total price
     total = cart.calculate_total()
-    
+
     # Then the result should include tax
     assert total == 10.80  # 8% tax included
 ```
@@ -360,7 +360,7 @@ Oh, the built-in synonyms aren't unique enough for you? You need your OWN PERSON
 ```ini
 # pytest.ini - Because you're just THAT special
 drill_sergeant_aaa_arrange_synonyms = Background,Precondition,Setup
-drill_sergeant_aaa_act_synonyms = Execute,Trigger,Action  
+drill_sergeant_aaa_act_synonyms = Execute,Trigger,Action
 drill_sergeant_aaa_assert_synonyms = Expect,Outcome,Result
 ```
 
@@ -368,12 +368,12 @@ drill_sergeant_aaa_assert_synonyms = Expect,Outcome,Result
 
 ```python
 def test_with_custom_vocabulary():
-    # Background - Configure the test environment  
+    # Background - Configure the test environment
     api_client = APIClient(base_url="https://test.api.com")
-    
+
     # Execute - Trigger the user creation endpoint
     response = api_client.create_user({"name": "John", "email": "john@test.com"})
-    
+
     # Expect - Result should be successful user creation
     assert response.status_code == 201
     assert response.json()["user"]["name"] == "John"
@@ -427,13 +427,13 @@ def test_widget_creation_with_custom_colors():  # No marker needed! Auto-detecte
     factory = WidgetFactory()
     desired_color = Color.NEON_PINK
     expected_widget_count = 1
-    
+
     # Act - Request widget creation with custom color
     created_widgets = factory.create_widgets(
         count=expected_widget_count,
         color=desired_color
     )
-    
+
     # Assert - Verify widget meets specifications
     assert len(created_widgets) == expected_widget_count
     assert created_widgets[0].color == desired_color
@@ -450,31 +450,31 @@ def test_user_authentication_flow():
     # Database setup
     test_db = create_test_database()
     user_service = UserService(test_db)
-    
+
     # Test user data
     valid_email = "test@example.com"
     valid_password = "SecurePassword123!"
-    
+
     # Mock external services
     email_service = Mock(spec=EmailService)
-    
+
     # Act - Execute the authentication flow
     registration_result = user_service.register_user(
         email=valid_email,
         password=valid_password,
         email_service=email_service
     )
-    
+
     # Assert - Verify all expectations are met
     # Registration success
     assert registration_result.success is True
     assert registration_result.user_id is not None
-    
+
     # Database state
     stored_user = test_db.get_user_by_email(valid_email)
     assert stored_user is not None
     assert stored_user.email == valid_email
-    
+
     # External service interactions
     email_service.send_welcome_email.assert_called_once()
 ```
@@ -483,7 +483,7 @@ def test_user_authentication_flow():
 
 ### "The Drill Sergeant is Too Mean!"
 
-**Problem:** Every test fails with quality violations.  
+**Problem:** Every test fails with quality violations.
 **Solution:** Your tests actually ARE garbage. Fix them or lower the standards:
 
 ```ini
@@ -493,7 +493,7 @@ drill_sergeant_min_description_length = 1  # Accept "a" as description
 
 ### "Auto-detection Isn't Working!"
 
-**Problem:** Tests in `tests/unit/` aren't getting `@pytest.mark.unit`.  
+**Problem:** Tests in `tests/unit/` aren't getting `@pytest.mark.unit`.
 **Solution:** Check your directory structure, genius:
 
 ```bash
@@ -510,7 +510,7 @@ tests/
 
 ### "I Don't Want Markers!"
 
-**Problem:** You hate organization and progress.  
+**Problem:** You hate organization and progress.
 **Solution:** Turn off marker enforcement:
 
 ```ini
@@ -519,7 +519,7 @@ drill_sergeant_enforce_markers = false
 
 ### "The Error Messages Are Too Verbose!"
 
-**Problem:** You don't like helpful feedback.  
+**Problem:** You don't like helpful feedback.
 **Solution:** There is no solution. Embrace the verbosity. Learn from it. Grow as a developer.
 
 ## 🎖️ Contributing (Join the Army)
@@ -550,7 +550,7 @@ just --list
 
 ```bash
 just test          # Run all tests
-just test-unit     # Run only unit tests  
+just test-unit     # Run only unit tests
 just test-integration  # Run integration tests
 just lint          # Check code style
 just type-check    # Verify type annotations
@@ -565,7 +565,7 @@ just clean         # Clean up generated files
 The Drill Sergeant fixes this by:
 
 1. **Making quality automatic** - Can't forget markers if they're added automatically
-2. **Teaching good habits** - Clear error messages explain what quality looks like  
+2. **Teaching good habits** - Clear error messages explain what quality looks like
 3. **Enforcing standards** - No more "we'll fix it later" (spoiler: later never comes)
 4. **Being helpful** - Auto-detection means less work for developers who do things right
 
@@ -579,7 +579,7 @@ The Drill Sergeant fixes this by:
 ## 🔮 Future Features (Coming Soon™)
 
 - **🎨 Custom AAA patterns** - Define your own test structure requirements
-- **📊 Quality metrics** - Dashboard showing test quality across your codebase  
+- **📊 Quality metrics** - Dashboard showing test quality across your codebase
 - **🤖 AI-powered suggestions** - Smart recommendations for test improvements
 - **🔗 IDE integration** - Real-time quality feedback while you type
 - **📈 Historical tracking** - See how your test quality improves over time
@@ -590,7 +590,7 @@ MIT License - Because sharing is caring, and good test quality should be availab
 
 ## 🎯 Final Words
 
-The Drill Sergeant doesn't exist to make your life harder. He exists to make your tests BETTER. 
+The Drill Sergeant doesn't exist to make your life harder. He exists to make your tests BETTER.
 
 Better tests = Better code = Better software = Better world.
 

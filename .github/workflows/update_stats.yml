@@ -13,21 +13,21 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      
+
     steps:
     - name: 🎖️ Checkout Battle Zone
       uses: actions/checkout@v4
-      
+
     - name: 🐍 Set up Python Command Center
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-        
+
     - name: ⚡ Install UV Battle Gear
       uses: astral-sh/setup-uv@v4
       with:
         enable-cache: true
-        
+
     - name: 📊 Count Test Battalions
       id: count_tests
       run: |
@@ -35,20 +35,20 @@ jobs:
         TEST_COUNT=$(find tests -name "*.py" -exec grep -c "def test_" {} + | awk '{sum += $1} END {print sum}')
         echo "test_count=$TEST_COUNT" >> $GITHUB_OUTPUT
         echo "🧪 Battle Report: $TEST_COUNT tests in the field!"
-        
+
     - name: 🏅 Generate Battle Stats Badge
       run: |
         # Create a dynamic badge for test count
         curl -X GET "https://img.shields.io/badge/tests-${{ steps.count_tests.outputs.test_count }}%20passing-brightgreen?style=flat&logo=pytest" > /dev/null
         echo "📈 Updated test count: ${{ steps.count_tests.outputs.test_count }} tests"
-        
+
     - name: 🔍 Analyze Code Complexity
       id: complexity
       run: |
         uv run --with xenon xenon --max-absolute B --max-modules A --max-average A src/ || echo "complexity=A+" >> $GITHUB_OUTPUT
         uv run --with xenon xenon --max-absolute B --max-modules A --max-average A src/ && echo "complexity=A+" >> $GITHUB_OUTPUT
         echo "🎯 Code Quality Grade: A+"
-        
+
     - name: 📦 Check Package Size
       id: package_size
       run: |
@@ -57,7 +57,7 @@ jobs:
         PACKAGE_SIZE=$(du -sh dist/*.whl | cut -f1)
         echo "package_size=$PACKAGE_SIZE" >> $GITHUB_OUTPUT
         echo "📦 Package Size: $PACKAGE_SIZE"
-        
+
     - name: 🎖️ Update README Battle Statistics
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -69,6 +69,6 @@ jobs:
         echo "   Quality: ${{ steps.complexity.outputs.complexity }}"
         echo "   Package: ${{ steps.package_size.outputs.package_size }}"
         echo "   Status: ALL SYSTEMS GREEN! 🚀"
-        
+
         # Note: Automatic README updates would require more sophisticated logic
         # to avoid conflicts and maintain the military theme format

@@ -99,13 +99,18 @@ class AAAValidator:
     ) -> None:
         """Check if line contains keywords for a specific AAA section."""
         section_keywords, section_name, description = section_info
-        if any(keyword in line for keyword in section_keywords):
-            # Set the appropriate flag
-            setattr(status, f"{section_name}_found", True)
-            # Find matched keyword for feedback
-            matched_keyword = next(k for k in section_keywords if k in line)
-            validation_context = (line, test_name, matched_keyword, description)
-            self._check_descriptive_comment(status, validation_context, config)
+
+        # Look for the pattern "# <keyword> -" specifically
+        for keyword in section_keywords:
+            # Check if line starts with "# " followed by the keyword and " -"
+            pattern = f"# {keyword} -"
+            if line.startswith(pattern):
+                # Set the appropriate flag
+                setattr(status, f"{section_name}_found", True)
+                # Find matched keyword for feedback
+                validation_context = (line, test_name, keyword, description)
+                self._check_descriptive_comment(status, validation_context, config)
+                break
 
     def _check_descriptive_comment(
         self,

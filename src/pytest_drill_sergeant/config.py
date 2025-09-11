@@ -19,8 +19,10 @@ class DrillSergeantConfig:
     enabled: bool = True
     enforce_markers: bool = True
     enforce_aaa: bool = True
+    enforce_file_length: bool = True
     auto_detect_markers: bool = True
     min_description_length: int = 3
+    max_file_length: int = 350
     marker_mappings: dict[str, str] = field(default_factory=dict)
 
     # AAA Synonym Recognition
@@ -59,6 +61,13 @@ class DrillSergeantConfig:
             default=True,
         )
 
+        enforce_file_length = get_bool_option(
+            config,
+            "drill_sergeant_enforce_file_length",
+            env_var="DRILL_SERGEANT_ENFORCE_FILE_LENGTH",
+            default=True,
+        )
+
         auto_detect_markers = get_bool_option(
             config,
             "drill_sergeant_auto_detect_markers",
@@ -71,6 +80,13 @@ class DrillSergeantConfig:
             "drill_sergeant_min_description_length",
             env_var="DRILL_SERGEANT_MIN_DESCRIPTION_LENGTH",
             default=3,
+        )
+
+        max_file_length = get_int_option(
+            config,
+            "drill_sergeant_max_file_length",
+            env_var="DRILL_SERGEANT_MAX_FILE_LENGTH",
+            default=350,
         )
 
         # Get custom marker mappings from TOML configuration
@@ -113,8 +129,10 @@ class DrillSergeantConfig:
             enabled=enabled,
             enforce_markers=enforce_markers,
             enforce_aaa=enforce_aaa,
+            enforce_file_length=enforce_file_length,
             auto_detect_markers=auto_detect_markers,
             min_description_length=min_description_length,
+            max_file_length=max_file_length,
             marker_mappings=marker_mappings,
             aaa_synonyms_enabled=aaa_synonyms_enabled,
             aaa_builtin_synonyms=aaa_builtin_synonyms,

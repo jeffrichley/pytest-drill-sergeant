@@ -12,9 +12,10 @@ from pytest_drill_sergeant.config import DrillSergeantConfig
 from pytest_drill_sergeant.validators import (
     AAAValidator,
     ErrorReporter,
+    FileLengthValidator,
     MarkerValidator,
 )
-from pytest_drill_sergeant.validators.base import TestValidator
+from pytest_drill_sergeant.validators.base import Validator
 
 
 class DrillSergeantPlugin:
@@ -22,9 +23,10 @@ class DrillSergeantPlugin:
 
     def __init__(self) -> None:
         """Initialize the plugin with default validators."""
-        self.validators: list[TestValidator] = [
+        self.validators: list[Validator] = [
             MarkerValidator(),
             AAAValidator(),
+            FileLengthValidator(),
         ]
         self.error_reporter = ErrorReporter()
 

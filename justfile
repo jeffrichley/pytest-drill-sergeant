@@ -5,7 +5,7 @@
 test:
     uv run pytest tests
 
-# Run unit tests only  
+# Run unit tests only
 test-unit:
     uv run pytest tests -m unit
 

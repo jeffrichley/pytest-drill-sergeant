@@ -21,7 +21,7 @@ DEFAULT_PYTHON = "3.12"  # Used by quality gates and local development
 nox.options.sessions = [
     f"tests-{DEFAULT_PYTHON}",  # Only test on default Python locally
     "lint",
-    "type_check", 
+    "type_check",
     "complexity",
     "security",
     "pyproject",

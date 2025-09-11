@@ -1,0 +1,61 @@
+# Pre-commit hooks for pytest-drill-sergeant
+# Following the Redwing Core pattern
+
+repos:
+  # Ruff for linting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        exclude: ^test_project/
+      - id: ruff-format
+        exclude: ^test_project/
+
+  # Black for code formatting (backup to ruff-format)
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        language_version: python3.12
+        exclude: ^test_project/
+
+  # MyPy for type checking (skip for now due to pytest stubs)
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.13.0
+  #   hooks:
+  #     - id: mypy
+  #       args: [--config-file=pyproject.toml]
+
+  # Security audit (disabled for now - low priority)
+  # - repo: https://github.com/PyCQA/bandit
+  #   rev: 1.7.10
+  #   hooks:
+  #     - id: bandit
+  #       args: [-r, src]
+  #       exclude: ^tests/
+
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: mixed-line-ending
+      - id: check-case-conflict
+
+  # Coverage check with 50% threshold
+  - repo: local
+    hooks:
+      - id: coverage-check
+        name: coverage-check
+        entry: bash -c 'uv run pytest tests --cov=src/pytest_drill_sergeant --cov-report=term-missing --cov-fail-under=50'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]

@@ -9,7 +9,7 @@ from pytest_drill_sergeant.models import ValidationIssue
 
 
 @runtime_checkable
-class TestValidator(Protocol):
+class Validator(Protocol):
     """Protocol for test validators.
 
     All validators must implement this interface to ensure consistent
