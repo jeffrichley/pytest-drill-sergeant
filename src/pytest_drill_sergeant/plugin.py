@@ -14,6 +14,7 @@ from pytest_drill_sergeant.validators import (
     ErrorReporter,
     FileLengthValidator,
     MarkerValidator,
+    ReturnTypeValidator,
 )
 from pytest_drill_sergeant.validators.base import Validator
 
@@ -27,6 +28,7 @@ class DrillSergeantPlugin:
             MarkerValidator(),
             AAAValidator(),
             FileLengthValidator(),
+            ReturnTypeValidator(),
         ]
         self.error_reporter = ErrorReporter()
 
@@ -65,5 +67,6 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 
     except Exception as e:
         # If there's any error, just skip the check to avoid breaking tests
-        print(f"Warning: Test validation failed for {item.name}: {e}")
+        test_name = getattr(item, "name", "unknown")
+        print(f"Warning: Test validation failed for {test_name}: {e}")
         pass

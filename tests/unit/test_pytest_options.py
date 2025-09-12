@@ -39,7 +39,7 @@ class TestPytestOptions:
         mock_parser = Mock()
         addini_calls = []
 
-        def track_addini(*args, **kwargs):
+        def track_addini(*args: object, **kwargs: object) -> None:
             addini_calls.append((args, kwargs))
 
         mock_parser.addini.side_effect = track_addini
@@ -75,7 +75,7 @@ class TestPytestOptions:
         mock_parser = Mock()
         addini_calls = []
 
-        def track_addini(*args, **kwargs):
+        def track_addini(*args: object, **kwargs: object) -> None:
             addini_calls.append((args, kwargs))
 
         mock_parser.addini.side_effect = track_addini

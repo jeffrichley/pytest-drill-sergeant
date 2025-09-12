@@ -31,6 +31,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         help="Enforce maximum file length limits",
     )
     parser.addini(
+        "drill_sergeant_enforce_return_type",
+        type="bool",
+        default=True,
+        help="Enforce return type annotations on test functions",
+    )
+    parser.addini(
         "drill_sergeant_auto_detect_markers",
         type="bool",
         default=True,
@@ -71,4 +77,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         type="bool",
         default=True,
         help="Use built-in AAA synonyms",
+    )
+
+    # Return type validation options
+    parser.addini(
+        "drill_sergeant_return_type_mode",
+        type="string",
+        default="error",
+        help="Return type validation mode: 'error' (report issues), 'auto_fix' (automatically add -> None), or 'disabled' (skip validation)",
     )

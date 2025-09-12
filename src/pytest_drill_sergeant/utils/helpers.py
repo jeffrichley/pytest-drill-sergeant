@@ -82,6 +82,39 @@ def get_int_option(
     return default
 
 
+def get_string_option(
+    config: pytest.Config, ini_name: str, env_var: str, default: str
+) -> str:
+    """Get string option from pytest config or environment variable."""
+    # Environment variable takes precedence
+    env_val = os.getenv(env_var)
+    if env_val is not None:
+        return env_val
+
+    # Then pytest config
+    if hasattr(config, "getini"):
+        try:
+            ini_val = config.getini(ini_name)
+            if ini_val is not None:
+                return str(ini_val)
+        except (ValueError, AttributeError):
+            pass
+
+    # Fallback: try to read from ini file directly
+    try:
+        ini_path = getattr(config, "inipath", None)
+        if ini_path and ini_path.exists():
+            parser = configparser.ConfigParser()
+            parser.read(ini_path)
+            if "pytest" in parser and ini_name in parser["pytest"]:
+                value = parser["pytest"][ini_name]
+                return str(value)
+    except Exception:
+        pass
+
+    return default
+
+
 def get_synonym_list(config: pytest.Config, ini_name: str, env_var: str) -> list[str]:
     """Get comma-separated synonym list from pytest config or environment variable."""
     # Environment variable takes precedence

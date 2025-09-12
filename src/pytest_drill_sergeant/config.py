@@ -8,6 +8,7 @@ from pytest_drill_sergeant.utils import (
     get_bool_option,
     get_int_option,
     get_marker_mappings,
+    get_string_option,
     get_synonym_list,
 )
 
@@ -20,6 +21,7 @@ class DrillSergeantConfig:
     enforce_markers: bool = True
     enforce_aaa: bool = True
     enforce_file_length: bool = True
+    enforce_return_type: bool = True
     auto_detect_markers: bool = True
     min_description_length: int = 3
     max_file_length: int = 350
@@ -31,6 +33,9 @@ class DrillSergeantConfig:
     aaa_arrange_synonyms: list[str] = field(default_factory=list)
     aaa_act_synonyms: list[str] = field(default_factory=list)
     aaa_assert_synonyms: list[str] = field(default_factory=list)
+
+    # Return Type Validation
+    return_type_mode: str = "error"  # "error", "auto_fix", or "disabled"
 
     @classmethod
     def from_pytest_config(cls, config: pytest.Config) -> "DrillSergeantConfig":
@@ -65,6 +70,13 @@ class DrillSergeantConfig:
             config,
             "drill_sergeant_enforce_file_length",
             env_var="DRILL_SERGEANT_ENFORCE_FILE_LENGTH",
+            default=True,
+        )
+
+        enforce_return_type = get_bool_option(
+            config,
+            "drill_sergeant_enforce_return_type",
+            env_var="DRILL_SERGEANT_ENFORCE_RETURN_TYPE",
             default=True,
         )
 
@@ -125,11 +137,20 @@ class DrillSergeantConfig:
             "DRILL_SERGEANT_AAA_ASSERT_SYNONYMS",
         )
 
+        # Return Type Validation settings
+        return_type_mode = get_string_option(
+            config,
+            "drill_sergeant_return_type_mode",
+            "DRILL_SERGEANT_RETURN_TYPE_MODE",
+            "error",
+        )
+
         return cls(
             enabled=enabled,
             enforce_markers=enforce_markers,
             enforce_aaa=enforce_aaa,
             enforce_file_length=enforce_file_length,
+            enforce_return_type=enforce_return_type,
             auto_detect_markers=auto_detect_markers,
             min_description_length=min_description_length,
             max_file_length=max_file_length,
@@ -139,4 +160,5 @@ class DrillSergeantConfig:
             aaa_arrange_synonyms=aaa_arrange_synonyms,
             aaa_act_synonyms=aaa_act_synonyms,
             aaa_assert_synonyms=aaa_assert_synonyms,
+            return_type_mode=return_type_mode,
         )

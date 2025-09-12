@@ -33,7 +33,7 @@ class FileLengthValidator:
 
         try:
             # Count lines in the file
-            with open(file_path, encoding="utf-8") as f:
+            with open(str(file_path), encoding="utf-8") as f:
                 line_count = sum(1 for _ in f)
 
             # Check if file exceeds maximum length
@@ -41,7 +41,7 @@ class FileLengthValidator:
                 issues.append(
                     ValidationIssue(
                         issue_type="file_length",
-                        message=f"Test file '{file_path.name}' is too long ({line_count} lines)",
+                        message=f"Test file '{file_path}' is too long ({line_count} lines)",
                         suggestion=f"Split this file into smaller modules. Current length: {line_count} lines, maximum allowed: {config.max_file_length} lines",
                     )
                 )
@@ -51,7 +51,7 @@ class FileLengthValidator:
             issues.append(
                 ValidationIssue(
                     issue_type="file_length",
-                    message=f"Could not read file '{file_path.name}' for length validation",
+                    message=f"Could not read file '{file_path}' for length validation",
                     suggestion=f"Check file permissions and encoding. Error: {e}",
                 )
             )

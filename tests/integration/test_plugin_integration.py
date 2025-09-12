@@ -22,7 +22,7 @@ class TestPluginIntegration:
             import pytest
 
             @pytest.mark.unit
-            def test_dummy():
+            def test_dummy() -> None:
                 '''# Arrange - Simple test setup
                 # Act - Simple test action
                 # Assert - Simple test assertion
@@ -72,7 +72,7 @@ markers =
         unit_test.write_text(
             textwrap.dedent(
                 """
-            def test_auto_decorated():
+            def test_auto_decorated() -> None:
                 '''Test without explicit marker - should be auto-decorated.'''
                 # Arrange - Simple test data
                 value = 10
@@ -105,7 +105,7 @@ markers =
             import pytest
 
             @pytest.mark.unit
-            def test_bad_structure():
+            def test_bad_structure() -> None:
                 '''Test without AAA structure.'''
                 value = 42
                 result = value * 2
@@ -131,7 +131,7 @@ markers =
 
         pytester.makepyfile(
             test_no_marker="""
-            def test_no_marker():
+            def test_no_marker() -> None:
                 '''Test without marker in non-detectable location.'''
                 # Arrange - Simple test data
                 value = 10
@@ -162,7 +162,7 @@ markers =
 
         pytester.makepyfile(
             test_multiple_violations="""
-            def test_multiple_violations():
+            def test_multiple_violations() -> None:
                 '''Test with both marker and AAA violations.'''
                 value = 42
                 result = value * 2
@@ -200,7 +200,7 @@ markers =
             class TestClass:
                 '''Test class - might cause issues with source inspection.'''
 
-                def test_method(self):
+                def test_method(self) -> None:
                     # Arrange - Simple test data
                     value = 10
 
@@ -232,7 +232,7 @@ markers =
             import pytest
 
             @pytest.mark.unit
-            def test_valid_structure():
+            def test_valid_structure() -> None:
                 '''Properly structured test with marker and AAA.'''
                 # Arrange - Set up test data and dependencies
                 input_value = 10

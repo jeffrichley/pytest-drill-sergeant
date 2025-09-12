@@ -8,6 +8,7 @@ from pytest_drill_sergeant.utils.helpers import (
     get_default_marker_mappings,
     get_int_option,
     get_marker_mappings,
+    get_string_option,
     get_synonym_list,
 )
 
@@ -19,5 +20,6 @@ __all__ = [
     "get_default_marker_mappings",
     "get_int_option",
     "get_marker_mappings",
+    "get_string_option",
     "get_synonym_list",
 ]
