@@ -25,7 +25,8 @@ type-check:
 quality: lint type-check complexity security pyproject
 
 # Run comprehensive quality checks (includes AI-specific checks)
-quality-full: quality dead-code imports docs-coverage duplication maintainability test-quality dependencies security-advanced
+quality-full:
+    nox -s dead_code imports docs_coverage duplication maintainability test_quality dependencies security_advanced
 
 # Run quality checks with unsafe fixes enabled
 quality-unsafe:

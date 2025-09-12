@@ -7,10 +7,13 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import pytest
-
 if TYPE_CHECKING:
+    import pytest
+
     from pytest_drill_sergeant.config import DrillSergeantConfig
+
+# Runtime import for function signatures
+import pytest  # noqa: TC002
 
 
 def get_bool_option(
