@@ -1,1 +1,1 @@
-"""Tests for pytest-drill-sergeant plugin."""
+"""Test package for pytest-drill-sergeant."""

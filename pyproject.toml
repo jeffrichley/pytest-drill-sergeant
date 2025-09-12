@@ -1,7 +1,7 @@
 [project]
 name = "pytest-drill-sergeant"
 dynamic = ["version"]
-description = "A pytest plugin that enforces test quality standards through automatic marker detection and AAA structure validation"
+description = "A pytest plugin for test quality enforcement (currently under major rewrite)"
 readme = "README.md"
 license = "MIT"
 authors = [
@@ -28,7 +28,7 @@ Repository = "https://github.com/jeffrichley/pytest-drill-sergeant.git"
 Issues = "https://github.com/jeffrichley/pytest-drill-sergeant/issues"
 
 [project.entry-points.pytest11]
-drill_sergeant = "pytest_drill_sergeant.plugin"
+# Plugin entry point will be added back during rewrite
 
 [project.optional-dependencies]
 dev = [
