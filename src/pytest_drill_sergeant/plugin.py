@@ -69,4 +69,3 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         # If there's any error, just skip the check to avoid breaking tests
         test_name = getattr(item, "name", "unknown")
         print(f"Warning: Test validation failed for {test_name}: {e}")
-        pass

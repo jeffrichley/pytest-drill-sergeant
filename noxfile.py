@@ -122,3 +122,67 @@ def pyproject(session):
     session.run("uv", "pip", "install", "-q", "-e", ".", external=True)
     session.run("uv", "pip", "install", "-q", "validate-pyproject", external=True)
     session.run("validate-pyproject", "pyproject.toml")
+
+
+# ---------------- AI-Specific Quality Sessions ---------------- #
+
+
+@nox.session(python=DEFAULT_PYTHON)
+def dead_code(session):
+    """Check for dead code using vulture."""
+    session.run("uv", "pip", "install", "-q", "vulture", external=True)
+    session.run("vulture", "src", "--min-confidence", "80")
+
+
+@nox.session(python=DEFAULT_PYTHON)
+def imports(session):
+    """Check import organization and unused imports."""
+    session.run("uv", "pip", "install", "-q", "isort", "unimport", external=True)
+    session.run("isort", "src", "tests", "--check-only", "--diff")
+    session.run("unimport", "src", "tests")
+
+
+@nox.session(python=DEFAULT_PYTHON)
+def docs_coverage(session):
+    """Check documentation coverage."""
+    session.run("uv", "pip", "install", "-q", "interrogate", external=True)
+    session.run("interrogate", "src", "--fail-under", "80", "--ignore-init-method")
+
+
+@nox.session(python=DEFAULT_PYTHON)
+def duplication(session):
+    """Check for code duplication."""
+    session.run("uv", "pip", "install", "-q", "pylint", external=True)
+    session.run("pylint", "src", "--disable=all", "--enable=duplicate-code")
+
+
+@nox.session(python=DEFAULT_PYTHON)
+def maintainability(session):
+    """Check maintainability index."""
+    session.run("uv", "pip", "install", "-q", "radon", external=True)
+    session.run("radon", "mi", "src", "--min", "B")
+
+
+@nox.session(python=DEFAULT_PYTHON)
+def test_quality(session):
+    """Check test quality metrics."""
+    session.run(
+        "uv", "pip", "install", "-q", "pytest-mock", "pytest-benchmark", external=True
+    )
+    session.run("pytest", "tests", "--benchmark-only", "--benchmark-skip")
+
+
+@nox.session(python=DEFAULT_PYTHON)
+def dependencies(session):
+    """Analyze dependencies for issues."""
+    session.run("uv", "pip", "install", "-q", "pipdeptree", "safety", external=True)
+    session.run("pipdeptree", "--warn", "fail")
+    session.run("safety", "check", "--json")
+
+
+@nox.session(python=DEFAULT_PYTHON)
+def security_advanced(session):
+    """Advanced security checks."""
+    session.run("uv", "pip", "install", "-q", "bandit", "semgrep", external=True)
+    session.run("bandit", "-r", "src", "-f", "json")
+    session.run("semgrep", "--config=auto", "src")

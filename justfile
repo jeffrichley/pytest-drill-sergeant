@@ -24,6 +24,9 @@ type-check:
 # Run all quality checks (matches CI quality gates)
 quality: lint type-check complexity security pyproject
 
+# Run comprehensive quality checks (includes AI-specific checks)
+quality-full: quality dead-code imports docs-coverage duplication maintainability test-quality dependencies security-advanced
+
 # Run quality checks with unsafe fixes enabled
 quality-unsafe:
     @echo "🚨 Running quality checks with unsafe fixes..."
