@@ -21,8 +21,8 @@ lint:
 type-check:
     nox -s type_check
 
-# Run all quality checks
-quality: lint type-check
+# Run all quality checks (matches CI quality gates)
+quality: lint type-check complexity security pyproject
 
 # Run quality checks with unsafe fixes enabled
 quality-unsafe:
