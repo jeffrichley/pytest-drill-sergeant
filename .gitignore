@@ -145,3 +145,4 @@ cython_debug/
 
 # Ruff
 .ruff_cache/
+.DS_Store
