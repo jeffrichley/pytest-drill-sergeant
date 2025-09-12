@@ -11,6 +11,53 @@ from pytest_drill_sergeant.models import ValidationIssue
 class ReturnTypeValidator:
     """Validator for enforcing return type annotations on test functions."""
 
+    def _get_test_function_name(self, item: pytest.Item) -> str:
+        """Get the test function name from the pytest item."""
+        test_function_name = getattr(item, "name", "unknown")
+        if hasattr(item, "function") and hasattr(item.function, "__name__"):
+            test_function_name = item.function.__name__
+        return test_function_name
+
+    def _parse_file_content(self, file_path: str) -> tuple[str, ast.AST]:
+        """Parse file content and return content and AST."""
+        with open(file_path, encoding="utf-8") as f:
+            content = f.read()
+        tree = ast.parse(content, filename=file_path)
+        return content, tree
+
+    def _find_test_function(
+        self, tree: ast.AST, test_function_name: str
+    ) -> ast.FunctionDef | None:
+        """Find the specific test function in the AST."""
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == test_function_name:
+                return node
+        return None
+
+    def _handle_missing_return_type(
+        self,
+        node: ast.FunctionDef,
+        config: DrillSergeantConfig,
+        file_path: str,
+        content: str,
+    ) -> list[ValidationIssue]:
+        """Handle missing return type annotation."""
+        issues: list[ValidationIssue] = []
+
+        if config.return_type_mode == "error":
+            issues.append(
+                ValidationIssue(
+                    issue_type="return_type",
+                    message=f"Test function '{node.name}' is missing return type annotation",
+                    suggestion="Add '-> None' return type annotation to the function signature",
+                )
+            )
+        elif config.return_type_mode == "auto_fix":
+            # Auto-fix by adding -> None to the function signature
+            self._auto_fix_return_type(file_path, node, content)
+
+        return issues
+
     def validate(
         self, item: pytest.Item, config: DrillSergeantConfig
     ) -> list[ValidationIssue]:
@@ -26,57 +73,33 @@ class ReturnTypeValidator:
         if not self.is_enabled(config) or config.return_type_mode == "disabled":
             return []
 
-        issues: list[ValidationIssue] = []
-
         # Get the file path from the test item
         file_path = item.fspath
         if not file_path:
-            return issues
+            return []
 
         try:
             # Parse the file to find test functions
-            with open(str(file_path), encoding="utf-8") as f:
-                content = f.read()
+            content, tree = self._parse_file_content(str(file_path))
+            test_function_name = self._get_test_function_name(item)
+            test_function = self._find_test_function(tree, test_function_name)
 
-            tree = ast.parse(content, filename=str(file_path))
-
-            # Find the specific test function being validated
-            test_function_name = getattr(item, "name", "unknown")
-            if hasattr(item, "function") and hasattr(item.function, "__name__"):
-                test_function_name = item.function.__name__
-
-            for node in ast.walk(tree):
-                if (
-                    isinstance(node, ast.FunctionDef)
-                    and node.name == test_function_name
-                ):
-                    # Check if this test function has a return type annotation
-                    if node.returns is None:
-                        if config.return_type_mode == "error":
-                            issues.append(
-                                ValidationIssue(
-                                    issue_type="return_type",
-                                    message=f"Test function '{node.name}' is missing return type annotation",
-                                    suggestion="Add '-> None' return type annotation to the function signature",
-                                )
-                            )
-                        elif config.return_type_mode == "auto_fix":
-                            # Auto-fix by adding -> None to the function signature
-                            self._auto_fix_return_type(file_path, node, content)
-
-                    break
+            if test_function and test_function.returns is None:
+                return self._handle_missing_return_type(
+                    test_function, config, str(file_path), content
+                )
 
         except (OSError, UnicodeDecodeError, SyntaxError) as e:
             # If we can't read or parse the file, create a warning issue
-            issues.append(
+            return [
                 ValidationIssue(
                     issue_type="return_type",
                     message=f"Could not parse file '{file_path}' for return type validation",
                     suggestion=f"Check file syntax and encoding. Error: {e}",
                 )
-            )
+            ]
 
-        return issues
+        return []
 
     def _auto_fix_return_type(
         self, file_path: str, function_node: ast.FunctionDef, content: str

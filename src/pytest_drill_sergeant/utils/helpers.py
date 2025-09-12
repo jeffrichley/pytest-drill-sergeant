@@ -46,19 +46,19 @@ def get_bool_option(
     return default
 
 
-def get_int_option(
-    config: pytest.Config, ini_name: str, env_var: str, default: int
-) -> int:
-    """Get integer option from pytest config or environment variable."""
-    # Environment variable takes precedence
+def _get_int_from_env(env_var: str) -> int | None:
+    """Get integer from environment variable."""
     env_val = os.getenv(env_var)
     if env_val is not None:
         try:
             return int(env_val)
         except ValueError:
             pass
+    return None
 
-    # Then pytest config
+
+def _get_int_from_config(config: pytest.Config, ini_name: str) -> int | None:
+    """Get integer from pytest config."""
     if hasattr(config, "getini"):
         try:
             ini_val = config.getini(ini_name)
@@ -66,8 +66,11 @@ def get_int_option(
                 return int(ini_val)
         except (ValueError, AttributeError):
             pass
+    return None
 
-    # Fallback: try to read from ini file directly
+
+def _get_int_from_ini_file(config: pytest.Config, ini_name: str) -> int | None:
+    """Get integer from ini file directly."""
     try:
         ini_path = getattr(config, "inipath", None)
         if ini_path and ini_path.exists():
@@ -78,6 +81,27 @@ def get_int_option(
                 return int(value)
     except Exception:
         pass
+    return None
+
+
+def get_int_option(
+    config: pytest.Config, ini_name: str, env_var: str, default: int
+) -> int:
+    """Get integer option from pytest config or environment variable."""
+    # Environment variable takes precedence
+    env_val = _get_int_from_env(env_var)
+    if env_val is not None:
+        return env_val
+
+    # Then pytest config
+    config_val = _get_int_from_config(config, ini_name)
+    if config_val is not None:
+        return config_val
+
+    # Fallback: try to read from ini file directly
+    ini_val = _get_int_from_ini_file(config, ini_name)
+    if ini_val is not None:
+        return ini_val
 
     return default
 
