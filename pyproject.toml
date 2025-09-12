@@ -3,7 +3,7 @@ name = "pytest-drill-sergeant"
 dynamic = ["version"]
 description = "A pytest plugin that enforces test quality standards through automatic marker detection and AAA structure validation"
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
 authors = [
     { name = "Jeff Richley", email = "jeffrichley@gmail.com" }
 ]
@@ -16,7 +16,6 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Framework :: Pytest",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
