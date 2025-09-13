@@ -1,11 +1,16 @@
 """Tests for the plugin factory system."""
 
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from pytest_drill_sergeant.core.config import DrillSergeantConfig
-from pytest_drill_sergeant.plugin.base import DrillSergeantPlugin, PluginMetadata
+from pytest_drill_sergeant.core.models import Config
+from pytest_drill_sergeant.plugin.base import (
+    AnalyzerPlugin,
+    DrillSergeantPlugin,
+    PluginMetadata,
+)
 from pytest_drill_sergeant.plugin.factory import (
     PluginConfigError,
     PluginFactory,
@@ -59,7 +64,7 @@ class TestPluginFactory:
 
     def setup_method(self) -> None:
         """Set up test fixtures."""
-        self.config = DrillSergeantConfig()
+        self.config = Config()
         self.factory = PluginFactory(self.config)
 
     def test_init(self) -> None:
@@ -79,7 +84,7 @@ class TestPluginFactory:
         )
 
         # Mock plugin class that implements required methods
-        class MockAnalyzerPlugin(DrillSergeantPlugin):
+        class MockAnalyzerPlugin(AnalyzerPlugin):
             def __init__(self, config, metadata):
                 super().__init__(config, metadata)
 
@@ -88,6 +93,15 @@ class TestPluginFactory:
 
             def cleanup(self) -> None:
                 pass
+
+            def analyze_file(self, _file_path, _content):
+                return []
+
+            def get_rule_ids(self):
+                return ["rule"]
+
+            def get_supported_extensions(self):
+                return [".py"]
 
         with patch.object(
             self.factory.manager.registry, "register_plugin"
@@ -110,7 +124,7 @@ class TestPluginFactory:
             category="analyzer",
         )
 
-        class MockAnalyzerPlugin(DrillSergeantPlugin):
+        class MockAnalyzerPlugin(AnalyzerPlugin):
             def __init__(self, config, metadata):
                 super().__init__(config, metadata)
 
@@ -119,6 +133,15 @@ class TestPluginFactory:
 
             def cleanup(self) -> None:
                 pass
+
+            def analyze_file(self, _file_path, _content):
+                return []
+
+            def get_rule_ids(self):
+                return ["rule"]
+
+            def get_supported_extensions(self):
+                return [".py"]
 
         with patch.object(
             self.factory.manager.registry, "register_plugin"
@@ -181,7 +204,7 @@ class TestHelperFunctions:
     def test_to_mapping_invalid(self) -> None:
         """Test _to_mapping with invalid type."""
         with pytest.raises(PluginConfigError):
-            _to_mapping("not_a_mapping", "test")
+            _to_mapping("not_a_mapping", "test")  # type: ignore[arg-type]
 
     def test_create_plugin_config_error(self) -> None:
         """Test _create_plugin_config_error."""
@@ -219,8 +242,8 @@ class TestHelperFunctions:
 
     def test_extract_string_field_default(self) -> None:
         """Test _extract_string_field with default."""
-        metadata = {}
-        result = _extract_string_field(metadata, 1, "field", "default")
+        metadata: dict[str, object] = {}
+        result = _extract_string_field(metadata, 1, "field", "default")  # type: ignore[arg-type]
         assert result == "default"
 
     def test_extract_string_field_invalid(self) -> None:
@@ -232,7 +255,7 @@ class TestHelperFunctions:
     def test_extract_dependencies_field_valid(self) -> None:
         """Test _extract_dependencies_field with valid list."""
         metadata = {"dependencies": ["dep1", "dep2"]}
-        result = _extract_dependencies_field(metadata)
+        result = _extract_dependencies_field(metadata)  # type: ignore[arg-type]
         assert result == ["dep1", "dep2"]
 
     def test_extract_dependencies_field_invalid(self) -> None:
@@ -267,7 +290,7 @@ class TestHelperFunctions:
 
     def test_parse_plugin_metadata(self) -> None:
         """Test _parse_plugin_metadata."""
-        metadata_dict = {
+        metadata_dict: dict[str, object] = {
             "plugin_id": "test_plugin",
             "name": "Test Plugin",
             "version": "1.0.0",
@@ -279,7 +302,7 @@ class TestHelperFunctions:
             "dependencies": ["dep1", "dep2"],
         }
 
-        metadata = _parse_plugin_metadata(1, metadata_dict)
+        metadata = _parse_plugin_metadata(1, metadata_dict)  # type: ignore[arg-type]
 
         assert isinstance(metadata, PluginMetadata)
         assert metadata.plugin_id == "test_plugin"
@@ -313,7 +336,7 @@ class TestHelperFunctions:
 
     def test_load_plugin_from_module_success(self) -> None:
         """Test load_plugin_from_module with successful load."""
-        config = DrillSergeantConfig()
+        config = Config()
         metadata = PluginMetadata(
             plugin_id="test_plugin",
             name="Test Plugin",
@@ -350,7 +373,7 @@ class TestHelperFunctions:
 
     def test_load_plugin_from_module_import_error(self) -> None:
         """Test load_plugin_from_module with import error."""
-        config = DrillSergeantConfig()
+        config = Config()
         metadata = PluginMetadata(
             plugin_id="test_plugin",
             name="Test Plugin",
@@ -370,7 +393,7 @@ class TestHelperFunctions:
 
     def test_load_plugin_from_module_attribute_error(self) -> None:
         """Test load_plugin_from_module with attribute error."""
-        config = DrillSergeantConfig()
+        config = Config()
         metadata = PluginMetadata(
             plugin_id="test_plugin",
             name="Test Plugin",
@@ -383,23 +406,15 @@ class TestHelperFunctions:
         with patch(
             "pytest_drill_sergeant.plugin.factory.importlib.import_module"
         ) as mock_import:
-            mock_module = MagicMock()
-
-            # Make getattr raise AttributeError
-            def mock_getattr(obj, name):
-                if name == "TestPlugin":
-                    raise AttributeError(NO_ATTRIBUTE_MSG)
-                return getattr(obj, name)
-
-            mock_module.__getattribute__ = mock_getattr
+            mock_module = SimpleNamespace()
             mock_import.return_value = mock_module
 
-            with pytest.raises(PluginConfigError, match="not a valid plugin class"):
+            with pytest.raises(PluginConfigError, match="has no class"):
                 load_plugin_from_module("test.module", "TestPlugin", config, metadata)
 
     def test_load_plugin_from_module_invalid_class(self) -> None:
         """Test load_plugin_from_module with invalid class."""
-        config = DrillSergeantConfig()
+        config = Config()
         metadata = PluginMetadata(
             plugin_id="test_plugin",
             name="Test Plugin",

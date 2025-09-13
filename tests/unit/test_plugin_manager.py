@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from pytest_drill_sergeant.core.config import DrillSergeantConfig
+from pytest_drill_sergeant.core.models import Config
 from pytest_drill_sergeant.plugin.base import (
     AnalyzerPlugin,
     DrillSergeantPlugin,
@@ -143,7 +143,7 @@ class TestPluginRegistry:
 
     def test_register_plugin(self) -> None:
         """Test registering a plugin."""
-        config = DrillSergeantConfig()
+        config = Config()
         metadata = PluginMetadata(
             plugin_id="test_plugin",
             name="Test Plugin",
@@ -169,7 +169,7 @@ class TestPluginRegistry:
 
     def test_register_plugin_duplicate(self) -> None:
         """Test registering a duplicate plugin."""
-        config = DrillSergeantConfig()
+        config = Config()
         metadata = PluginMetadata(
             plugin_id="test_plugin",
             name="Test Plugin",
@@ -190,7 +190,7 @@ class TestPluginRegistry:
 
     def test_unregister_plugin(self) -> None:
         """Test unregistering a plugin."""
-        config = DrillSergeantConfig()
+        config = Config()
         metadata = PluginMetadata(
             plugin_id="test_plugin",
             name="Test Plugin",
@@ -222,7 +222,7 @@ class TestPluginRegistry:
 
     def test_get_plugin(self) -> None:
         """Test getting a plugin by ID."""
-        config = DrillSergeantConfig()
+        config = Config()
         metadata = PluginMetadata(
             plugin_id="test_plugin",
             name="Test Plugin",
@@ -243,7 +243,7 @@ class TestPluginRegistry:
 
     def test_get_plugins_by_category(self) -> None:
         """Test getting plugins by category."""
-        config = DrillSergeantConfig()
+        config = Config()
 
         # Register analyzer plugin
         analyzer_metadata = PluginMetadata(
@@ -285,7 +285,7 @@ class TestPluginRegistry:
 
     def test_get_enabled_plugins(self) -> None:
         """Test getting enabled plugins."""
-        config = DrillSergeantConfig()
+        config = Config()
 
         # Register enabled plugin
         enabled_metadata = PluginMetadata(
@@ -319,7 +319,7 @@ class TestPluginRegistry:
 
     def test_initialize_all(self) -> None:
         """Test initializing all plugins."""
-        config = DrillSergeantConfig()
+        config = Config()
         metadata = PluginMetadata(
             plugin_id="test_plugin",
             name="Test Plugin",
@@ -343,7 +343,7 @@ class TestPluginRegistry:
 
     def test_initialize_all_with_exception(self) -> None:
         """Test initializing all plugins with exception."""
-        config = DrillSergeantConfig()
+        config = Config()
         metadata = PluginMetadata(
             plugin_id="test_plugin",
             name="Test Plugin",
@@ -366,7 +366,7 @@ class TestPluginRegistry:
 
     def test_cleanup_all(self) -> None:
         """Test cleaning up all plugins."""
-        config = DrillSergeantConfig()
+        config = Config()
         metadata = PluginMetadata(
             plugin_id="test_plugin",
             name="Test Plugin",
@@ -386,7 +386,7 @@ class TestPluginRegistry:
 
     def test_cleanup_all_with_exception(self) -> None:
         """Test cleaning up all plugins with exception."""
-        config = DrillSergeantConfig()
+        config = Config()
         metadata = PluginMetadata(
             plugin_id="test_plugin",
             name="Test Plugin",
@@ -409,7 +409,7 @@ class TestPluginRegistry:
 
     def test_list_plugins(self) -> None:
         """Test listing all plugins."""
-        config = DrillSergeantConfig()
+        config = Config()
         metadata = PluginMetadata(
             plugin_id="test_plugin",
             name="Test Plugin",
@@ -432,7 +432,7 @@ class TestPluginManager:
 
     def setup_method(self) -> None:
         """Set up test fixtures."""
-        self.config = DrillSergeantConfig()
+        self.config = Config()
         self.manager = PluginManager(self.config)
 
     def test_init(self) -> None:

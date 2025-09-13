@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.12"]
 
     steps:
       - uses: actions/checkout@v4
@@ -30,24 +30,26 @@ jobs:
         with:
           version: "latest"
 
+      - name: Install just
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
       - name: Install dependencies
         run: uv sync --all-extras
 
       - name: Run tests
         run: uv run pytest tests --cov=src --cov-report=xml --cov-report=term-missing
 
-      - name: Run quality gates (Python 3.12 only)
-        if: ${{ matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest' }}
+      - name: Run quality gates
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          uv run ruff check src tests --fix --config=pyproject.toml
-          uv run black src tests --config=pyproject.toml
-          uv run mypy src tests --config-file=pyproject.toml
-          uv run xenon --max-absolute B src
+          just quality
           uv run pip-audit --progress-spinner=off
           uv run validate-pyproject pyproject.toml
 
       - name: Upload coverage
-        if: ${{ matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml

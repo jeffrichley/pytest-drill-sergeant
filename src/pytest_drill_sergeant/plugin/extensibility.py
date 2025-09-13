@@ -8,7 +8,6 @@ from collections.abc import Mapping
 from typing import (
     TYPE_CHECKING,
     Protocol,
-    TypeVar,
     cast,
     runtime_checkable,
 )
@@ -44,8 +43,7 @@ class BasePlugin(Protocol):
         ...
 
 
-# TypeVar bound to the actual plugin base classes
-P = TypeVar("P", bound=AnalyzerPlugin | PersonaPlugin | ReporterPlugin)
+# Type parameter for the actual plugin base classes
 
 
 class TemplateError(ValueError):
@@ -83,8 +81,12 @@ def _create_invalid_subclass_error() -> TypeError:
 
 
 def create_plugin_class[
-    P
-](name: str, base: type[P], attrs: Mapping[str, object] | None = None,) -> type[P]:
+    P: AnalyzerPlugin | PersonaPlugin | ReporterPlugin,
+](
+    name: str,
+    base: type[P],
+    attrs: Mapping[str, object] | None = None,
+) -> type[P]:
     """Create a plugin subclass with proper typing and runtime checks.
 
     Args:

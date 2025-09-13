@@ -3,6 +3,8 @@
 import os
 from unittest.mock import MagicMock, patch
 
+from _pytest.nodes import Item
+
 from pytest_drill_sergeant.plugin.hooks import (
     pytest_addoption,
     pytest_collection_modifyitems,
@@ -107,7 +109,7 @@ class TestPytestHooks:
         """Test pytest_collection_modifyitems hook."""
         mock_session = MagicMock()
         mock_config = MagicMock()
-        mock_items = [MagicMock(), MagicMock()]
+        mock_items: list[Item] = [MagicMock(spec=Item), MagicMock(spec=Item)]
 
         # This hook currently has no implementation, just test it doesn't crash
         pytest_collection_modifyitems(mock_session, mock_config, mock_items)

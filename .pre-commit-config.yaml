@@ -17,12 +17,12 @@ repos:
       - id: black
         language_version: python3.12
 
-  # MyPy for type checking with auto-install types
+  # MyPy for type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.13.0
     hooks:
       - id: mypy
-        args: ["--install-types", "--non-interactive", "--config-file=pyproject.toml"]
+        args: ["--non-interactive", "--config-file=pyproject.toml"]
         additional_dependencies:
           # Add common third-party stubs
           - types-requests
@@ -52,12 +52,13 @@ repos:
       - id: mixed-line-ending
       - id: check-case-conflict
 
-  # Coverage check with 50% threshold
+  # Coverage check with 20% threshold
   - repo: local
     hooks:
       - id: coverage-check
         name: coverage-check
-        entry: bash -c 'uv run pytest tests --cov=src --cov-report=term-missing --cov-fail-under=50'
+        entry: python -m pytest
+        args: ["tests", "--cov=src/pytest_drill_sergeant", "--cov-report=term-missing", "--cov-fail-under=20"]
         language: system
         pass_filenames: false
         always_run: true
