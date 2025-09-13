@@ -1,0 +1,387 @@
+# 🧪 Drill Sergeant Testing Rules
+
+This document defines **precise, enforceable rules** for writing tests in the Drill Sergeant project.
+It's designed to:
+
+* Ensure consistent, maintainable, high-quality tests
+* Balance fast execution with deep coverage
+* Guide humans and AI contributors equally
+
+---
+
+## ✅ Core Principles
+
+* Test **WHAT** the system does, not **HOW** it does it. Focus on public behavior, not internal implementation. Tests should fail when behavior is incorrect, not just when implementation changes.
+* All production code must have tests. No exceptions.
+* Tests must be readable, reliable, and relevant.
+* All code should maintain **≥90% line and branch coverage**, unless explicitly exempted.
+* Tests are tiered by scope and purpose—each type of test has a specific role in verifying the system.
+* They must be placed in the correct subdirectory (e.g., unit/, integration/, e2e/) and tagged with the appropriate @pytest.mark.\* marker to indicate their type and execution scope.
+* This ensures test suites are fast, maintainable, and logically organized, and allows selective running in CI pipelines or during development.
+
+### 🔍 Example Directory + Marker Pairings
+
+| Directory            | Purpose                             | Marker                     |
+| -------------------- | ----------------------------------- | -------------------------- |
+| `tests/unit/`        | Fast, isolated function/class tests | `@pytest.mark.unit`        |
+| `tests/integration/` | Cross-module or DB/file system I/O  | `@pytest.mark.integration` |
+| `tests/functional/`  | High-level, multi-layer behavior    | `@pytest.mark.functional`  |
+| `tests/e2e/`         | End-to-end user flows or API        | `@pytest.mark.e2e`         |
+| `tests/performance/` | Load/latency testing                | `@pytest.mark.performance` |
+
+---
+
+## ✅ Test Structure Rules
+
+### ✅ Function Naming
+
+* Use: `test_<thing_under_test>_<expected_behavior>`
+* Examples:
+
+```python
+def test_export_method_creates_output_file():
+def test_register_raises_on_duplicate():
+def test_yaml_loader_parses_valid_input():
+```
+
+### ✅ Docstrings
+
+* Every test must have a 1-line docstring explaining **what is being tested**.
+
+```python
+def test_register_raises_on_duplicate():
+    '''Test that register() raises ValueError if a name is already registered.'''
+```
+
+### ✅ Test Structure: Arrange–Act–Assert
+
+Tests must follow the Arrange–Act–Assert structure:
+
+```python
+def test_register_raises_on_duplicate():
+    '''Raises if duplicate name is registered.'''
+
+    # Arrange
+    registry = Registry()
+
+    # Act
+    with pytest.raises(ValueError):
+        registry.register("foo", {})
+
+    # Assert
+    assert "foo" in registry.names
+```
+
+Use blank lines between phases. One clear action ("Act") per test. Never merge all three steps into one block.
+
+---
+
+## 🔬 What to Test
+
+### ✅ Focus on:
+
+* Public APIs
+* Inputs → Outputs
+* Behavioral contracts (e.g., "should raise on duplicate")
+
+### ❌ Avoid testing:
+
+* Private methods (`_helper_func`) unless reused and complex
+* Third-party library internals
+* Logic already covered by other tests
+
+---
+
+## 🧪 Assertion Rules
+
+### ✅ Assert:
+
+* Return values
+* Exceptions (with `pytest.raises`)
+* Side effects (state change, function calls)
+
+### ❌ Anti-patterns:
+
+* `assert True`
+* Assertions without meaningful outcomes
+
+### ❌ Avoid Fragile Static Assertions
+
+```python
+assert len(data) == 7  # Fragile
+```
+
+Use dynamic or relational assertions:
+
+```python
+assert len(data) > 0
+assert "key" in data
+```
+
+---
+
+### ⚠️ Exception Message Testing
+
+* **Always assert the exception type first.**
+
+  ```python
+  with pytest.raises(ValueError):
+      ...
+  ```
+
+* **If testing the message, check only the stable invariant.**
+  Use `match` with a minimal regex:
+
+  ```python
+  with pytest.raises(ValueError, match=r"type group"):
+      ...
+  ```
+
+* **Capture the exception for further checks when needed:**
+
+  ```python
+  with pytest.raises(ValueError) as excinfo:
+      factory.create_component("nonexistent_component")
+  assert "type group" in str(excinfo.value)
+  ```
+
+* **Prefer custom exceptions with fields.**
+  Instead of parsing messages, define domain-specific exceptions with attributes (e.g., `component`, `reason`, `code`) and assert those directly.
+
+* **Avoid brittle exact matches.**
+  Only test full message strings if they are a documented, user-facing contract.
+
+---
+
+## 🧱 Mocking Rules
+
+### ✅ Mock external systems:
+
+* Filesystem (`os`, `pathlib`, etc.)
+* Time (`datetime`, `sleep`)
+* Networking (`httpx`, `requests`)
+* Databases and ORMs
+* Cloud SDKs
+
+### ✅ How to mock:
+
+* Use `@patch` decorators for readability
+* Prefer `MagicMock()` with `spec=...` for object mocks
+* Assert behavior (not just call existence)
+
+### ❌ Never mock:
+
+* The method you're testing
+* Internal functions without a compelling reason
+
+### ✅ Do mock your code ONLY IF you justify it
+
+> If using Cursor/AI, request permission before mocking internals:
+
+```text
+INTERNAL MOCK REQUEST:
+I want to mock `TimelineBuilder._build_layers()` because it's slow and already tested elsewhere.
+```
+
+Use interface segregation or fakes before mocking internal flow.
+
+---
+
+## 🧪 Pytest Markers
+
+Use markers for runtime scoping and CI targeting:
+
+```python
+@pytest.mark.unit
+def test_basic_math():
+    ...
+```
+
+Define all markers in `pytest.ini` or `pyproject.toml` to avoid warnings.
+
+---
+
+## 📊 Coverage Expectations
+
+* Maintain **≥90%** coverage (lines + branches)
+* Use `pytest-cov` and enforce `fail_under = 90`
+* Allow `# pragma: no cover` only when:
+
+  * Platform-specific
+  * Logically unreachable branches
+
+Security- or mission-critical logic (e.g., reward functions, reducers): **target 100%**
+
+---
+
+## 🧬 Mutation Testing (Advanced)
+
+Use `mutmut` or `cosmic-ray` to verify test strength.
+
+Required for:
+
+* Reward functions
+* Decision graphs
+* Flow control systems
+
+---
+
+## 📏 Naming Conventions
+
+* Files: `test_<module>.py`
+* Classes: `Test<ClassName>`
+* Methods: `test_<expected_behavior>_when_<context>()`
+
+```python
+def test_returns_403_when_user_is_unauthenticated():
+```
+
+---
+
+## 🔁 Fixtures & Setup
+
+* Shared: `conftest.py`
+* Use factory libraries (e.g., `FactoryBoy`, `pydantic-factories`)
+* Use `scope="session"` for containers or expensive setup
+* Avoid `autouse=True` unless necessary
+
+### ⚙️ Fixture Best Practices
+
+* **Scope smartly**:
+
+  * `function` scope for cheap, isolated objects.
+  * `module` scope for mid-weight resources shared in a file.
+  * `session` scope for heavy, read-only resources.
+
+* **Layer isolation**: session-scoped heavy fixture + function-scoped copy/reset fixture.
+
+```python
+@pytest.fixture(scope="session")
+def base_dataset():
+    return load_my_big_dataset()
+
+@pytest.fixture(scope="function")
+def dataset(base_dataset):
+    return copy.deepcopy(base_dataset)
+```
+
+* **Centralize in conftest.py**: avoid redeclaring.
+
+* **Prefer factory fixtures**: return a callable instead of many variants.
+
+```python
+@pytest.fixture
+def user_factory():
+    def make_user(name="alice", role="viewer"):
+        return User(name=name, role=role)
+    return make_user
+```
+
+* **Use `yield` for teardown**: clean and clear.
+
+* **Avoid `autouse=True` unless trivial/global**.
+
+* **Compose fixtures**: let small fixtures depend on others; pytest caches them per scope.
+
+* **Reset hooks**: keep resource session-scoped; reset state per test.
+
+* **Use built-ins**: `tmp_path`, `monkeypatch`, `caplog`, etc. before writing custom ones.
+
+* **Parametrize instead of duplicating**:
+
+```python
+@pytest.mark.parametrize("role", ["viewer", "editor", "admin"])
+def test_roles(user_factory, role):
+    user = user_factory(role=role)
+```
+
+* **Parallel safety**: ensure session-scoped fixtures work with pytest-xdist.
+
+* **Performance guardrails**: if fixture >200ms, widen scope or cache.
+
+* **Document scope choice** in the fixture docstring.
+
+---
+
+## 🧹 Warning Suppression
+
+Scoped only:
+
+```python
+warnings.filterwarnings("ignore", category=UserWarning, module="pytest.*")
+```
+
+Avoid global filters like `ignore::DeprecationWarning`
+
+---
+
+## 🔬 Best Practices
+
+### ✅ Test happy and sad paths:
+
+```python
+assert builder.export("good.json").success
+
+with pytest.raises(FileNotFoundError):
+    builder.export("missing.png")
+```
+
+### ✅ Keep runtime <200ms
+
+### ✅ Use helper fixtures for setup
+
+---
+
+## 📁 Directory Structure
+
+| Directory            | Purpose                              |
+| -------------------- | ------------------------------------ |
+| `tests/unit/`        | Fast, logic-only tests               |
+| `tests/integration/` | Module-to-module testing             |
+| `tests/functional/`  | System behavior with mocks           |
+| `tests/e2e/`         | Full-path tests from entry to output |
+| `tests/performance/` | Runtime, throughput, memory          |
+
+---
+
+## 🚫 Anti-patterns
+
+| Bad Practice                   | Instead...                          |
+| ------------------------------ | ----------------------------------- |
+| `assert True`                  | Write meaningful assertions         |
+| Over-patching                  | Use `@patch` only where needed      |
+| Mocking internal logic         | Inject or test real implementations |
+| Testing mocks instead of logic | Assert true behavior and outputs    |
+| Test state dependent on config | Inject config with fixtures         |
+
+---
+
+## 🔧 CI Strategy
+
+Split jobs by marker:
+
+```yaml
+- name: Unit Tests
+  run: pytest tests/unit -m unit
+
+- name: Integration Tests
+  run: pytest tests/integration -m integration
+
+- name: End-to-End Tests (nightly)
+  run: pytest tests/e2e -m e2e
+```
+
+Use `@pytest.mark.slow` for >5s and run them selectively.
+
+---
+
+## ✅ Summary
+
+Tests must be:
+
+* **Isolated** – no hidden state or side effects
+* **Fast** – sub-second preferred
+* **Focused** – each test proves one thing
+* **Descriptive** – names and docstrings must explain intent
+* **Strategic** – only mock external boundaries
+* **Fixture-smart** – scoped appropriately, centralized, and reused

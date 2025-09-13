@@ -8,9 +8,7 @@ repos:
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
-        exclude: ^test_project/
       - id: ruff-format
-        exclude: ^test_project/
 
   # Black for code formatting (backup to ruff-format)
   - repo: https://github.com/psf/black
@@ -18,14 +16,19 @@ repos:
     hooks:
       - id: black
         language_version: python3.12
-        exclude: ^test_project/
 
-  # MyPy for type checking (skip for now due to pytest stubs)
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v1.13.0
-  #   hooks:
-  #     - id: mypy
-  #       args: [--config-file=pyproject.toml]
+  # MyPy for type checking with auto-install types
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        args: ["--install-types", "--non-interactive", "--config-file=pyproject.toml"]
+        additional_dependencies:
+          # Add common third-party stubs
+          - types-requests
+          - types-PyYAML
+          - types-setuptools
+          - typing-extensions
 
   # Security audit (disabled for now - low priority)
   # - repo: https://github.com/PyCQA/bandit
@@ -54,7 +57,7 @@ repos:
     hooks:
       - id: coverage-check
         name: coverage-check
-        entry: bash -c 'uv run pytest tests --cov=src/pytest_drill_sergeant --cov-report=term-missing --cov-fail-under=50'
+        entry: bash -c 'uv run pytest tests --cov=src --cov-report=term-missing --cov-fail-under=50'
         language: system
         pass_filenames: false
         always_run: true

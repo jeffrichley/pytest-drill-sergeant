@@ -1,6 +1,9 @@
-"""Pytest Drill Sergeant - A pytest plugin for test quality enforcement.
+"""Pytest Drill Sergeant - AI test quality enforcement tool.
 
-This package is currently under major rewrite.
+A pytest plugin that acts as a drill sergeant for AI-written tests, enforcing
+quality standards and catching common AI coding anti-patterns with humor and personality.
 """
 
-__version__ = "0.3.0-dev"
+__version__ = "1.0.0-dev"
+
+__all__ = ["__version__"]

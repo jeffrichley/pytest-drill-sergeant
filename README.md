@@ -1,7 +1,7 @@
 # 🎖️ Pytest Drill Sergeant
 
 <!-- CI/CD Battle Status -->
-[![CI Status](https://github.com/jeffrichley/pytest-drill-sergeant/workflows/CI%20(nox)/badge.svg)](https://github.com/jeffrichley/pytest-drill-sergeant/actions)
+[![CI Status](https://github.com/jeffrichley/pytest-drill-sergeant/workflows/CI/badge.svg)](https://github.com/jeffrichley/pytest-drill-sergeant/actions)
 [![codecov](https://codecov.io/gh/jeffrichley/pytest-drill-sergeant/branch/main/graph/badge.svg)](https://codecov.io/gh/jeffrichley/pytest-drill-sergeant)
 [![Quality Gate](https://img.shields.io/badge/quality-A%2B-brightgreen?style=flat&logo=codacy)](https://github.com/jeffrichley/pytest-drill-sergeant)
 

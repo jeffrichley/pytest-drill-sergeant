@@ -1,0 +1,207 @@
+---
+alwaysApply: false
+---
+# 🌱 StuffIt: Git + Quality Workflow Guide for Redwing II Environment - Water
+
+When the user says **"stuffit"**, run the full Git + quality workflow.
+When they say **"prestuff"**, run all pre-commit quality checks.
+
+> Redwing II Environment - Water uses a **two-tier quality tool system**:
+> - `just` – Developer-friendly shortcuts (recommended)
+> - `uv` – Direct access to low-level Python tooling
+
+---
+
+## 🧭 Quick Commands Overview
+
+### 📌 Standard Git Workflow
+```bash
+git add .
+git status
+git commit -m "type(scope): message"
+git push origin main
+```
+
+### ⚙️ Quality Checks (Just)
+```bash
+just pre-commit       # run all checks + enforce commit style
+just lint             # ruff + black
+just type-check       # mypy
+just test             # pytest + coverage
+just docs             # sphinx build check
+just quality          # all checks except commitizen
+just security         # pip-audit
+just complexity       # xenon
+```
+
+### 🔍 Pre-commit (Direct)
+```bash
+uv run pre-commit run --all-files
+```
+
+---
+
+## 🧼 Prestuff = Quality Checks
+
+Prestuff means: "Run every quality hook."
+
+✅ Includes:
+- Code formatting: `black`
+- Linting: `ruff`
+- Typing: `mypy`
+- Security: `pip-audit`
+- Complexity: `xenon`
+- Conventional commits: `commitizen`
+- File formatting: `.toml`, `.json`, `.yaml`, etc.
+
+### 💡 Run With:
+```bash
+just pre-commit        # Recommended
+uv run pre-commit run --all-files  # Direct
+```
+
+---
+
+## ✅ Commit Format: Required
+
+Redwing II Environment - Water **enforces Conventional Commits** using `commitizen`.
+
+### 📎 Format:
+```
+type(scope): description
+[optional body]
+[optional footer]
+```
+
+### 🔑 Valid Types:
+- `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `ci`, `build`, `perf`, `revert`
+
+### ✅ Examples:
+```bash
+git commit -m "feat(agent): add MCP tool support"
+git commit -m "fix(linter): ignore dynamic module imports"
+```
+
+### ❌ Invalid:
+```bash
+git commit -m "bug fix"           # ❌ missing type + colon
+git commit -m "add new thing"     # ❌ missing type
+```
+
+---
+
+## 🧱 Full Git + Quality Workflow
+
+```bash
+# 1. Create a feature branch
+git checkout -b feature/my-task
+
+# 2. Work on your changes
+
+# 3. Run quality checks
+just pre-commit
+
+# 4. Stage your work
+git add .
+
+# 5. Commit with conventional message
+git commit -m "feat(core): add workflow support"
+
+# 6. Push your branch
+git push -u origin feature/my-task
+
+# 7. Merge after review
+git checkout main
+git pull origin main
+git merge feature/my-task
+git push origin main
+```
+
+---
+
+## 🧪 Just vs Nox vs UV
+
+| Tool  | Purpose                          | When to Use                          |
+|-------|----------------------------------|--------------------------------------|
+| `just` | Fast dev shortcuts               | ✅ Recommended for daily development |
+| `nox`  | Explicit session runner          | ✅ For CI scripts / reproducibility  |
+| `uv`   | Raw command execution            | ⚙️ For debugging or tool testing     |
+
+---
+
+## 🔄 Troubleshooting
+
+### ❌ Pre-commit or hook errors?
+```bash
+# Clean corrupted coverage files
+rm -f .coverage*
+pre-commit run --all-files
+```
+
+### ❌ Commit rejected by commitizen?
+```bash
+# Fix your message
+git commit --amend -m "fix(scope): rewrite for clarity"
+```
+
+### ❌ Skip pre-commit temporarily?
+```bash
+git commit --no-verify -m "chore: emergency fix (skipped checks)"
+```
+
+### 🔍 View Recent History
+```bash
+git log --oneline -10
+git branch -vv
+```
+
+---
+
+## 📎 Reference Snippets
+
+### Atomic Commits
+```bash
+git add src/toolkit/parser.py
+git commit -m "feat: add AST parser"
+
+git add tests/test_parser.py
+git commit -m "test: add parser coverage"
+```
+
+### Test Just Commands
+```bash
+just lint
+just type-check
+just test
+just docs
+```
+
+### Test Nox Commands
+```bash
+nox -s lint
+nox -s type_check
+nox -s tests
+nox -s docs
+```
+
+### Manual UV Commands
+```bash
+uv sync
+uv run pytest tests --cov=src --cov-report=term-missing
+uv run ruff check src tests --fix
+uv run black --check src tests
+uv run mypy src tests
+```
+
+---
+
+## ✅ Summary
+
+| Step               | Action                        |
+|--------------------|-------------------------------|
+| **"stuffit"**       | Run the full Git + quality workflow |
+| **"prestuff"**      | Run all pre-commit quality checks  |
+| **Always**          | Use `just` or `nox`, not `make`     |
+| **Enforced**        | Conventional commits via commitizen |
+| **Test & Lint**     | `just` preferred, `nox` fallback    |
+| **Advanced**        | Use `uv` only for direct tool debugging |
