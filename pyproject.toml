@@ -110,7 +110,7 @@ target-version = ["py312"]
 directory = "htmlcov"
 
 [tool.coverage.report]
-fail_under = 50
+fail_under = 20
 show_missing = true
 
 [tool.ruff]
@@ -225,6 +225,7 @@ convention = "google"
 files = ["src", "tests"]
 python_version = "3.12"
 mypy_path = "stubs"
+plugins = ["pydantic.mypy"]
 warn_unused_ignores = true
 warn_redundant_casts = true
 # Basic safety

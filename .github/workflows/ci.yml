@@ -30,6 +30,11 @@ jobs:
         with:
           version: "latest"
 
+      - name: Install just
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
       - name: Install dependencies
         run: uv sync --all-extras
 
@@ -39,10 +44,7 @@ jobs:
       - name: Run quality gates (Python 3.12 only)
         if: ${{ matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest' }}
         run: |
-          uv run ruff check src tests --fix --config=pyproject.toml
-          uv run black src tests --config=pyproject.toml
-          uv run mypy src tests --config-file=pyproject.toml
-          uv run xenon --max-absolute B src
+          just quality
           uv run pip-audit --progress-spinner=off
           uv run validate-pyproject pyproject.toml
 
