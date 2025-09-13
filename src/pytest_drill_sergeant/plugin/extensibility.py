@@ -82,7 +82,7 @@ def _create_invalid_subclass_error() -> TypeError:
     return TypeError(msg)
 
 
-def create_plugin_class(  # noqa: UP047
+def create_plugin_class(
     name: str,
     base: type[P],
     attrs: Mapping[str, object] | None = None,
