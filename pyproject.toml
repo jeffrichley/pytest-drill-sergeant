@@ -225,6 +225,7 @@ convention = "google"
 files = ["src", "tests"]
 python_version = "3.12"
 mypy_path = "stubs"
+plugins = ["pydantic.mypy"]
 warn_unused_ignores = true
 warn_redundant_casts = true
 # Basic safety
