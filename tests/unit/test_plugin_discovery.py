@@ -1,12 +1,13 @@
 """Tests for the plugin discovery system."""
 
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic import ValidationError
 
-from pytest_drill_sergeant.core.config import DrillSergeantConfig
+from pytest_drill_sergeant.core.models import Config
 from pytest_drill_sergeant.plugin.base import DrillSergeantPlugin
 from pytest_drill_sergeant.plugin.discovery import (
     PluginDiscovery,
@@ -57,7 +58,7 @@ class TestPluginDiscoveryConfig:
     def test_config_validation(self) -> None:
         """Test configuration validation."""
         with pytest.raises(ValidationError):
-            PluginDiscoveryConfig(enabled="invalid")  # type: ignore[arg-type]
+            PluginDiscoveryConfig(enabled="invalid")
 
 
 class TestPluginDiscovery:
@@ -65,7 +66,7 @@ class TestPluginDiscovery:
 
     def setup_method(self) -> None:
         """Set up test fixtures."""
-        self.config = DrillSergeantConfig()
+        self.config = Config()
         self.discovery_config = PluginDiscoveryConfig()
         self.discovery = PluginDiscovery(self.config, self.discovery_config)
 
@@ -427,10 +428,9 @@ class TestPluginDiscovery:
         mock_plugin_instance = MagicMock(spec=DrillSergeantPlugin)
         mock_plugin_class.return_value = mock_plugin_instance
 
-        mock_module = MagicMock()
-        mock_module.__dir__ = MagicMock(return_value=["TestPlugin", "other_attr"])
-        mock_module.TestPlugin = mock_plugin_class
-        mock_module.other_attr = "not_a_plugin"
+        mock_module = SimpleNamespace(
+            TestPlugin=mock_plugin_class, other_attr="not_a_plugin"
+        )
 
         with (
             patch.object(self.discovery, "_is_valid_plugin_class") as mock_is_valid,
@@ -450,9 +450,7 @@ class TestPluginDiscovery:
 
     def test_extract_plugin_from_module_no_valid_plugin(self) -> None:
         """Test plugin extraction when no valid plugin is found."""
-        mock_module = MagicMock()
-        mock_module.__dir__ = MagicMock(return_value=["not_a_plugin"])
-        mock_module.not_a_plugin = "not_a_plugin"
+        mock_module = SimpleNamespace(not_a_plugin="not_a_plugin")
 
         with patch.object(self.discovery, "_is_valid_plugin_class") as mock_is_valid:
             mock_is_valid.return_value = False

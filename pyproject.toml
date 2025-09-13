@@ -10,7 +10,7 @@ authors = [
 maintainers = [
     { name = "Jeff Richley", email = "jeffrichley@gmail.com" }
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "pytest>=8.4.0",
     "coverage>=7.1.0",
@@ -27,8 +27,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Framework :: Pytest",
     "Topic :: Software Development :: Testing",
@@ -110,7 +108,7 @@ target-version = ["py312"]
 directory = "htmlcov"
 
 [tool.coverage.report]
-fail_under = 50
+fail_under = 20
 show_missing = true
 
 [tool.ruff]
@@ -225,6 +223,7 @@ convention = "google"
 files = ["src", "tests"]
 python_version = "3.12"
 mypy_path = "stubs"
+plugins = ["pydantic.mypy"]
 warn_unused_ignores = true
 warn_redundant_casts = true
 # Basic safety

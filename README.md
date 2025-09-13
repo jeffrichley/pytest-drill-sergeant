@@ -49,6 +49,8 @@ This pytest plugin will turn your chaotic test mess into a disciplined, well-org
 
 ## 🚀 Installation (AKA Basic Training)
 
+> Requires Python 3.12 or later.
+
 ### For Smart Developers
 
 ```bash
