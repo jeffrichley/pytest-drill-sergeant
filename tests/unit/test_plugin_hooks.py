@@ -1,7 +1,13 @@
 """Tests for the plugin hooks system."""
 
+from __future__ import annotations
+
 import os
+from typing import cast
 from unittest.mock import MagicMock, patch
+
+import pytest
+from _pytest.nodes import Item
 
 from pytest_drill_sergeant.plugin.hooks import (
     pytest_addoption,
@@ -13,6 +19,7 @@ from pytest_drill_sergeant.plugin.hooks import (
     pytest_sessionfinish,
     pytest_terminal_summary,
 )
+from pytest_drill_sergeant.plugin.internals import plan_item_order
 
 
 class TestPytestHooks:
@@ -103,14 +110,29 @@ class TestPytestHooks:
             assert call_args[0][0] == {}
             assert call_args[0][1] is mock_config
 
-    def test_pytest_collection_modifyitems(self) -> None:
-        """Test pytest_collection_modifyitems hook."""
-        mock_session = MagicMock()
-        mock_config = MagicMock()
-        mock_items = [MagicMock(), MagicMock()]
+    def test_plan_item_order_pure_function(self) -> None:
+        a = MagicMock(spec=Item)
+        a.nodeid = "b_test.py::test_b"
+        b = MagicMock(spec=Item)
+        b.nodeid = "a_test.py::test_a"
+        seq = [a, b]
 
-        # This hook currently has no implementation, just test it doesn't crash
-        pytest_collection_modifyitems(mock_session, mock_config, mock_items)
+        ordered = plan_item_order(cast("list[Item]", seq))
+        assert [i.nodeid for i in ordered] == sorted([i.nodeid for i in seq])
+        assert [i.nodeid for i in seq] == ["b_test.py::test_b", "a_test.py::test_a"]
+
+    def test_pytest_collection_modifyitems_mutates_boundary(
+        self, pytestconfig: pytest.Config
+    ) -> None:
+        session = MagicMock(spec=pytest.Session)
+        i1 = MagicMock(spec=Item)
+        i1.nodeid = "b"
+        i2 = MagicMock(spec=Item)
+        i2.nodeid = "a"
+        items: list[Item] = [i1, i2]
+
+        pytest_collection_modifyitems(session, pytestconfig, items)
+        assert [i.nodeid for i in items] == ["a", "b"]
 
     def test_pytest_runtest_setup(self) -> None:
         """Test pytest_runtest_setup hook."""

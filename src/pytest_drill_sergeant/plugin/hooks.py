@@ -1,44 +1,50 @@
 """Pytest hook implementations for drill sergeant plugin."""
 
-import os
+from __future__ import annotations
 
-import pytest
+import os
+from typing import TYPE_CHECKING
 
 from pytest_drill_sergeant.core.cli_config import DrillSergeantArgumentParser
 from pytest_drill_sergeant.core.config_manager import initialize_config
 from pytest_drill_sergeant.core.logging_utils import setup_standard_logging
+from pytest_drill_sergeant.plugin.internals import plan_item_order
+
+if TYPE_CHECKING:  # pragma: no cover - imports for type checking only
+    import pytest
+    from _pytest.nodes import Item
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Add command line options."""
-    # Use our CLI argument parser to add options
     cli_parser = DrillSergeantArgumentParser()
     cli_parser.add_pytest_options(parser)
 
 
 def pytest_configure(config: pytest.Config) -> None:
     """Configure the plugin."""
-    # Force standard logging in pytest context
     os.environ["PYTEST_DRILL_SERGEANT_PLUGIN_MODE"] = "1"
-
-    # Set up standard logging for pytest plugin mode
     setup_standard_logging()
 
-    # Extract drill sergeant options from pytest config
     cli_args = {}
     for option in config.option.__dict__:
         if option.startswith("ds_"):
             cli_args[option] = getattr(config.option, option)
 
-    # Initialize configuration
     initialize_config(cli_args, config)
 
 
 def pytest_collection_modifyitems(
-    session: pytest.Session, config: pytest.Config, items: list[pytest.Item]
+    _session: pytest.Session, _config: pytest.Config, items: list[Item]
 ) -> None:
-    """Modify test items during collection."""
-    # TODO: Analyze test collection
+    """Reorder collected test items in place.
+
+    Pytest requires a concrete ``list[Item]``. Internal planners operate on
+    abstract ``Sequence[Item]`` and return a new ``list[Item]``. Mutation is
+    isolated to this boundary via slice assignment.
+    """
+    new_order = plan_item_order(items)
+    items[:] = new_order
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:
