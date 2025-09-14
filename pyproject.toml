@@ -10,7 +10,7 @@ authors = [
 maintainers = [
     { name = "Jeff Richley", email = "jeffrichley@gmail.com" }
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "pytest>=8.4.0",
     "coverage>=7.1.0",
@@ -47,6 +47,9 @@ drill-sergeant = "pytest_drill_sergeant.cli.main:cli"
 drill_sergeant = "pytest_drill_sergeant.plugin.hooks"
 
 [project.optional-dependencies]
+compat = [
+    "typing_extensions>=4.9.0 ; python_version<'3.12'",
+]
 dev = [
     "pytest>=8.4.0",
     "pytest-cov>=4.0.0",
@@ -115,7 +118,7 @@ show_missing = true
 
 [tool.ruff]
 line-length = 88
-target-version = "py312"
+target-version = "py311"
 src = ["src"]
 exclude = [
     "stubs",
@@ -223,10 +226,11 @@ convention = "google"
 
 [tool.mypy]
 files = ["src", "tests"]
-python_version = "3.12"
+python_version = "3.11"
 mypy_path = "stubs"
 warn_unused_ignores = true
 warn_redundant_casts = true
+strict = true
 # Basic safety
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

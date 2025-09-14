@@ -11,6 +11,7 @@ from typing import (
     TYPE_CHECKING,
     NotRequired,
     Protocol,
+    TypeAlias,
     TypedDict,
     TypeGuard,
     cast,
@@ -30,8 +31,8 @@ else:
     from pytest_drill_sergeant.plugin.base import PluginManager, PluginMetadata
 
 # JSON types for plugin configuration
-type JSONScalar = str | int | float | bool | None
-type JSONValue = JSONScalar | list[JSONValue] | dict[str, JSONValue]
+JSONScalar: TypeAlias = str | int | float | bool | None
+JSONValue: TypeAlias = JSONScalar | list["JSONValue"] | dict[str, "JSONValue"]
 
 
 class PluginConfigRaw(TypedDict, total=False):

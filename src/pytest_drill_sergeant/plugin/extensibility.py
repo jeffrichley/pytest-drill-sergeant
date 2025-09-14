@@ -8,6 +8,7 @@ from collections.abc import Mapping
 from typing import (
     TYPE_CHECKING,
     Protocol,
+    TypeAlias,
     TypeVar,
     cast,
     runtime_checkable,
@@ -29,8 +30,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 # JSON types for plugin configuration
-type JSONScalar = str | int | float | bool | None
-type JSONValue = JSONScalar | list[JSONValue] | dict[str, JSONValue]
+JSONScalar: TypeAlias = str | int | float | bool | None
+JSONValue: TypeAlias = JSONScalar | list["JSONValue"] | dict[str, "JSONValue"]
 
 
 @runtime_checkable
@@ -82,9 +83,9 @@ def _create_invalid_subclass_error() -> TypeError:
     return TypeError(msg)
 
 
-def create_plugin_class[
-    P
-](name: str, base: type[P], attrs: Mapping[str, object] | None = None,) -> type[P]:
+def create_plugin_class(
+    name: str, base: type[P], attrs: Mapping[str, object] | None = None,
+) -> type[P]:
     """Create a plugin subclass with proper typing and runtime checks.
 
     Args:
