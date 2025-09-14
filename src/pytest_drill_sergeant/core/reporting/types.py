@@ -8,6 +8,8 @@ type definitions.
 from __future__ import annotations
 
 # Recursive JSON types
-type JSONScalar = str | int | float | bool | None
-type JSONValue = JSONScalar | list["JSONValue"] | dict[str, "JSONValue"]
-type JSONDict = dict[str, JSONValue]
+from typing import TypeAlias
+
+JSONScalar: TypeAlias = str | int | float | bool | None
+JSONValue: TypeAlias = JSONScalar | list["JSONValue"] | dict[str, "JSONValue"]
+JSONDict: TypeAlias = dict[str, JSONValue]

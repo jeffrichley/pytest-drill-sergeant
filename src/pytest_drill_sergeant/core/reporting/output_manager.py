@@ -6,12 +6,13 @@ template-based messaging, Rich terminal output, JSON reports, and SARIF output.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
-    from pytest_drill_sergeant.core.config import Config
+    from pytest_drill_sergeant.core.config import (
+        DrillSergeantConfig as Config,
+    )
     from pytest_drill_sergeant.core.models import Finding, ResultData, RunMetrics
     from pytest_drill_sergeant.core.reporting.types import JSONDict
 from pytest_drill_sergeant.core.reporting.json_formatter import JSONReportBuilder
@@ -82,7 +83,7 @@ class OutputManager:
         Args:
             finding: Finding to print
         """
-        if self.config.output_format == "terminal":
+        if "terminal" in self.config.output_formats:
             self.rich_formatter.print_finding(finding)
 
     def print_test_result(self, result: ResultData) -> None:
@@ -91,7 +92,7 @@ class OutputManager:
         Args:
             result: Test result to print
         """
-        if self.config.output_format == "terminal":
+        if "terminal" in self.config.output_formats:
             self.rich_formatter.print_test_result(result)
 
     def print_summary(self) -> None:
@@ -104,7 +105,7 @@ class OutputManager:
             msg = "Metrics must be set before printing summary"
             raise ValueError(msg)
 
-        if self.config.output_format == "terminal":
+        if "terminal" in self.config.output_formats:
             self.rich_formatter.print_summary(self._metrics)
 
     def generate_json_report(self) -> str:
@@ -151,7 +152,9 @@ class OutputManager:
             raise ValueError(msg)
 
         if output_path is None:
-            output_path = self.config.json_report_path
+            path_str = self.config.json_report_path
+            if path_str is not None:
+                output_path = Path(path_str)
 
         if output_path is None:
             msg = "No output path specified for JSON report"
@@ -173,7 +176,9 @@ class OutputManager:
             raise ValueError(msg)
 
         if output_path is None:
-            output_path = self.config.sarif_report_path
+            path_str = self.config.sarif_report_path
+            if path_str is not None:
+                output_path = Path(path_str)
 
         if output_path is None:
             msg = "No output path specified for SARIF report"
@@ -197,15 +202,15 @@ class OutputManager:
         outputs = {}
 
         # Generate terminal output (already printed)
-        if self.config.output_format == "terminal":
+        if "terminal" in self.config.output_formats:
             outputs["terminal"] = "Printed to console"
 
         # Generate JSON output
-        if self.config.json_report_path or "json" in self.config.output_format:
+        if self.config.json_report_path or "json" in self.config.output_formats:
             outputs["json"] = self.generate_json_report()
 
         # Generate SARIF output
-        if self.config.sarif_report_path or "sarif" in self.config.output_format:
+        if self.config.sarif_report_path or "sarif" in self.config.output_formats:
             outputs["sarif"] = self.generate_sarif_report()
 
         return outputs

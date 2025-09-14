@@ -14,7 +14,7 @@ MIN_THRESHOLD_VALUE = 0
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from _pytest.config import Parser
+    from _pytest.config import Parser  # type: ignore[attr-defined]
 
 
 class ConfigError(ValueError):

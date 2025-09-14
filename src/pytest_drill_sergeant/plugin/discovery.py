@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 try:
     from importlib.metadata import entry_points
 except ImportError:  # pragma: no cover
-    from importlib_metadata import entry_points  # type: ignore[assignment]
+    from importlib_metadata import entry_points  # type: ignore[no-redef]
 from pydantic import BaseModel
 
 # Import modules at top level to avoid runtime imports
@@ -359,7 +359,7 @@ class PluginDiscovery:
         )
 
     def _create_plugin_instance(
-        self, plugin_class: type, module_path: str, attr_name: str
+        self, plugin_class: type[DrillSergeantPlugin], module_path: str, attr_name: str
     ) -> DrillSergeantPlugin:
         """Create and register plugin instance."""
         metadata = PluginMetadata(
