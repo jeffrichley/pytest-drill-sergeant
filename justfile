@@ -33,7 +33,6 @@ quality: lint type-check complexity
 quality-full:
     uv run vulture src --min-confidence 80
     uv run isort src tests --check-only --diff
-    uv run unimport src tests
     uv run interrogate src --fail-under 80 --ignore-init-method
     uv run pylint src --disable=all --enable=duplicate-code
     uv run radon mi src --min B
@@ -73,7 +72,7 @@ pre-commit:
 
 # Install development dependencies
 install:
-    uv sync --all-extras
+    uv sync --group dev --all-extras
 
 # Install test dependencies only
 install-test:

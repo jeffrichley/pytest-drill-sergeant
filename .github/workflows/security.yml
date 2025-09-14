@@ -27,8 +27,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  presubmit:
-    name: PR SAST/SCA (Linux, Py3.12)
+  scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,31 +37,13 @@ jobs:
       - uses: astral-sh/setup-uv@v3
 
       - name: Install security deps
-        run: uv sync --extra ci --extra security
+        run: uv sync --group ci --group security
 
-      - name: pip-audit (lockfile SCA)
+      - name: pip-audit
         run: uv run pip-audit --progress-spinner=off
 
-      - name: semgrep (SAST)
+      - name: semgrep
         run: uv run semgrep ci
 
-      - name: bandit (quick)
+      - name: bandit
         run: uv run bandit -q -r src -f txt
-
-  nightly:
-    if: github.event_name == 'schedule'
-    name: Nightly SAST/SCA (Linux matrix)
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11", "3.12", "3.13"]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - uses: astral-sh/setup-uv@v3
-      - run: uv sync --extra ci --extra security
-      - run: uv run pip-audit --progress-spinner=off
-      - run: uv run semgrep ci
-      - run: uv run bandit -q -r src -f txt

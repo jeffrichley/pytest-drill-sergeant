@@ -30,8 +30,8 @@ jobs:
         with:
           version: "latest"
 
-      - name: Install deps (no security)
-        run: uv sync --extra ci --no-dev
+      - name: Install deps (lean)
+        run: uv sync --group ci
 
       - name: Run tests
         run: uv run pytest tests --cov=src --cov-report=xml --cov-report=term-missing
