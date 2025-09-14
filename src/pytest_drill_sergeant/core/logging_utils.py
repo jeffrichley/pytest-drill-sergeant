@@ -109,17 +109,19 @@ def get_logger(name: str) -> logging.Logger:
     return logging.getLogger(name)
 
 
-def create_progress_logger(_logger: logging.Logger) -> object | None:
+def create_progress_logger(logger: logging.Logger) -> object | None:
     """Create a progress logger if rich is available.
 
     Args:
-        _logger: Base logger instance (unused but kept for API consistency)
+        logger: Base logger instance (unused but kept for API consistency)
 
     Returns:
         Rich Progress instance if available, None otherwise
     """
     if not RICH_AVAILABLE:
         return None
+
+    _ = logger  # Preserve API without triggering unused-argument warnings
 
     return Progress(
         SpinnerColumn(),
