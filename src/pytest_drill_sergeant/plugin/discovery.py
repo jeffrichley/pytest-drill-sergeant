@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from pytest_drill_sergeant.core.config import DrillSergeantConfig as Config
 from pytest_drill_sergeant.plugin.base import DrillSergeantPlugin, PluginMetadata
 from pytest_drill_sergeant.plugin.factory import PluginFactory, PluginSpec
+from pytest_drill_sergeant.util.paths import normalize_module_path
 
 logger = logging.getLogger(__name__)
 
@@ -332,11 +333,7 @@ class PluginDiscovery:
 
     def _get_module_path(self, py_file: Path, search_path: Path) -> str:
         """Convert file path to module path."""
-        return (
-            str(py_file.relative_to(search_path.parent))
-            .replace("/", ".")
-            .replace(".py", "")
-        )
+        return normalize_module_path(py_file, search_path.parent)
 
     def _extract_plugin_from_module(
         self, module: object, module_path: str
