@@ -84,7 +84,9 @@ def _create_invalid_subclass_error() -> TypeError:
 
 
 def create_plugin_class(
-    name: str, base: type[P], attrs: Mapping[str, object] | None = None,
+    name: str,
+    base: type[P],
+    attrs: Mapping[str, object] | None = None,
 ) -> type[P]:
     """Create a plugin subclass with proper typing and runtime checks.
 
