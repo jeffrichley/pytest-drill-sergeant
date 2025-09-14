@@ -12,7 +12,7 @@ maintainers = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "pytest>=8.4.0",
+    "pytest==8.4.2",
     "coverage>=7.1.0",
     "datasketch>=1.6.0",
     "typer>=0.9.0",
@@ -51,7 +51,7 @@ compat = [
     "typing_extensions>=4.9.0 ; python_version<'3.12'",
 ]
 dev = [
-    "pytest>=8.4.0",
+    "pytest==8.4.2",
     "pytest-cov>=4.0.0",
     "black>=23.0.0",
     "ruff>=0.1.0",
@@ -274,6 +274,11 @@ max-modules = "A"
 max-average = "A"
 exclude = ["tests", "examples", "scripts", "tools"]
 
+[tool.pip-audit]
+# Explicitly list vulnerabilities to ignore. Keep this list empty unless a
+# vulnerability has been reviewed and approved for temporary suppression.
+ignore-vulns = []
+
 [dependency-groups]
 dev = [
     "black>=25.1.0",
@@ -289,7 +294,6 @@ dev = [
     "vulture>=2.10.0",
     "isort>=5.13.0",
     "unimport>=0.20.0",
-    "interrogate>=1.5.0",
     "pylint>=3.0.0",
     "radon>=6.0.0",
     "pytest-benchmark>=4.0.0",
