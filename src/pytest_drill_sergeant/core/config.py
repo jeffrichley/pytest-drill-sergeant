@@ -17,8 +17,6 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from pytest_drill_sergeant.core.models import Config, RuleType
-
 # Threshold constants
 MAX_THRESHOLD_VALUE = 100
 MIN_THRESHOLD_VALUE = 0
@@ -798,50 +796,6 @@ class DrillSergeantConfig(BaseModel):
             raise ValueError(msg)
 
         return self
-
-    def to_base_config(self) -> Config:
-        """Convert to the base Config model for compatibility."""
-
-        # Convert string rules to RuleType enums
-        def convert_rule(rule_str: str) -> RuleType:
-            rule_mapping = {
-                "aaa_comments": RuleType.AAA_COMMENT,
-                "private_access": RuleType.PRIVATE_ACCESS,
-                "mock_overspecification": RuleType.MOCK_OVERSPECIFICATION,
-                "structural_equality": RuleType.STRUCTURAL_EQUALITY,
-                "static_clones": RuleType.DUPLICATE_TEST,
-                "fixture_extract": RuleType.FIXTURE_EXTRACTION,
-            }
-            return rule_mapping.get(rule_str, RuleType.AAA_COMMENT)
-
-        enabled_rules = [convert_rule(rule) for rule in self.enabled_rules]
-        disabled_rules = [convert_rule(rule) for rule in self.suppressed_rules]
-
-        return Config(
-            mode=self.mode,
-            persona=self.persona,
-            sut_package=self.sut_package,
-            fail_on_how=self.fail_on_how,
-            output_format=self.output_formats[0] if self.output_formats else "terminal",
-            json_report_path=(
-                Path(self.json_report_path) if self.json_report_path else None
-            ),
-            sarif_report_path=(
-                Path(self.sarif_report_path) if self.sarif_report_path else None
-            ),
-            verbose=self.verbose,
-            enabled_rules=enabled_rules,
-            disabled_rules=disabled_rules,
-            rule_configs={},
-            similarity_threshold=self.thresholds.get("dynamic_cov_jaccard", 0.8),
-            bis_threshold=self.thresholds.get("bis_threshold_warn", 80),
-            brs_threshold=self.thresholds.get("bis_threshold_fail", 60),
-            parallel_analysis=True,
-            max_workers=4,
-            cache_ast=True,
-            lsp_enabled=False,
-            lsp_port=8080,
-        )
 
     def is_rule_enabled(self, rule_id: str) -> bool:
         """Check if a rule is enabled."""

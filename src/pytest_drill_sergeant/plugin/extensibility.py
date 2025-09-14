@@ -17,7 +17,8 @@ from typing import (
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
-    from pytest_drill_sergeant.core.models import Config, Finding
+    from pytest_drill_sergeant.core.config import DrillSergeantConfig as Config
+    from pytest_drill_sergeant.core.models import Finding
 from pytest_drill_sergeant.plugin.base import (
     AnalyzerPlugin,
     PersonaPlugin,
