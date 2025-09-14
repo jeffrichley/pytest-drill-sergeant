@@ -35,7 +35,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def pytest_collection_modifyitems(
-    _session: pytest.Session, _config: pytest.Config, items: list[Item]
+    session: pytest.Session, config: pytest.Config, items: list[Item]
 ) -> None:
     """Reorder collected test items in place.
 
@@ -43,6 +43,7 @@ def pytest_collection_modifyitems(
     abstract ``Sequence[Item]`` and return a new ``list[Item]``. Mutation is
     isolated to this boundary via slice assignment.
     """
+    _ = session, config  # Preserve API and clarify parameters are unused
     new_order = plan_item_order(items)
     items[:] = new_order
 
