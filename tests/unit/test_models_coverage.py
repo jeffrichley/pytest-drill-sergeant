@@ -23,20 +23,20 @@ def test_models_import():
 
 def test_severity_enum():
     """Test Severity enum values."""
-    assert Severity.ERROR == "error"
-    assert Severity.WARNING == "warning"
-    assert Severity.INFO == "info"
+    assert Severity.ERROR.value == "error"
+    assert Severity.WARNING.value == "warning"
+    assert Severity.INFO.value == "info"
 
 
 def test_rule_type_enum():
     """Test RuleType enum values."""
-    assert RuleType.PRIVATE_ACCESS == "private_access"
-    assert RuleType.MOCK_OVERSPECIFICATION == "mock_overspecification"
-    assert RuleType.STRUCTURAL_EQUALITY == "structural_equality"
-    assert RuleType.AAA_COMMENT == "aaa_comment"
-    assert RuleType.DUPLICATE_TEST == "duplicate_test"
-    assert RuleType.PARAMETRIZATION == "parametrization"
-    assert RuleType.FIXTURE_EXTRACTION == "fixture_extraction"
+    assert RuleType.PRIVATE_ACCESS.value == "private_access"
+    assert RuleType.MOCK_OVERSPECIFICATION.value == "mock_overspecification"
+    assert RuleType.STRUCTURAL_EQUALITY.value == "structural_equality"
+    assert RuleType.AAA_COMMENT.value == "aaa_comment"
+    assert RuleType.DUPLICATE_TEST.value == "duplicate_test"
+    assert RuleType.PARAMETRIZATION.value == "parametrization"
+    assert RuleType.FIXTURE_EXTRACTION.value == "fixture_extraction"
 
 
 def test_finding_model():
