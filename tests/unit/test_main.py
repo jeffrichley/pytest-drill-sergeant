@@ -2,11 +2,16 @@
 
 import inspect
 from pathlib import Path
+from typing import TYPE_CHECKING, cast
 from unittest.mock import patch
 
 import pytest_drill_sergeant.__main__ as main_module
-from pytest_drill_sergeant.__main__ import cli
 from pytest_drill_sergeant.cli.main import cli as cli_main
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+cli = cast("Callable[[], None]", getattr(main_module, "cli"))  # noqa: B009
 
 
 class TestMain:
@@ -15,7 +20,7 @@ class TestMain:
     def test_main_module_import(self) -> None:
         """Test that the main module can be imported."""
         assert hasattr(main_module, "cli")
-        assert callable(main_module.cli)
+        assert callable(cli)
 
     def test_cli_function_exists(self) -> None:
         """Test that the cli function exists and is callable."""

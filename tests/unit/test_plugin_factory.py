@@ -1,11 +1,18 @@
 """Tests for the plugin factory system."""
 
+from pathlib import Path
+from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from pytest_drill_sergeant.core.config import DrillSergeantConfig
-from pytest_drill_sergeant.plugin.base import DrillSergeantPlugin, PluginMetadata
+from pytest_drill_sergeant.core.models import Finding
+from pytest_drill_sergeant.plugin.base import (
+    AnalyzerPlugin,
+    DrillSergeantPlugin,
+    PluginMetadata,
+)
 from pytest_drill_sergeant.plugin.factory import (
     PluginConfigError,
     PluginFactory,
@@ -25,11 +32,38 @@ from pytest_drill_sergeant.plugin.factory import (
     load_plugin_from_module,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from pytest_drill_sergeant.plugin.factory import JSONValue
+
 # Test constants to avoid magic numbers
 PRIORITY_5 = 5
 FIELD_VALUE_42 = 42
 DEFAULT_VALUE_10 = 10
 NO_ATTRIBUTE_MSG = "No attribute"
+
+
+class MockAnalyzerPlugin(AnalyzerPlugin):
+    """Mock analyzer plugin for testing."""
+
+    def __init__(self, config: DrillSergeantConfig, metadata: PluginMetadata) -> None:
+        super().__init__(config, metadata)
+
+    def initialize(self) -> None:
+        """Initialize plugin."""
+
+    def cleanup(self) -> None:
+        """Cleanup plugin."""
+
+    def analyze_file(self, _file_path: Path) -> list[Finding]:
+        return []
+
+    def get_rule_ids(self) -> set[str]:
+        return set()
+
+    def get_supported_extensions(self) -> set[str]:
+        return {".py"}
 
 
 class TestPluginSpec:
@@ -78,17 +112,7 @@ class TestPluginFactory:
             category="analyzer",
         )
 
-        # Mock plugin class that implements required methods
-        class MockAnalyzerPlugin(DrillSergeantPlugin):
-            def __init__(self, config, metadata):
-                super().__init__(config, metadata)
-
-            def initialize(self) -> None:
-                pass
-
-            def cleanup(self) -> None:
-                pass
-
+        # Use the global mock analyzer plugin implementation
         with patch.object(
             self.factory.manager.registry, "register_plugin"
         ) as mock_register:
@@ -109,16 +133,6 @@ class TestPluginFactory:
             author="Test Author",
             category="analyzer",
         )
-
-        class MockAnalyzerPlugin(DrillSergeantPlugin):
-            def __init__(self, config, metadata):
-                super().__init__(config, metadata)
-
-            def initialize(self) -> None:
-                pass
-
-            def cleanup(self) -> None:
-                pass
 
         with patch.object(
             self.factory.manager.registry, "register_plugin"
@@ -181,7 +195,7 @@ class TestHelperFunctions:
     def test_to_mapping_invalid(self) -> None:
         """Test _to_mapping with invalid type."""
         with pytest.raises(PluginConfigError):
-            _to_mapping("not_a_mapping", "test")
+            _to_mapping(cast("Mapping[str, JSONValue]", "not_a_mapping"), "test")
 
     def test_create_plugin_config_error(self) -> None:
         """Test _create_plugin_config_error."""
@@ -213,61 +227,61 @@ class TestHelperFunctions:
 
     def test_extract_string_field(self) -> None:
         """Test _extract_string_field."""
-        metadata = {"field": "value"}
+        metadata: dict[str, JSONValue] = {"field": "value"}
         result = _extract_string_field(metadata, 1, "field")
         assert result == "value"
 
     def test_extract_string_field_default(self) -> None:
         """Test _extract_string_field with default."""
-        metadata = {}
+        metadata: dict[str, JSONValue] = {}
         result = _extract_string_field(metadata, 1, "field", "default")
         assert result == "default"
 
     def test_extract_string_field_invalid(self) -> None:
         """Test _extract_string_field with invalid type."""
-        metadata = {"field": 123}
+        metadata: dict[str, JSONValue] = {"field": 123}
         with pytest.raises(PluginConfigError):
             _extract_string_field(metadata, 1, "field")
 
     def test_extract_dependencies_field_valid(self) -> None:
         """Test _extract_dependencies_field with valid list."""
-        metadata = {"dependencies": ["dep1", "dep2"]}
+        metadata: dict[str, JSONValue] = {"dependencies": ["dep1", "dep2"]}
         result = _extract_dependencies_field(metadata)
         assert result == ["dep1", "dep2"]
 
     def test_extract_dependencies_field_invalid(self) -> None:
         """Test _extract_dependencies_field with invalid type."""
-        metadata = {"dependencies": "not_a_list"}
+        metadata: dict[str, JSONValue] = {"dependencies": "not_a_list"}
         result = _extract_dependencies_field(metadata)
         assert result == []
 
     def test_extract_bool_field(self) -> None:
         """Test _extract_bool_field."""
-        metadata = {"field": True}
+        metadata: dict[str, JSONValue] = {"field": True}
         result = _extract_bool_field(metadata, "field")
         assert result is True
 
     def test_extract_bool_field_default(self) -> None:
         """Test _extract_bool_field with default."""
-        metadata = {"field": "invalid"}
+        metadata: dict[str, JSONValue] = {"field": "invalid"}
         result = _extract_bool_field(metadata, "field", False)
         assert result is False
 
     def test_extract_int_field(self) -> None:
         """Test _extract_int_field."""
-        metadata = {"field": 42}
+        metadata: dict[str, JSONValue] = {"field": 42}
         result = _extract_int_field(metadata, "field")
         assert result == FIELD_VALUE_42
 
     def test_extract_int_field_default(self) -> None:
         """Test _extract_int_field with default."""
-        metadata = {"field": "invalid"}
+        metadata: dict[str, JSONValue] = {"field": "invalid"}
         result = _extract_int_field(metadata, "field", 10)
         assert result == DEFAULT_VALUE_10
 
     def test_parse_plugin_metadata(self) -> None:
         """Test _parse_plugin_metadata."""
-        metadata_dict = {
+        metadata_dict: dict[str, JSONValue] = {
             "plugin_id": "test_plugin",
             "name": "Test Plugin",
             "version": "1.0.0",
@@ -368,7 +382,9 @@ class TestHelperFunctions:
             with pytest.raises(PluginConfigError, match="Cannot import module"):
                 load_plugin_from_module("test.module", "TestPlugin", config, metadata)
 
-    def test_load_plugin_from_module_attribute_error(self) -> None:
+    def test_load_plugin_from_module_attribute_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test load_plugin_from_module with attribute error."""
         config = DrillSergeantConfig()
         metadata = PluginMetadata(
@@ -386,12 +402,14 @@ class TestHelperFunctions:
             mock_module = MagicMock()
 
             # Make getattr raise AttributeError
-            def mock_getattr(obj, name):
+            def mock_getattr(obj: object, name: str) -> object:
                 if name == "TestPlugin":
                     raise AttributeError(NO_ATTRIBUTE_MSG)
                 return getattr(obj, name)
 
-            mock_module.__getattribute__ = mock_getattr
+            monkeypatch.setattr(
+                mock_module, "__getattribute__", mock_getattr, raising=False
+            )
             mock_import.return_value = mock_module
 
             with pytest.raises(PluginConfigError, match="not a valid plugin class"):

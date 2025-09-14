@@ -1,6 +1,7 @@
 """Tests for the plugin discovery system."""
 
 from pathlib import Path
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -57,7 +58,7 @@ class TestPluginDiscoveryConfig:
     def test_config_validation(self) -> None:
         """Test configuration validation."""
         with pytest.raises(ValidationError):
-            PluginDiscoveryConfig(enabled="invalid")  # type: ignore[arg-type]
+            PluginDiscoveryConfig(enabled=cast("bool", "invalid"))
 
 
 class TestPluginDiscovery:
@@ -420,7 +421,9 @@ class TestPluginDiscovery:
 
         assert result == "subdir.plugin"
 
-    def test_extract_plugin_from_module_success(self) -> None:
+    def test_extract_plugin_from_module_success(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test successful plugin extraction from module."""
         mock_plugin_class = MagicMock()
         mock_plugin_class.__name__ = "TestPlugin"
@@ -428,7 +431,12 @@ class TestPluginDiscovery:
         mock_plugin_class.return_value = mock_plugin_instance
 
         mock_module = MagicMock()
-        mock_module.__dir__ = MagicMock(return_value=["TestPlugin", "other_attr"])
+        monkeypatch.setattr(
+            mock_module,
+            "__dir__",
+            MagicMock(return_value=["TestPlugin", "other_attr"]),
+            raising=False,
+        )
         mock_module.TestPlugin = mock_plugin_class
         mock_module.other_attr = "not_a_plugin"
 
@@ -448,10 +456,17 @@ class TestPluginDiscovery:
                 mock_plugin_class, "test.module", "TestPlugin"
             )
 
-    def test_extract_plugin_from_module_no_valid_plugin(self) -> None:
+    def test_extract_plugin_from_module_no_valid_plugin(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test plugin extraction when no valid plugin is found."""
         mock_module = MagicMock()
-        mock_module.__dir__ = MagicMock(return_value=["not_a_plugin"])
+        monkeypatch.setattr(
+            mock_module,
+            "__dir__",
+            MagicMock(return_value=["not_a_plugin"]),
+            raising=False,
+        )
         mock_module.not_a_plugin = "not_a_plugin"
 
         with patch.object(self.discovery, "_is_valid_plugin_class") as mock_is_valid:
