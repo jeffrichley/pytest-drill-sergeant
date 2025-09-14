@@ -18,7 +18,7 @@ import pytest_drill_sergeant.core.analyzers
 import pytest_drill_sergeant.plugin.personas
 
 if TYPE_CHECKING:
-    from pytest_drill_sergeant.core.models import Config
+    from pytest_drill_sergeant.core.config import DrillSergeantConfig as Config
 from pytest_drill_sergeant.plugin.base import DrillSergeantPlugin, PluginMetadata
 from pytest_drill_sergeant.plugin.factory import PluginFactory, PluginSpec
 

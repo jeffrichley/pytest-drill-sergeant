@@ -18,7 +18,7 @@ from typing import (
 )
 
 if TYPE_CHECKING:
-    from pytest_drill_sergeant.core.models import Config
+    from pytest_drill_sergeant.core.config import DrillSergeantConfig as Config
     from pytest_drill_sergeant.plugin.base import (
         AnalyzerPlugin,
         DrillSergeantPlugin,

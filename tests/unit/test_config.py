@@ -16,9 +16,7 @@ from pytest_drill_sergeant.core.config import (
     DrillSergeantConfig,
     load_config,
 )
-from pytest_drill_sergeant.core.models import RuleType
 from tests.constants import (
-    BIS_THRESHOLD_90,
     BIS_THRESHOLD_WARN,
     BIS_THRESHOLD_WARN_DEFAULT,
     BUDGET_ERROR,
@@ -26,9 +24,6 @@ from tests.constants import (
     CUSTOM_THRESHOLD,
     CUSTOM_THRESHOLD_ALT,
     DYNAMIC_COV_JACCARD,
-    LSP_PORT,
-    MAX_WORKERS,
-    SIMILARITY_THRESHOLD,
 )
 
 if TYPE_CHECKING:
@@ -204,37 +199,6 @@ class TestDrillSergeantConfig:
         assert config.get_budget("warn") == CUSTOM_BUDGET_WARN
         assert config.get_budget("error") == BUDGET_ERROR
         assert config.get_budget("nonexistent", 0) == 0
-
-    def test_to_base_config(self) -> None:
-        """Test conversion to base config."""
-        config = DrillSergeantConfig(
-            mode="strict",
-            persona="snoop_dogg",
-            sut_package="myapp",
-            budgets={"warn": 10, "error": 0},
-            enabled_rules={"aaa_comments"},
-            suppressed_rules=set(),
-            thresholds={"bis_threshold_warn": 90},
-            mock_allowlist={"custom.*"},
-        )
-
-        base_config = config.to_base_config()
-
-        assert base_config.mode == "strict"
-        assert base_config.persona == "snoop_dogg"
-        assert base_config.sut_package == "myapp"
-        assert base_config.fail_on_how is False
-        assert base_config.output_format == "terminal"
-        assert base_config.verbose is False
-        assert base_config.enabled_rules == [RuleType.AAA_COMMENT]
-        assert base_config.disabled_rules == []
-        assert base_config.similarity_threshold == SIMILARITY_THRESHOLD
-        assert base_config.bis_threshold == BIS_THRESHOLD_90
-        assert base_config.parallel_analysis is True
-        assert base_config.max_workers == MAX_WORKERS
-        assert base_config.cache_ast is True
-        assert base_config.lsp_enabled is False
-        assert base_config.lsp_port == LSP_PORT
 
 
 class TestConfigLoader:

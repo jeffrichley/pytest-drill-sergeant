@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from rich.console import Console
 
-from pytest_drill_sergeant.core.config import Config
+from pytest_drill_sergeant.core.config import DrillSergeantConfig
 from pytest_drill_sergeant.core.models import (
     FeaturesData,
     Finding,
@@ -360,24 +360,7 @@ class TestOutputManager:
 
     def test_output_manager_creation(self) -> None:
         """Test creating an output manager."""
-        config = Config(
-            mode="advisory",
-            persona="drill_sergeant",
-            sut_package=None,
-            fail_on_how=False,
-            output_format="terminal",
-            json_report_path=None,
-            sarif_report_path=None,
-            verbose=False,
-            bis_threshold=70.0,
-            brs_threshold=60.0,
-            similarity_threshold=0.8,
-            parallel_analysis=True,
-            max_workers=4,
-            cache_ast=True,
-            lsp_enabled=False,
-            lsp_port=8080,
-        )
+        config = DrillSergeantConfig()
         manager = OutputManager(config)
 
         assert manager.config is config
@@ -389,24 +372,7 @@ class TestOutputManager:
 
     def test_add_test_result(self) -> None:
         """Test adding a test result."""
-        config = Config(
-            mode="advisory",
-            persona="drill_sergeant",
-            sut_package=None,
-            fail_on_how=False,
-            output_format="terminal",
-            json_report_path=None,
-            sarif_report_path=None,
-            verbose=False,
-            bis_threshold=70.0,
-            brs_threshold=60.0,
-            similarity_threshold=0.8,
-            parallel_analysis=True,
-            max_workers=4,
-            cache_ast=True,
-            lsp_enabled=False,
-            lsp_port=8080,
-        )
+        config = DrillSergeantConfig()
         manager = OutputManager(config)
 
         features = FeaturesData(
@@ -449,24 +415,7 @@ class TestOutputManager:
 
     def test_get_summary_stats_without_metrics(self) -> None:
         """Test getting summary stats without metrics raises error."""
-        config = Config(
-            mode="advisory",
-            persona="drill_sergeant",
-            sut_package=None,
-            fail_on_how=False,
-            output_format="terminal",
-            json_report_path=None,
-            sarif_report_path=None,
-            verbose=False,
-            bis_threshold=70.0,
-            brs_threshold=60.0,
-            similarity_threshold=0.8,
-            parallel_analysis=True,
-            max_workers=4,
-            cache_ast=True,
-            lsp_enabled=False,
-            lsp_port=8080,
-        )
+        config = DrillSergeantConfig()
         manager = OutputManager(config)
 
         with pytest.raises(ValueError, match="Metrics must be set"):
@@ -474,24 +423,7 @@ class TestOutputManager:
 
     def test_clear_results(self) -> None:
         """Test clearing results."""
-        config = Config(
-            mode="advisory",
-            persona="drill_sergeant",
-            sut_package=None,
-            fail_on_how=False,
-            output_format="terminal",
-            json_report_path=None,
-            sarif_report_path=None,
-            verbose=False,
-            bis_threshold=70.0,
-            brs_threshold=60.0,
-            similarity_threshold=0.8,
-            parallel_analysis=True,
-            max_workers=4,
-            cache_ast=True,
-            lsp_enabled=False,
-            lsp_port=8080,
-        )
+        config = DrillSergeantConfig()
         manager = OutputManager(config)
 
         # Add some results

@@ -262,8 +262,8 @@ class RunMetrics(BaseModel):
     )
 
 
-class Config(BaseModel):
-    """Main configuration for pytest-drill-sergeant."""
+class LegacyConfigModel(BaseModel):
+    """DEPRECATED - do not use."""
 
     # General settings
     mode: str = Field(
