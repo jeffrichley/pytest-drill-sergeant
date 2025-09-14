@@ -1,10 +1,12 @@
 """Tests for the plugin manager and registry system."""
 
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
 from pytest_drill_sergeant.core.config import DrillSergeantConfig
+from pytest_drill_sergeant.core.models import Finding
 from pytest_drill_sergeant.plugin.base import (
     AnalyzerPlugin,
     DrillSergeantPlugin,
@@ -26,7 +28,7 @@ class PluginCreationError(Exception):
 class MockPlugin(DrillSergeantPlugin):
     """Mock plugin for testing."""
 
-    def __init__(self, config, metadata):
+    def __init__(self, config: DrillSergeantConfig, metadata: PluginMetadata) -> None:
         super().__init__(config, metadata)
         self._initialized = False
 
@@ -47,7 +49,7 @@ class MockPlugin(DrillSergeantPlugin):
 class MockAnalyzerPlugin(AnalyzerPlugin):
     """Mock analyzer plugin for testing."""
 
-    def __init__(self, config, metadata):
+    def __init__(self, config: DrillSergeantConfig, metadata: PluginMetadata) -> None:
         super().__init__(config, metadata)
         self._initialized = False
 
@@ -64,20 +66,20 @@ class MockAnalyzerPlugin(AnalyzerPlugin):
     def mark_initialized(self) -> None:
         self._initialized = True
 
-    def analyze_file(self, _file_path, _content):
+    def analyze_file(self, _file_path: Path) -> list[Finding]:
         return []
 
-    def get_rule_ids(self):
-        return ["test_rule"]
+    def get_rule_ids(self) -> set[str]:
+        return {"test_rule"}
 
-    def get_supported_extensions(self):
-        return [".py"]
+    def get_supported_extensions(self) -> set[str]:
+        return {".py"}
 
 
 class MockPersonaPlugin(PersonaPlugin):
     """Mock persona plugin for testing."""
 
-    def __init__(self, config, metadata):
+    def __init__(self, config: DrillSergeantConfig, metadata: PluginMetadata) -> None:
         super().__init__(config, metadata)
         self._initialized = False
 
@@ -94,17 +96,18 @@ class MockPersonaPlugin(PersonaPlugin):
     def mark_initialized(self) -> None:
         self._initialized = True
 
-    def generate_message(self, _context, _finding):
+    def generate_message(self, context: str, **kwargs: str) -> str:
+        del context, kwargs
         return "Test message"
 
-    def get_supported_contexts(self):
-        return ["test"]
+    def get_supported_contexts(self) -> set[str]:
+        return {"test"}
 
 
 class MockReporterPlugin(ReporterPlugin):
     """Mock reporter plugin for testing."""
 
-    def __init__(self, config, metadata):
+    def __init__(self, config: DrillSergeantConfig, metadata: PluginMetadata) -> None:
         super().__init__(config, metadata)
         self._initialized = False
 
@@ -121,11 +124,13 @@ class MockReporterPlugin(ReporterPlugin):
     def mark_initialized(self) -> None:
         self._initialized = True
 
-    def generate_report(self, _findings, _output_path):
+    def generate_report(
+        self, _findings: list[Finding], _output_path: Path | None = None
+    ) -> str:
         return "Test report"
 
-    def get_supported_formats(self):
-        return ["test"]
+    def get_supported_formats(self) -> set[str]:
+        return {"test"}
 
 
 class TestPluginRegistry:
