@@ -34,10 +34,10 @@ class TestSeverity:
 
     def test_severity_values(self) -> None:
         """Test severity enum values."""
-        assert Severity.ERROR == "error"
-        assert Severity.WARNING == "warning"
-        assert Severity.INFO == "info"
-        assert Severity.HINT == "hint"
+        assert Severity.ERROR.value == "error"
+        assert Severity.WARNING.value == "warning"
+        assert Severity.INFO.value == "info"
+        assert Severity.HINT.value == "hint"
 
     def test_severity_string_conversion(self) -> None:
         """Test severity string conversion."""
@@ -50,13 +50,13 @@ class TestRuleType:
 
     def test_rule_type_values(self) -> None:
         """Test rule type enum values."""
-        assert RuleType.PRIVATE_ACCESS == "private_access"
-        assert RuleType.MOCK_OVERSPECIFICATION == "mock_overspecification"
-        assert RuleType.STRUCTURAL_EQUALITY == "structural_equality"
-        assert RuleType.AAA_COMMENT == "aaa_comment"
-        assert RuleType.DUPLICATE_TEST == "duplicate_test"
-        assert RuleType.PARAMETRIZATION == "parametrization"
-        assert RuleType.FIXTURE_EXTRACTION == "fixture_extraction"
+        assert RuleType.PRIVATE_ACCESS.value == "private_access"
+        assert RuleType.MOCK_OVERSPECIFICATION.value == "mock_overspecification"
+        assert RuleType.STRUCTURAL_EQUALITY.value == "structural_equality"
+        assert RuleType.AAA_COMMENT.value == "aaa_comment"
+        assert RuleType.DUPLICATE_TEST.value == "duplicate_test"
+        assert RuleType.PARAMETRIZATION.value == "parametrization"
+        assert RuleType.FIXTURE_EXTRACTION.value == "fixture_extraction"
 
 
 class TestFinding:
@@ -156,7 +156,7 @@ class TestFinding:
     def test_finding_required_fields(self) -> None:
         """Test finding required fields validation."""
         with pytest.raises(ValidationError):
-            Finding()  # Missing required fields
+            Finding.model_validate({})  # Missing required fields
 
 
 class TestCluster:
@@ -369,7 +369,7 @@ class TestFeaturesData:
     def test_features_data_required_fields(self) -> None:
         """Test features data required fields validation."""
         with pytest.raises(ValidationError):
-            FeaturesData()  # Missing required fields
+            FeaturesData.model_validate({})  # Missing required fields
 
 
 class TestModelIntegration:
