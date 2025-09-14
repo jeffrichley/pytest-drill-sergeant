@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from pathlib import Path  # Pydantic needs Path at runtime
+from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -60,7 +61,7 @@ class Finding(BaseModel):
         default_factory=dict, description="Additional metadata about the finding"
     )
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         use_enum_values=True,
         validate_assignment=True,
     )
@@ -110,7 +111,7 @@ class Rule(BaseModel):
         default_factory=dict, description="Rule-specific configuration"
     )
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         use_enum_values=True,
         validate_assignment=True,
     )
@@ -255,7 +256,7 @@ class RunMetrics(BaseModel):
         None, description="When this run was completed"
     )
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         use_enum_values=True,
         validate_assignment=True,
     )
@@ -317,7 +318,7 @@ class Config(BaseModel):
     lsp_enabled: bool = Field(False, description="Enable LSP server")
     lsp_port: int = Field(8080, ge=1024, le=65535, description="LSP server port")
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         use_enum_values=True,
         validate_assignment=True,
     )

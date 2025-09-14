@@ -2,6 +2,7 @@
 
 from ast import AST
 from datetime import datetime
+from pathlib import Path
 
 from pytest_drill_sergeant.core.analysis_result import (
     AAAComment,
@@ -21,7 +22,7 @@ from pytest_drill_sergeant.core.analysis_result import (
     StructuralEqualityCheck,
     SuggestedFixture,
 )
-from pytest_drill_sergeant.core.models import FeaturesData, Finding
+from pytest_drill_sergeant.core.models import FeaturesData, Finding, RuleType, Severity
 
 # Test constants to avoid magic numbers
 ASSERTION_COUNT = 3
@@ -57,6 +58,7 @@ class TestPrivateAccessViolation:
             line_number=10,
             attribute_name="_private_attr",
             violation_type="private_attr",
+            context="",
         )
         assert violation.line_number == LINE_NUMBER_10
         assert violation.attribute_name == "_private_attr"
@@ -508,11 +510,23 @@ class TestComprehensiveAnalysisResult:
         """Test creating a ComprehensiveAnalysisResult with required fields."""
         features = FeaturesData(
             test_name="test_comprehensive",
-            file_path="/path/to/test.py",
+            file_path=Path("/path/to/test.py"),
             line_number=5,
             has_aaa_comments=True,
-            assertion_count=3,
+            aaa_comment_order="arrange_act_assert",
+            private_access_count=0,
+            mock_assertion_count=0,
+            structural_equality_count=0,
             test_length=10,
+            complexity_score=1.0,
+            coverage_percentage=85.0,
+            coverage_signature="test_signature",
+            assertion_count=3,
+            setup_lines=2,
+            teardown_lines=1,
+            execution_time=0.1,
+            memory_usage=1.0,
+            exception_count=0,
         )
 
         result = ComprehensiveAnalysisResult(
@@ -539,11 +553,23 @@ class TestComprehensiveAnalysisResult:
         """Test creating a ComprehensiveAnalysisResult with analysis results."""
         features = FeaturesData(
             test_name="test_comprehensive",
-            file_path="/path/to/test.py",
+            file_path=Path("/path/to/test.py"),
             line_number=5,
             has_aaa_comments=True,
-            assertion_count=5,
+            aaa_comment_order="arrange_act_assert",
+            private_access_count=0,
+            mock_assertion_count=0,
+            structural_equality_count=0,
             test_length=20,
+            complexity_score=2.0,
+            coverage_percentage=90.0,
+            coverage_signature="test_signature_2",
+            assertion_count=5,
+            setup_lines=3,
+            teardown_lines=2,
+            execution_time=0.2,
+            memory_usage=1.5,
+            exception_count=0,
         )
 
         ast_result = ASTAnalysisResult(
@@ -553,11 +579,15 @@ class TestComprehensiveAnalysisResult:
             test_name="test_coverage", file_path="/path/to/test.py"
         )
         finding = Finding(
-            rule_type="private_access",
+            rule_type=RuleType.PRIVATE_ACCESS,
             message="Test finding",
-            severity="error",
-            file_path="/path/to/test.py",
+            severity=Severity.ERROR,
+            file_path=Path("/path/to/test.py"),
             line_number=10,
+            column_number=5,
+            code_snippet="test code",
+            suggestion="fix suggestion",
+            confidence=0.9,
         )
 
         result = ComprehensiveAnalysisResult(

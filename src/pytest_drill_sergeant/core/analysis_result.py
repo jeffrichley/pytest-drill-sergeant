@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from ast import AST
 from datetime import datetime
+from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -90,7 +91,7 @@ class ASTAnalysisResult(BaseModel):
     line_count: int = Field(0, description="Total line count")
     comment_count: int = Field(0, description="Comment line count")
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         arbitrary_types_allowed=True,
     )
 
@@ -125,7 +126,7 @@ class CoverageAnalysisResult(BaseModel):
         default_factory=list, description="Mock calls made"
     )
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         use_enum_values=True,
     )
 
@@ -175,7 +176,7 @@ class DuplicateAnalysisResult(BaseModel):
         default_factory=dict, description="Jaccard similarity scores"
     )
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         validate_assignment=True,
     )
 
@@ -237,7 +238,7 @@ class ParametrizationAnalysisResult(BaseModel):
         None, description="Generated consolidated test code"
     )
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         validate_assignment=True,
     )
 
@@ -311,7 +312,7 @@ class FixtureAnalysisResult(BaseModel):
         0.0, description="Expected complexity reduction"
     )
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         validate_assignment=True,
     )
 
@@ -355,6 +356,6 @@ class ComprehensiveAnalysisResult(BaseModel):
         default_factory=datetime.now, description="When this analysis was created"
     )
 
-    model_config = ConfigDict(
+    model_config: ClassVar[ConfigDict] = ConfigDict(
         validate_assignment=True,
     )

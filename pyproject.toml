@@ -240,6 +240,13 @@ disallow_any_expr = false
 disallow_any_decorated = false  # Allow decorators like @patch
 disallow_any_generics = true
 disallow_subclassing_any = true
+# Pydantic plugin
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_typed = true
+init_forbid_extra = true
+warn_required_dynamic_aliases = true
 
 # Our local untyped deps (we provide stubs)
 [[tool.mypy.overrides]]
@@ -286,6 +293,7 @@ dev = [
     "safety>=3.0.0",
     "bandit>=1.7.0",
     "semgrep>=1.0.0",
+    "pydantic[email]>=2.9.2",
 ]
 
 # Example drill sergeant configuration
