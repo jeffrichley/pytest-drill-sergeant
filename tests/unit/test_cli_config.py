@@ -32,7 +32,8 @@ class TestDrillSergeantArgumentParser:
 
         assert parser.parser is not None
         # When run under pytest, the program name gets changed to "pytest"
-        assert parser.parser.prog in ["pytest-drill-sergeant", "pytest"]
+        # When run as a module, it might be "__main__.py"
+        assert parser.parser.prog in ["pytest-drill-sergeant", "pytest", "__main__.py"]
 
     def test_parse_args_basic(self) -> None:
         """Test basic argument parsing."""

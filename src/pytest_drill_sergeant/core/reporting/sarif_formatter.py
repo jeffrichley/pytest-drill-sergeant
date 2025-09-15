@@ -60,7 +60,10 @@ class SARIFFormatter:
         Args:
             base_uri: Base URI for file references
         """
-        self.base_uri = base_uri.rstrip("/") + "//"
+        # Normalize base URI to end with single slash
+        if not base_uri.endswith("/"):
+            base_uri += "/"
+        self.base_uri = base_uri
         self.tool_name = "pytest-drill-sergeant"
         self.tool_version = "1.0.0-dev"
 
@@ -178,7 +181,9 @@ class SARIFFormatter:
         # Create region
         region = Region()
         region.start_line = finding.line_number
-        region.start_column = finding.column_number or 1
+        region.start_column = (
+            finding.column_number if finding.column_number is not None else 1
+        )
 
         # Add code snippet if available
         if finding.code_snippet:
@@ -287,8 +292,7 @@ class SARIFFormatter:
         # Create rules
         rules = []
         for rule_type in rule_types:
-            rule = ReportingDescriptor()
-            rule.id = self._get_rule_id(rule_type)
+            rule = ReportingDescriptor(id=self._get_rule_id(rule_type))  # type: ignore[call-arg]
             rule.name = self._get_rule_name(rule_type)
             rule.short_description = Message(text=self._get_rule_description(rule_type))
             rule.help_uri = self._get_help_uri(rule_type)
@@ -304,8 +308,7 @@ class SARIFFormatter:
             results.extend(self.format_test_result(result))
 
         # Create tool component
-        tool_component = ToolComponent()
-        tool_component.name = self.tool_name
+        tool_component = ToolComponent(name=self.tool_name)  # type: ignore[call-arg]
         tool_component.version = self.tool_version
         tool_component.information_uri = (
             "https://github.com/jeffrichley/pytest-drill-sergeant"
@@ -316,8 +319,7 @@ class SARIFFormatter:
         tool = Tool(driver=tool_component)
 
         # Create run
-        run = Run()
-        run.tool = tool
+        run = Run(tool=tool)  # type: ignore[call-arg]
         run.results = results
         run.properties = cast("SarifProperties", self.format_run_metrics(metrics))
 
@@ -326,10 +328,8 @@ class SARIFFormatter:
             run.properties["configuration"] = config
 
         # Create SARIF log
-        sarif_log = SarifLog()
-        sarif_log.version = "2.1.0"
+        sarif_log = SarifLog(version="2.1.0", runs=[run])  # type: ignore[call-arg]
         sarif_log.schema = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
-        sarif_log.runs = [run]
 
         return sarif_log
 
@@ -343,7 +343,7 @@ class SARIFFormatter:
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         with output_path.open("w", encoding="utf-8") as f:
-            json.dump(report.__dict__, f, indent=2, ensure_ascii=False)
+            json.dump(report.__dict__, f, indent=2, ensure_ascii=False, default=str)
 
     def to_string(self, data: SarifLog) -> str:
         """Convert data to SARIF JSON string.
@@ -354,7 +354,7 @@ class SARIFFormatter:
         Returns:
             SARIF JSON string
         """
-        return json.dumps(data.__dict__, indent=2, ensure_ascii=False)
+        return json.dumps(data.__dict__, indent=2, ensure_ascii=False, default=str)
 
 
 class SARIFReportBuilder:
