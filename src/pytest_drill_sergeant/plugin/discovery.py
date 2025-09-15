@@ -4,13 +4,10 @@ from __future__ import annotations
 
 import importlib
 import logging
+from importlib.metadata import entry_points
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-try:
-    from importlib.metadata import entry_points
-except ImportError:  # pragma: no cover
-    from importlib_metadata import entry_points  # type: ignore[no-redef]
 from pydantic import BaseModel
 
 # Import modules at top level to avoid runtime imports

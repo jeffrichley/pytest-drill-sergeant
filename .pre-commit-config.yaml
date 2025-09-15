@@ -1,5 +1,5 @@
 # Pre-commit hooks for pytest-drill-sergeant
-# Following the Redwing Core pattern
+# Fast and static only - no coverage or slow checks
 
 repos:
   # Ruff for linting and formatting
@@ -30,14 +30,6 @@ repos:
           - types-setuptools
           - typing-extensions
 
-  # Security audit (disabled for now - low priority)
-  # - repo: https://github.com/PyCQA/bandit
-  #   rev: 1.7.10
-  #   hooks:
-  #     - id: bandit
-  #       args: [-r, src]
-  #       exclude: ^tests/
-
   # General hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
@@ -52,13 +44,24 @@ repos:
       - id: mixed-line-ending
       - id: check-case-conflict
 
-  # Coverage check with 50% threshold
+  # Optional pre-push hook for quick tests (no coverage)
   - repo: local
     hooks:
-      - id: coverage-check
-        name: coverage-check
-        entry: bash -c 'uv run pytest tests --cov=src --cov-report=term-missing --cov-fail-under=50'
+      - id: quick-tests
+        name: quick-tests
+        entry: uv run pytest tests -x --tb=short
         language: system
         pass_filenames: false
         always_run: true
-        stages: [pre-commit]
+        stages: [pre-push]
+
+  # Manual hook for tests with coverage (run locally when needed)
+  - repo: local
+    hooks:
+      - id: tests-with-coverage
+        name: tests-with-coverage
+        entry: uv run pytest tests --cov=src --cov-report=term-missing --cov-fail-under=50
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [manual]

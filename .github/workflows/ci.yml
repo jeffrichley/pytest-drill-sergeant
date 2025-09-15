@@ -33,8 +33,8 @@ jobs:
       - name: Install deps (lean)
         run: uv sync --group ci
 
-      - name: Run tests
-        run: uv run pytest tests --cov=src --cov-report=xml --cov-report=term-missing
+      - name: Run tests with coverage
+        run: uv run pytest tests --cov=src --cov-report=xml --cov-report=term-missing --cov-fail-under=50
 
       - name: Run quality gates (Python 3.12 only)
         if: ${{ matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest' }}
@@ -45,11 +45,11 @@ jobs:
           uv run xenon --max-absolute B src
           uv run validate-pyproject pyproject.toml
 
-      - name: Upload coverage
-        if: ${{ matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest' }}
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
+          flags: ${{ matrix.os }},python${{ matrix.python-version }}
           fail_ci_if_error: false  # Don't fail CI if Codecov fails
           verbose: true
         env:
