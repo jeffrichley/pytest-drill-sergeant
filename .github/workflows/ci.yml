@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, rewrite/main]
   pull_request:
     paths-ignore:
       - 'docs/**'
