@@ -4,8 +4,8 @@ import pytest
 from pydantic import ValidationError
 
 from pytest_drill_sergeant.core.config_schema import (
-    DSConfig,
     AnalysisConfig,
+    DSConfig,
     OutputConfig,
     OutputFormat,
     Profile,
@@ -28,9 +28,9 @@ class TestRuleConfig:
             severity=SeverityLevel.WARNING,
             threshold=0.8,
             tags=["quality", "test"],
-            metadata={"custom": "value"}
+            metadata={"custom": "value"},
         )
-        
+
         assert config.enabled is True
         assert config.severity == SeverityLevel.WARNING
         assert config.threshold == 0.8
@@ -40,11 +40,8 @@ class TestRuleConfig:
     def test_rule_config_extra_fields_forbidden(self):
         """Test that extra fields are forbidden in RuleConfig."""
         with pytest.raises(ValidationError) as exc_info:
-            RuleConfig(
-                enabled=True,
-                invalid_field="should_fail"
-            )
-        
+            RuleConfig(enabled=True, invalid_field="should_fail")
+
         error = exc_info.value
         assert "Extra inputs are not permitted" in str(error)
 
@@ -53,9 +50,9 @@ class TestRuleConfig:
         with pytest.raises(ValidationError) as exc_info:
             RuleConfig(
                 enabled=True,
-                threshold=1.5  # Invalid: > 1.0
+                threshold=1.5,  # Invalid: > 1.0
             )
-        
+
         error = exc_info.value
         assert "less than or equal to 1" in str(error)
 
@@ -64,9 +61,9 @@ class TestRuleConfig:
         with pytest.raises(ValidationError) as exc_info:
             RuleConfig(
                 enabled=True,
-                tags=["valid", "", "invalid"]  # Empty string should fail
+                tags=["valid", "", "invalid"],  # Empty string should fail
             )
-        
+
         error = exc_info.value
         assert "Tags must be non-empty strings" in str(error)
 
@@ -84,9 +81,9 @@ class TestProfileConfig:
                 "DS301": RuleConfig(enabled=False),
             },
             thresholds={"bis_threshold": 80.0},
-            settings={"strict_mode": True}
+            settings={"strict_mode": True},
         )
-        
+
         assert config.name == "test_profile"
         assert len(config.rules) == 2
         assert "DS201" in config.rules
@@ -98,11 +95,9 @@ class TestProfileConfig:
             ProfileConfig(
                 name="test_profile",
                 description="Test profile",
-                rules={
-                    "INVALID": RuleConfig(enabled=True)  # Invalid rule code
-                }
+                rules={"INVALID": RuleConfig(enabled=True)},  # Invalid rule code
             )
-        
+
         error = exc_info.value
         assert "Invalid rule code 'INVALID'" in str(error)
 
@@ -112,9 +107,9 @@ class TestProfileConfig:
             ProfileConfig(
                 name="test_profile",
                 description="Test profile",
-                invalid_field="should_fail"
+                invalid_field="should_fail",
             )
-        
+
         error = exc_info.value
         assert "Extra inputs are not permitted" in str(error)
 
@@ -125,12 +120,9 @@ class TestOutputConfig:
     def test_valid_output_config(self):
         """Test creating a valid output configuration."""
         config = OutputConfig(
-            format=OutputFormat.JSON,
-            json_path="output.json",
-            verbose=True,
-            color=False
+            format=OutputFormat.JSON, json_path="output.json", verbose=True, color=False
         )
-        
+
         assert config.format == OutputFormat.JSON
         assert str(config.json_path) == "output.json"
         assert config.verbose is True
@@ -139,11 +131,8 @@ class TestOutputConfig:
     def test_output_config_extra_fields_forbidden(self):
         """Test that extra fields are forbidden in OutputConfig."""
         with pytest.raises(ValidationError) as exc_info:
-            OutputConfig(
-                format=OutputFormat.TERMINAL,
-                invalid_field="should_fail"
-            )
-        
+            OutputConfig(format=OutputFormat.TERMINAL, invalid_field="should_fail")
+
         error = exc_info.value
         assert "Extra inputs are not permitted" in str(error)
 
@@ -158,9 +147,9 @@ class TestAnalysisConfig:
             max_workers=8,
             cache_ast=False,
             timeout=30.0,
-            memory_limit=512
+            memory_limit=512,
         )
-        
+
         assert config.parallel is True
         assert config.max_workers == 8
         assert config.cache_ast is False
@@ -170,21 +159,16 @@ class TestAnalysisConfig:
     def test_analysis_config_invalid_workers(self):
         """Test validation of max_workers."""
         with pytest.raises(ValidationError) as exc_info:
-            AnalysisConfig(
-                max_workers=0  # Invalid: < 1
-            )
-        
+            AnalysisConfig(max_workers=0)  # Invalid: < 1
+
         error = exc_info.value
         assert "greater than or equal to 1" in str(error)
 
     def test_analysis_config_extra_fields_forbidden(self):
         """Test that extra fields are forbidden in AnalysisConfig."""
         with pytest.raises(ValidationError) as exc_info:
-            AnalysisConfig(
-                parallel=True,
-                invalid_field="should_fail"
-            )
-        
+            AnalysisConfig(parallel=True, invalid_field="should_fail")
+
         error = exc_info.value
         assert "Extra inputs are not permitted" in str(error)
 
@@ -199,15 +183,14 @@ class TestDSConfig:
             profile=Profile.STANDARD,
             profiles={
                 "standard": ProfileConfig(
-                    name="standard",
-                    description="Standard profile"
+                    name="standard", description="Standard profile"
                 )
             },
             bis_threshold=75.0,
             brs_threshold=65.0,
-            similarity_threshold=0.85
+            similarity_threshold=0.85,
         )
-        
+
         assert config.schema_version == SchemaVersion.V1_0
         assert config.profile == Profile.STANDARD
         assert config.bis_threshold == 75.0
@@ -219,9 +202,9 @@ class TestDSConfig:
                 schema_version=SchemaVersion.V1_0,
                 profile=Profile.STANDARD,
                 profiles={},
-                invalid_field="should_fail"
+                invalid_field="should_fail",
             )
-        
+
         error = exc_info.value
         assert "Extra inputs are not permitted" in str(error)
 
@@ -232,11 +215,9 @@ class TestDSConfig:
                 schema_version=SchemaVersion.V1_0,
                 profile=Profile.STANDARD,
                 profiles={},
-                rules={
-                    "INVALID": RuleConfig(enabled=True)
-                }
+                rules={"INVALID": RuleConfig(enabled=True)},
             )
-        
+
         error = exc_info.value
         assert "Invalid rule code 'INVALID'" in str(error)
 
@@ -247,11 +228,9 @@ class TestDSConfig:
                 schema_version=SchemaVersion.V1_0,
                 profile=Profile.STANDARD,
                 profiles={},
-                per_file_ignores={
-                    "tests/**": ["INVALID"]  # Invalid rule code
-                }
+                per_file_ignores={"tests/**": ["INVALID"]},  # Invalid rule code
             )
-        
+
         error = exc_info.value
         assert "Invalid rule code 'INVALID'" in str(error)
 
@@ -262,9 +241,9 @@ class TestDSConfig:
                 schema_version=SchemaVersion.V1_0,
                 profile=Profile.STANDARD,
                 profiles={},
-                test_patterns=[""]  # Empty pattern
+                test_patterns=[""],  # Empty pattern
             )
-        
+
         error = exc_info.value
         assert "File patterns cannot be empty" in str(error)
 
@@ -276,12 +255,11 @@ class TestDSConfig:
                 profile=Profile.STRICT,
                 profiles={
                     "standard": ProfileConfig(
-                        name="standard",
-                        description="Standard profile"
+                        name="standard", description="Standard profile"
                     )
-                }
+                },
             )
-        
+
         error = exc_info.value
         assert "Profile 'strict' not found" in str(error)
 
@@ -293,16 +271,15 @@ class TestDSConfig:
                 profile=Profile.STANDARD,
                 profiles={
                     "standard": ProfileConfig(
-                        name="standard",
-                        description="Standard profile"
+                        name="standard", description="Standard profile"
                     )
                 },
                 output=OutputConfig(
                     format=OutputFormat.JSON,
                     # Missing json_path
-                )
+                ),
             )
-        
+
         error = exc_info.value
         assert "json_path is required when format is 'json'" in str(error)
 
@@ -316,16 +293,13 @@ class TestValidateConfig:
             "schema_version": "1.0",
             "profile": "standard",
             "profiles": {
-                "standard": {
-                    "name": "standard",
-                    "description": "Standard profile"
-                }
+                "standard": {"name": "standard", "description": "Standard profile"}
             },
             "bis_threshold": 70.0,
             "brs_threshold": 60.0,
-            "similarity_threshold": 0.8
+            "similarity_threshold": 0.8,
         }
-        
+
         config = validate_config(config_data)
         assert isinstance(config, DSConfig)
         assert config.profile == Profile.STANDARD
@@ -336,27 +310,22 @@ class TestValidateConfig:
             "schema_version": "1.0",
             "profile": "standard",
             "profiles": {
-                "standard": {
-                    "name": "standard",
-                    "description": "Standard profile"
-                }
+                "standard": {"name": "standard", "description": "Standard profile"}
             },
             "invalid_field": "should_fail",  # Extra field
-            "rules": {
-                "INVALID": {"enabled": True}  # Invalid rule code
-            }
+            "rules": {"INVALID": {"enabled": True}},  # Invalid rule code
         }
-        
+
         with pytest.raises(ValidationError) as exc_info:
             validate_config(config_data)
-        
+
         error = exc_info.value
         error_str = str(error)
-        
+
         # Should have error for invalid field
         assert "invalid_field" in error_str
         assert "Extra inputs are not permitted" in error_str
-        
+
         # Should have error for invalid rule code
         assert "Invalid rule code 'INVALID'" in error_str
 
@@ -367,7 +336,7 @@ class TestCreateDefaultConfig:
     def test_create_default_config(self):
         """Test creating a default configuration."""
         config = create_default_config()
-        
+
         assert isinstance(config, DSConfig)
         assert config.schema_version == SchemaVersion.V1_0
         assert config.profile == Profile.STANDARD
@@ -375,7 +344,7 @@ class TestCreateDefaultConfig:
         assert "standard" in config.profiles
         assert "strict" in config.profiles
         assert "relaxed" in config.profiles
-        
+
         # Check that rules are properly configured
         assert len(config.rules) > 0
         for rule_code, rule_config in config.rules.items():
@@ -385,18 +354,22 @@ class TestCreateDefaultConfig:
     def test_default_profiles_differ(self):
         """Test that default profiles have different configurations."""
         config = create_default_config()
-        
+
         standard = config.profiles["standard"]
         strict = config.profiles["strict"]
         relaxed = config.profiles["relaxed"]
-        
+
         # Strict should have higher thresholds
         assert strict.thresholds["bis_threshold"] > standard.thresholds["bis_threshold"]
         assert strict.thresholds["brs_threshold"] > standard.thresholds["brs_threshold"]
-        
+
         # Relaxed should have lower thresholds
-        assert relaxed.thresholds["bis_threshold"] < standard.thresholds["bis_threshold"]
-        assert relaxed.thresholds["brs_threshold"] < standard.thresholds["brs_threshold"]
+        assert (
+            relaxed.thresholds["bis_threshold"] < standard.thresholds["bis_threshold"]
+        )
+        assert (
+            relaxed.thresholds["brs_threshold"] < standard.thresholds["brs_threshold"]
+        )
 
 
 class TestSchemaVersioning:
@@ -409,12 +382,11 @@ class TestSchemaVersioning:
             profile=Profile.STANDARD,
             profiles={
                 "standard": ProfileConfig(
-                    name="standard",
-                    description="Standard profile"
+                    name="standard", description="Standard profile"
                 )
-            }
+            },
         )
-        
+
         # Should have default schema version
         assert config.schema_version == SchemaVersion.V1_0
 
@@ -424,9 +396,9 @@ class TestSchemaVersioning:
             DSConfig(
                 schema_version="2.0",  # Invalid version
                 profile=Profile.STANDARD,
-                profiles={}
+                profiles={},
             )
-        
+
         error = exc_info.value
         assert "Input should be '1.0'" in str(error)
 
@@ -441,11 +413,9 @@ class TestErrorMessages:
                 schema_version=SchemaVersion.V1_0,
                 profile=Profile.STANDARD,
                 profiles={},
-                rules={
-                    "private": RuleConfig(enabled=True)  # Should suggest DS301
-                }
+                rules={"private": RuleConfig(enabled=True)},  # Should suggest DS301
             )
-        
+
         error = exc_info.value
         error_str = str(error)
         assert "private" in error_str
@@ -457,17 +427,14 @@ class TestErrorMessages:
             "schema_version": "1.0",
             "profile": "standard",
             "profiles": {
-                "standard": {
-                    "name": "standard",
-                    "description": "Standard profile"
-                }
+                "standard": {"name": "standard", "description": "Standard profile"}
             },
-            "threshhold": 70.0  # Typo: should be "threshold"
+            "threshhold": 70.0,  # Typo: should be "threshold"
         }
-        
+
         with pytest.raises(ValidationError) as exc_info:
             validate_config(config_data)
-        
+
         error = exc_info.value
         error_str = str(error)
         assert "threshhold" in error_str

@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from pathlib import Path  # Pydantic needs Path at runtime
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 

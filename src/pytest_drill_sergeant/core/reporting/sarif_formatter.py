@@ -32,7 +32,6 @@ if TYPE_CHECKING:
     from pytest_drill_sergeant.core.models import (
         Finding,
         ResultData,
-        RuleType,
         RunMetrics,
         Severity,
     )
@@ -96,9 +95,7 @@ class SARIFFormatter:
             "parametrization": "Parametrization Opportunity",
             "fixture_extraction": "Fixture Extraction Opportunity",
         }
-        return name_mapping.get(
-            rule_name, rule_name.replace("_", " ").title()
-        )
+        return name_mapping.get(rule_name, rule_name.replace("_", " ").title())
 
     def _get_rule_description(self, rule_name: str) -> str:
         """Get rule description for a rule name.

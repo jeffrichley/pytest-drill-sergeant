@@ -19,7 +19,6 @@ if TYPE_CHECKING:
     from pytest_drill_sergeant.core.models import (
         Finding,
         ResultData,
-        RuleType,
         RunMetrics,
     )
 
@@ -325,7 +324,6 @@ class RichFormatter:
             template = self.registry.get("finding.warning")
 
         return template
-
 
     def _apply_severity_styling(self, text: Text, severity: Severity) -> Text:
         """Apply Rich styling based on severity.

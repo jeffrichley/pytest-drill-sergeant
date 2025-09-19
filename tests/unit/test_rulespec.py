@@ -3,12 +3,12 @@
 import pytest
 
 from pytest_drill_sergeant.core.rulespec import (
+    DUPLICATE_TESTS,
+    PRIVATE_ACCESS,
+    RuleCategory,
     RuleRegistry,
     RuleSpec,
     Severity,
-    RuleCategory,
-    DUPLICATE_TESTS,
-    PRIVATE_ACCESS,
 )
 
 
@@ -25,9 +25,9 @@ class TestRuleSpec:
             long_desc="This is a test rule for testing purposes",
             tags=["test", "quality"],
             fixable=True,
-            category=RuleCategory.TEST_QUALITY
+            category=RuleCategory.TEST_QUALITY,
         )
-        
+
         assert rule.code == "DS999"
         assert rule.name == "test_rule"
         assert rule.default_level == Severity.WARNING
@@ -43,10 +43,10 @@ class TestRuleSpec:
             default_level=Severity.WARNING,
             short_desc="Test",
             long_desc="Test",
-            category=RuleCategory.TEST_QUALITY
+            category=RuleCategory.TEST_QUALITY,
         )
         assert rule.code == "DS201"
-        
+
         # Invalid codes should raise validation error
         with pytest.raises(ValueError, match="Rule code must start with 'DS'"):
             RuleSpec(
@@ -55,9 +55,9 @@ class TestRuleSpec:
                 default_level=Severity.WARNING,
                 short_desc="Test",
                 long_desc="Test",
-                category=RuleCategory.TEST_QUALITY
+                category=RuleCategory.TEST_QUALITY,
             )
-        
+
         with pytest.raises(ValueError, match="Rule code must be 5 characters"):
             RuleSpec(
                 code="DS20",
@@ -65,7 +65,7 @@ class TestRuleSpec:
                 default_level=Severity.WARNING,
                 short_desc="Test",
                 long_desc="Test",
-                category=RuleCategory.TEST_QUALITY
+                category=RuleCategory.TEST_QUALITY,
             )
 
 
@@ -79,7 +79,7 @@ class TestRuleRegistry:
         assert RuleRegistry.is_valid_rule("duplicate_tests")
         assert RuleRegistry.is_valid_rule("DS301")
         assert RuleRegistry.is_valid_rule("private_access")
-        
+
         # Invalid rules should not be found
         assert not RuleRegistry.is_valid_rule("DS999")
         assert not RuleRegistry.is_valid_rule("invalid_rule")
@@ -101,7 +101,7 @@ class TestRuleRegistry:
         """Test getting non-existent rules."""
         with pytest.raises(KeyError):
             RuleRegistry.get_rule("DS999")
-        
+
         with pytest.raises(KeyError):
             RuleRegistry.get_rule("nonexistent_rule")
 
@@ -109,7 +109,7 @@ class TestRuleRegistry:
         """Test getting all registered rules."""
         rules = RuleRegistry.get_all_rules()
         assert len(rules) >= 12  # We have at least 12 predefined rules
-        
+
         # Check that specific rules are included
         codes = [rule.code for rule in rules]
         assert "DS201" in codes
@@ -117,17 +117,21 @@ class TestRuleRegistry:
 
     def test_get_rules_by_category(self):
         """Test getting rules by category."""
-        test_quality_rules = RuleRegistry.get_rules_by_category(RuleCategory.TEST_QUALITY)
+        test_quality_rules = RuleRegistry.get_rules_by_category(
+            RuleCategory.TEST_QUALITY
+        )
         assert len(test_quality_rules) >= 6  # We have 6 test quality rules
-        
-        code_quality_rules = RuleRegistry.get_rules_by_category(RuleCategory.CODE_QUALITY)
+
+        code_quality_rules = RuleRegistry.get_rules_by_category(
+            RuleCategory.CODE_QUALITY
+        )
         assert len(code_quality_rules) >= 6  # We have 6 code quality rules
 
     def test_get_rules_by_tag(self):
         """Test getting rules by tag."""
         quality_rules = RuleRegistry.get_rules_by_tag("quality")
         assert len(quality_rules) >= 1
-        
+
         duplication_rules = RuleRegistry.get_rules_by_tag("duplication")
         assert len(duplication_rules) >= 1
 
@@ -160,7 +164,7 @@ class TestPredefinedRules:
             assert rule.code.startswith("DS")
             assert len(rule.code) == 5
             assert rule.code[2:].isdigit()
-            
+
             # All rules should have required fields
             assert rule.name
             assert rule.short_desc

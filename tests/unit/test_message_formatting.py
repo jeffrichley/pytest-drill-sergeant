@@ -12,7 +12,6 @@ from pytest_drill_sergeant.core.models import (
     FeaturesData,
     Finding,
     ResultData,
-    RuleType,
     Severity,
 )
 from pytest_drill_sergeant.core.reporting import (

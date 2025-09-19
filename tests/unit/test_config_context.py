@@ -1,11 +1,8 @@
 """Tests for the context-based configuration system."""
 
 import threading
-import time
 from pathlib import Path
 from unittest.mock import patch
-
-import pytest
 
 from pytest_drill_sergeant.core.config_context import (
     ConfigContext,
@@ -97,7 +94,7 @@ class TestConfigContext:
     def test_auto_initialization(self):
         """Test that config is auto-initialized when accessed."""
         reset_config()
-        
+
         # Access config without explicit initialization
         config = get_config()
         assert config is not None
@@ -106,7 +103,7 @@ class TestConfigContext:
     def test_initialization_with_project_root(self):
         """Test initialization with custom project root."""
         custom_root = Path("/tmp/test_project")
-        
+
         with patch.object(Path, "cwd", return_value=custom_root):
             config = initialize_config(project_root=custom_root)
             assert config is not None
@@ -137,30 +134,30 @@ class TestConfigContext:
         """Test that convenience functions work with context system."""
         from pytest_drill_sergeant.core.config_context import (
             get_active_profile,
-            get_rule_config,
-            is_rule_enabled,
-            get_rule_severity,
-            should_fail_on_severity,
             get_fail_on_level,
             get_output_formats,
-            is_verbose,
+            get_rule_severity,
             is_quiet,
+            is_rule_enabled,
+            is_verbose,
         )
 
         # Initialize config
         config = initialize_config(cli_args={"profile": "strict", "verbose": True})
-        
+
         # Test convenience functions
         assert get_active_profile() == Profile.STRICT
-        
+
         # Test rule functions (rules may not be configured in default config)
         # Just test that the functions work without error
         is_rule_enabled("private_access")  # Should return True for non-existent rules
         get_rule_severity("private_access")  # May return None for non-existent rules
-        
+
         assert get_fail_on_level() is not None
         assert get_output_formats() == ["terminal"]
-        assert is_verbose() is False  # DSConfig doesn't have verbose, so should be False
+        assert (
+            is_verbose() is False
+        )  # DSConfig doesn't have verbose, so should be False
         assert is_quiet() is False
 
     def test_error_handling(self):

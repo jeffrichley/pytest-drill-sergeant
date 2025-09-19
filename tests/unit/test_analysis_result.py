@@ -22,7 +22,7 @@ from pytest_drill_sergeant.core.analysis_result import (
     StructuralEqualityCheck,
     SuggestedFixture,
 )
-from pytest_drill_sergeant.core.models import FeaturesData, Finding, RuleType, Severity
+from pytest_drill_sergeant.core.models import FeaturesData, Finding, Severity
 
 # Test constants to avoid magic numbers
 ASSERTION_COUNT = 3

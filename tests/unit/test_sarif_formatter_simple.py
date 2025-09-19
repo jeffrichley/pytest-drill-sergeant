@@ -77,18 +77,9 @@ class TestRuleHelpers:
         """Test getting rule ID for different rule codes."""
         formatter = SARIFFormatter()
 
-        assert (
-            formatter._get_rule_id("DS201")
-            == "drill-sergeant/DS201"
-        )
-        assert (
-            formatter._get_rule_id("DS202")
-            == "drill-sergeant/DS202"
-        )
-        assert (
-            formatter._get_rule_id("DS203")
-            == "drill-sergeant/DS203"
-        )
+        assert formatter._get_rule_id("DS201") == "drill-sergeant/DS201"
+        assert formatter._get_rule_id("DS202") == "drill-sergeant/DS202"
+        assert formatter._get_rule_id("DS203") == "drill-sergeant/DS203"
 
     def test_get_rule_name(self) -> None:
         """Test getting rule name for different rule types."""
@@ -209,7 +200,7 @@ class TestFindingFormatting:
         ]:
             finding = Finding(
                 code="DS201",
-            name="private_access",
+                name="private_access",
                 severity=severity,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -268,7 +259,7 @@ class TestReportGeneration:
         findings = [
             Finding(
                 code="DS201",
-            name="private_access",
+                name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding 1",
                 file_path=Path("test_file1.py"),
@@ -276,7 +267,7 @@ class TestReportGeneration:
             ),
             Finding(
                 code="DS203",
-            name="mock_overspecification",
+                name="mock_overspecification",
                 severity=Severity.ERROR,
                 message="Test finding 2",
                 file_path=Path("test_file2.py"),
@@ -314,7 +305,7 @@ class TestReportGeneration:
         findings = [
             Finding(
                 code="DS201",
-            name="private_access",
+                name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -403,7 +394,7 @@ class TestReportGeneration:
         findings = [
             Finding(
                 code="DS201",
-            name="private_access",
+                name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -431,7 +422,7 @@ class TestReportSaving:
         findings = [
             Finding(
                 code="DS201",
-            name="private_access",
+                name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -483,7 +474,7 @@ class TestReportSaving:
         findings = [
             Finding(
                 code="DS201",
-            name="private_access",
+                name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -609,7 +600,7 @@ class TestSARIFReportBuilder:
         findings = [
             Finding(
                 code="DS201",
-            name="private_access",
+                name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -659,7 +650,7 @@ class TestSARIFReportBuilder:
         findings = [
             Finding(
                 code="DS201",
-            name="private_access",
+                name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -700,7 +691,7 @@ class TestSARIFReportBuilder:
         findings = [
             Finding(
                 code="DS201",
-            name="private_access",
+                name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),

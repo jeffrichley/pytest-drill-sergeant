@@ -9,13 +9,13 @@ long-term stability.
 from __future__ import annotations
 
 from enum import Enum
-from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
 
 class Severity(str, Enum):
     """Severity levels for findings."""
+
     ERROR = "error"
     WARNING = "warning"
     INFO = "info"
@@ -24,6 +24,7 @@ class Severity(str, Enum):
 
 class RuleCategory(str, Enum):
     """Categories for organizing rules."""
+
     TEST_QUALITY = "test_quality"
     CODE_QUALITY = "code_quality"
     PERFORMANCE = "performance"
@@ -33,16 +34,18 @@ class RuleCategory(str, Enum):
 
 class RuleSpec(BaseModel):
     """Specification for a single rule with stable code and metadata."""
-    
+
     code: str = Field(description="Stable rule code (e.g., DS201)")
     name: str = Field(description="Human-readable rule name")
     default_level: Severity = Field(description="Default severity level")
     short_desc: str = Field(description="Brief description for CLI output")
     long_desc: str = Field(description="Detailed description for help")
-    tags: List[str] = Field(default_factory=list, description="Tags for categorization")
-    fixable: bool = Field(default=False, description="Whether rule violations can be auto-fixed")
+    tags: list[str] = Field(default_factory=list, description="Tags for categorization")
+    fixable: bool = Field(
+        default=False, description="Whether rule violations can be auto-fixed"
+    )
     category: RuleCategory = Field(description="Rule category")
-    
+
     @field_validator("code")
     @classmethod
     def validate_code(cls, v: str) -> str:
@@ -56,10 +59,10 @@ class RuleSpec(BaseModel):
         except ValueError:
             raise ValueError("Rule code must be DS followed by 3 digits")
         return v
-    
+
     @field_validator("tags")
     @classmethod
-    def validate_tags(cls, v: List[str]) -> List[str]:
+    def validate_tags(cls, v: list[str]) -> list[str]:
         """Validate tags are non-empty strings."""
         for tag in v:
             if not isinstance(tag, str) or not tag.strip():
@@ -69,55 +72,55 @@ class RuleSpec(BaseModel):
 
 class RuleRegistry:
     """Registry for all rules in the system."""
-    
+
     _rules: dict[str, RuleSpec] = {}
     _rules_by_name: dict[str, str] = {}  # name -> code mapping
-    
+
     @classmethod
     def register_rule(cls, rule: RuleSpec) -> None:
         """Register a rule in the registry."""
         cls._rules[rule.code] = rule
         cls._rules_by_name[rule.name] = rule.code
-    
+
     @classmethod
     def get_rule(cls, identifier: str) -> RuleSpec:
         """Get a rule by code or name.
-        
+
         Args:
             identifier: Rule code (DS201) or name (duplicate_tests)
-            
+
         Returns:
             Rule specification
-            
+
         Raises:
             KeyError: If rule not found
         """
         # Try as code first
         if identifier in cls._rules:
             return cls._rules[identifier]
-        
+
         # Try as name
         if identifier in cls._rules_by_name:
             code = cls._rules_by_name[identifier]
             return cls._rules[code]
-        
+
         raise KeyError(f"Rule not found: {identifier}")
-    
+
     @classmethod
-    def get_all_rules(cls) -> List[RuleSpec]:
+    def get_all_rules(cls) -> list[RuleSpec]:
         """Get all registered rules."""
         return list(cls._rules.values())
-    
+
     @classmethod
-    def get_rules_by_category(cls, category: RuleCategory) -> List[RuleSpec]:
+    def get_rules_by_category(cls, category: RuleCategory) -> list[RuleSpec]:
         """Get all rules in a category."""
         return [rule for rule in cls._rules.values() if rule.category == category]
-    
+
     @classmethod
-    def get_rules_by_tag(cls, tag: str) -> List[RuleSpec]:
+    def get_rules_by_tag(cls, tag: str) -> list[RuleSpec]:
         """Get all rules with a specific tag."""
         return [rule for rule in cls._rules.values() if tag in rule.tags]
-    
+
     @classmethod
     def is_valid_rule(cls, identifier: str) -> bool:
         """Check if a rule identifier is valid."""
@@ -134,7 +137,7 @@ DUPLICATE_TESTS = RuleSpec(
     long_desc="Computes token-similarity between test functions and flags clones above threshold. Helps identify test code duplication that reduces maintainability.",
     tags=["duplication", "quality", "maintainability"],
     fixable=True,
-    category=RuleCategory.TEST_QUALITY
+    category=RuleCategory.TEST_QUALITY,
 )
 
 FIXTURE_SMELLS = RuleSpec(
@@ -145,7 +148,7 @@ FIXTURE_SMELLS = RuleSpec(
     long_desc="Identifies fixtures that are too complex, have side effects, or violate fixture best practices. Helps maintain clean test architecture.",
     tags=["fixtures", "quality", "architecture"],
     fixable=False,
-    category=RuleCategory.TEST_QUALITY
+    category=RuleCategory.TEST_QUALITY,
 )
 
 HOW_NOT_WHAT = RuleSpec(
@@ -156,7 +159,7 @@ HOW_NOT_WHAT = RuleSpec(
     long_desc="Flags tests that verify internal implementation details rather than external behavior. Tests should focus on what the code does, not how it does it.",
     tags=["testing", "quality", "behavior"],
     fixable=False,
-    category=RuleCategory.TEST_QUALITY
+    category=RuleCategory.TEST_QUALITY,
 )
 
 OVERMOCKING = RuleSpec(
@@ -167,7 +170,7 @@ OVERMOCKING = RuleSpec(
     long_desc="Identifies tests that mock too many dependencies, making tests brittle and less valuable. Suggests using real objects where appropriate.",
     tags=["mocking", "quality", "brittleness"],
     fixable=False,
-    category=RuleCategory.TEST_QUALITY
+    category=RuleCategory.TEST_QUALITY,
 )
 
 NONDETERMINISM = RuleSpec(
@@ -178,7 +181,7 @@ NONDETERMINISM = RuleSpec(
     long_desc="Flags tests that may produce different results on different runs due to timing, random data, or external dependencies. These tests are unreliable.",
     tags=["reliability", "flaky", "quality"],
     fixable=False,
-    category=RuleCategory.TEST_QUALITY
+    category=RuleCategory.TEST_QUALITY,
 )
 
 NAMING_HYGIENE = RuleSpec(
@@ -189,7 +192,7 @@ NAMING_HYGIENE = RuleSpec(
     long_desc="Validates that test names follow good conventions and clearly describe what is being tested. Poor naming makes tests hard to understand and maintain.",
     tags=["naming", "conventions", "readability"],
     fixable=True,
-    category=RuleCategory.TEST_QUALITY
+    category=RuleCategory.TEST_QUALITY,
 )
 
 # DS3xx - Code Quality Issues
@@ -201,7 +204,7 @@ PRIVATE_ACCESS = RuleSpec(
     long_desc="Flags tests that access private methods, attributes, or modules. Tests should use public APIs to avoid brittleness when implementation changes.",
     tags=["encapsulation", "quality", "brittleness"],
     fixable=False,
-    category=RuleCategory.CODE_QUALITY
+    category=RuleCategory.CODE_QUALITY,
 )
 
 AAA_COMMENTS = RuleSpec(
@@ -212,7 +215,7 @@ AAA_COMMENTS = RuleSpec(
     long_desc="Validates that tests follow the AAA pattern with clear sections for setup, execution, and verification. Improves test readability and structure.",
     tags=["structure", "readability", "patterns"],
     fixable=True,
-    category=RuleCategory.CODE_QUALITY
+    category=RuleCategory.CODE_QUALITY,
 )
 
 STATIC_CLONES = RuleSpec(
@@ -223,7 +226,7 @@ STATIC_CLONES = RuleSpec(
     long_desc="Identifies duplicate code blocks in test files using static analysis. Helps reduce maintenance burden and improve code quality.",
     tags=["duplication", "quality", "maintainability"],
     fixable=True,
-    category=RuleCategory.CODE_QUALITY
+    category=RuleCategory.CODE_QUALITY,
 )
 
 FIXTURE_EXTRACT = RuleSpec(
@@ -234,7 +237,7 @@ FIXTURE_EXTRACT = RuleSpec(
     long_desc="Identifies common setup code that could be extracted into fixtures. Helps reduce duplication and improve test organization.",
     tags=["fixtures", "refactoring", "duplication"],
     fixable=True,
-    category=RuleCategory.CODE_QUALITY
+    category=RuleCategory.CODE_QUALITY,
 )
 
 MOCK_OVERSPECIFICATION = RuleSpec(
@@ -245,7 +248,7 @@ MOCK_OVERSPECIFICATION = RuleSpec(
     long_desc="Flags mocks that are too specific about method calls, parameters, or return values. Over-specification makes tests brittle and hard to maintain.",
     tags=["mocking", "brittleness", "quality"],
     fixable=False,
-    category=RuleCategory.CODE_QUALITY
+    category=RuleCategory.CODE_QUALITY,
 )
 
 STRUCTURAL_EQUALITY = RuleSpec(
@@ -256,7 +259,7 @@ STRUCTURAL_EQUALITY = RuleSpec(
     long_desc="Validates that tests use appropriate equality assertions and don't rely on object identity when value equality is intended.",
     tags=["assertions", "quality", "correctness"],
     fixable=False,
-    category=RuleCategory.CODE_QUALITY
+    category=RuleCategory.CODE_QUALITY,
 )
 
 
@@ -276,7 +279,7 @@ def register_all_rules() -> None:
         MOCK_OVERSPECIFICATION,
         STRUCTURAL_EQUALITY,
     ]
-    
+
     for rule in rules:
         RuleRegistry.register_rule(rule)
 

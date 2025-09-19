@@ -43,7 +43,7 @@ def test_finding_model():
     """Test Finding model creation."""
     finding = Finding(
         code="DS201",
-            name="private_access",
+        name="private_access",
         file_path="test.py",
         line_number=10,
         message="Test finding",

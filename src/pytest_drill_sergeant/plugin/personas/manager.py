@@ -29,42 +29,42 @@ class PersonaManager:
         # Register built-in personas
         drill_sergeant = DrillSergeantPersona()
         self._personas[drill_sergeant.name] = drill_sergeant
-        
+
         logger.debug(f"Registered persona: {drill_sergeant.name}")
 
     def get_persona(self, name: str | None = None) -> PersonaStrategy:
         """Get a persona by name or the configured default.
-        
+
         Args:
             name: Persona name to get. If None, uses configured default.
-            
+
         Returns:
             PersonaStrategy instance
-            
+
         Raises:
             ValueError: If persona not found
         """
         if name is None:
             name = self._get_default_persona_name()
-        
+
         if name not in self._personas:
             available = ", ".join(self._personas.keys())
             raise ValueError(f"Persona '{name}' not found. Available: {available}")
-        
+
         return self._personas[name]
 
     def _get_default_persona_name(self) -> str:
         """Get the default persona name from configuration."""
         try:
             config = get_config()
-            return getattr(config, 'persona', 'drill_sergeant')
+            return getattr(config, "persona", "drill_sergeant")
         except Exception:
             logger.warning("Could not get persona from config, using default")
-            return 'drill_sergeant'
+            return "drill_sergeant"
 
     def list_personas(self) -> list[str]:
         """List available persona names.
-        
+
         Returns:
             List of persona names
         """
@@ -72,13 +72,13 @@ class PersonaManager:
 
     def get_persona_info(self, name: str) -> dict[str, str]:
         """Get information about a persona.
-        
+
         Args:
             name: Persona name
-            
+
         Returns:
             Dictionary with persona information
-            
+
         Raises:
             ValueError: If persona not found
         """
@@ -86,57 +86,63 @@ class PersonaManager:
         return {
             "name": persona.name,
             "description": persona.description,
-            "config": persona.config.model_dump()
+            "config": persona.config.model_dump(),
         }
 
     def on_test_pass(self, test_name: str, **context: str | int | float | bool) -> str:
         """Generate test pass message using current persona.
-        
+
         Args:
             test_name: Name of the test that passed
             **context: Additional context variables
-            
+
         Returns:
             Formatted message for test pass
         """
         persona = self.get_persona()
         return persona.on_test_pass(test_name, **context)
 
-    def on_test_fail(self, test_name: str, finding: Finding, **context: str | int | float | bool) -> str:
+    def on_test_fail(
+        self, test_name: str, finding: Finding, **context: str | int | float | bool
+    ) -> str:
         """Generate test fail message using current persona.
-        
+
         Args:
             test_name: Name of the test that failed
             finding: Finding that caused the failure
             **context: Additional context variables
-            
+
         Returns:
             Formatted message for test failure
         """
         persona = self.get_persona()
         return persona.on_test_fail(test_name, finding, **context)
 
-    def on_summary(self, metrics: RunMetrics, **context: str | int | float | bool) -> str:
+    def on_summary(
+        self, metrics: RunMetrics, **context: str | int | float | bool
+    ) -> str:
         """Generate summary message using current persona.
-        
+
         Args:
             metrics: Test run metrics
             **context: Additional context variables
-            
+
         Returns:
             Formatted summary message
         """
         persona = self.get_persona()
         return persona.on_summary(metrics, **context)
 
-    def on_bis_score(self, test_name: str, score: float, **context: str | int | float | bool) -> str:
+    def on_bis_score(
+        self, test_name: str, score: float, **context: str | int | float | bool
+    ) -> str:
         """Generate BIS score message using current persona.
-        
+
         Args:
             test_name: Name of the test
             score: BIS score (0-100)
             **context: Additional context variables
-            
+
         Returns:
             Formatted BIS score message
         """
@@ -145,11 +151,11 @@ class PersonaManager:
 
     def on_brs_score(self, score: float, **context: str | int | float | bool) -> str:
         """Generate BRS score message using current persona.
-        
+
         Args:
             score: BRS score (0-100)
             **context: Additional context variables
-            
+
         Returns:
             Formatted BRS score message
         """
@@ -163,7 +169,7 @@ _persona_manager: PersonaManager | None = None
 
 def get_persona_manager() -> PersonaManager:
     """Get the global persona manager instance.
-    
+
     Returns:
         PersonaManager instance
     """

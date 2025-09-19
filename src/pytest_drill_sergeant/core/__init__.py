@@ -11,6 +11,15 @@ from pytest_drill_sergeant.core.config import (
     DrillSergeantConfig,
     load_config,
 )
+from pytest_drill_sergeant.core.config_context import (
+    get_config as get_profile_config,
+)
+from pytest_drill_sergeant.core.config_context import (
+    initialize_config as initialize_profile_config,
+)
+from pytest_drill_sergeant.core.config_context import (
+    reset_config,
+)
 from pytest_drill_sergeant.core.config_manager import (
     ConfigManager,
     config_manager,
@@ -19,11 +28,6 @@ from pytest_drill_sergeant.core.config_manager import (
     get_threshold,
     initialize_config,
     is_rule_enabled,
-)
-from pytest_drill_sergeant.core.config_context import (
-    get_config as get_profile_config,
-    initialize_config as initialize_profile_config,
-    reset_config,
 )
 from pytest_drill_sergeant.core.config_schema import DSConfig, create_default_config
 

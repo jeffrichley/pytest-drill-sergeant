@@ -80,19 +80,19 @@ include_patterns = tests/**/*.py
 exclude_patterns = **/migrations/*.py
 
 # Per-file ignores
-per_file_ignores = 
+per_file_ignores =
     test_legacy.py:DS201,DS202
     test_old.py:DS301
     **/integration/*.py:DS201,DS202,DS301
 
 # Per-file severity overrides
-per_file_severity_overrides = 
+per_file_severity_overrides =
     test_critical.py:error
     test_warning.py:warning
     **/production/*.py:error
 
 # Per-file rule overrides (JSON format)
-per_file_rule_overrides = 
+per_file_rule_overrides =
     test_special.py:{"DS201": {"enabled": false, "severity": "info"}, "DS202": {"threshold": 0.5}}
     **/performance/*.py:{"DS301": {"enabled": false}, "DS302": {"threshold": 0.3}}
 """
@@ -171,23 +171,23 @@ print(f"Found {len(analysis_files)} files to analyze")
 test_file = Path("test_example.py")
 if file_discovery.should_analyze_file(test_file):
     print(f"Will analyze {test_file}")
-    
+
     # Get file-specific configuration
     file_config = file_discovery.get_file_config(test_file)
     print(f"Ignored rules: {file_config['ignored_rules']}")
     print(f"Severity override: {file_config['severity_override']}")
     print(f"Rule overrides: {file_config['rule_overrides']}")
-    
+
     # Check if specific rules are ignored
     if file_discovery.is_rule_ignored_for_file(test_file, "DS201"):
         print("DS201 is ignored for this file")
-    
+
     # Get effective severity for a rule
     effective_severity = file_discovery.get_effective_severity(
         test_file, "DS201", SeverityLevel.WARNING
     )
     print(f"Effective severity for DS201: {effective_severity}")
-    
+
     # Get effective rule configuration
     rule_config = file_discovery.get_effective_rule_config(test_file, "DS201")
     if rule_config:

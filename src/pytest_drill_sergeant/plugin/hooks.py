@@ -6,7 +6,9 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from pytest_drill_sergeant.core.analyzers.private_access_detector import PrivateAccessDetector
+from pytest_drill_sergeant.core.analyzers.private_access_detector import (
+    PrivateAccessDetector,
+)
 from pytest_drill_sergeant.core.cli_config import DrillSergeantArgumentParser
 from pytest_drill_sergeant.core.config_context import get_config, initialize_config
 from pytest_drill_sergeant.core.file_discovery import create_file_discovery
@@ -37,7 +39,7 @@ def pytest_configure(config: pytest.Config) -> None:
             cli_args[option] = getattr(config.option, option)
 
     initialize_config(cli_args, config)
-    
+
     # Initialize analyzers
     _initialize_analyzers()
 
@@ -92,16 +94,18 @@ def _initialize_analyzers() -> None:
     """Initialize analyzers for the test session."""
     try:
         storage = get_analysis_storage()
-        
+
         # Initialize Private Access Detector
         # SUT filtering is now handled by context, not by the detector
         # Initialize config context for pytest plugin mode
         from pytest_drill_sergeant.core.config_context import initialize_config
+
         initialize_config()  # Use defaults for plugin mode
         detector = PrivateAccessDetector()
         storage.add_analyzer(detector)
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.warning(f"Failed to initialize analyzers: {e}")
 
@@ -111,36 +115,36 @@ def _analyze_test_file(item: pytest.Item) -> None:
     try:
         test_file_path = Path(item.fspath)
         storage = get_analysis_storage()
-        
+
         # Check if file should be analyzed using file discovery
         config = get_config()
         file_discovery = create_file_discovery(config)
-        
+
         if not file_discovery.should_analyze_file(test_file_path):
             # File is excluded by configuration, skip analysis
             return
-        
+
         # Only analyze if we haven't already analyzed this file
         if str(test_file_path) not in storage._test_findings:
             findings = storage.analyze_test_file(test_file_path)
-            
+
             # Apply file-specific rule filtering
             file_config = file_discovery.get_file_config(test_file_path)
             ignored_rules = file_config["ignored_rules"]
-            
+
             # Filter out findings for ignored rules
             filtered_findings = [
-                finding for finding in findings
-                if finding.code not in ignored_rules
+                finding for finding in findings if finding.code not in ignored_rules
             ]
-            
+
             # Store findings in the item for later use
-            if not hasattr(item, 'ds_findings'):
+            if not hasattr(item, "ds_findings"):
                 item.ds_findings = filtered_findings
             else:
                 item.ds_findings = filtered_findings
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.warning(f"Failed to analyze test file {item.fspath}: {e}")
 
@@ -151,14 +155,14 @@ def _inject_persona_feedback(report: pytest.TestReport) -> None:
         # Only inject feedback for test reports (not setup/teardown)
         if report.when != "call":
             return
-            
+
         persona_manager = get_persona_manager()
         storage = get_analysis_storage()
-        
+
         # Get findings for this test file
         test_file_path = Path(report.fspath)
         findings = storage.get_test_findings(test_file_path)
-        
+
         # Generate appropriate message based on test result
         if report.outcome == "passed":
             if findings:
@@ -168,33 +172,34 @@ def _inject_persona_feedback(report: pytest.TestReport) -> None:
             else:
                 # Test passed with no violations
                 message = persona_manager.on_test_pass(report.nodeid)
+        # Test failed - generate failure message
+        elif findings:
+            # Use the first finding for the failure message
+            message = persona_manager.on_test_fail(report.nodeid, findings[0])
         else:
-            # Test failed - generate failure message
-            if findings:
-                # Use the first finding for the failure message
-                message = persona_manager.on_test_fail(report.nodeid, findings[0])
-            else:
-                # Test failed for other reasons (not our violations)
-                from pytest_drill_sergeant.core.models import Finding, RuleType, Severity
-                dummy_finding = Finding(
-                    rule_type=RuleType.PRIVATE_ACCESS,
-                    severity=Severity.WARNING,
-                    message="Test failed for unknown reasons",
-                    file_path=test_file_path,
-                    line_number=0
-                )
-                message = persona_manager.on_test_fail(report.nodeid, dummy_finding)
-        
+            # Test failed for other reasons (not our violations)
+            from pytest_drill_sergeant.core.models import Finding, RuleType, Severity
+
+            dummy_finding = Finding(
+                rule_type=RuleType.PRIVATE_ACCESS,
+                severity=Severity.WARNING,
+                message="Test failed for unknown reasons",
+                file_path=test_file_path,
+                line_number=0,
+            )
+            message = persona_manager.on_test_fail(report.nodeid, dummy_finding)
+
         # Add the message to the report
-        if hasattr(report, 'longrepr') and report.longrepr:
+        if hasattr(report, "longrepr") and report.longrepr:
             # Append to existing longrepr
             report.longrepr = f"{report.longrepr}\n\n{message}"
         else:
             # Create new longrepr
             report.longrepr = message
-            
+
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.warning(f"Failed to inject persona feedback: {e}")
 
@@ -204,39 +209,45 @@ def _generate_persona_summary(terminalreporter: pytest.TerminalReporter) -> None
     try:
         storage = get_analysis_storage()
         persona_manager = get_persona_manager()
-        
+
         # Get summary statistics
         stats = storage.get_summary_stats()
-        
+
         # Create mock metrics for summary
         from pytest_drill_sergeant.core.models import RunMetrics
+
         metrics = RunMetrics(
             total_tests=stats["total_tests"],
             total_violations=stats["total_violations"],
-            brs_score=max(0, 100 - (stats["total_violations"] * 15))  # Simple BRS calculation
+            brs_score=max(
+                0, 100 - (stats["total_violations"] * 15)
+            ),  # Simple BRS calculation
         )
-        
+
         # Generate summary message
         summary_message = persona_manager.on_summary(metrics)
-        
+
         # Add to terminal output
         terminalreporter.write_sep("=", "DRILL SERGEANT SUMMARY")
         terminalreporter.write_line(summary_message)
         terminalreporter.write_line("")
-        
+
         # Add detailed statistics
-        terminalreporter.write_line(f"Total violations found: {stats['total_violations']}")
+        terminalreporter.write_line(
+            f"Total violations found: {stats['total_violations']}"
+        )
         terminalreporter.write_line(f"Test files analyzed: {stats['total_test_files']}")
         terminalreporter.write_line(f"Tests run: {stats['total_tests']}")
-        
+
         if stats["rule_counts"]:
             terminalreporter.write_line("Violations by type:")
             for rule_type, count in stats["rule_counts"].items():
                 terminalreporter.write_line(f"  {rule_type}: {count}")
-        
+
         terminalreporter.write_sep("=", "END DRILL SERGEANT SUMMARY")
-        
+
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.warning(f"Failed to generate persona summary: {e}")

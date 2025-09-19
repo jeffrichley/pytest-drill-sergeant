@@ -23,22 +23,22 @@ def test_proper_test_structure():
     # Arrange
     obj = SomeClass()
     expected = "expected_value"
-    
+
     # Act
     result = obj.public_method()
-    
+
     # Assert
     assert result == expected
 
 
 class SomeClass:
     """Sample class with only public methods."""
-    
+
     def __init__(self):
         self.public_attr = "public"
-    
+
     def public_method(self):
         return "public"
-    
+
     def another_public_method(self):
         return "another_public"

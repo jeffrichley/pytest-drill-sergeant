@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from pytest_drill_sergeant.core.models import Finding, RuleType, Severity, RunMetrics
+import pytest
+
+from pytest_drill_sergeant.core.models import Finding, RunMetrics, Severity
 from pytest_drill_sergeant.plugin.analysis_storage import AnalysisStorage
 from pytest_drill_sergeant.plugin.personas.manager import PersonaManager
 
@@ -67,7 +68,7 @@ class TestPersonaManager:
             severity=Severity.WARNING,
             message="Some violation",
             file_path=Path("test.py"),
-            line_number=1
+            line_number=1,
         )
         message = manager.on_test_fail("test_something", finding)
         assert "test_something" in message
@@ -76,11 +77,7 @@ class TestPersonaManager:
     def test_on_summary(self) -> None:
         """Test summary message generation."""
         manager = PersonaManager()
-        metrics = RunMetrics(
-            total_tests=10,
-            total_violations=2,
-            brs_score=70.0
-        )
+        metrics = RunMetrics(total_tests=10, total_violations=2, brs_score=70.0)
         message = manager.on_summary(metrics)
         assert len(message) > 0
 
@@ -119,7 +116,7 @@ class TestAnalysisStorage:
     def test_analyze_test_file(self) -> None:
         """Test analyzing a test file."""
         storage = AnalysisStorage()
-        
+
         # Mock analyzer
         mock_analyzer = Mock()
         mock_finding = Finding(
@@ -128,15 +125,15 @@ class TestAnalysisStorage:
             severity=Severity.WARNING,
             message="Test violation",
             file_path=Path("test.py"),
-            line_number=1
+            line_number=1,
         )
         mock_analyzer.analyze_file.return_value = [mock_finding]
         storage.add_analyzer(mock_analyzer)
-        
+
         # Analyze test file
         test_file = Path("test_example.py")
         findings = storage.analyze_test_file(test_file)
-        
+
         assert len(findings) == 1
         assert findings[0] == mock_finding
         assert str(test_file) in storage._test_findings
@@ -151,10 +148,10 @@ class TestAnalysisStorage:
             severity=Severity.WARNING,
             message="Test violation",
             file_path=test_file,
-            line_number=1
+            line_number=1,
         )
         storage._test_findings[str(test_file)] = [mock_finding]
-        
+
         findings = storage.get_test_findings(test_file)
         assert len(findings) == 1
         assert findings[0] == mock_finding
@@ -164,20 +161,16 @@ class TestAnalysisStorage:
         storage = AnalysisStorage()
         metrics = {"score": 85.0, "violations": 2}
         storage.set_test_metrics("test_something", metrics)
-        
+
         retrieved_metrics = storage.get_test_metrics("test_something")
         assert retrieved_metrics == metrics
 
     def test_set_get_session_metrics(self) -> None:
         """Test setting and getting session metrics."""
         storage = AnalysisStorage()
-        metrics = RunMetrics(
-            total_tests=10,
-            total_violations=3,
-            brs_score=70.0
-        )
+        metrics = RunMetrics(total_tests=10, total_violations=3, brs_score=70.0)
         storage.set_session_metrics(metrics)
-        
+
         retrieved_metrics = storage.get_session_metrics()
         assert retrieved_metrics == metrics
 
@@ -190,7 +183,7 @@ class TestAnalysisStorage:
             severity=Severity.WARNING,
             message="Violation 1",
             file_path=Path("test1.py"),
-            line_number=1
+            line_number=1,
         )
         mock_finding2 = Finding(
             code="DS201",
@@ -198,11 +191,11 @@ class TestAnalysisStorage:
             severity=Severity.ERROR,
             message="Violation 2",
             file_path=Path("test2.py"),
-            line_number=2
+            line_number=2,
         )
         storage._test_findings["test1.py"] = [mock_finding1]
         storage._test_findings["test2.py"] = [mock_finding2]
-        
+
         all_findings = storage.get_all_findings()
         assert len(all_findings) == 2
         assert mock_finding1 in all_findings
@@ -217,7 +210,7 @@ class TestAnalysisStorage:
             severity=Severity.WARNING,
             message="Violation 1",
             file_path=Path("test1.py"),
-            line_number=1
+            line_number=1,
         )
         mock_finding2 = Finding(
             code="DS201",
@@ -225,11 +218,11 @@ class TestAnalysisStorage:
             severity=Severity.ERROR,
             message="Violation 2",
             file_path=Path("test2.py"),
-            line_number=2
+            line_number=2,
         )
         storage._test_findings["test1.py"] = [mock_finding1]
         storage._test_findings["test2.py"] = [mock_finding2]
-        
+
         total = storage.get_total_violations()
         assert total == 2
 
@@ -239,9 +232,9 @@ class TestAnalysisStorage:
         storage._test_findings["test.py"] = [Mock()]
         storage._test_metrics["test"] = {"score": 85.0}
         storage._session_metrics = Mock()
-        
+
         storage.clear()
-        
+
         assert storage._test_findings == {}
         assert storage._test_metrics == {}
         assert storage._session_metrics is None
@@ -255,7 +248,7 @@ class TestAnalysisStorage:
             severity=Severity.WARNING,
             message="Violation 1",
             file_path=Path("test1.py"),
-            line_number=1
+            line_number=1,
         )
         mock_finding2 = Finding(
             code="DS201",
@@ -263,15 +256,15 @@ class TestAnalysisStorage:
             severity=Severity.ERROR,
             message="Violation 2",
             file_path=Path("test2.py"),
-            line_number=2
+            line_number=2,
         )
         storage._test_findings["test1.py"] = [mock_finding1]
         storage._test_findings["test2.py"] = [mock_finding2]
         storage._test_metrics["test1"] = {"score": 85.0}
         storage._test_metrics["test2"] = {"score": 70.0}
-        
+
         stats = storage.get_summary_stats()
-        
+
         assert stats["total_violations"] == 2
         assert stats["total_test_files"] == 2
         assert stats["total_tests"] == 2
@@ -282,62 +275,64 @@ class TestAnalysisStorage:
 class TestHookIntegration:
     """Test the integration between hooks and persona system."""
 
-    @patch('pytest_drill_sergeant.plugin.hooks.get_config')
-    @patch('pytest_drill_sergeant.plugin.hooks.get_analysis_storage')
+    @patch("pytest_drill_sergeant.plugin.hooks.get_config")
+    @patch("pytest_drill_sergeant.plugin.hooks.get_analysis_storage")
     def test_initialize_analyzers(self, mock_storage, mock_config) -> None:
         """Test analyzer initialization in hooks."""
         from pytest_drill_sergeant.plugin.hooks import _initialize_analyzers
-        
+
         # Mock config
         mock_config.return_value.sut_package = "myapp"
-        
+
         # Mock storage
         mock_storage_instance = Mock()
         mock_storage.return_value = mock_storage_instance
-        
+
         # Call the function
         _initialize_analyzers()
-        
+
         # Verify analyzer was added
         mock_storage_instance.add_analyzer.assert_called_once()
 
-    @patch('pytest_drill_sergeant.plugin.hooks.get_analysis_storage')
+    @patch("pytest_drill_sergeant.plugin.hooks.get_analysis_storage")
     def test_analyze_test_file(self, mock_storage) -> None:
         """Test test file analysis in hooks."""
         from pytest_drill_sergeant.plugin.hooks import _analyze_test_file
-        
+
         # Mock storage
         mock_storage_instance = Mock()
         mock_storage_instance._test_findings = {}
         mock_storage_instance.analyze_test_file.return_value = []
         mock_storage.return_value = mock_storage_instance
-        
+
         # Mock test item
         mock_item = Mock()
         mock_item.fspath = "/path/to/test.py"
-        
+
         # Call the function
         _analyze_test_file(mock_item)
-        
+
         # Verify analysis was called
         mock_storage_instance.analyze_test_file.assert_called_once()
 
-    @patch('pytest_drill_sergeant.plugin.hooks.get_persona_manager')
-    @patch('pytest_drill_sergeant.plugin.hooks.get_analysis_storage')
-    def test_inject_persona_feedback_passed(self, mock_storage, mock_persona_manager) -> None:
+    @patch("pytest_drill_sergeant.plugin.hooks.get_persona_manager")
+    @patch("pytest_drill_sergeant.plugin.hooks.get_analysis_storage")
+    def test_inject_persona_feedback_passed(
+        self, mock_storage, mock_persona_manager
+    ) -> None:
         """Test persona feedback injection for passed tests."""
         from pytest_drill_sergeant.plugin.hooks import _inject_persona_feedback
-        
+
         # Mock storage
         mock_storage_instance = Mock()
         mock_storage_instance.get_test_findings.return_value = []
         mock_storage.return_value = mock_storage_instance
-        
+
         # Mock persona manager
         mock_persona_manager_instance = Mock()
         mock_persona_manager_instance.on_test_pass.return_value = "Test passed!"
         mock_persona_manager.return_value = mock_persona_manager_instance
-        
+
         # Mock test report
         mock_report = Mock()
         mock_report.when = "call"
@@ -345,20 +340,24 @@ class TestHookIntegration:
         mock_report.nodeid = "test_something"
         mock_report.fspath = "/path/to/test.py"
         mock_report.longrepr = None
-        
+
         # Call the function
         _inject_persona_feedback(mock_report)
-        
+
         # Verify persona message was generated
-        mock_persona_manager_instance.on_test_pass.assert_called_once_with("test_something")
+        mock_persona_manager_instance.on_test_pass.assert_called_once_with(
+            "test_something"
+        )
         assert mock_report.longrepr == "Test passed!"
 
-    @patch('pytest_drill_sergeant.plugin.hooks.get_persona_manager')
-    @patch('pytest_drill_sergeant.plugin.hooks.get_analysis_storage')
-    def test_inject_persona_feedback_failed(self, mock_storage, mock_persona_manager) -> None:
+    @patch("pytest_drill_sergeant.plugin.hooks.get_persona_manager")
+    @patch("pytest_drill_sergeant.plugin.hooks.get_analysis_storage")
+    def test_inject_persona_feedback_failed(
+        self, mock_storage, mock_persona_manager
+    ) -> None:
         """Test persona feedback injection for failed tests."""
         from pytest_drill_sergeant.plugin.hooks import _inject_persona_feedback
-        
+
         # Mock storage
         mock_storage_instance = Mock()
         mock_finding = Finding(
@@ -367,16 +366,16 @@ class TestHookIntegration:
             severity=Severity.WARNING,
             message="Test violation",
             file_path=Path("test.py"),
-            line_number=1
+            line_number=1,
         )
         mock_storage_instance.get_test_findings.return_value = [mock_finding]
         mock_storage.return_value = mock_storage_instance
-        
+
         # Mock persona manager
         mock_persona_manager_instance = Mock()
         mock_persona_manager_instance.on_test_fail.return_value = "Test failed!"
         mock_persona_manager.return_value = mock_persona_manager_instance
-        
+
         # Mock test report
         mock_report = Mock()
         mock_report.when = "call"
@@ -384,41 +383,43 @@ class TestHookIntegration:
         mock_report.nodeid = "test_something"
         mock_report.fspath = "/path/to/test.py"
         mock_report.longrepr = None
-        
+
         # Call the function
         _inject_persona_feedback(mock_report)
-        
+
         # Verify persona message was generated
-        mock_persona_manager_instance.on_test_fail.assert_called_once_with("test_something", mock_finding)
+        mock_persona_manager_instance.on_test_fail.assert_called_once_with(
+            "test_something", mock_finding
+        )
         assert mock_report.longrepr == "Test failed!"
 
-    @patch('pytest_drill_sergeant.plugin.hooks.get_persona_manager')
-    @patch('pytest_drill_sergeant.plugin.hooks.get_analysis_storage')
+    @patch("pytest_drill_sergeant.plugin.hooks.get_persona_manager")
+    @patch("pytest_drill_sergeant.plugin.hooks.get_analysis_storage")
     def test_generate_persona_summary(self, mock_storage, mock_persona_manager) -> None:
         """Test persona summary generation."""
         from pytest_drill_sergeant.plugin.hooks import _generate_persona_summary
-        
+
         # Mock storage
         mock_storage_instance = Mock()
         mock_storage_instance.get_summary_stats.return_value = {
             "total_violations": 2,
             "total_test_files": 1,
             "total_tests": 5,
-            "rule_counts": {"PRIVATE_ACCESS": 2}
+            "rule_counts": {"PRIVATE_ACCESS": 2},
         }
         mock_storage.return_value = mock_storage_instance
-        
+
         # Mock persona manager
         mock_persona_manager_instance = Mock()
         mock_persona_manager_instance.on_summary.return_value = "Summary message!"
         mock_persona_manager.return_value = mock_persona_manager_instance
-        
+
         # Mock terminal reporter
         mock_terminal_reporter = Mock()
-        
+
         # Call the function
         _generate_persona_summary(mock_terminal_reporter)
-        
+
         # Verify summary was generated
         mock_persona_manager_instance.on_summary.assert_called_once()
         mock_terminal_reporter.write_sep.assert_called()

@@ -142,7 +142,7 @@ class TestFinding:
         with pytest.raises(ValidationError):
             Finding(
                 code="DS201",
-            name="private_access",
+                name="private_access",
                 severity=Severity.WARNING,
                 message="Test",
                 file_path=Path("test.py"),
@@ -153,7 +153,7 @@ class TestFinding:
         with pytest.raises(ValidationError):
             Finding(
                 code="DS201",
-            name="private_access",
+                name="private_access",
                 severity=Severity.WARNING,
                 message="Test",
                 file_path=Path("test.py"),
