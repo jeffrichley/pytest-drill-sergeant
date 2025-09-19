@@ -35,7 +35,8 @@ class TemplateContext:
     column_number: int | None = None
 
     # Finding-specific context
-    rule_type: str | None = None
+    code: str | None = None
+    name: str | None = None
     severity: str | None = None
     message: str | None = None
     suggestion: str | None = None
@@ -187,22 +188,22 @@ class TemplateRegistry:
         # Finding templates
         self.register(
             "finding.warning",
-            MessageTemplate("⚠️  {rule_type}: {message} at {file_path}:{line_number}"),
+            MessageTemplate("⚠️  {name}: {message} at {file_path}:{line_number}"),
         )
 
         self.register(
             "finding.error",
-            MessageTemplate("❌ {rule_type}: {message} at {file_path}:{line_number}"),
+            MessageTemplate("❌ {name}: {message} at {file_path}:{line_number}"),
         )
 
         self.register(
             "finding.info",
-            MessageTemplate("ℹ️  {rule_type}: {message} at {file_path}:{line_number}"),
+            MessageTemplate("ℹ️  {name}: {message} at {file_path}:{line_number}"),
         )
 
         self.register(
             "finding.hint",
-            MessageTemplate("💡 {rule_type}: {message} at {file_path}:{line_number}"),
+            MessageTemplate("💡 {name}: {message} at {file_path}:{line_number}"),
         )
 
         # Test result templates
@@ -291,11 +292,11 @@ class RichFormatter:
             Rendered template string
         """
         template = self._get_finding_template(finding.severity)
-        rule_type_value = self._get_rule_type_value(finding.rule_type)
 
         if template is not None:
             return template.render(
-                rule_type=rule_type_value,
+                code=finding.code,
+                name=finding.name,
                 message=finding.message,
                 file_path=str(finding.file_path),
                 line_number=finding.line_number,
@@ -325,16 +326,6 @@ class RichFormatter:
 
         return template
 
-    def _get_rule_type_value(self, rule_type: RuleType) -> str:
-        """Get the string value of a rule type.
-
-        Args:
-            rule_type: Rule type
-
-        Returns:
-            String representation of rule type
-        """
-        return rule_type.value if hasattr(rule_type, "value") else str(rule_type)
 
     def _apply_severity_styling(self, text: Text, severity: Severity) -> Text:
         """Apply Rich styling based on severity.

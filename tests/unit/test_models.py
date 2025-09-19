@@ -65,7 +65,8 @@ class TestFinding:
     def test_finding_creation(self) -> None:
         """Test creating a finding."""
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test message",
             file_path=Path("test.py"),
@@ -77,7 +78,8 @@ class TestFinding:
             metadata={"key": "value"},
         )
 
-        assert finding.rule_type == RuleType.PRIVATE_ACCESS
+        assert finding.code == "DS201"
+        assert finding.name == "private_access"
         assert finding.severity == Severity.WARNING
         assert finding.message == "Test message"
         assert finding.file_path == Path("test.py")
@@ -91,14 +93,16 @@ class TestFinding:
     def test_finding_minimal(self) -> None:
         """Test creating a finding with minimal required fields."""
         finding = Finding(
-            rule_type=RuleType.AAA_COMMENT,
+            code="DS202",
+            name="aaa_comment",
             severity=Severity.ERROR,
             message="Minimal message",
             file_path=Path("test.py"),
             line_number=1,
         )
 
-        assert finding.rule_type == RuleType.AAA_COMMENT
+        assert finding.code == "DS202"
+        assert finding.name == "aaa_comment"
         assert finding.severity == Severity.ERROR
         assert finding.message == "Minimal message"
         assert finding.file_path == Path("test.py")
@@ -113,7 +117,8 @@ class TestFinding:
         """Test finding confidence validation."""
         # Valid confidence values
         finding1 = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test",
             file_path=Path("test.py"),
@@ -123,7 +128,8 @@ class TestFinding:
         assert finding1.confidence == 0.0
 
         finding2 = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test",
             file_path=Path("test.py"),
@@ -135,7 +141,8 @@ class TestFinding:
         # Invalid confidence values
         with pytest.raises(ValidationError):
             Finding(
-                rule_type=RuleType.PRIVATE_ACCESS,
+                code="DS201",
+            name="private_access",
                 severity=Severity.WARNING,
                 message="Test",
                 file_path=Path("test.py"),
@@ -145,7 +152,8 @@ class TestFinding:
 
         with pytest.raises(ValidationError):
             Finding(
-                rule_type=RuleType.PRIVATE_ACCESS,
+                code="DS201",
+            name="private_access",
                 severity=Severity.WARNING,
                 message="Test",
                 file_path=Path("test.py"),
@@ -165,7 +173,8 @@ class TestCluster:
     def test_cluster_creation(self) -> None:
         """Test creating a cluster."""
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test finding",
             file_path=Path("test.py"),
@@ -378,7 +387,8 @@ class TestModelIntegration:
     def test_finding_in_cluster(self) -> None:
         """Test finding can be used in cluster."""
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test finding",
             file_path=Path("test.py"),
@@ -405,14 +415,16 @@ class TestModelIntegration:
         )
 
         finding = Finding(
-            rule_type=rule.rule_type,
+            code="DS201",
+            name="private_access",
             severity=rule.severity,
             message="Private access violation",
             file_path=Path("test.py"),
             line_number=1,
         )
 
-        assert finding.rule_type == rule.rule_type
+        assert finding.code == "DS201"
+        assert finding.name == "private_access"
         assert finding.severity == rule.severity
 
     def test_features_data_with_finding(self) -> None:
@@ -425,7 +437,8 @@ class TestModelIntegration:
         )
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Private access violation",
             file_path=features.file_path,

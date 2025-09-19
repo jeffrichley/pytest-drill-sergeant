@@ -39,11 +39,6 @@ class JSONFormatter:
         Returns:
             JSON-serializable dictionary
         """
-        rule_type_value = (
-            finding.rule_type.value
-            if hasattr(finding.rule_type, "value")
-            else str(finding.rule_type)
-        )
         severity_value = (
             finding.severity.value
             if hasattr(finding.severity, "value")
@@ -51,7 +46,8 @@ class JSONFormatter:
         )
 
         return {
-            "rule_type": rule_type_value,
+            "code": finding.code,
+            "name": finding.name,
             "severity": severity_value,
             "message": finding.message,
             "file_path": str(finding.file_path),

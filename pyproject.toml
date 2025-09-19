@@ -41,6 +41,10 @@ Issues = "https://github.com/jeffrichley/pytest-drill-sergeant/issues"
 
 [project.scripts]
 drill-sergeant = "pytest_drill_sergeant.cli.main:cli"
+ds = "pytest_drill_sergeant.cli.main:cli"
+maggot = "pytest_drill_sergeant.cli.main:cli"        # hidden humiliation alias
+sorry-excuse = "pytest_drill_sergeant.cli.main:cli"  # another easter egg
+
 
 [project.entry-points.pytest11]
 drill_sergeant = "pytest_drill_sergeant.plugin.hooks"

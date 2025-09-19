@@ -74,20 +74,20 @@ class TestRuleHelpers:
     """Test rule helper methods."""
 
     def test_get_rule_id(self) -> None:
-        """Test getting rule ID for different rule types."""
+        """Test getting rule ID for different rule codes."""
         formatter = SARIFFormatter()
 
         assert (
-            formatter._get_rule_id(RuleType.PRIVATE_ACCESS)
-            == "drill-sergeant/private_access"
+            formatter._get_rule_id("DS201")
+            == "drill-sergeant/DS201"
         )
         assert (
-            formatter._get_rule_id(RuleType.MOCK_OVERSPECIFICATION)
-            == "drill-sergeant/mock_overspecification"
+            formatter._get_rule_id("DS202")
+            == "drill-sergeant/DS202"
         )
         assert (
-            formatter._get_rule_id(RuleType.STRUCTURAL_EQUALITY)
-            == "drill-sergeant/structural_equality"
+            formatter._get_rule_id("DS203")
+            == "drill-sergeant/DS203"
         )
 
     def test_get_rule_name(self) -> None:
@@ -127,10 +127,10 @@ class TestRuleHelpers:
         assert formatter._get_severity_level(Severity.HINT) == "note"
 
     def test_get_help_uri(self) -> None:
-        """Test getting help URI for rule types."""
+        """Test getting help URI for rule names."""
         formatter = SARIFFormatter()
 
-        uri = formatter._get_help_uri(RuleType.PRIVATE_ACCESS)
+        uri = formatter._get_help_uri("private_access")
         assert "github.com/jeffrichley/pytest-drill-sergeant" in uri
         assert "private_access.md" in uri
 
@@ -143,7 +143,8 @@ class TestFindingFormatting:
         formatter = SARIFFormatter()
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test finding message",
             file_path=Path("test_file.py"),
@@ -154,7 +155,7 @@ class TestFindingFormatting:
         result = formatter.format_finding(finding)
 
         assert result.message.text == "Test finding message"
-        assert result.rule_id == "drill-sergeant/private_access"
+        assert result.rule_id == "drill-sergeant/DS201"
         assert result.level == "warning"
         assert result.locations[0].artifact_location.uri == "file:///test_file.py"
         assert result.locations[0].region.start_line == TEST_LINE_NUMBER
@@ -165,7 +166,8 @@ class TestFindingFormatting:
         formatter = SARIFFormatter()
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test finding message",
             file_path=Path("test_file.py"),
@@ -183,7 +185,8 @@ class TestFindingFormatting:
         formatter = SARIFFormatter()
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test finding message",
             file_path=Path("test_file.py"),
@@ -205,7 +208,8 @@ class TestFindingFormatting:
             (Severity.HINT, "note"),
         ]:
             finding = Finding(
-                rule_type=RuleType.PRIVATE_ACCESS,
+                code="DS201",
+            name="private_access",
                 severity=severity,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -219,9 +223,17 @@ class TestFindingFormatting:
         """Test finding formatting with different rule types."""
         formatter = SARIFFormatter()
 
-        for rule_type in RuleType:
+        # Test with different rule codes
+        test_rules = [
+            ("DS201", "private_access"),
+            ("DS202", "aaa_comment"),
+            ("DS203", "mock_overspecification"),
+        ]
+
+        for code, name in test_rules:
             finding = Finding(
-                rule_type=rule_type,
+                code=code,
+                name=name,
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -229,7 +241,7 @@ class TestFindingFormatting:
             )
 
             result = formatter.format_finding(finding)
-            assert result.rule_id == f"drill-sergeant/{rule_type.value}"
+            assert result.rule_id == f"drill-sergeant/{code}"
 
 
 class TestReportGeneration:
@@ -255,14 +267,16 @@ class TestReportGeneration:
 
         findings = [
             Finding(
-                rule_type=RuleType.PRIVATE_ACCESS,
+                code="DS201",
+            name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding 1",
                 file_path=Path("test_file1.py"),
                 line_number=10,
             ),
             Finding(
-                rule_type=RuleType.MOCK_OVERSPECIFICATION,
+                code="DS203",
+            name="mock_overspecification",
                 severity=Severity.ERROR,
                 message="Test finding 2",
                 file_path=Path("test_file2.py"),
@@ -299,7 +313,8 @@ class TestReportGeneration:
 
         findings = [
             Finding(
-                rule_type=RuleType.PRIVATE_ACCESS,
+                code="DS201",
+            name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -387,7 +402,8 @@ class TestReportGeneration:
 
         findings = [
             Finding(
-                rule_type=RuleType.PRIVATE_ACCESS,
+                code="DS201",
+            name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -401,7 +417,7 @@ class TestReportGeneration:
         results = formatter.format_test_result(test_result)
 
         assert len(results) == 1
-        assert results[0].rule_id == "drill-sergeant/private_access"
+        assert results[0].rule_id == "drill-sergeant/DS201"
         assert results[0].level == "warning"
 
 
@@ -414,7 +430,8 @@ class TestReportSaving:
 
         findings = [
             Finding(
-                rule_type=RuleType.PRIVATE_ACCESS,
+                code="DS201",
+            name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -465,7 +482,8 @@ class TestReportSaving:
 
         findings = [
             Finding(
-                rule_type=RuleType.PRIVATE_ACCESS,
+                code="DS201",
+            name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -590,7 +608,8 @@ class TestSARIFReportBuilder:
 
         findings = [
             Finding(
-                rule_type=RuleType.PRIVATE_ACCESS,
+                code="DS201",
+            name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -639,7 +658,8 @@ class TestSARIFReportBuilder:
 
         findings = [
             Finding(
-                rule_type=RuleType.PRIVATE_ACCESS,
+                code="DS201",
+            name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -679,7 +699,8 @@ class TestSARIFReportBuilder:
 
         findings = [
             Finding(
-                rule_type=RuleType.PRIVATE_ACCESS,
+                code="DS201",
+            name="private_access",
                 severity=Severity.WARNING,
                 message="Test finding",
                 file_path=Path("test_file.py"),
@@ -718,7 +739,8 @@ class TestEdgeCases:
         formatter = SARIFFormatter()
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="测试消息 🚀",
             file_path=Path("测试文件.py"),
@@ -738,7 +760,8 @@ class TestEdgeCases:
         long_message = "A" * 10000  # 10KB message
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message=long_message,
             file_path=Path("test_file.py"),
@@ -754,7 +777,8 @@ class TestEdgeCases:
         formatter = SARIFFormatter()
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test finding",
             file_path=Path("test file with spaces.py"),
@@ -770,7 +794,8 @@ class TestEdgeCases:
         formatter = SARIFFormatter()
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test finding",
             file_path=Path("/absolute/path/to/test_file.py"),
@@ -789,7 +814,8 @@ class TestEdgeCases:
         formatter = SARIFFormatter()
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test finding",
             file_path=Path("test_file.py"),
@@ -807,7 +833,8 @@ class TestEdgeCases:
         formatter = SARIFFormatter()
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test finding",
             file_path=Path("test_file.py"),
@@ -825,7 +852,8 @@ class TestEdgeCases:
         formatter = SARIFFormatter()
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test finding",
             file_path=Path("test_file.py"),
@@ -843,7 +871,8 @@ class TestEdgeCases:
         formatter = SARIFFormatter()
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test finding",
             file_path=Path("test_file.py"),

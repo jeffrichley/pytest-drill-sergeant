@@ -1,0 +1,26 @@
+[tool:pytest-drill-sergeant]
+# Profile-based configuration for pytest-drill-sergeant
+# This file shows how to configure drill sergeant in pytest.ini
+
+# Profile selection
+profile = standard
+ci_profile = strict
+fail_on = error
+report = summary
+
+# Output settings
+output_formats = terminal,json
+json_report_path = build/drill_report.json
+sarif_report_path = build/drill_report.sarif
+
+# Behavior flags
+verbose = false
+quiet = false
+
+# Rule configurations (simplified for pytest.ini)
+# For complex rule configs, use pyproject.toml instead
+rules = duplicate_tests,fixture_smells,how_not_what,overmocking,nondeterminism,private_access
+
+# Profile-specific overrides (basic format)
+# For complex profile configs, use pyproject.toml instead
+profiles = strict,chill

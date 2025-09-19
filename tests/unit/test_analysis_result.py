@@ -579,7 +579,8 @@ class TestComprehensiveAnalysisResult:
             test_name="test_coverage", file_path="/path/to/test.py"
         )
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             message="Test finding",
             severity=Severity.ERROR,
             file_path=Path("/path/to/test.py"),

@@ -1,0 +1,58 @@
+[tool.pytest-drill-sergeant]
+# Profile-based configuration for pytest-drill-sergeant
+# This file shows how to configure drill sergeant in pyproject.toml
+
+# Profile selection
+profile = "standard"            # default for local dev
+ci_profile = "strict"           # auto-applied when CI=true
+fail_on = "error"               # warnings don't fail in standard
+report = "summary"              # or "json","sarif","full"
+
+# Output settings
+output_formats = ["terminal", "json"]
+json_report_path = "build/drill_report.json"
+sarif_report_path = "build/drill_report.sarif"
+
+# Behavior flags
+verbose = false
+quiet = false
+
+# Rule-level configuration
+[tool.pytest-drill-sergeant.rules]
+duplicate_tests = { level = "warning", similarity = 0.92 }
+fixture_smells = { level = "warning", threshold = 3 }
+how_not_what = { level = "warning", private_call_asserts = true }
+overmocking = { level = "warning", max_mocks = 4 }
+nondeterminism = { level = "error" }
+naming_hygiene = { level = "info", min_len = 12 }
+private_access = { level = "warning" }
+aaa_comments = { level = "info" }
+static_clones = { level = "warning", similarity = 0.95 }
+fixture_extract = { level = "warning", threshold = 2 }
+mock_overspecification = { level = "warning", max_mocks = 3 }
+structural_equality = { level = "warning" }
+
+# Profile-specific overrides
+[tool.pytest-drill-sergeant.profiles.strict.rules]
+duplicate_tests.level = "error"
+fixture_smells.level = "error"
+how_not_what.level = "error"
+overmocking.level = "error"
+nondeterminism.level = "error"
+private_access.level = "error"
+static_clones.level = "error"
+fixture_extract.level = "error"
+mock_overspecification.level = "error"
+structural_equality.level = "error"
+
+[tool.pytest-drill-sergeant.profiles.chill.rules]
+duplicate_tests.level = "info"
+fixture_smells.level = "info"
+how_not_what.level = "info"
+overmocking.level = "warning"
+nondeterminism.level = "error"  # Always error for safety
+private_access.level = "info"
+static_clones.level = "info"
+fixture_extract.level = "info"
+mock_overspecification.level = "info"
+structural_equality.level = "info"

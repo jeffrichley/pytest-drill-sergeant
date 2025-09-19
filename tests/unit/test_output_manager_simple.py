@@ -207,7 +207,8 @@ class TestTerminalOutput:
         manager = OutputManager(config)
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test finding",
             file_path=Path("test_file.py"),
@@ -225,7 +226,8 @@ class TestTerminalOutput:
         manager = OutputManager(config)
 
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Test finding",
             file_path=Path("test_file.py"),

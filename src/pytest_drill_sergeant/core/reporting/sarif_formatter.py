@@ -67,32 +67,26 @@ class SARIFFormatter:
         self.tool_name = "pytest-drill-sergeant"
         self.tool_version = "1.0.0-dev"
 
-    def _get_rule_id(self, rule_type: RuleType) -> str:
-        """Get SARIF rule ID for a rule type.
+    def _get_rule_id(self, rule_code: str) -> str:
+        """Get SARIF rule ID for a rule code.
 
         Args:
-            rule_type: Rule type
+            rule_code: Rule code (e.g., "DS201")
 
         Returns:
             SARIF rule ID
         """
-        rule_type_value = (
-            rule_type.value if hasattr(rule_type, "value") else str(rule_type)
-        )
-        return f"drill-sergeant/{rule_type_value}"
+        return f"drill-sergeant/{rule_code}"
 
-    def _get_rule_name(self, rule_type: RuleType) -> str:
-        """Get human-readable rule name for a rule type.
+    def _get_rule_name(self, rule_name: str) -> str:
+        """Get human-readable rule name for a rule name.
 
         Args:
-            rule_type: Rule type
+            rule_name: Rule name (e.g., "private_access")
 
         Returns:
             Human-readable rule name
         """
-        rule_type_value = (
-            rule_type.value if hasattr(rule_type, "value") else str(rule_type)
-        )
         name_mapping = {
             "private_access": "Private Access Violation",
             "mock_overspecification": "Mock Over-Specification",
@@ -103,21 +97,18 @@ class SARIFFormatter:
             "fixture_extraction": "Fixture Extraction Opportunity",
         }
         return name_mapping.get(
-            rule_type_value, rule_type_value.replace("_", " ").title()
+            rule_name, rule_name.replace("_", " ").title()
         )
 
-    def _get_rule_description(self, rule_type: RuleType) -> str:
-        """Get rule description for a rule type.
+    def _get_rule_description(self, rule_name: str) -> str:
+        """Get rule description for a rule name.
 
         Args:
-            rule_type: Rule type
+            rule_name: Rule name
 
         Returns:
             Rule description
         """
-        rule_type_value = (
-            rule_type.value if hasattr(rule_type, "value") else str(rule_type)
-        )
         description_mapping = {
             "private_access": "Test accesses private implementation details that may break with refactoring",
             "mock_overspecification": "Test has too many mock assertions, making it brittle",
@@ -128,7 +119,7 @@ class SARIFFormatter:
             "fixture_extraction": "Test setup could be extracted into a fixture",
         }
         return description_mapping.get(
-            rule_type_value, f"Quality issue detected: {rule_type_value}"
+            rule_name, f"Quality issue detected: {rule_name}"
         )
 
     def _get_severity_level(self, severity: Severity) -> str:
@@ -149,22 +140,19 @@ class SARIFFormatter:
         }
         return mapping.get(severity_value, "note")
 
-    def _get_help_uri(self, rule_type: RuleType) -> str:
-        """Get help URI for a rule type.
+    def _get_help_uri(self, rule_name: str) -> str:
+        """Get help URI for a rule name.
 
         Args:
-            rule_type: Rule type
+            rule_name: Rule name
 
         Returns:
             Help URI
         """
-        rule_type_value = (
-            rule_type.value if hasattr(rule_type, "value") else str(rule_type)
-        )
         base_url = (
             "https://github.com/jeffrichley/pytest-drill-sergeant/blob/main/docs/rules/"
         )
-        return urljoin(base_url, f"{rule_type_value}.md")
+        return urljoin(base_url, f"{rule_name}.md")
 
     def format_finding(self, finding: Finding) -> Result:
         """Format a finding as a SARIF result.
@@ -201,7 +189,7 @@ class SARIFFormatter:
         # Create result
         result = Result(
             message=Message(text=finding.message),
-            rule_id=self._get_rule_id(finding.rule_type),
+            rule_id=self._get_rule_id(finding.code),
             level=self._get_severity_level(finding.severity),
             locations=[location],
         )
@@ -286,16 +274,18 @@ class SARIFFormatter:
         for result in test_results:
             all_findings.extend(result.findings)
 
-        # Get unique rule types
-        rule_types = set(finding.rule_type for finding in all_findings)
+        # Get unique rule codes and names
+        rule_codes = set(finding.code for finding in all_findings)
+        rule_names = {finding.code: finding.name for finding in all_findings}
 
         # Create rules
         rules = []
-        for rule_type in rule_types:
-            rule = ReportingDescriptor(id=self._get_rule_id(rule_type))  # type: ignore[call-arg]
-            rule.name = self._get_rule_name(rule_type)
-            rule.short_description = Message(text=self._get_rule_description(rule_type))
-            rule.help_uri = self._get_help_uri(rule_type)
+        for rule_code in rule_codes:
+            rule_name = rule_names[rule_code]
+            rule = ReportingDescriptor(id=self._get_rule_id(rule_code))  # type: ignore[call-arg]
+            rule.name = self._get_rule_name(rule_name)
+            rule.short_description = Message(text=self._get_rule_description(rule_name))
+            rule.help_uri = self._get_help_uri(rule_name)
             rule.properties = {
                 "category": "quality",
                 "tags": ["test-quality", "ai-generated-tests"],

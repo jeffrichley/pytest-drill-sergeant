@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 from pathlib import Path  # Pydantic needs Path at runtime
-from typing import ClassVar
+from typing import ClassVar, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -38,9 +38,8 @@ class RuleType(str, Enum):
 class Finding(BaseModel):
     """Represents a single quality finding in a test."""
 
-    rule_type: RuleType = Field(
-        ..., description="Type of rule that triggered this finding"
-    )
+    code: str = Field(..., description="Rule code (e.g., DS201)")
+    name: str = Field(..., description="Rule name (e.g., duplicate_tests)")
     severity: Severity = Field(..., description="Severity level of the finding")
     message: str = Field(
         ..., description="Human-readable message describing the finding"
@@ -50,12 +49,22 @@ class Finding(BaseModel):
     column_number: int | None = Field(
         None, description="Column number where the finding occurs"
     )
+    end_line_number: int | None = Field(
+        None, description="End line number for multi-line findings"
+    )
     code_snippet: str | None = Field(
         None, description="Code snippet around the finding"
     )
     suggestion: str | None = Field(None, description="Suggested fix for the finding")
     confidence: float = Field(
         0.0, ge=0.0, le=1.0, description="Confidence level (0-1) in the finding"
+    )
+    fingerprint: str | None = Field(
+        None, description="Unique fingerprint for deduplication"
+    )
+    fixable: bool = Field(False, description="Whether this finding can be auto-fixed")
+    tags: list[str] = Field(
+        default_factory=list, description="Tags associated with this finding"
     )
     metadata: dict[str, str | int | float | bool] = Field(
         default_factory=dict, description="Additional metadata about the finding"
@@ -65,6 +74,20 @@ class Finding(BaseModel):
         use_enum_values=True,
         validate_assignment=True,
     )
+
+    @field_validator("code")
+    @classmethod
+    def validate_code(cls, v: str) -> str:
+        """Validate rule code format."""
+        if not v.startswith("DS"):
+            raise ValueError("Rule code must start with 'DS'")
+        if len(v) != 5:
+            raise ValueError("Rule code must be 5 characters (DS###)")
+        try:
+            int(v[2:])
+        except ValueError:
+            raise ValueError("Rule code must be DS followed by 3 digits")
+        return v
 
 
 class Cluster(BaseModel):
@@ -216,8 +239,8 @@ class RunMetrics(BaseModel):
     findings_by_severity: dict[Severity, int] = Field(
         default_factory=dict, description="Findings by severity"
     )
-    findings_by_rule: dict[RuleType, int] = Field(
-        default_factory=dict, description="Findings by rule type"
+    findings_by_rule: dict[str, int] = Field(
+        default_factory=dict, description="Findings by rule code"
     )
 
     # Quality scores

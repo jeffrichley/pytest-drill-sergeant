@@ -42,13 +42,15 @@ def test_rule_type_enum():
 def test_finding_model():
     """Test Finding model creation."""
     finding = Finding(
-        rule_type=RuleType.PRIVATE_ACCESS,
+        code="DS201",
+            name="private_access",
         file_path="test.py",
         line_number=10,
         message="Test finding",
         severity=Severity.ERROR,
     )
-    assert finding.rule_type == RuleType.PRIVATE_ACCESS
+    assert finding.code == "DS201"
+    assert finding.name == "private_access"
     assert finding.file_path == Path("test.py")
     assert finding.line_number == LINE_NUMBER_10
     assert finding.message == "Test finding"

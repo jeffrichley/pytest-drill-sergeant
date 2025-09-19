@@ -42,14 +42,16 @@ class TestTemplateContext:
             test_name="test_example",
             file_path="test_file.py",
             line_number=42,
-            rule_type="private_access",
+            code="DS201",
+            name="private_access",
             severity="warning",
         )
 
         assert context.test_name == "test_example"
         assert context.file_path == "test_file.py"
         assert context.line_number == TEST_LINE_NUMBER
-        assert context.rule_type == "private_access"
+        assert context.code == "DS201"
+        assert context.name == "private_access"
         assert context.severity == "warning"
         assert context.custom == {}
 
@@ -163,7 +165,8 @@ class TestRichFormatter:
     def test_format_finding(self) -> None:
         """Test formatting a finding."""
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Private access detected",
             file_path=Path("test_file.py"),
@@ -243,7 +246,8 @@ class TestJSONFormatter:
     def test_format_finding(self) -> None:
         """Test formatting a finding as JSON."""
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Private access detected",
             file_path=Path("test_file.py"),
@@ -258,7 +262,8 @@ class TestJSONFormatter:
         result = formatter.format_finding(finding)
 
         assert isinstance(result, dict)
-        assert result["rule_type"] == "private_access"
+        assert result["code"] == "DS201"
+        assert result["name"] == "private_access"
         assert result["severity"] == "warning"
         assert result["message"] == "Private access detected"
         assert result["file_path"] == "test_file.py"
@@ -326,7 +331,8 @@ class TestSARIFFormatter:
     def test_format_finding(self) -> None:
         """Test formatting a finding as SARIF."""
         finding = Finding(
-            rule_type=RuleType.PRIVATE_ACCESS,
+            code="DS201",
+            name="private_access",
             severity=Severity.WARNING,
             message="Private access detected",
             file_path=Path("test_file.py"),
@@ -341,7 +347,7 @@ class TestSARIFFormatter:
         result = formatter.format_finding(finding)
 
         # Test the SARIF Result object properties
-        assert result.rule_id == "drill-sergeant/private_access"
+        assert result.rule_id == "drill-sergeant/DS201"
         assert result.level == "warning"
         assert result.message.text == "Private access detected"
         assert result.locations is not None
