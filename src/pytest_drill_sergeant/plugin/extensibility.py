@@ -124,8 +124,12 @@ def create_plugin_class(
     cls = types.new_class(name, (base,), exec_body=lambda d: d.update(ns))
 
     # Runtime verification that the constructed class subclasses base
-    if not issubclass(cls, base):
-        raise _create_invalid_subclass_error()
+    try:
+        if not issubclass(cls, base):
+            raise _create_invalid_subclass_error()
+    except TypeError as e:
+        # Handle case where cls or base is not a class
+        raise _create_invalid_subclass_error() from e
 
     return cls
 

@@ -346,11 +346,16 @@ class PluginDiscovery:
 
     def _is_valid_plugin_class(self, attr: object) -> bool:
         """Check if attribute is a valid plugin class."""
-        return (
-            isinstance(attr, type)
-            and issubclass(attr, DrillSergeantPlugin)
-            and attr != DrillSergeantPlugin
-        )
+        try:
+            return (
+                isinstance(attr, type)
+                and issubclass(attr, DrillSergeantPlugin)
+                and attr != DrillSergeantPlugin
+            )
+        except TypeError as e:
+            # Handle case where attr is not a class or DrillSergeantPlugin is not a class
+            self._logger.debug(f"Invalid plugin class check: {e}")
+            return False
 
     def _create_plugin_instance(
         self, plugin_class: type[DrillSergeantPlugin], module_path: str, attr_name: str

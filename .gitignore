@@ -144,4 +144,66 @@ cython_debug/
 
 # Ruff
 .ruff_cache/
+
+# macOS
 .DS_Store
+
+# LSP Server
+*.lsp.log
+lsp-server.log
+language-server.log
+.drill-sergeant-lsp/
+
+# VS Code Extension
+vscode-extension/node_modules/
+vscode-extension/out/
+vscode-extension/*.vsix
+vscode-extension/.vscode/
+vscode-extension/dist/
+vscode-extension/build/
+
+# LSP Client logs and temp files
+.lsp/
+.language-server/
+*.lsp.tmp
+*.lsp.cache
+
+# IDE LSP integration
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.vscode/tasks.json
+.vscode/.ropeproject
+
+# LSP debugging
+lsp-debug.log
+language-server-debug.log
+
+# LSP workspace files
+*.code-workspace
+.vscode-test/
+
+# LSP server state
+.drill-sergeant/
+.drill-sergeant-cache/
+
+# Language server temp files
+*.lsp.tmp
+*.lsp.pid
+*.lsp.sock
+
+# VS Code extension development
+vscode-extension/.vscode-test/
+vscode-extension/test-results/
+vscode-extension/coverage/
+
+# Development scripts (keep clean scripts, ignore temp ones)
+scripts/*.tmp
+scripts/*.log
+scripts/*.pid
+
+# VS Code example configurations (keep as templates)
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/extensions.json

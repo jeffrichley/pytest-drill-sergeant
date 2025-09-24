@@ -1,0 +1,34 @@
+# Language Server Protocol files
+*.lsp.log linguist-generated=true
+*.lsp.tmp linguist-generated=true
+*.lsp.cache linguist-generated=true
+*.lsp.pid linguist-generated=true
+*.lsp.sock linguist-generated=true
+
+# VS Code Extension files
+*.vsix linguist-generated=true
+vscode-extension/node_modules/ linguist-vendored=true
+vscode-extension/out/ linguist-generated=true
+vscode-extension/dist/ linguist-generated=true
+vscode-extension/build/ linguist-generated=true
+
+# LSP server state files
+.drill-sergeant/ linguist-generated=true
+.drill-sergeant-cache/ linguist-generated=true
+.drill-sergeant-lsp/ linguist-generated=true
+
+# Ensure proper line endings
+*.py text eol=lf
+*.ts text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+
+# Binary files
+*.vsix binary
+*.so binary
+*.dll binary
+*.dylib binary

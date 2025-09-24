@@ -558,6 +558,34 @@ just quality       # Run all quality checks
 just clean         # Clean up generated files
 ```
 
+### Language Server Protocol (LSP) Development
+
+The Drill Sergeant includes a full LSP server for real-time IDE integration:
+
+```bash
+# Test the LSP server
+uv run python -m pytest_drill_sergeant.lsp.main
+
+# Clean up LSP temporary files
+./scripts/clean-lsp.sh
+
+# Build VS Code extension
+cd vscode-extension
+npm install
+npm run build
+```
+
+**LSP Features:**
+- 🎯 Real-time diagnostics in VS Code
+- 🔍 Live analysis of test files
+- ⚡ Instant feedback on quality violations
+- 🛠️ Configurable severity levels
+
+**VS Code Extension:**
+- Install the `.vsix` file from `vscode-extension/`
+- Configure Python path in VS Code settings
+- Enjoy real-time drill sergeant feedback!
+
 ## 📊 Why This Plugin Exists
 
 **Real talk:** I got tired of reviewing pull requests where tests looked like someone threw code at a wall and hoped it stuck. Tests without markers, no structure, comments like `# test stuff` - it was chaos.

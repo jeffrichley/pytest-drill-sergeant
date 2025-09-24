@@ -51,7 +51,7 @@ drill_sergeant = "pytest_drill_sergeant.plugin.hooks"
 
 [project.optional-dependencies]
 compat = ["typing_extensions>=4.9.0 ; python_version<'3.12'"]
-lsp = ["pygls>=1.0.0"]
+lsp = ["pygls>=1.3.0", "lsprotocol>=2023.0.0"]
 test = ["hypothesis>=6.136.6", "pytest-benchmark>=4.0.0", "psutil>=5.9.0"]
 docs = [
     "mkdocs>=1.5.0",
@@ -294,11 +294,28 @@ security = [
     "bandit>=1.7.0",
 ]
 
-# Example drill sergeant configuration
-[tool.drill_sergeant]
+# Drill Sergeant Configuration
+[tool.pytest-drill-sergeant]
+# Profile to use (standard, strict, relaxed)
+profile = "standard"
+
 # Custom marker mappings (directory_name = marker_name)
-[tool.drill_sergeant.marker_mappings]
+[tool.pytest-drill-sergeant.marker_mappings]
 contract = "api"
 smoke = "integration"
 acceptance = "e2e"
 benchmarks = "performance"
+
+# Rule-specific configurations
+[tool.pytest-drill-sergeant.rules]
+# AAA Comments rule - require meaningful content
+DS302 = { enabled = true, severity = "warning" }
+
+# Private Access rule - error level
+DS201 = { enabled = true, severity = "error" }
+
+# Mock Over-specification rule - warning level  
+DS204 = { enabled = true, severity = "warning" }
+
+# Structural Equality rule - info level
+DS203 = { enabled = true, severity = "info" }
