@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import ANY, AsyncMock, Mock, patch
 
 import pytest
 
@@ -176,7 +176,7 @@ class TestMainAsync:
                             await main()
 
                             mock_logger.error.assert_called_with(
-                                "Failed to start language server: Server creation failed"
+                                "Failed to start language server: %s", ANY
                             )
                             mock_traceback.assert_called_once()
                             mock_exit.assert_called_once_with(1)
@@ -200,7 +200,7 @@ class TestMainAsync:
                             await main()
 
                             mock_logger.error.assert_called_with(
-                                "Failed to start language server: Start failed"
+                                "Failed to start language server: %s", ANY
                             )
                             mock_traceback.assert_called_once()
                             mock_exit.assert_called_once_with(1)
@@ -218,7 +218,7 @@ class TestMainAsync:
                         await main()
 
                         mock_logger.error.assert_called_with(
-                            "Failed to start language server: Logging failed"
+                            "Failed to start language server: %s", ANY
                         )
                         mock_traceback.assert_called_once()
                         mock_exit.assert_called_once_with(1)
@@ -293,7 +293,7 @@ class TestRunServer:
                             run_server()
 
                             mock_logger.error.assert_called_with(
-                                "Failed to start language server: Server creation failed"
+                                "Failed to start language server: %s", ANY
                             )
                             mock_traceback.assert_called_once()
                             mock_exit.assert_called_once_with(1)
@@ -316,7 +316,7 @@ class TestRunServer:
                             run_server()
 
                             mock_logger.error.assert_called_with(
-                                "Failed to start language server: Start failed"
+                                "Failed to start language server: %s", ANY
                             )
                             mock_traceback.assert_called_once()
                             mock_exit.assert_called_once_with(1)
@@ -333,7 +333,7 @@ class TestRunServer:
                         run_server()
 
                         mock_logger.error.assert_called_with(
-                            "Failed to start language server: Logging failed"
+                            "Failed to start language server: %s", ANY
                         )
                         mock_traceback.assert_called_once()
                         mock_exit.assert_called_once_with(1)
@@ -423,7 +423,7 @@ class TestErrorHandling:
                             asyncio.run(main())
 
                             mock_logger.error.assert_called_with(
-                                "Failed to start language server: Module not found"
+                                "Failed to start language server: %s", ANY
                             )
                             mock_traceback.assert_called_once()
                             mock_exit.assert_called_once_with(1)
@@ -441,7 +441,7 @@ class TestErrorHandling:
                             run_server()
 
                             mock_logger.error.assert_called_with(
-                                "Failed to start language server: Module not found"
+                                "Failed to start language server: %s", ANY
                             )
                             mock_traceback.assert_called_once()
                             mock_exit.assert_called_once_with(1)

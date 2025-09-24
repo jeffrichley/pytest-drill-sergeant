@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 from pytest_drill_sergeant import __version__
 from pytest_drill_sergeant.core.analysis_pipeline import create_analysis_pipeline
+from pytest_drill_sergeant.core.config_context import initialize_config
 from pytest_drill_sergeant.core.logging_utils import setup_standard_logging
 
 logger = logging.getLogger(__name__)
@@ -39,8 +40,6 @@ class DrillSergeantLanguageServer(LanguageServer):
         setup_standard_logging()
 
         # Initialize configuration from project files
-        from pytest_drill_sergeant.core.config_context import initialize_config
-
         self.config = initialize_config()
 
         # Initialize analyzers

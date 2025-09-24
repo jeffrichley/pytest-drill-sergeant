@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pytest_drill_sergeant.core.models import Finding
 
+from pytest_drill_sergeant.core.rulespec import RuleRegistry
+
 
 @dataclass
 class BISMetrics:
@@ -60,8 +62,6 @@ class DynamicBISCalculator:
     def _load_rule_registry(self) -> None:
         """Load the rule registry to access rule metadata."""
         try:
-            from pytest_drill_sergeant.core.rulespec import RuleRegistry
-
             self._rule_registry = RuleRegistry
         except ImportError:
             # Fallback if registry not available

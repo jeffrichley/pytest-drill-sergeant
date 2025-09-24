@@ -16,7 +16,8 @@ if TYPE_CHECKING:
     from pytest_drill_sergeant.core.models import Finding
 
 from pytest_drill_sergeant.core.models import Finding, Severity
-from pytest_drill_sergeant.core.rulespec import RuleCategory, RuleRegistry, RuleSpec, Severity as RuleSeverity
+from pytest_drill_sergeant.core.rulespec import RuleCategory, RuleRegistry, RuleSpec
+from pytest_drill_sergeant.core.rulespec import Severity as RuleSeverity
 
 
 class MockOverspecDetector:

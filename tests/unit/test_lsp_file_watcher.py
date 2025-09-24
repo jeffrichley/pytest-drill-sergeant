@@ -8,7 +8,7 @@ file type detection, and analysis triggering.
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 from lsprotocol.types import TextDocumentSyncKind
 
@@ -74,7 +74,7 @@ class TestDocumentEventHandling:
 
                 mock_analyze.assert_called_once_with(mock_document)
                 mock_logger.debug.assert_called_once_with(
-                    "Document opened: file:///path/to/test_file.py"
+                    "Document opened: %s", "file:///path/to/test_file.py"
                 )
 
     def test_on_document_save(self):
@@ -97,7 +97,7 @@ class TestDocumentEventHandling:
 
                 mock_analyze.assert_called_once_with(mock_document)
                 mock_logger.debug.assert_called_once_with(
-                    "Document saved: file:///path/to/test_file.py"
+                    "Document saved: %s", "file:///path/to/test_file.py"
                 )
 
     def test_on_document_change(self):
@@ -180,7 +180,7 @@ class TestDocumentAnalysis:
 
                 # Should log the analysis
                 mock_logger.debug.assert_called_with(
-                    "Published 2 diagnostics for file:///path/to/test_file.py"
+                    "Published %d diagnostics for %s", 2, "file:///path/to/test_file.py"
                 )
 
                 # Should clean up analyzing set
@@ -208,7 +208,7 @@ class TestDocumentAnalysis:
 
                 # Should log error
                 mock_logger.error.assert_called_with(
-                    "Failed to analyze document file:///path/to/test_file.py: Analysis failed"
+                    "Failed to analyze document %s: %s", "file:///path/to/test_file.py", ANY
                 )
 
                 # Should clean up analyzing set even on error
@@ -582,10 +582,10 @@ class TestIntegrationScenarios:
 
             # Verify logging
             mock_logger.debug.assert_any_call(
-                "Document opened: file:///project/tests/test_example.py"
+                "Document opened: %s", "file:///project/tests/test_example.py"
             )
             mock_logger.debug.assert_any_call(
-                "Published 3 diagnostics for file:///project/tests/test_example.py"
+                "Published %d diagnostics for %s", 3, "file:///project/tests/test_example.py"
             )
 
     def test_file_watching_with_non_test_file(self):
@@ -648,7 +648,7 @@ class TestIntegrationScenarios:
 
             # Verify error was logged
             mock_logger.error.assert_called_with(
-                "Failed to analyze document file:///project/tests/test_example.py: Analysis failed"
+                "Failed to analyze document %s: %s", "file:///project/tests/test_example.py", ANY
             )
 
         # Verify analyzing files was cleaned up
