@@ -75,7 +75,7 @@ class FeatureExtractor:
             return test_features
 
         except Exception as e:
-            logger.error(f"Failed to extract features from {file_path}: {e}")
+            logger.error("Failed to extract features from %s: %s", file_path, e)
             default_features = self._create_default_features(file_path)
             return {str(file_path): default_features}
 

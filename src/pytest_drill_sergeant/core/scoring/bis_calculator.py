@@ -59,7 +59,7 @@ class BISCalculator:
             return results
 
         except Exception as e:
-            logger.error(f"Failed to calculate BIS scores for file {file_path}: {e}")
+            logger.error("Failed to calculate BIS scores for file %s: %s", file_path, e)
             return {}
 
     def calculate_test_bis(
@@ -104,13 +104,13 @@ class BISCalculator:
             )
 
             logger.debug(
-                f"Calculated BIS score for {test_name}: {bis_score:.1f} ({bis_grade})"
+                "Calculated BIS score for %s: %.1f (%s)", test_name, bis_score, bis_grade
             )
 
             return result
 
         except Exception as e:
-            logger.error(f"Failed to calculate BIS score for {test_name}: {e}")
+            logger.error("Failed to calculate BIS score for %s: %s", test_name, e)
             return ResultData(
                 test_name=test_name,
                 file_path=features.file_path,
