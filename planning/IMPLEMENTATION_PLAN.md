@@ -190,7 +190,7 @@ This implementation plan provides a detailed roadmap for building pytest-drill-s
 - [x] Output formatting works (terminal, JSON, SARIF)
 - [x] Comprehensive test suite with 698+ tests and 54% coverage
 
-### Current Status Summary (Updated 2025-09-24)
+### Current Status Summary (Updated 2025-09-24 - Dynamic Duplicate Detection Completed)
 
 **✅ COMPLETED (Phase 1 Foundation - 100% Complete, Phase 2 Runtime Analysis - ~95% Complete):**
 - Project structure and build system
@@ -215,7 +215,7 @@ This implementation plan provides a detailed roadmap for building pytest-drill-s
 - **NEW: Coverage Integration** - Per-test coverage collection with pytest-cov
 - **NEW: CAR (Coverage-to-Assertion Ratio)** calculation system
 - **NEW: Coverage Signature Generation** for similarity detection
-- **NEW: Dynamic Duplicate Detection** using coverage-based similarity
+- **NEW: Dynamic Duplicate Detection** using coverage-based similarity with CLI and pytest integration
 - **NEW: Coverage Data Storage** - JSON file-based persistence with retrieval API
 - **NEW: Coverage Trends Analysis** - Historical analysis and trend tracking
 - **NEW: Coverage CLI Integration** - `ds test --coverage` with advanced options
@@ -248,7 +248,7 @@ This implementation plan provides a detailed roadmap for building pytest-drill-s
 - CLI System: 100% Complete (lint, personas, profiles, demo, test commands working)
 - Output Formatting: 100% Complete (terminal, JSON, SARIF formatters implemented)
 - Scoring Systems: 100% Complete (BIS and BRS calculation systems with CLI integration)
-- **NEW: Runtime Analysis: 100% Complete** (Coverage integration, CAR calculation, dynamic duplicate detection)
+- **NEW: Runtime Analysis: 100% Complete** (Coverage integration, CAR calculation, dynamic duplicate detection with CLI/pytest integration)
 - **NEW: Coverage Data Storage: 100% Complete** (JSON persistence, retrieval API, trend analysis)
 - **NEW: Coverage CLI Integration: 100% Complete** (ds test --coverage with advanced options)
 - **NEW: LSP Integration: 95% Complete** (LSP server + VS Code extension implemented, PyCharm plugin needed)
@@ -287,6 +287,11 @@ This implementation plan provides a detailed roadmap for building pytest-drill-s
   - [x] Runtime mock assertion counting
   - [x] Exception message analysis
   - [x] Configurable similarity thresholds
+  - [x] CLI integration with `drill-sergeant lint` command
+  - [x] Pytest hooks integration for real-time duplicate detection
+  - [x] Rule DS201 registration and configuration
+  - [x] Clean output formatting without debug statements
+  - [x] Comprehensive test coverage and validation
 
 - [x] **Behavior Integrity Score (BIS)** ✅ **COMPLETED**
   - [x] Implementation per [Scoring System](planning/04_scoring_system.md#behavior-integrity-score-bis)
@@ -356,6 +361,8 @@ This implementation plan provides a detailed roadmap for building pytest-drill-s
 - [x] JSON reports are generated correctly ✅ **COMPLETED**
 - [x] Multiple personas provide distinct feedback ✅ **PARTIALLY COMPLETED** (Drill Sergeant + Snoop Dogg implemented)
 - [x] LSP server provides real-time IDE squiggles ✅ **COMPLETED**
+- [x] Duplicate detection integrated with CLI and pytest ✅ **COMPLETED**
+- [x] Duplicate detection shows clean output without debug statements ✅ **COMPLETED**
 - [ ] Plugin development uses its own LSP integration ❌ **NOT IMPLEMENTED**
 
 ### Reference Documentation

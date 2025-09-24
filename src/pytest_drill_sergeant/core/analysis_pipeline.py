@@ -260,6 +260,9 @@ class AnalyzerRegistry:
             from pytest_drill_sergeant.core.analyzers.aaa_comment_detector import (
                 AAACommentDetector,
             )
+            from pytest_drill_sergeant.core.analyzers.duplicate_test_detector import (
+                DuplicateTestDetector,
+            )
             from pytest_drill_sergeant.core.analyzers.mock_overspec_detector import (
                 MockOverspecDetector,
             )
@@ -271,6 +274,7 @@ class AnalyzerRegistry:
             )
 
             self.register_analyzer("aaa_comments", AAACommentDetector)
+            self.register_analyzer("duplicate_tests", DuplicateTestDetector)
             self.register_analyzer("mock_overspec", MockOverspecDetector)
             self.register_analyzer("private_access", PrivateAccessDetector)
             self.register_analyzer("structural_equality", StructuralEqualityDetector)

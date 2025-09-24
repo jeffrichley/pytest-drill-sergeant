@@ -245,13 +245,21 @@ class CoverageHooks:
                 if self._duplicate_clusters:
                     terminalreporter.write_line("Duplicate Test Clusters:")
                     for cluster in self._duplicate_clusters:
-                        terminalreporter.write_line(f"  Cluster {cluster.cluster_id} ({cluster.cluster_type}):")
-                        terminalreporter.write_line(f"    Similarity: {cluster.similarity_score:.2f}")
+                        terminalreporter.write_line(
+                            f"  Cluster {cluster.cluster_id} ({cluster.cluster_type}):"
+                        )
+                        terminalreporter.write_line(
+                            f"    Similarity: {cluster.similarity_score:.2f}"
+                        )
                         terminalreporter.write_line(f"    Tests: {len(cluster.tests)}")
                         for test_name, test_file in cluster.tests:
-                            terminalreporter.write_line(f"      - {test_name} ({test_file.name})")
+                            terminalreporter.write_line(
+                                f"      - {test_name} ({test_file.name})"
+                            )
                         if cluster.consolidation_suggestion:
-                            terminalreporter.write_line(f"    Suggestion: {cluster.consolidation_suggestion}")
+                            terminalreporter.write_line(
+                                f"    Suggestion: {cluster.consolidation_suggestion}"
+                            )
                         terminalreporter.write_line("")
                 else:
                     terminalreporter.write_line("No duplicate test clusters found")
@@ -280,7 +288,9 @@ class CoverageHooks:
                 list(test_files), self.coverage_collector._coverage_data
             )
 
-            self.logger.info(f"Duplicate detection found {len(self._duplicate_clusters)} clusters")
+            self.logger.info(
+                f"Duplicate detection found {len(self._duplicate_clusters)} clusters"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to run duplicate detection: {e}")

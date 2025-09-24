@@ -291,8 +291,8 @@ class TestHookIntegration:
         # Call the function
         _initialize_analyzers()
 
-        # Verify analyzers were added (now we have 4 analyzers: private access, mock overspec, AAA comment, structural equality)
-        assert mock_storage_instance.add_analyzer.call_count == 4
+        # Verify analyzers were added (now we have 5 analyzers: private access, mock overspec, AAA comment, structural equality, duplicate tests)
+        assert mock_storage_instance.add_analyzer.call_count == 5
 
     @patch("pytest_drill_sergeant.plugin.hooks.create_file_discovery")
     @patch("pytest_drill_sergeant.plugin.hooks.get_config")

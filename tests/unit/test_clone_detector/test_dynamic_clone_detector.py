@@ -5,12 +5,10 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-import pytest
-
 from pytest_drill_sergeant.core.analyzers.clone_detector import (
     DuplicateCluster,
     DynamicCloneDetector,
-    TestSimilarity,
+    SimilarityData,
 )
 from pytest_drill_sergeant.core.analyzers.coverage_collector import CoverageData
 
@@ -26,6 +24,7 @@ class TestDynamicCloneDetector:
     def teardown_method(self) -> None:
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_initialization(self) -> None:
@@ -60,7 +59,7 @@ def test_something():
 """
         tree = ast.parse(code)
         test_func = tree.body[0]
-        
+
         count = self.detector._count_mock_assertions(test_func)
         assert count == 4
 
@@ -73,7 +72,7 @@ def test_something():
 """
         tree = ast.parse(code)
         test_func = tree.body[0]
-        
+
         count = self.detector._count_mock_assertions(test_func)
         assert count == 0
 
@@ -90,7 +89,7 @@ def test_something():
 """
         tree = ast.parse(code)
         test_func = tree.body[0]
-        
+
         pattern = self.detector._extract_exception_pattern(test_func)
         assert "pytest_raises" in pattern
         assert "except_RuntimeError" in pattern
@@ -104,7 +103,7 @@ def test_something():
 """
         tree = ast.parse(code)
         test_func = tree.body[0]
-        
+
         pattern = self.detector._extract_exception_pattern(test_func)
         assert pattern == ""
 
@@ -119,13 +118,15 @@ def test_something():
         tree = ast.parse(code)
         test_func = tree.body[0]
         test_file = self.temp_dir / "test_file.py"
-        
+
         signature = self.detector._generate_test_signature(test_func, test_file)
         assert "func:test_something" in signature
         assert "params:0" in signature
         assert "decorators:0" in signature
         assert "statements:3" in signature
-        assert "mocks:0" in signature  # Mock count is calculated during signature generation
+        assert (
+            "mocks:0" in signature
+        )  # Mock count is calculated during signature generation
 
     def test_calculate_coverage_similarity(self) -> None:
         """Test coverage similarity calculation."""
@@ -142,7 +143,7 @@ def test_something():
             covered_lines={1, 2, 3, 4, 5},
             missing_lines={6, 7, 8, 9, 10},
         )
-        
+
         cov2 = CoverageData(
             test_name="test2",
             file_path=Path("test2.py"),
@@ -155,17 +156,17 @@ def test_something():
             covered_lines={1, 2, 3, 4},
             missing_lines={5, 6, 7, 8, 9, 10},
         )
-        
+
         # Set up detector with coverage data
         self.detector._coverage_data = {
             "test1.py:test1": cov1,
             "test2.py:test2": cov2,
         }
-        
+
         similarity = self.detector._calculate_coverage_similarity(
             "test1.py:test1", "test2.py:test2"
         )
-        
+
         # Jaccard similarity: intersection=4, union=5, similarity=4/5=0.8
         assert similarity == 0.8
 
@@ -182,11 +183,11 @@ def test_something():
             "test1.py:test1": 3,
             "test2.py:test2": 2,
         }
-        
+
         similarity = self.detector._calculate_mock_similarity(
             "test1.py:test1", "test2.py:test2"
         )
-        
+
         # Similarity: min(3,2) / max(3,2) = 2/3 ≈ 0.67
         assert abs(similarity - 0.67) < 0.01
 
@@ -196,7 +197,7 @@ def test_something():
             "test1.py:test1": 0,
             "test2.py:test2": 0,
         }
-        
+
         similarity = self.detector._calculate_mock_similarity(
             "test1.py:test1", "test2.py:test2"
         )
@@ -208,11 +209,11 @@ def test_something():
             "test1.py:test1": "pytest_raises|except_ValueError",
             "test2.py:test2": "pytest_raises|except_RuntimeError",
         }
-        
+
         similarity = self.detector._calculate_exception_similarity(
             "test1.py:test1", "test2.py:test2"
         )
-        
+
         # Jaccard similarity: intersection=1, union=3, similarity=1/3 ≈ 0.33
         assert abs(similarity - 0.33) < 0.01
 
@@ -222,11 +223,11 @@ def test_something():
             "test1.py:test1": "func:test1|params:0|decorators:0|statements:3|mocks:1",
             "test2.py:test2": "func:test2|params:0|decorators:0|statements:3|mocks:1",
         }
-        
+
         similarity = self.detector._calculate_structure_similarity(
             "test1.py:test1", "test2.py:test2"
         )
-        
+
         # Jaccard similarity: intersection=4, union=6, similarity=4/6≈0.67
         assert abs(similarity - 0.67) < 0.01
 
@@ -245,7 +246,7 @@ def test_something():
             covered_lines={1, 2, 3, 4, 5},
             missing_lines={6, 7, 8, 9, 10},
         )
-        
+
         cov2 = CoverageData(
             test_name="test2",
             file_path=Path("test2.py"),
@@ -258,7 +259,7 @@ def test_something():
             covered_lines={1, 2, 3, 4},
             missing_lines={5, 6, 7, 8, 9, 10},
         )
-        
+
         self.detector._coverage_data = {
             "test1.py:test1": cov1,
             "test2.py:test2": cov2,
@@ -275,22 +276,24 @@ def test_something():
             "test1.py:test1": "func:test1|params:0|decorators:0|statements:3|mocks:2",
             "test2.py:test2": "func:test2|params:0|decorators:0|statements:3|mocks:2",
         }
-        
+
         similarity = self.detector._calculate_test_similarity(
             "test1.py:test1", "test2.py:test2"
         )
-        
+
         # Should be a weighted combination of all similarity components
         assert 0.0 <= similarity <= 1.0
 
     def test_create_cluster(self) -> None:
         """Test cluster creation."""
         test_keys = ["test1.py:test1", "test2.py:test2"]
-        
+
         # Set up mock similarity data
-        with patch.object(self.detector, '_calculate_test_similarity', return_value=0.99):
+        with patch.object(
+            self.detector, "_calculate_test_similarity", return_value=0.99
+        ):
             cluster = self.detector._create_cluster(test_keys)
-        
+
         assert cluster is not None
         assert cluster.cluster_id is not None
         assert len(cluster.tests) == 2
@@ -301,14 +304,14 @@ def test_something():
     def test_create_cluster_insufficient_tests(self) -> None:
         """Test cluster creation with insufficient tests."""
         test_keys = ["test1.py:test1"]
-        
+
         cluster = self.detector._create_cluster(test_keys)
         assert cluster is None
 
     def test_generate_consolidation_suggestion(self) -> None:
         """Test consolidation suggestion generation."""
         tests = [("test1", Path("test1.py")), ("test2", Path("test2.py"))]
-        
+
         suggestion = self.detector._generate_consolidation_suggestion(
             tests, "exact_duplicates"
         )
@@ -319,19 +322,23 @@ def test_something():
         """Test test suite analysis."""
         # Create test files
         test_file1 = self.temp_dir / "test_file1.py"
-        test_file1.write_text("""
+        test_file1.write_text(
+            """
 def test_function1():
     result = some_function()
     assert result == "expected"
-""")
-        
+"""
+        )
+
         test_file2 = self.temp_dir / "test_file2.py"
-        test_file2.write_text("""
+        test_file2.write_text(
+            """
 def test_function2():
     result = some_function()
     assert result == "expected"
-""")
-        
+"""
+        )
+
         # Create mock coverage data
         coverage_data = {
             f"{test_file1}:test_function1": CoverageData(
@@ -359,16 +366,18 @@ def test_function2():
                 missing_lines={5, 6},
             ),
         }
-        
-        clusters = self.detector.analyze_test_suite([test_file1, test_file2], coverage_data)
-        
+
+        clusters = self.detector.analyze_test_suite(
+            [test_file1, test_file2], coverage_data
+        )
+
         # Should find at least one cluster due to similar structure
         assert len(clusters) >= 0
 
     def test_get_similarity_thresholds(self) -> None:
         """Test getting similarity thresholds."""
         thresholds = self.detector.get_similarity_thresholds()
-        
+
         assert "exact_duplicate_threshold" in thresholds
         assert "near_duplicate_threshold" in thresholds
         assert "similar_pattern_threshold" in thresholds
@@ -380,9 +389,9 @@ def test_function2():
             "exact_duplicate_threshold": 0.95,
             "near_duplicate_threshold": 0.80,
         }
-        
+
         self.detector.update_similarity_thresholds(new_thresholds)
-        
+
         assert self.detector.config["exact_duplicate_threshold"] == 0.95
         assert self.detector.config["near_duplicate_threshold"] == 0.80
         assert self.detector.config["similar_pattern_threshold"] == 0.70  # Unchanged
@@ -395,9 +404,9 @@ def test_function2():
         self.detector._mock_assertion_counts["test"] = 1
         self.detector._exception_patterns["test"] = "pattern"
         self.detector._test_signatures["test"] = "signature"
-        
+
         self.detector.clear_cache()
-        
+
         assert len(self.detector._similarity_cache) == 0
         assert len(self.detector._coverage_data) == 0
         assert len(self.detector._mock_assertion_counts) == 0
@@ -407,14 +416,16 @@ def test_function2():
     def test_analyze_file(self) -> None:
         """Test file analysis."""
         test_file = self.temp_dir / "test_file.py"
-        test_file.write_text("""
+        test_file.write_text(
+            """
 def test_function():
     result = some_function()
     assert result == "expected"
-""")
-        
+"""
+        )
+
         findings = self.detector.analyze_file(test_file)
-        
+
         # Should return empty findings for now (placeholder implementation)
         assert isinstance(findings, list)
 
@@ -425,7 +436,7 @@ class TestDuplicateCluster:
     def test_duplicate_cluster_creation(self) -> None:
         """Test DuplicateCluster creation."""
         tests = [("test1", Path("test1.py")), ("test2", Path("test2.py"))]
-        
+
         cluster = DuplicateCluster(
             cluster_id="test123",
             tests=tests,
@@ -434,7 +445,7 @@ class TestDuplicateCluster:
             representative_test=tests[0],
             consolidation_suggestion="Test suggestion",
         )
-        
+
         assert cluster.cluster_id == "test123"
         assert len(cluster.tests) == 2
         assert cluster.similarity_score == 0.9
@@ -445,7 +456,7 @@ class TestDuplicateCluster:
     def test_duplicate_cluster_without_suggestion(self) -> None:
         """Test DuplicateCluster creation without suggestion."""
         tests = [("test1", Path("test1.py"))]
-        
+
         cluster = DuplicateCluster(
             cluster_id="test123",
             tests=tests,
@@ -453,16 +464,16 @@ class TestDuplicateCluster:
             cluster_type="near_duplicates",
             representative_test=tests[0],
         )
-        
+
         assert cluster.consolidation_suggestion is None
 
 
-class TestSimilarityDataclass:
-    """Test cases for TestSimilarity dataclass."""
+class TestSimilarityDataDataclass:
+    """Test cases for SimilarityData dataclass."""
 
-    def test_test_similarity_creation(self) -> None:
-        """Test TestSimilarity creation."""
-        similarity = TestSimilarity(
+    def test_similarity_data_creation(self) -> None:
+        """Test SimilarityData creation."""
+        similarity = SimilarityData(
             test1_name="test1",
             test1_file=Path("test1.py"),
             test2_name="test2",
@@ -474,7 +485,7 @@ class TestSimilarityDataclass:
             overall_similarity=0.75,
             similarity_type="near",
         )
-        
+
         assert similarity.test1_name == "test1"
         assert similarity.test2_name == "test2"
         assert similarity.jaccard_similarity == 0.8

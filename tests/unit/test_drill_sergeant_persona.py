@@ -183,6 +183,7 @@ class TestDrillSergeantPersona:
                 "ADEQUATE",
                 "ACCEPTABLE",
                 "REMARKABLY",
+                "CAPTAIN",
             ]
         )
         # Some templates include the score, others don't - both are valid

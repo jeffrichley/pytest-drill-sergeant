@@ -289,6 +289,7 @@ STRUCTURAL_EQUALITY = RuleSpec(
 )
 
 
+
 def register_all_rules() -> None:
     """Register all rules in the registry."""
     rules = [
