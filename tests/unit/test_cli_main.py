@@ -88,10 +88,10 @@ class TestAnalysisContext:
         """Test AnalysisContext initialization."""
         with (
             patch(
-                "pytest_drill_sergeant.plugin.analysis_storage.AnalysisStorage"
+                "pytest_drill_sergeant.cli.main.AnalysisStorage"
             ) as mock_storage_class,
             patch(
-                "pytest_drill_sergeant.plugin.personas.manager.get_persona_manager"
+                "pytest_drill_sergeant.cli.main.get_persona_manager"
             ) as mock_persona_manager,
         ):
             mock_storage = Mock()
@@ -110,10 +110,10 @@ class TestAnalysisContext:
         """Test adding analyzer to context."""
         with (
             patch(
-                "pytest_drill_sergeant.plugin.analysis_storage.AnalysisStorage"
+                "pytest_drill_sergeant.cli.main.AnalysisStorage"
             ) as mock_storage_class,
             patch(
-                "pytest_drill_sergeant.plugin.personas.manager.get_persona_manager"
+                "pytest_drill_sergeant.cli.main.get_persona_manager"
             ) as mock_persona_manager,
         ):
             mock_storage = Mock()
@@ -221,10 +221,10 @@ def test_example():
                     "pytest_drill_sergeant.cli.main.AnalysisContext"
                 ) as mock_context_class,
                 patch(
-                    "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
+                    "pytest_drill_sergeant.cli.main.create_analysis_pipeline"
                 ) as mock_pipeline,
                 patch(
-                    "pytest_drill_sergeant.core.config_context.initialize_config"
+                    "pytest_drill_sergeant.cli.main.initialize_config"
                 ) as mock_init_config,
                 patch(
                     "pytest_drill_sergeant.cli.main.setup_logging"
@@ -271,10 +271,10 @@ def test_example():
                 "pytest_drill_sergeant.cli.main.AnalysisContext"
             ) as mock_context_class,
             patch(
-                "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
+                "pytest_drill_sergeant.cli.main.create_analysis_pipeline"
             ) as mock_pipeline,
             patch(
-                "pytest_drill_sergeant.core.config_context.initialize_config"
+                "pytest_drill_sergeant.cli.main.initialize_config"
             ) as mock_init_config,
             patch("pytest_drill_sergeant.cli.main.setup_logging") as mock_setup_logging,
         ):
@@ -313,16 +313,12 @@ def test_example():
         config = LintConfig(paths=["test.py"])
 
         with (
+            patch("pytest_drill_sergeant.cli.main.AnalysisContext") as _,
+            patch("pytest_drill_sergeant.cli.main.create_analysis_pipeline") as _,
             patch(
-                "pytest_drill_sergeant.cli.main.AnalysisContext"
-            ) as mock_context_class,
-            patch(
-                "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
-            ) as mock_pipeline,
-            patch(
-                "pytest_drill_sergeant.core.config_context.initialize_config"
+                "pytest_drill_sergeant.cli.main.initialize_config"
             ) as mock_init_config,
-            patch("pytest_drill_sergeant.cli.main.setup_logging") as mock_setup_logging,
+            patch("pytest_drill_sergeant.cli.main.setup_logging") as _,
         ):
             # Make initialize_config raise an exception
             mock_init_config.side_effect = Exception("Config error")
@@ -412,10 +408,10 @@ class TestCLIErrorHandling:
                 "pytest_drill_sergeant.cli.main.AnalysisContext"
             ) as mock_context_class,
             patch(
-                "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
+                "pytest_drill_sergeant.cli.main.create_analysis_pipeline"
             ) as mock_pipeline,
             patch(
-                "pytest_drill_sergeant.core.config_context.initialize_config"
+                "pytest_drill_sergeant.cli.main.initialize_config"
             ) as mock_init_config,
             patch("pytest_drill_sergeant.cli.main.setup_logging") as mock_setup_logging,
         ):
@@ -454,16 +450,12 @@ class TestCLIErrorHandling:
         config = LintConfig(paths=["/root/protected_file.py"])
 
         with (
+            patch("pytest_drill_sergeant.cli.main.AnalysisContext") as _,
+            patch("pytest_drill_sergeant.cli.main.create_analysis_pipeline") as _,
             patch(
-                "pytest_drill_sergeant.cli.main.AnalysisContext"
-            ) as mock_context_class,
-            patch(
-                "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
-            ) as mock_pipeline,
-            patch(
-                "pytest_drill_sergeant.core.config_context.initialize_config"
+                "pytest_drill_sergeant.cli.main.initialize_config"
             ) as mock_init_config,
-            patch("pytest_drill_sergeant.cli.main.setup_logging") as mock_setup_logging,
+            patch("pytest_drill_sergeant.cli.main.setup_logging") as _,
         ):
             # Make initialize_config raise PermissionError
             mock_init_config.side_effect = PermissionError("Permission denied")
@@ -478,16 +470,12 @@ class TestCLIErrorHandling:
         config = LintConfig(paths=["test.py"], config="invalid_config.toml")
 
         with (
+            patch("pytest_drill_sergeant.cli.main.AnalysisContext") as _,
+            patch("pytest_drill_sergeant.cli.main.create_analysis_pipeline") as _,
             patch(
-                "pytest_drill_sergeant.cli.main.AnalysisContext"
-            ) as mock_context_class,
-            patch(
-                "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
-            ) as mock_pipeline,
-            patch(
-                "pytest_drill_sergeant.core.config_context.initialize_config"
+                "pytest_drill_sergeant.cli.main.initialize_config"
             ) as mock_init_config,
-            patch("pytest_drill_sergeant.cli.main.setup_logging") as mock_setup_logging,
+            patch("pytest_drill_sergeant.cli.main.setup_logging") as _,
         ):
             # Make initialize_config raise FileNotFoundError for config file
             mock_init_config.side_effect = FileNotFoundError("Config file not found")
