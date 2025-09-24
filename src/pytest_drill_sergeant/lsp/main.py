@@ -87,8 +87,6 @@ async def main() -> None:
 
     except Exception as e:
         logger.error("Failed to start language server: %s", e)
-        import traceback
-
         traceback.print_exc()
         sys.exit(1)
 
@@ -113,8 +111,6 @@ def run_server() -> None:
 
     except Exception as e:
         logger.error("Failed to start language server: %s", e)
-        import traceback
-
         traceback.print_exc()
         sys.exit(1)
 

@@ -15,7 +15,8 @@ if TYPE_CHECKING:
     from pytest_drill_sergeant.core.models import Finding
 
 from pytest_drill_sergeant.core.models import Finding, Severity
-from pytest_drill_sergeant.core.rulespec import RuleRegistry, RuleSpec
+from pytest_drill_sergeant.core.rulespec import RuleCategory, RuleRegistry, RuleSpec
+from pytest_drill_sergeant.core.rulespec import Severity as RuleSeverity
 
 
 class Detector(Protocol):
@@ -54,9 +55,6 @@ class PrivateAccessDetector:
             return RuleRegistry.get_rule("DS301")  # Private access rule code
         except KeyError:
             # Fallback if rule not found
-            from pytest_drill_sergeant.core.rulespec import RuleCategory, RuleSpec
-            from pytest_drill_sergeant.core.rulespec import Severity as RuleSeverity
-
             return RuleSpec(
                 code="DS301",
                 name="private_access",
