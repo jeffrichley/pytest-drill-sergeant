@@ -12,6 +12,7 @@ from pytest_drill_sergeant.core.config_context import get_config, initialize_con
 from pytest_drill_sergeant.core.file_discovery import create_file_discovery
 from pytest_drill_sergeant.core.logging_utils import setup_standard_logging
 from pytest_drill_sergeant.plugin.analysis_storage import get_analysis_storage
+from pytest_drill_sergeant.plugin.pytest_cov_integration import PytestCovIntegration
 from pytest_drill_sergeant.plugin.internals import plan_item_order
 from pytest_drill_sergeant.plugin.personas.manager import get_persona_manager
 
@@ -19,16 +20,27 @@ if TYPE_CHECKING:  # pragma: no cover - imports for type checking only
     import pytest
     from _pytest.nodes import Item
 
+# Global pytest-cov integration instance
+_pytest_cov_integration: PytestCovIntegration | None = None
+
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Add command line options."""
     cli_parser = DrillSergeantArgumentParser()
     cli_parser.add_pytest_options(parser)
+    
+    # Coverage analysis is automatically enabled when pytest-cov is used
 
 
 def pytest_configure(config: pytest.Config) -> None:
     """Configure the plugin."""
+    global _pytest_cov_integration
+    
     os.environ["PYTEST_DRILL_SERGEANT_PLUGIN_MODE"] = "1"
+    
+    # Initialize pytest-cov integration
+    _pytest_cov_integration = PytestCovIntegration()
+    _pytest_cov_integration.pytest_configure(config)
     setup_standard_logging()
 
     cli_args = {}
@@ -60,11 +72,21 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     """Setup before each test runs."""
     # Run static analysis on the test file
     _analyze_test_file(item)
+    
+    # pytest-cov integration doesn't need setup
 
 
 def pytest_runtest_call(item: pytest.Item) -> None:
     """Execute the test with analysis."""
-    # TODO: Execute test with analysis
+    # Run pytest-cov integration if available
+    if _pytest_cov_integration is not None:
+        _pytest_cov_integration.pytest_runtest_call(item)
+
+
+def pytest_runtest_teardown(item: pytest.Item) -> None:
+    """Cleanup after each test runs."""
+    # pytest-cov integration doesn't need teardown, but we could add it if needed
+    pass
 
 
 def pytest_runtest_logreport(report: pytest.TestReport) -> None:
@@ -73,19 +95,31 @@ def pytest_runtest_logreport(report: pytest.TestReport) -> None:
     _inject_persona_feedback(report)
 
 
+def pytest_unconfigure(config: pytest.Config) -> None:
+    """Clean up after test session."""
+    global _pytest_cov_integration
+    
+    # Clean up pytest-cov integration if it was initialized
+    if _pytest_cov_integration is not None:
+        _pytest_cov_integration = None
+
+
 def pytest_terminal_summary(
     terminalreporter: pytest.TerminalReporter, exitstatus: int, config: pytest.Config
 ) -> None:
     """Generate terminal summary."""
     # Generate persona summary
     _generate_persona_summary(terminalreporter)
+    
+    # Generate coverage summary if pytest-cov integration is enabled
+    if _pytest_cov_integration is not None:
+        _pytest_cov_integration.pytest_terminal_summary(terminalreporter, exitstatus, config)
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     """Clean up after test session."""
-    # Clear analysis storage
-    storage = get_analysis_storage()
-    storage.clear()
+    # Don't clear storage here - let it persist for summary generation
+    pass
 
 
 def _initialize_analyzers() -> None:
@@ -116,14 +150,16 @@ def _initialize_analyzers() -> None:
 def _analyze_test_file(item: pytest.Item) -> None:
     """Analyze a test file for violations."""
     try:
-        test_file_path = Path(item.fspath)
+        test_file_path = Path(item.fspath).resolve()  # Make path absolute
         storage = get_analysis_storage()
 
         # Check if file should be analyzed using file discovery
         config = get_config()
         file_discovery = create_file_discovery(config)
 
-        if not file_discovery.should_analyze_file(test_file_path):
+        should_analyze = file_discovery.should_analyze_file(test_file_path)
+
+        if not should_analyze:
             # File is excluded by configuration, skip analysis
             return
 
@@ -140,6 +176,10 @@ def _analyze_test_file(item: pytest.Item) -> None:
                 finding for finding in findings if finding.code not in ignored_rules
             ]
 
+            # Store filtered findings back in storage
+            test_key = str(test_file_path)
+            storage._test_findings[test_key] = filtered_findings
+            
             # Store findings in the item for later use
             if not hasattr(item, "ds_findings"):
                 item.ds_findings = filtered_findings

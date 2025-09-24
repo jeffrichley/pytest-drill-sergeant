@@ -6,13 +6,12 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-import pytest
-from lsprotocol.types import DiagnosticSeverity, Position, Range
+from lsprotocol.types import DiagnosticSeverity
 from pygls.workspace import Document
 
+from pytest_drill_sergeant.core.models import Finding, Severity
 from pytest_drill_sergeant.lsp.diagnostics import DiagnosticConverter
 from pytest_drill_sergeant.lsp.server import DrillSergeantLanguageServer
-from pytest_drill_sergeant.core.models import Finding, Severity
 
 
 class TestDrillSergeantLanguageServer:
@@ -21,7 +20,7 @@ class TestDrillSergeantLanguageServer:
     def test_init(self) -> None:
         """Test server initialization."""
         with patch("pytest_drill_sergeant.lsp.server.create_analysis_pipeline"):
-            with patch("pytest_drill_sergeant.lsp.server.get_config"):
+            with patch("pytest_drill_sergeant.core.config_context.initialize_config"):
                 with patch("pytest_drill_sergeant.lsp.server.setup_standard_logging"):
                     server = DrillSergeantLanguageServer()
                     assert server is not None
@@ -80,15 +79,15 @@ def test_something():
             ]
             
             with patch("pytest_drill_sergeant.lsp.server.create_analysis_pipeline") as mock_pipeline:
-                mock_analyzers = Mock()
-                mock_analyzers.analyzers = [Mock()]
-                mock_analyzers.analyzers[0].analyze_file.return_value = mock_findings
-                mock_pipeline.return_value = mock_analyzers
-                
-                with patch("pytest_drill_sergeant.lsp.server.get_config"):
-                    with patch("pytest_drill_sergeant.lsp.server.setup_standard_logging"):
-                        server = DrillSergeantLanguageServer()
-                        diagnostics = server.analyze_document(document)
+                    mock_analyzers = Mock()
+                    mock_analyzers.analyzers = [Mock()]
+                    mock_analyzers.analyzers[0].analyze_file.return_value = mock_findings
+                    mock_pipeline.return_value = mock_analyzers
+                    
+                    with patch("pytest_drill_sergeant.core.config_context.initialize_config"):
+                        with patch("pytest_drill_sergeant.lsp.server.setup_standard_logging"):
+                            server = DrillSergeantLanguageServer()
+                            diagnostics = server.analyze_document(document)
                         
                         # Should find 2 diagnostics
                         assert len(diagnostics) == 2
@@ -117,7 +116,7 @@ def test_something():
             document.uri = f"file://{f.name}"
             
             with patch("pytest_drill_sergeant.lsp.server.create_analysis_pipeline"):
-                with patch("pytest_drill_sergeant.lsp.server.get_config"):
+                with patch("pytest_drill_sergeant.core.config_context.initialize_config"):
                     with patch("pytest_drill_sergeant.lsp.server.setup_standard_logging"):
                         server = DrillSergeantLanguageServer()
                         diagnostics = server.analyze_document(document)
@@ -128,7 +127,7 @@ def test_something():
     def test_convert_severity(self) -> None:
         """Test severity conversion."""
         with patch("pytest_drill_sergeant.lsp.server.create_analysis_pipeline"):
-            with patch("pytest_drill_sergeant.lsp.server.get_config"):
+            with patch("pytest_drill_sergeant.core.config_context.initialize_config"):
                 with patch("pytest_drill_sergeant.lsp.server.setup_standard_logging"):
                     server = DrillSergeantLanguageServer()
                     
@@ -141,7 +140,7 @@ def test_something():
     def test_is_test_file(self) -> None:
         """Test test file detection."""
         with patch("pytest_drill_sergeant.lsp.server.create_analysis_pipeline"):
-            with patch("pytest_drill_sergeant.lsp.server.get_config"):
+            with patch("pytest_drill_sergeant.core.config_context.initialize_config"):
                 with patch("pytest_drill_sergeant.lsp.server.setup_standard_logging"):
                     server = DrillSergeantLanguageServer()
                     

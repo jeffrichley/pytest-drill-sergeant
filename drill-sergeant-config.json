@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "profile": "standard",
+  "profiles": {
+    "standard": {
+      "rules": {
+        "private_access": {
+          "enabled": true,
+          "severity": "warning"
+        },
+        "mock_overspecification": {
+          "enabled": true,
+          "severity": "warning"
+        },
+        "structural_equality": {
+          "enabled": true,
+          "severity": "info"
+        },
+        "aaa_comments": {
+          "enabled": true,
+          "severity": "warning"
+        }
+      }
+    }
+  }
+}

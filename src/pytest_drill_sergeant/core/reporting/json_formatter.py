@@ -13,9 +13,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from pytest_drill_sergeant.core.error_handler import AnalysisError
     from pytest_drill_sergeant.core.models import Finding, ResultData, RunMetrics
     from pytest_drill_sergeant.core.reporting.types import JSONDict
-    from pytest_drill_sergeant.core.error_handler import AnalysisError
 
 
 class JSONFormatter:

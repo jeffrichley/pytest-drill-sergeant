@@ -188,7 +188,7 @@ class DSConfig(BaseModel):
     project_root: Path | None = Field(None, description="Project root directory")
     sut_package: str | None = Field(None, description="System under test package")
     test_patterns: list[str] = Field(
-        default_factory=lambda: ["test_*.py", "*_test.py"],
+        default_factory=lambda: ["**/test_*.py", "**/*_test.py"],
         description="Test file patterns",
     )
     ignore_patterns: list[str] = Field(
@@ -532,7 +532,7 @@ def create_default_config() -> DSConfig:
         brs_threshold=60.0,
         similarity_threshold=0.8,
         mock_overspec_threshold=3,
-        test_patterns=["test_*.py", "*_test.py"],
+        test_patterns=["**/test_*.py", "**/*_test.py"],
         ignore_patterns=[],
         per_file_ignores={},
         include_patterns=[],

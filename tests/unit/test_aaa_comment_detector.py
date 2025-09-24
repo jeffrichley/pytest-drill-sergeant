@@ -499,7 +499,7 @@ def test_function():
         """Test detection with multiple AAA sections in single comments."""
         detector = AAACommentDetector()
 
-        test_code = '''
+        test_code = """
 def test_multi_section_comment():
     # Arrange, Act, Assert - all in one line
     data = {"key": "value"}
@@ -509,7 +509,7 @@ def test_multi_section_comment():
     
     # Assert result is correct
     assert result == expected
-'''
+"""
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(test_code)
@@ -526,7 +526,7 @@ def test_multi_section_comment():
         """Test detection with mixed AAA sections in comments."""
         detector = AAACommentDetector()
 
-        test_code = '''
+        test_code = """
 def test_mixed_sections():
     # Setup data and Act on it - mixed sections
     data = {"key": "value"}
@@ -534,7 +534,7 @@ def test_mixed_sections():
     # When we call the method, Then verify
     result = process_data(data)
     assert result == expected
-'''
+"""
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(test_code)
@@ -551,7 +551,7 @@ def test_mixed_sections():
         """Test that non-AAA comments are properly ignored."""
         detector = AAACommentDetector()
 
-        test_code = '''
+        test_code = """
 def test_non_aaa_comments():
     # Actually this is not an AAA comment
     data = {"key": "value"}
@@ -561,7 +561,7 @@ def test_non_aaa_comments():
     
     # Assertion about the result
     assert result == expected
-'''
+"""
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(test_code)

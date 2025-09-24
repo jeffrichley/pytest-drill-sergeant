@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
+
 from pytest_drill_sergeant.core.models import Finding, Severity
 from pytest_drill_sergeant.core.scoring.brs_calculator import BRSCalculator, RunMetrics
 

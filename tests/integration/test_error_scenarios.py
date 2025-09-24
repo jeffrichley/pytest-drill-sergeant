@@ -1,20 +1,17 @@
 """Integration tests for error handling scenarios."""
 
-import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 from pytest_drill_sergeant.core.analysis_pipeline import AnalysisPipeline
-from pytest_drill_sergeant.core.error_handler import (
-    ErrorHandler,
-    ErrorCategory,
-    ErrorSeverity,
-    get_error_handler,
-)
 from pytest_drill_sergeant.core.config_validator_enhanced import (
     EnhancedConfigValidator,
     validate_config_file,
+)
+from pytest_drill_sergeant.core.error_handler import (
+    ErrorCategory,
+    ErrorHandler,
+    ErrorSeverity,
 )
 
 
@@ -286,7 +283,7 @@ class TestConfigurationValidationErrorHandling:
 
     def test_config_file_validation(self):
         """Test validation of configuration files."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             # Write invalid JSON (missing closing brace)
             f.write('{"version": "1.0", "profiles": {}')
             f.flush()
@@ -354,8 +351,8 @@ class TestErrorReportingIntegration:
 
     def test_error_reporting_in_report(self):
         """Test error reporting in complete report."""
-        from pytest_drill_sergeant.core.reporting.json_formatter import JSONFormatter
         from pytest_drill_sergeant.core.models import RunMetrics
+        from pytest_drill_sergeant.core.reporting.json_formatter import JSONFormatter
         
         # Create test errors
         error_handler = ErrorHandler()
@@ -397,8 +394,8 @@ class TestErrorReportingIntegration:
 
     def test_error_statistics_in_report(self):
         """Test error statistics in report."""
-        from pytest_drill_sergeant.core.reporting.json_formatter import JSONFormatter
         from pytest_drill_sergeant.core.models import RunMetrics
+        from pytest_drill_sergeant.core.reporting.json_formatter import JSONFormatter
         
         # Create test errors of different types
         error_handler = ErrorHandler()

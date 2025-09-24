@@ -6,7 +6,10 @@ in supported editors like VS Code.
 """
 
 from pytest_drill_sergeant.lsp.config import LSPConfig, get_lsp_config
-from pytest_drill_sergeant.lsp.diagnostics import DiagnosticConverter, get_diagnostic_converter
+from pytest_drill_sergeant.lsp.diagnostics import (
+    DiagnosticConverter,
+    get_diagnostic_converter,
+)
 from pytest_drill_sergeant.lsp.file_watcher import FileWatcher, setup_file_watching
 from pytest_drill_sergeant.lsp.server import (
     DrillSergeantLanguageServer,

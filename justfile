@@ -1,21 +1,22 @@
 # Development shortcuts for pytest-drill-sergeant
 # Following the Redwing Core pattern
 
-# Run tests with coverage
+# Run fast tests only (unit tests, excludes slow integration/coverage tests)
 test:
+    uv run pytest tests/unit --cov=src/pytest_drill_sergeant --cov-report=term-missing --cov-report=html
+
+# Run all tests (including slow integration tests)
+test-all:
     uv run pytest tests --cov=src/pytest_drill_sergeant --cov-report=term-missing --cov-report=html
 
-# Run tests without coverage (faster)
+# Run tests without coverage (fastest)
 test-fast:
-    uv run pytest tests
+    uv run pytest tests/unit
 
 # Run unit tests only
 test-unit:
-    uv run pytest tests -m unit --cov=src/pytest_drill_sergeant --cov-report=term-missing --cov-report=html
+    uv run pytest tests/unit --cov=src/pytest_drill_sergeant --cov-report=term-missing --cov-report=html
 
-# Run integration tests only
-test-integration:
-    uv run pytest tests -m integration --cov=src/pytest_drill_sergeant --cov-report=term-missing --cov-report=html
 
 # Run linting
 lint:
@@ -103,8 +104,8 @@ j:
 demo:
     clear || cls
     @echo "🎖️ Testing pytest-drill-sergeant plugin"
-    @echo "🧪 Running tests with drill sergeant enforcement..."
-    uv run pytest tests -v
+    @echo "🧪 Running fast tests with drill sergeant enforcement..."
+    uv run pytest tests/unit -v
 
 # Show help
 default:

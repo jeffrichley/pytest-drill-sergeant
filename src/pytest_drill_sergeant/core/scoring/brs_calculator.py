@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pathlib import Path
+
     from pytest_drill_sergeant.core.models import Finding
 
 
@@ -46,7 +47,6 @@ class BRSCalculator:
     
     def __init__(self) -> None:
         """Initialize the BRS calculator."""
-        pass
     
     def calculate_brs(self, metrics: RunMetrics) -> float:
         """Calculate Battlefield Readiness Score based on run metrics.
@@ -139,18 +139,17 @@ class BRSCalculator:
         """
         if score >= 90:
             return "CHAMPIONSHIP LEVEL! Your test suite is BATTLE-READY!"
-        elif score >= 80:
+        if score >= 80:
             return "EXCELLENT! Your test suite shows strong discipline!"
-        elif score >= 70:
+        if score >= 70:
             return "GOOD! Your test suite is well-structured with minor issues!"
-        elif score >= 60:
+        if score >= 60:
             return "ADEQUATE! Your test suite needs some attention!"
-        elif score >= 50:
+        if score >= 50:
             return "NEEDS IMPROVEMENT! Your test suite requires significant work!"
-        elif score >= 40:
+        if score >= 40:
             return "CRITICAL! Your test suite needs major restructuring!"
-        else:
-            return "DISASTER! Your test suite is completely broken!"
+        return "DISASTER! Your test suite is completely broken!"
     
     def get_brs_grade(self, score: float) -> str:
         """Get letter grade for BRS score.
@@ -163,26 +162,25 @@ class BRSCalculator:
         """
         if score >= 90:
             return "A+"
-        elif score >= 85:
+        if score >= 85:
             return "A"
-        elif score >= 80:
+        if score >= 80:
             return "A-"
-        elif score >= 75:
+        if score >= 75:
             return "B+"
-        elif score >= 70:
+        if score >= 70:
             return "B"
-        elif score >= 65:
+        if score >= 65:
             return "B-"
-        elif score >= 60:
+        if score >= 60:
             return "C+"
-        elif score >= 55:
+        if score >= 55:
             return "C"
-        elif score >= 50:
+        if score >= 50:
             return "C-"
-        elif score >= 40:
+        if score >= 40:
             return "D"
-        else:
-            return "F"
+        return "F"
     
     def get_component_breakdown(self, metrics: RunMetrics) -> dict[str, float]:
         """Get breakdown of BRS components.

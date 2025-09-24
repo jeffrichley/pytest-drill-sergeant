@@ -19,6 +19,7 @@ dependencies = [
     "pydantic>=2.0.0",
     "rich>=13.0.0",
     "sarif-om>=1.0.4",
+    "pytest-asyncio>=1.2.0",
 ]
 keywords = ["pytest", "testing", "quality", "ai", "linting", "drill-sergeant", "test-enforcement"]
 classifiers = [

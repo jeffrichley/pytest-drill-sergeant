@@ -8,12 +8,11 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from pytest_drill_sergeant.core.error_handler import (
     AnalysisError,
     ErrorCategory,
-    ErrorContext,
     ErrorSeverity,
     create_error_context,
 )
@@ -23,7 +22,7 @@ from pytest_drill_sergeant.core.models import Severity
 class ConfigurationValidationError(Exception):
     """Exception raised for configuration validation errors."""
 
-    def __init__(self, message: str, field: Optional[str] = None, suggestion: Optional[str] = None) -> None:
+    def __init__(self, message: str, field: str | None = None, suggestion: str | None = None) -> None:
         """Initialize configuration validation error.
 
         Args:
@@ -39,16 +38,16 @@ class ConfigurationValidationError(Exception):
 class EnhancedConfigValidator:
     """Enhanced configuration validator with detailed error reporting."""
 
-    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(self, logger: logging.Logger | None = None) -> None:
         """Initialize the enhanced configuration validator.
 
         Args:
             logger: Logger instance for validation messages
         """
         self.logger = logger or logging.getLogger("drill_sergeant.config_validator")
-        self.validation_errors: List[AnalysisError] = []
+        self.validation_errors: list[AnalysisError] = []
 
-    def validate_config(self, config: Dict[str, Any]) -> List[AnalysisError]:
+    def validate_config(self, config: dict[str, Any]) -> list[AnalysisError]:
         """Validate a configuration dictionary.
 
         Args:
@@ -84,7 +83,7 @@ class EnhancedConfigValidator:
         
         return self.validation_errors.copy()
 
-    def _validate_basic_structure(self, config: Dict[str, Any]) -> None:
+    def _validate_basic_structure(self, config: dict[str, Any]) -> None:
         """Validate basic configuration structure.
 
         Args:
@@ -99,7 +98,7 @@ class EnhancedConfigValidator:
                     suggestion=f"Add '{field}' field to your configuration"
                 )
 
-    def _validate_profiles(self, profiles: Dict[str, Any]) -> None:
+    def _validate_profiles(self, profiles: dict[str, Any]) -> None:
         """Validate profile configurations.
 
         Args:
@@ -125,7 +124,7 @@ class EnhancedConfigValidator:
             # Validate profile structure
             self._validate_profile_structure(profile_name, profile_config)
 
-    def _validate_profile_structure(self, profile_name: str, profile_config: Dict[str, Any]) -> None:
+    def _validate_profile_structure(self, profile_name: str, profile_config: dict[str, Any]) -> None:
         """Validate individual profile structure.
 
         Args:
@@ -166,7 +165,7 @@ class EnhancedConfigValidator:
                             suggestion="Use valid rule names (e.g., 'DS201', 'DS202')"
                         )
 
-    def _validate_rules(self, rules: Dict[str, Any]) -> None:
+    def _validate_rules(self, rules: dict[str, Any]) -> None:
         """Validate rule configurations.
 
         Args:
@@ -192,7 +191,7 @@ class EnhancedConfigValidator:
             # Validate rule structure
             self._validate_rule_structure(rule_name, rule_config)
 
-    def _validate_rule_structure(self, rule_name: str, rule_config: Dict[str, Any]) -> None:
+    def _validate_rule_structure(self, rule_name: str, rule_config: dict[str, Any]) -> None:
         """Validate individual rule structure.
 
         Args:
@@ -230,7 +229,7 @@ class EnhancedConfigValidator:
                     suggestion="Use a non-negative number for threshold"
                 )
 
-    def _validate_paths(self, paths: Union[str, List[str]]) -> None:
+    def _validate_paths(self, paths: str | list[str]) -> None:
         """Validate path configurations.
 
         Args:
@@ -264,7 +263,7 @@ class EnhancedConfigValidator:
                     suggestion=f"Check if the path exists: {path.absolute()}"
                 )
 
-    def _validate_output_settings(self, output: Dict[str, Any]) -> None:
+    def _validate_output_settings(self, output: dict[str, Any]) -> None:
         """Validate output configuration.
 
         Args:
@@ -308,7 +307,7 @@ class EnhancedConfigValidator:
                         suggestion=f"Create the directory: {output_path.parent.absolute()}"
                     )
 
-    def _validate_persona_settings(self, persona: Union[str, Dict[str, Any]]) -> None:
+    def _validate_persona_settings(self, persona: str | dict[str, Any]) -> None:
         """Validate persona configuration.
 
         Args:
@@ -343,8 +342,8 @@ class EnhancedConfigValidator:
     def _add_validation_error(
         self,
         message: str,
-        field: Optional[str] = None,
-        suggestion: Optional[str] = None,
+        field: str | None = None,
+        suggestion: str | None = None,
     ) -> None:
         """Add a validation error to the list.
 
@@ -373,7 +372,7 @@ class EnhancedConfigValidator:
         self.validation_errors.append(error)
         self.logger.warning(f"Configuration validation error: {message}")
 
-    def get_validation_summary(self) -> Dict[str, Any]:
+    def get_validation_summary(self) -> dict[str, Any]:
         """Get a summary of validation errors.
 
         Returns:
@@ -406,7 +405,7 @@ class EnhancedConfigValidator:
         self.validation_errors.clear()
 
 
-def validate_config_file(config_path: Path) -> List[AnalysisError]:
+def validate_config_file(config_path: Path) -> list[AnalysisError]:
     """Validate a configuration file.
 
     Args:

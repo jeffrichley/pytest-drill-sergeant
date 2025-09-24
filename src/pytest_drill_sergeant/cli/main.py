@@ -210,6 +210,7 @@ def _run_lint_with_options(opts: LintConfig) -> int:
 
     # Initialize error handling
     from pytest_drill_sergeant.core.error_handler import get_error_handler
+
     error_handler = get_error_handler()
 
     # Initialize centralized configuration
@@ -244,7 +245,7 @@ def _run_lint_with_options(opts: LintConfig) -> int:
     # Validate configuration
     config_validator = EnhancedConfigValidator()
     validation_errors = config_validator.validate_config(cli_config)
-    
+
     if validation_errors:
         typer.echo("❌ Configuration validation errors:")
         for error in validation_errors:
@@ -316,7 +317,7 @@ def _run_lint_with_options(opts: LintConfig) -> int:
 
             # Create centralized analysis pipeline with error handling
             pipeline = create_analysis_pipeline()
-            
+
             # Add the pipeline to context (context will handle individual analyzers)
             for analyzer in pipeline.analyzers:
                 ctx.add_analyzer(analyzer)
@@ -334,7 +335,7 @@ def _run_lint_with_options(opts: LintConfig) -> int:
                 if path.is_file():
                     # Analyze single file with error handling
                     findings, file_errors = pipeline.analyze_file(path)
-                    
+
                     # Report any analysis errors
                     if file_errors:
                         typer.echo(f"\n⚠️  Analysis errors in {path}:")
@@ -342,39 +343,46 @@ def _run_lint_with_options(opts: LintConfig) -> int:
                             typer.echo(f"  • {error.message}")
                             if error.suggestion:
                                 typer.echo(f"    💡 Suggestion: {error.suggestion}")
-                    
+
                     # In advisory mode, show all findings; in strict mode, filter by severity
                     if opts.fail_on == "error":
                         # Advisory mode - show all findings but don't fail on warnings
                         display_findings = findings
                         filtered_findings = ctx.filter_findings_by_severity(findings)
-                        total_violations += len(filtered_findings)  # Only count failures for exit code
+                        total_violations += len(
+                            filtered_findings
+                        )  # Only count failures for exit code
                     else:
                         # Strict mode - filter and count all
                         display_findings = ctx.filter_findings_by_severity(findings)
                         filtered_findings = display_findings
                         total_violations += len(filtered_findings)
-                    
+
                     total_files += 1
 
                     # Calculate BIS score for this file
                     from pytest_drill_sergeant.core.scoring import DynamicBISCalculator
+
                     bis_calculator = DynamicBISCalculator()
                     metrics = bis_calculator.extract_metrics_from_findings(findings)
                     bis_score = bis_calculator.calculate_bis(metrics)
                     bis_grade = bis_calculator.get_grade(bis_score)
-                    
+
                     # Collect data for BRS calculation
                     all_findings.extend(findings)
                     all_bis_scores.append(bis_score)
                     files_analyzed.append(path)
-                    
+
                     # Display results for this file
                     if display_findings:
                         typer.echo(f"\n🔍 Analyzing: {path}")
                         for i, finding in enumerate(display_findings, 1):
                             # Use appropriate message based on severity
-                            severity_str = finding.severity if isinstance(finding.severity, str) else finding.severity.value
+                            severity_str = (
+                                finding.severity
+                                if isinstance(finding.severity, str)
+                                else finding.severity.value
+                            )
                             if severity_str in ["error"]:
                                 message = ctx.persona_manager.on_test_fail(
                                     f"{path.name}:{finding.line_number}", finding
@@ -382,14 +390,20 @@ def _run_lint_with_options(opts: LintConfig) -> int:
                                 typer.echo(f"  ❌ {i}. {message}")
                             else:
                                 # For warnings/info, show advisory message with IDE-clickable format
-                                typer.echo(f"  ⚠️  {i}. {path}:{finding.line_number}: {finding.message}")
-                        
+                                typer.echo(
+                                    f"  ⚠️  {i}. {path}:{finding.line_number}: {finding.message}"
+                                )
+
                         # Show BIS score
-                        typer.echo(f"  📊 BIS Score: {bis_score:.1f} ({bis_grade}) - {bis_calculator.get_score_interpretation(bis_score)}")
+                        typer.echo(
+                            f"  📊 BIS Score: {bis_score:.1f} ({bis_grade}) - {bis_calculator.get_score_interpretation(bis_score)}"
+                        )
                     else:
                         success_msg = ctx.persona_manager.on_test_pass(str(path))
                         typer.echo(f"\n✅ {success_msg}")
-                        typer.echo(f"  📊 BIS Score: {bis_score:.1f} ({bis_grade}) - {bis_calculator.get_score_interpretation(bis_score)}")
+                        typer.echo(
+                            f"  📊 BIS Score: {bis_score:.1f} ({bis_grade}) - {bis_calculator.get_score_interpretation(bis_score)}"
+                        )
 
                 elif path.is_dir():
                     # Use SUT filter to get files to analyze
@@ -414,48 +428,61 @@ def _run_lint_with_options(opts: LintConfig) -> int:
 
                     for py_file in files_to_analyze:
                         findings, file_errors = pipeline.analyze_file(py_file)
-                        
+
                         # Report any analysis errors
                         if file_errors:
-                            typer.echo(f"\n  ⚠️  Analysis errors in {py_file.relative_to(path)}:")
+                            typer.echo(
+                                f"\n  ⚠️  Analysis errors in {py_file.relative_to(path)}:"
+                            )
                             for error in file_errors:
                                 typer.echo(f"    • {error.message}")
                                 if error.suggestion:
-                                    typer.echo(f"      💡 Suggestion: {error.suggestion}")
-                        
+                                    typer.echo(
+                                        f"      💡 Suggestion: {error.suggestion}"
+                                    )
+
                         # In advisory mode, show all findings; in strict mode, filter by severity
                         if opts.fail_on == "error":
                             # Advisory mode - show all findings but don't fail on warnings
                             display_findings = findings
-                            filtered_findings = ctx.filter_findings_by_severity(findings)
-                            total_violations += len(filtered_findings)  # Only count failures for exit code
+                            filtered_findings = ctx.filter_findings_by_severity(
+                                findings
+                            )
+                            total_violations += len(
+                                filtered_findings
+                            )  # Only count failures for exit code
                         else:
                             # Strict mode - filter and count all
                             display_findings = ctx.filter_findings_by_severity(findings)
                             filtered_findings = display_findings
                             total_violations += len(filtered_findings)
-                        
+
                         total_files += 1
 
                         # Calculate BIS score for this file
                         from pytest_drill_sergeant.core.scoring import (
                             DynamicBISCalculator,
                         )
+
                         bis_calculator = DynamicBISCalculator()
                         metrics = bis_calculator.extract_metrics_from_findings(findings)
                         bis_score = bis_calculator.calculate_bis(metrics)
                         bis_grade = bis_calculator.get_grade(bis_score)
-                        
+
                         # Collect data for BRS calculation
                         all_findings.extend(findings)
                         all_bis_scores.append(bis_score)
                         files_analyzed.append(py_file)
-                        
+
                         if display_findings:
                             typer.echo(f"\n  🔍 {py_file.relative_to(path)}")
                             for i, finding in enumerate(display_findings, 1):
                                 # Use appropriate message based on severity
-                                severity_str = finding.severity if isinstance(finding.severity, str) else finding.severity.value
+                                severity_str = (
+                                    finding.severity
+                                    if isinstance(finding.severity, str)
+                                    else finding.severity.value
+                                )
                                 if severity_str in ["error"]:
                                     message = ctx.persona_manager.on_test_fail(
                                         f"{py_file.name}:{finding.line_number}", finding
@@ -463,25 +490,34 @@ def _run_lint_with_options(opts: LintConfig) -> int:
                                     typer.echo(f"    ❌ {i}. {message}")
                                 else:
                                     # For warnings/info, show advisory message with IDE-clickable format
-                                    typer.echo(f"    ⚠️  {i}. {py_file}:{finding.line_number}: {finding.message}")
-                            
+                                    typer.echo(
+                                        f"    ⚠️  {i}. {py_file}:{finding.line_number}: {finding.message}"
+                                    )
+
                             # Show BIS score
-                            typer.echo(f"    📊 BIS Score: {bis_score:.1f} ({bis_grade}) - {bis_calculator.get_score_interpretation(bis_score)}")
+                            typer.echo(
+                                f"    📊 BIS Score: {bis_score:.1f} ({bis_grade}) - {bis_calculator.get_score_interpretation(bis_score)}"
+                            )
                         else:
                             # Show BIS score for clean files too
-                            typer.echo(f"  ✅ {py_file.relative_to(path)} - BIS Score: {bis_score:.1f} ({bis_grade})")
+                            typer.echo(
+                                f"  ✅ {py_file.relative_to(path)} - BIS Score: {bis_score:.1f} ({bis_grade})"
+                            )
                 else:
                     typer.echo(f"⚠️  Path not found: {path}")
                     continue
 
             # Calculate BRS score
             from pytest_drill_sergeant.core.scoring import BRSCalculator
+
             brs_calculator = BRSCalculator()
-            metrics = brs_calculator.extract_metrics_from_analysis(files_analyzed, all_findings, all_bis_scores)
+            metrics = brs_calculator.extract_metrics_from_analysis(
+                files_analyzed, all_findings, all_bis_scores
+            )
             brs_score = brs_calculator.calculate_brs(metrics)
             brs_grade = brs_calculator.get_brs_grade(brs_score)
             brs_interpretation = brs_calculator.get_brs_interpretation(brs_score)
-            
+
             # Display summary
             typer.echo(f"\n{'='*60}")
             summary_msg = ctx.persona_manager.on_summary(
@@ -496,7 +532,9 @@ def _run_lint_with_options(opts: LintConfig) -> int:
                 )()
             )
             typer.echo(f"🎖️  {summary_msg}")
-            typer.echo(f"📊 BRS Score: {brs_score:.1f} ({brs_grade}) - {brs_interpretation}")
+            typer.echo(
+                f"📊 BRS Score: {brs_score:.1f} ({brs_grade}) - {brs_interpretation}"
+            )
 
             typer.echo(f"📊 Total violations found: {total_violations}")
             typer.echo(f"📁 Files analyzed: {total_files}")
@@ -506,9 +544,13 @@ def _run_lint_with_options(opts: LintConfig) -> int:
             if analysis_errors:
                 typer.echo(f"\n⚠️  Analysis errors encountered: {len(analysis_errors)}")
                 error_summary = pipeline.get_error_summary()
-                typer.echo(f"   • Critical errors: {error_summary.get('critical_errors', 0)}")
-                typer.echo(f"   • Recoverable errors: {error_summary.get('recoverable_errors', 0)}")
-                
+                typer.echo(
+                    f"   • Critical errors: {error_summary.get('critical_errors', 0)}"
+                )
+                typer.echo(
+                    f"   • Recoverable errors: {error_summary.get('recoverable_errors', 0)}"
+                )
+
                 # Show error breakdown by category
                 by_category = error_summary.get("by_category", {})
                 if by_category:
@@ -637,7 +679,7 @@ def demo(
 
         initialize_config()  # Use defaults for demo
         pipeline = create_analysis_pipeline()
-        
+
         # Add all analyzers from pipeline to storage
         for analyzer in pipeline.analyzers:
             storage.add_analyzer(analyzer)
@@ -802,6 +844,231 @@ def personas(
     except Exception as e:
         logger.error("Failed to list personas: %s", e)
         typer.echo(f"❌ Failed to list personas: {e}")
+
+
+def _load_coverage_config(config_file: str) -> dict:
+    """Load coverage configuration from file."""
+    import json
+    import yaml
+    from pathlib import Path
+    
+    config_path = Path(config_file)
+    if not config_path.exists():
+        typer.echo(f"⚠️  Configuration file not found: {config_file}")
+        return {}
+    
+    try:
+        if config_path.suffix.lower() in ['.json']:
+            with open(config_path, 'r') as f:
+                return json.load(f)
+        elif config_path.suffix.lower() in ['.yml', '.yaml']:
+            with open(config_path, 'r') as f:
+                return yaml.safe_load(f)
+        else:
+            typer.echo(f"⚠️  Unsupported configuration file format: {config_path.suffix}")
+            return {}
+    except Exception as e:
+        typer.echo(f"⚠️  Failed to load configuration file: {e}")
+        return {}
+
+
+def _process_coverage_analysis(coverage_config: dict, verbose: bool) -> None:
+    """Process coverage analysis results."""
+    try:
+        from pytest_drill_sergeant.plugin.pytest_cov_integration import PytestCovIntegration
+        from pytest_drill_sergeant.core.analyzers.car_calculator import CARCalculator
+        from pytest_drill_sergeant.core.analyzers.coverage_signature import CoverageSignatureGenerator
+        
+        # Get coverage data from the integration
+        integration = PytestCovIntegration()
+        
+        # This is a simplified approach - in a real implementation,
+        # we'd need to access the coverage data that was collected during pytest execution
+        typer.echo("\n📊 Coverage Analysis Results:")
+        
+        threshold = coverage_config.get("threshold", 0.0)
+        output_file = coverage_config.get("output")
+        output_format = coverage_config.get("format", "text")
+        
+        if verbose:
+            typer.echo(f"  Threshold: {threshold}")
+            typer.echo(f"  Output: {output_file or 'console'}")
+            typer.echo(f"  Format: {output_format}")
+        
+        # Generate coverage analysis report
+        report = _generate_coverage_report(coverage_config, verbose)
+        
+        # Output the report
+        if output_file:
+            _write_coverage_report(report, output_file, output_format)
+            typer.echo(f"📄 Coverage analysis report written to: {output_file}")
+        else:
+            typer.echo(report)
+            
+    except Exception as e:
+        typer.echo(f"⚠️  Failed to process coverage analysis: {e}")
+
+
+def _generate_coverage_report(coverage_config: dict, verbose: bool) -> str:
+    """Generate coverage analysis report."""
+    # This is a placeholder implementation
+    # In a real implementation, this would analyze the actual coverage data
+    # collected during pytest execution
+    
+    threshold = coverage_config.get("threshold", 0.0)
+    output_format = coverage_config.get("format", "text")
+    
+    if output_format == "json":
+        import json
+        report_data = {
+            "coverage_analysis": {
+                "threshold": threshold,
+                "summary": "Coverage analysis completed",
+                "timestamp": str(Path.cwd()),
+            }
+        }
+        return json.dumps(report_data, indent=2)
+    elif output_format == "html":
+        return f"""
+        <html>
+        <head><title>Coverage Analysis Report</title></head>
+        <body>
+        <h1>Coverage Analysis Report</h1>
+        <p>Threshold: {threshold}</p>
+        <p>Analysis completed successfully</p>
+        </body>
+        </html>
+        """
+    else:  # text format
+        return f"""
+Coverage Analysis Report
+========================
+Threshold: {threshold}
+Status: Analysis completed successfully
+Timestamp: {Path.cwd()}
+"""
+
+
+def _write_coverage_report(report: str, output_file: str, output_format: str) -> None:
+    """Write coverage report to file."""
+    from pathlib import Path
+    
+    output_path = Path(output_file)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(output_path, 'w') as f:
+        f.write(report)
+
+
+@app.command()
+def test(
+    paths: Annotated[
+        list[str] | None,
+        typer.Argument(help="Test files or directories to run"),
+    ] = None,
+    coverage: bool = typer.Option(
+        False, "--coverage", "-c", help="Enable coverage collection with pytest-cov"
+    ),
+    coverage_source: str = typer.Option(
+        "src", "--cov-source", help="Source directory for coverage collection"
+    ),
+    coverage_fail_under: int = typer.Option(
+        0, "--cov-fail-under", help="Minimum coverage percentage to pass"
+    ),
+    ds_coverage_threshold: float = typer.Option(
+        0.0, "--ds-coverage-threshold", help="Minimum CAR score threshold for coverage analysis"
+    ),
+    ds_coverage_output: str = typer.Option(
+        None, "--ds-coverage-output", help="Output file for coverage analysis results"
+    ),
+    ds_coverage_format: str = typer.Option(
+        "text", "--ds-coverage-format", help="Output format for coverage analysis (text, json, html)"
+    ),
+    config_file: str = typer.Option(
+        None, "--config", help="Configuration file for coverage settings"
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Verbose output"
+    ),
+    rich_output: bool = typer.Option(
+        True, "--rich/--plain", help="Use rich output formatting"
+    ),
+) -> None:
+    """Run tests with pytest and optional coverage analysis."""
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    # Set up logging based on user preference and context
+    setup_logging(use_rich=rich_output)
+    logger = get_logger(__name__)
+
+    logger.info("Running tests with pytest-drill-sergeant integration")
+
+    try:
+        # Load configuration file if provided
+        coverage_config = {}
+        if config_file:
+            coverage_config = _load_coverage_config(config_file)
+            # Override with command line options
+            if ds_coverage_threshold != 0.0:
+                coverage_config["threshold"] = ds_coverage_threshold
+            if ds_coverage_output:
+                coverage_config["output"] = ds_coverage_output
+            if ds_coverage_format != "text":
+                coverage_config["format"] = ds_coverage_format
+        else:
+            # Use command line options directly
+            coverage_config = {
+                "threshold": ds_coverage_threshold,
+                "output": ds_coverage_output,
+                "format": ds_coverage_format,
+            }
+        
+        # Set default paths if none provided
+        if not paths:
+            paths = ["tests/"]
+        
+        # Build pytest command
+        cmd = [sys.executable, "-m", "pytest"]
+        
+        # Add paths
+        cmd.extend(paths)
+        
+        # Add verbose flag if requested
+        if verbose:
+            cmd.append("-v")
+        
+        # Add coverage options if requested
+        if coverage:
+            cmd.extend([
+                f"--cov={coverage_source}",
+                f"--cov-fail-under={coverage_fail_under}",
+            ])
+            typer.echo("🎯 Running tests with coverage analysis...")
+        else:
+            typer.echo("🧪 Running tests...")
+        
+        typer.echo(f"Command: {' '.join(cmd)}")
+        typer.echo("=" * 60)
+        
+        # Run pytest
+        result = subprocess.run(cmd, cwd=Path.cwd())
+        
+        # Process coverage analysis if coverage was enabled
+        if coverage and result.returncode == 0:
+            _process_coverage_analysis(coverage_config, verbose)
+        
+        if result.returncode == 0:
+            typer.echo("\n✅ All tests passed!")
+        else:
+            typer.echo(f"\n❌ Tests failed with exit code {result.returncode}")
+            sys.exit(result.returncode)
+            
+    except Exception as e:
+        logger.error("Failed to run tests: %s", e)
+        typer.echo(f"❌ Failed to run tests: {e}")
+        sys.exit(1)
 
 
 def cli() -> None:

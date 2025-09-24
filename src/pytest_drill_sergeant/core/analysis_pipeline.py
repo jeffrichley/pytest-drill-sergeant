@@ -11,16 +11,16 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from pytest_drill_sergeant.core.models import Finding
     from pytest_drill_sergeant.core.error_handler import AnalysisError
+    from pytest_drill_sergeant.core.models import Finding
 
-from pytest_drill_sergeant.core.models import Finding
 from pytest_drill_sergeant.core.error_handler import (
     ErrorHandler,
     ErrorRecoveryManager,
-    get_error_handler,
     create_error_context,
+    get_error_handler,
 )
+from pytest_drill_sergeant.core.models import Finding
 
 
 class Analyzer(Protocol):

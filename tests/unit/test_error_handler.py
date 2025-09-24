@@ -1,17 +1,15 @@
 """Tests for the error handling system."""
 
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from pytest_drill_sergeant.core.error_handler import (
     AnalysisError,
     ErrorCategory,
-    ErrorContext,
     ErrorHandler,
     ErrorRecoveryManager,
-    ErrorSeverity,
     ErrorRecoveryStrategy,
+    ErrorSeverity,
     create_error_context,
     get_error_handler,
 )
@@ -293,7 +291,7 @@ class TestErrorRecoveryManager:
                 raise RuntimeError("temporary failure")
             return "success"
         
-        with patch('time.sleep'):  # Mock sleep to speed up test
+        with patch("time.sleep"):  # Mock sleep to speed up test
             result, error = manager.execute_with_recovery(failing_func)
         
         assert result == "success"
@@ -322,7 +320,7 @@ class TestErrorRecoveryManager:
         def always_failing_func():
             raise RuntimeError("always fails")
         
-        with patch('time.sleep'):  # Mock sleep to speed up test
+        with patch("time.sleep"):  # Mock sleep to speed up test
             result, error = manager.execute_with_recovery(always_failing_func)
         
         assert result is None

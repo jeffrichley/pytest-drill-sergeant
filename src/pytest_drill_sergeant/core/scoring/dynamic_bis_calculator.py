@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pytest_drill_sergeant.core.models import Finding
-    from pytest_drill_sergeant.core.rulespec import BISImpact
 
 
 @dataclass
@@ -166,26 +165,25 @@ class DynamicBISCalculator:
         """
         if score >= 90:
             return "A+"
-        elif score >= 85:
+        if score >= 85:
             return "A"
-        elif score >= 80:
+        if score >= 80:
             return "A-"
-        elif score >= 75:
+        if score >= 75:
             return "B+"
-        elif score >= 70:
+        if score >= 70:
             return "B"
-        elif score >= 65:
+        if score >= 65:
             return "B-"
-        elif score >= 60:
+        if score >= 60:
             return "C+"
-        elif score >= 55:
+        if score >= 55:
             return "C"
-        elif score >= 50:
+        if score >= 50:
             return "C-"
-        elif score >= 40:
+        if score >= 40:
             return "D"
-        else:
-            return "F"
+        return "F"
     
     def get_score_interpretation(self, score: float) -> str:
         """Get human-readable interpretation of BIS score.
@@ -198,14 +196,13 @@ class DynamicBISCalculator:
         """
         if score >= 85:
             return "Excellent - Focuses on behavior, not implementation"
-        elif score >= 70:
+        if score >= 70:
             return "Good - Mostly behavior-focused with minor implementation details"
-        elif score >= 55:
+        if score >= 55:
             return "Fair - Some implementation details but generally behavior-focused"
-        elif score >= 40:
+        if score >= 40:
             return "Poor - Too focused on implementation details"
-        else:
-            return "Critical - Heavily implementation-focused, needs major refactoring"
+        return "Critical - Heavily implementation-focused, needs major refactoring"
     
     def get_breakdown(self, metrics: BISMetrics) -> dict[str, float]:
         """Get detailed breakdown of BIS components.
