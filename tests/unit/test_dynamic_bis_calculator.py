@@ -28,7 +28,7 @@ class TestDynamicBISCalculator:
                 message="Private access detected",
                 file_path=Path("test.py"),
                 line_number=10,
-                severity=Severity.WARNING
+                severity=Severity.WARNING,
             ),
             Finding(
                 code="DS302",  # AAA comments (advisory)
@@ -36,7 +36,7 @@ class TestDynamicBISCalculator:
                 message="Missing AAA structure",
                 file_path=Path("test.py"),
                 line_number=15,
-                severity=Severity.INFO
+                severity=Severity.INFO,
             ),
             Finding(
                 code="DS305",  # Mock overspec (high penalty)
@@ -44,17 +44,17 @@ class TestDynamicBISCalculator:
                 message="Mock over-specified",
                 file_path=Path("test.py"),
                 line_number=20,
-                severity=Severity.WARNING
-            )
+                severity=Severity.WARNING,
+            ),
         ]
-        
+
         calculator = DynamicBISCalculator()
         metrics = calculator.extract_metrics_from_findings(findings)
-        
+
         # Should have 2 high penalty violations
         assert metrics.high_penalty_count == 2
         assert metrics.weighted_high_penalty > 0
-        
+
         # Should have 1 advisory violation
         assert metrics.advisory_count == 1
         assert metrics.weighted_advisory > 0
@@ -64,7 +64,7 @@ class TestDynamicBISCalculator:
         metrics = BISMetrics()  # No violations
         calculator = DynamicBISCalculator()
         score = calculator.calculate_bis(metrics)
-        
+
         # Perfect test suite should score 100
         assert score == 100.0
 
@@ -76,33 +76,30 @@ class TestDynamicBISCalculator:
             medium_penalty_count=1,
             weighted_medium_penalty=1.0,
             advisory_count=3,
-            weighted_advisory=0.9
+            weighted_advisory=0.9,
         )
-        
+
         calculator = DynamicBISCalculator()
         score = calculator.calculate_bis(metrics)
-        
+
         # Should be penalized for violations
         assert score < 100
         assert score > 0
 
     def test_calculate_bis_with_rewards(self) -> None:
         """Test BIS calculation with reward indicators."""
-        metrics = BISMetrics(
-            reward_count=2,
-            weighted_reward=2.0
-        )
-        
+        metrics = BISMetrics(reward_count=2, weighted_reward=2.0)
+
         calculator = DynamicBISCalculator()
         score = calculator.calculate_bis(metrics)
-        
+
         # Should get bonus for rewards (but capped at 100)
         assert score >= 90  # Should be high due to rewards
 
     def test_get_grade(self) -> None:
         """Test grade assignment."""
         calculator = DynamicBISCalculator()
-        
+
         assert calculator.get_grade(95) == "A+"
         assert calculator.get_grade(90) == "A+"
         assert calculator.get_grade(85) == "A"
@@ -119,7 +116,7 @@ class TestDynamicBISCalculator:
     def test_get_score_interpretation(self) -> None:
         """Test score interpretation."""
         calculator = DynamicBISCalculator()
-        
+
         assert "Excellent" in calculator.get_score_interpretation(90)
         assert "Good" in calculator.get_score_interpretation(75)
         assert "Fair" in calculator.get_score_interpretation(60)
@@ -138,12 +135,12 @@ class TestDynamicBISCalculator:
             weighted_medium_penalty=2.0,
             weighted_low_penalty=1.0,
             weighted_advisory=0.9,
-            weighted_reward=1.0
+            weighted_reward=1.0,
         )
-        
+
         calculator = DynamicBISCalculator()
         breakdown = calculator.get_breakdown(metrics)
-        
+
         assert breakdown["high_penalty_violations"] == 1
         assert breakdown["medium_penalty_violations"] == 2
         assert breakdown["low_penalty_violations"] == 1
@@ -164,13 +161,13 @@ class TestDynamicBISCalculator:
                 message="Unknown violation",
                 file_path=Path("test.py"),
                 line_number=10,
-                severity=Severity.WARNING
+                severity=Severity.WARNING,
             )
         ]
-        
+
         calculator = DynamicBISCalculator()
         metrics = calculator.extract_metrics_from_findings(findings)
-        
+
         # Unknown rules should be treated as medium penalty
         assert metrics.medium_penalty_count == 1
         assert metrics.weighted_medium_penalty == 1.0
@@ -178,7 +175,7 @@ class TestDynamicBISCalculator:
     def test_score_bounds(self) -> None:
         """Test that BIS scores are always within 0-100 bounds."""
         calculator = DynamicBISCalculator()
-        
+
         # Test extreme violations
         extreme_metrics = BISMetrics(
             high_penalty_count=100,
@@ -186,25 +183,22 @@ class TestDynamicBISCalculator:
             medium_penalty_count=100,
             weighted_medium_penalty=1000.0,
             advisory_count=100,
-            weighted_advisory=1000.0
+            weighted_advisory=1000.0,
         )
-        
+
         score = calculator.calculate_bis(extreme_metrics)
         assert 0 <= score <= 100
-        
+
         # Test extreme rewards
-        reward_metrics = BISMetrics(
-            reward_count=100,
-            weighted_reward=1000.0
-        )
-        
+        reward_metrics = BISMetrics(reward_count=100, weighted_reward=1000.0)
+
         score = calculator.calculate_bis(reward_metrics)
         assert 0 <= score <= 100
 
     def test_penalty_capping(self) -> None:
         """Test that penalties are capped to prevent excessive scoring."""
         calculator = DynamicBISCalculator()
-        
+
         # Test that many violations don't result in negative scores
         metrics = BISMetrics(
             high_penalty_count=50,
@@ -212,9 +206,9 @@ class TestDynamicBISCalculator:
             medium_penalty_count=50,
             weighted_medium_penalty=50.0,
             advisory_count=50,
-            weighted_advisory=50.0
+            weighted_advisory=50.0,
         )
-        
+
         score = calculator.calculate_bis(metrics)
         assert score >= 0  # Should not go below 0
         assert score < 50  # Should be significantly penalized

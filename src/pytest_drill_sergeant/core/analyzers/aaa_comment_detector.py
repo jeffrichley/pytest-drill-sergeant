@@ -333,7 +333,7 @@ class AAACommentDetector:
                     # Allow standalone keywords (e.g., "Arrange", "Act", "Assert")
                     if len(remaining_text) == 0:
                         return section_type
-                    
+
                     # Allow keywords with minimal descriptive content (e.g., "Arrange - setup data")
                     if len(remaining_text) >= 3:
                         # Skip if it looks like a regular sentence that happens to start with the keyword
@@ -354,9 +354,9 @@ class AAACommentDetector:
                             )
                         ):
                             continue
-                        
+
                         return section_type
-                    
+
                     # For very short remaining text, be more permissive
                     return section_type
 
@@ -393,15 +393,15 @@ class AAACommentDetector:
 
     def _extract_sections_from_part(self, text: str) -> list[str]:
         """Extract AAA sections from a single text part.
-        
+
         Args:
             text: Text part to analyze
-            
+
         Returns:
             List of section types found in the text
         """
         sections_found = []
-        
+
         # Check each keyword
         for section_type, keywords in self.AAA_KEYWORDS.items():
             for keyword in keywords:
@@ -411,13 +411,13 @@ class AAACommentDetector:
                     keyword_match = re.search(rf"\b{keyword}\b", text)
                     if keyword_match:
                         start_pos = keyword_match.start()
-                        remaining_text = text[start_pos + len(keyword):].strip()
-                        
+                        remaining_text = text[start_pos + len(keyword) :].strip()
+
                         # Allow standalone keywords (e.g., "Arrange", "Act", "Assert")
                         if len(remaining_text) == 0:
                             sections_found.append(section_type)
                             break
-                        
+
                         # Allow keywords with minimal descriptive content (e.g., "Arrange - setup data")
                         if len(remaining_text) >= 3:
                             # Skip if it looks like a regular sentence that happens to start with the keyword
@@ -437,10 +437,10 @@ class AAACommentDetector:
                                 )
                             ):
                                 continue
-                            
+
                             sections_found.append(section_type)
                             break
-                        
+
                         # For very short remaining text, be more permissive
                         sections_found.append(section_type)
                         break  # Only add each section type once per part

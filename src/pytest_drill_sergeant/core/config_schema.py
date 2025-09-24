@@ -422,7 +422,12 @@ def _suggest_field_name(invalid_field: str) -> list[str]:
 
     # Common typos
     common_typos = {
-        "threshold": ["bis_threshold", "brs_threshold", "similarity_threshold", "mock_overspec_threshold"],
+        "threshold": [
+            "bis_threshold",
+            "brs_threshold",
+            "similarity_threshold",
+            "mock_overspec_threshold",
+        ],
         "pattern": ["test_patterns", "ignore_patterns"],
         "ignore": ["ignore_patterns", "per_file_ignores"],
         "rule": ["rules"],

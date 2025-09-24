@@ -12,7 +12,9 @@ def test_lsp_module_imports():
     # Test __all__ content
     all_items = pytest_drill_sergeant.lsp.__all__
     assert isinstance(all_items, list)
-    assert len(all_items) == 9  # This module exports DiagnosticConverter, DrillSergeantLanguageServer, FileWatcher, LSPConfig, create_language_server, get_diagnostic_converter, get_language_server, get_lsp_config, setup_file_watching
+    assert (
+        len(all_items) == 9
+    )  # This module exports DiagnosticConverter, DrillSergeantLanguageServer, FileWatcher, LSPConfig, create_language_server, get_diagnostic_converter, get_language_server, get_lsp_config, setup_file_watching
     assert "DiagnosticConverter" in all_items
     assert "DrillSergeantLanguageServer" in all_items
     assert "FileWatcher" in all_items
@@ -37,7 +39,9 @@ def test_lsp_module_all():
 
     # Test that __all__ is a list
     assert isinstance(__all__, list)
-    assert len(__all__) == 9  # This module exports DiagnosticConverter, DrillSergeantLanguageServer, FileWatcher, LSPConfig, create_language_server, get_diagnostic_converter, get_language_server, get_lsp_config, setup_file_watching
+    assert (
+        len(__all__) == 9
+    )  # This module exports DiagnosticConverter, DrillSergeantLanguageServer, FileWatcher, LSPConfig, create_language_server, get_diagnostic_converter, get_language_server, get_lsp_config, setup_file_watching
     assert "DiagnosticConverter" in __all__
     assert "DrillSergeantLanguageServer" in __all__
     assert "FileWatcher" in __all__

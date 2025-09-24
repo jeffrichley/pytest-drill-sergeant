@@ -16,22 +16,22 @@ if TYPE_CHECKING:
 @dataclass
 class BISMetrics:
     """Metrics for BIS calculation based on rule impact categories."""
-    
+
     # High penalty violations (major behavior integrity issues)
     high_penalty_count: int = 0
-    
+
     # Medium penalty violations (moderate behavior integrity issues)
     medium_penalty_count: int = 0
-    
+
     # Low penalty violations (minor behavior integrity issues)
     low_penalty_count: int = 0
-    
+
     # Advisory violations (style/structure issues)
     advisory_count: int = 0
-    
+
     # Reward indicators (positive behavior)
     reward_count: int = 0
-    
+
     # Weighted totals (considering rule-specific weights)
     weighted_high_penalty: float = 0.0
     weighted_medium_penalty: float = 0.0
@@ -42,45 +42,46 @@ class BISMetrics:
 
 class DynamicBISCalculator:
     """Dynamic BIS calculator that uses rule metadata for scoring."""
-    
+
     # Base penalty weights by impact category
     PENALTY_WEIGHTS = {
-        "high_penalty": 15.0,    # Major behavior integrity issues
-        "medium_penalty": 8.0,   # Moderate behavior integrity issues
-        "low_penalty": 4.0,      # Minor behavior integrity issues
-        "advisory": 1.0,         # Style/structure issues (minimal)
-        "reward": -5.0,          # Positive behavior indicators
+        "high_penalty": 15.0,  # Major behavior integrity issues
+        "medium_penalty": 8.0,  # Moderate behavior integrity issues
+        "low_penalty": 4.0,  # Minor behavior integrity issues
+        "advisory": 1.0,  # Style/structure issues (minimal)
+        "reward": -5.0,  # Positive behavior indicators
     }
-    
+
     def __init__(self) -> None:
         """Initialize the dynamic BIS calculator."""
         self._rule_registry = None
         self._load_rule_registry()
-    
+
     def _load_rule_registry(self) -> None:
         """Load the rule registry to access rule metadata."""
         try:
             from pytest_drill_sergeant.core.rulespec import RuleRegistry
+
             self._rule_registry = RuleRegistry
         except ImportError:
             # Fallback if registry not available
             self._rule_registry = None
-    
+
     def extract_metrics_from_findings(self, findings: list[Finding]) -> BISMetrics:
         """Extract BIS metrics from analysis findings using rule metadata.
-        
+
         Args:
             findings: List of findings from static analysis
-            
+
         Returns:
             BISMetrics object with extracted metrics
         """
         metrics = BISMetrics()
-        
+
         for finding in findings:
             # Get rule metadata
             rule_impact, rule_weight = self._get_rule_impact(finding.code)
-            
+
             # Count by impact category
             if rule_impact == "high_penalty":
                 metrics.high_penalty_count += 1
@@ -97,69 +98,77 @@ class DynamicBISCalculator:
             elif rule_impact == "reward":
                 metrics.reward_count += 1
                 metrics.weighted_reward += rule_weight
-        
+
         return metrics
-    
+
     def _get_rule_impact(self, rule_code: str) -> tuple[str, float]:
         """Get BIS impact and weight for a rule code.
-        
+
         Args:
             rule_code: The rule code to look up
-            
+
         Returns:
             Tuple of (impact_category, weight)
         """
         if not self._rule_registry:
             # Fallback to default if registry not available
             return "medium_penalty", 1.0
-        
+
         try:
             rule_spec = self._rule_registry.get_rule(rule_code)
             return rule_spec.bis_impact.value, rule_spec.bis_weight
         except (KeyError, AttributeError):
             # Unknown rule - treat as medium penalty
             return "medium_penalty", 1.0
-    
+
     def calculate_bis(self, metrics: BISMetrics) -> float:
         """Calculate Behavior Integrity Score based on metrics.
-        
+
         Args:
             metrics: BIS metrics extracted from findings
-            
+
         Returns:
             BIS score from 0-100 (higher is better)
         """
         base_score = 100.0
-        
+
         # Calculate penalties based on weighted counts
         total_penalty = 0.0
-        
+
         # High penalty violations (major behavior integrity issues)
-        total_penalty += self.PENALTY_WEIGHTS["high_penalty"] * min(metrics.weighted_high_penalty, 5.0)
-        
+        total_penalty += self.PENALTY_WEIGHTS["high_penalty"] * min(
+            metrics.weighted_high_penalty, 5.0
+        )
+
         # Medium penalty violations (moderate behavior integrity issues)
-        total_penalty += self.PENALTY_WEIGHTS["medium_penalty"] * min(metrics.weighted_medium_penalty, 8.0)
-        
+        total_penalty += self.PENALTY_WEIGHTS["medium_penalty"] * min(
+            metrics.weighted_medium_penalty, 8.0
+        )
+
         # Low penalty violations (minor behavior integrity issues)
-        total_penalty += self.PENALTY_WEIGHTS["low_penalty"] * min(metrics.weighted_low_penalty, 10.0)
-        
+        total_penalty += self.PENALTY_WEIGHTS["low_penalty"] * min(
+            metrics.weighted_low_penalty, 10.0
+        )
+
         # Advisory violations (style/structure issues)
-        total_penalty += self.PENALTY_WEIGHTS["advisory"] * min(metrics.weighted_advisory, 15.0)
-        
+        total_penalty += self.PENALTY_WEIGHTS["advisory"] * min(
+            metrics.weighted_advisory, 15.0
+        )
+
         # Reward for positive behavior indicators
         reward = self.PENALTY_WEIGHTS["reward"] * min(metrics.weighted_reward, 3.0)
-        
+
         # Calculate final score
         raw_score = base_score - total_penalty + reward
-        
+
         return max(0, min(100, round(raw_score, 1)))
-    
+
     def get_grade(self, score: float) -> str:
         """Get letter grade for BIS score.
-        
+
         Args:
             score: BIS score (0-100)
-            
+
         Returns:
             Letter grade (A-F)
         """
@@ -184,13 +193,13 @@ class DynamicBISCalculator:
         if score >= 40:
             return "D"
         return "F"
-    
+
     def get_score_interpretation(self, score: float) -> str:
         """Get human-readable interpretation of BIS score.
-        
+
         Args:
             score: BIS score (0-100)
-            
+
         Returns:
             Interpretation string
         """
@@ -203,13 +212,13 @@ class DynamicBISCalculator:
         if score >= 40:
             return "Poor - Too focused on implementation details"
         return "Critical - Heavily implementation-focused, needs major refactoring"
-    
+
     def get_breakdown(self, metrics: BISMetrics) -> dict[str, float]:
         """Get detailed breakdown of BIS components.
-        
+
         Args:
             metrics: BIS metrics
-            
+
         Returns:
             Dictionary with component breakdown
         """

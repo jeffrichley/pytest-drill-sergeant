@@ -40,14 +40,14 @@ class Analyzer(Protocol):
 
 class AnalysisPipeline:
     """Central analysis pipeline that coordinates all analyzers.
-    
+
     This implements the Observer pattern from the architecture design,
     providing a single interface for running multiple analyzers.
     """
 
     def __init__(self, error_handler: ErrorHandler | None = None) -> None:
         """Initialize the analysis pipeline.
-        
+
         Args:
             error_handler: Error handler instance for error recovery
         """
@@ -81,7 +81,9 @@ class AnalysisPipeline:
         self.analyzers.clear()
         self.logger.debug("Cleared all analyzers")
 
-    def analyze_file(self, file_path: Path) -> tuple[list[Finding], list[AnalysisError]]:
+    def analyze_file(
+        self, file_path: Path
+    ) -> tuple[list[Finding], list[AnalysisError]]:
         """Analyze a single test file using all registered analyzers.
 
         Args:
@@ -92,28 +94,27 @@ class AnalysisPipeline:
         """
         findings: list[Finding] = []
         file_errors: list[AnalysisError] = []
-        
+
         self.logger.debug(f"Analyzing file: {file_path}")
-        
+
         for analyzer in self.analyzers:
             analyzer_name = type(analyzer).__name__
-            
+
             # Execute analyzer with error recovery
             result, error = self.recovery_manager.execute_with_recovery(
-                analyzer.analyze_file,
-                file_path
+                analyzer.analyze_file, file_path
             )
-            
+
             if error:
                 # Handle the error
                 error.context = create_error_context(
                     file_path=file_path,
                     analyzer_name=analyzer_name,
-                    function_name="analyze_file"
+                    function_name="analyze_file",
                 )
                 file_errors.append(error)
                 self.analysis_errors.append(error)
-                
+
                 self.logger.warning(
                     f"Analyzer {analyzer_name} failed for {file_path}: {error.message}"
                 )
@@ -126,7 +127,9 @@ class AnalysisPipeline:
 
         return findings, file_errors
 
-    def analyze_files(self, file_paths: list[Path]) -> tuple[dict[Path, list[Finding]], dict[Path, list[AnalysisError]]]:
+    def analyze_files(
+        self, file_paths: list[Path]
+    ) -> tuple[dict[Path, list[Finding]], dict[Path, list[AnalysisError]]]:
         """Analyze multiple test files.
 
         Args:
@@ -137,13 +140,13 @@ class AnalysisPipeline:
         """
         findings_by_file: dict[Path, list[Finding]] = {}
         errors_by_file: dict[Path, list[AnalysisError]] = {}
-        
+
         for file_path in file_paths:
             findings, errors = self.analyze_file(file_path)
             findings_by_file[file_path] = findings
             if errors:
                 errors_by_file[file_path] = errors
-            
+
         return findings_by_file, errors_by_file
 
     def get_analyzer_count(self) -> int:
@@ -186,7 +189,7 @@ class AnalysisPipeline:
 
 class AnalyzerRegistry:
     """Registry for discovering and creating analyzers.
-    
+
     This implements the Registry pattern from the architecture design.
     """
 
@@ -219,7 +222,7 @@ class AnalyzerRegistry:
         """
         if name not in self._analyzer_classes:
             raise KeyError(f"Unknown analyzer: {name}")
-        
+
         analyzer_class = self._analyzer_classes[name]
         return analyzer_class()
 
@@ -238,17 +241,17 @@ class AnalyzerRegistry:
             AnalysisPipeline with default analyzers
         """
         pipeline = AnalysisPipeline()
-        
+
         # Register and add default analyzers
         self._register_default_analyzers()
-        
+
         for name in self.get_available_analyzers():
             try:
                 analyzer = self.create_analyzer(name)
                 pipeline.add_analyzer(analyzer)
             except Exception as e:
                 self.logger.error(f"Failed to create analyzer {name}: {e}")
-                
+
         return pipeline
 
     def _register_default_analyzers(self) -> None:
@@ -266,12 +269,12 @@ class AnalyzerRegistry:
             from pytest_drill_sergeant.core.analyzers.structural_equality_detector import (
                 StructuralEqualityDetector,
             )
-            
+
             self.register_analyzer("aaa_comments", AAACommentDetector)
             self.register_analyzer("mock_overspec", MockOverspecDetector)
             self.register_analyzer("private_access", PrivateAccessDetector)
             self.register_analyzer("structural_equality", StructuralEqualityDetector)
-            
+
         except ImportError as e:
             self.logger.warning(f"Failed to import analyzer: {e}")
 

@@ -9,12 +9,12 @@ from .private_access_detector import Detector, PrivateAccessDetector
 from .structural_equality_detector import StructuralEqualityDetector
 
 __all__: list[str] = [
-    "AAACommentDetector", 
+    "AAACommentDetector",
     "CARCalculator",
-    "CoverageCollector", 
+    "CoverageCollector",
     "CoverageSignatureGenerator",
-    "Detector", 
-    "MockOverspecDetector", 
-    "PrivateAccessDetector", 
-    "StructuralEqualityDetector"
+    "Detector",
+    "MockOverspecDetector",
+    "PrivateAccessDetector",
+    "StructuralEqualityDetector",
 ]

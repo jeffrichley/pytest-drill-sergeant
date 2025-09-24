@@ -37,6 +37,7 @@ class AnalysisContext:
     """Context manager for analysis operations, replacing global state."""
 
     def __init__(self):
+        """Initialize the analysis context."""
         from pytest_drill_sergeant.plugin.analysis_storage import AnalysisStorage
         from pytest_drill_sergeant.plugin.personas.manager import get_persona_manager
 
@@ -64,7 +65,7 @@ class AnalysisContext:
                 findings.extend(analyzer_findings)
             except Exception as e:
                 # Log error but continue with other analyzers
-                print(f"Error in {type(analyzer).__name__}: {e}")
+                logger.error("Error in %s: %s", type(analyzer).__name__, e)
         return findings
 
     def filter_findings_by_severity(self, findings: list, profile_config=None) -> list:
@@ -122,9 +123,11 @@ class AnalysisContext:
         ]
 
     def __enter__(self):
+        """Enter the analysis context."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit the analysis context."""
         # Cleanup if needed
         pass
 
@@ -162,11 +165,7 @@ class SUTFilter:
                 return True
 
             # Also check if any parent directory matches
-            for parent in rel_path.parents:
-                if str(parent) == self.sut_pattern:
-                    return True
-
-            return False
+            return any(str(parent) == self.sut_pattern for parent in rel_path.parents)
 
         except ValueError:
             # File is not under base_path
@@ -849,23 +848,26 @@ def personas(
 def _load_coverage_config(config_file: str) -> dict:
     """Load coverage configuration from file."""
     import json
-    import yaml
     from pathlib import Path
-    
+
+    import yaml
+
     config_path = Path(config_file)
     if not config_path.exists():
         typer.echo(f"⚠️  Configuration file not found: {config_file}")
         return {}
-    
+
     try:
-        if config_path.suffix.lower() in ['.json']:
-            with open(config_path, 'r') as f:
+        if config_path.suffix.lower() in [".json"]:
+            with open(config_path) as f:
                 return json.load(f)
-        elif config_path.suffix.lower() in ['.yml', '.yaml']:
-            with open(config_path, 'r') as f:
+        elif config_path.suffix.lower() in [".yml", ".yaml"]:
+            with open(config_path) as f:
                 return yaml.safe_load(f)
         else:
-            typer.echo(f"⚠️  Unsupported configuration file format: {config_path.suffix}")
+            typer.echo(
+                f"⚠️  Unsupported configuration file format: {config_path.suffix}"
+            )
             return {}
     except Exception as e:
         typer.echo(f"⚠️  Failed to load configuration file: {e}")
@@ -875,36 +877,36 @@ def _load_coverage_config(config_file: str) -> dict:
 def _process_coverage_analysis(coverage_config: dict, verbose: bool) -> None:
     """Process coverage analysis results."""
     try:
-        from pytest_drill_sergeant.plugin.pytest_cov_integration import PytestCovIntegration
-        from pytest_drill_sergeant.core.analyzers.car_calculator import CARCalculator
-        from pytest_drill_sergeant.core.analyzers.coverage_signature import CoverageSignatureGenerator
-        
+        from pytest_drill_sergeant.plugin.pytest_cov_integration import (
+            PytestCovIntegration,
+        )
+
         # Get coverage data from the integration
         integration = PytestCovIntegration()
-        
+
         # This is a simplified approach - in a real implementation,
         # we'd need to access the coverage data that was collected during pytest execution
         typer.echo("\n📊 Coverage Analysis Results:")
-        
+
         threshold = coverage_config.get("threshold", 0.0)
         output_file = coverage_config.get("output")
         output_format = coverage_config.get("format", "text")
-        
+
         if verbose:
             typer.echo(f"  Threshold: {threshold}")
             typer.echo(f"  Output: {output_file or 'console'}")
             typer.echo(f"  Format: {output_format}")
-        
+
         # Generate coverage analysis report
         report = _generate_coverage_report(coverage_config, verbose)
-        
+
         # Output the report
         if output_file:
             _write_coverage_report(report, output_file, output_format)
             typer.echo(f"📄 Coverage analysis report written to: {output_file}")
         else:
             typer.echo(report)
-            
+
     except Exception as e:
         typer.echo(f"⚠️  Failed to process coverage analysis: {e}")
 
@@ -914,12 +916,13 @@ def _generate_coverage_report(coverage_config: dict, verbose: bool) -> str:
     # This is a placeholder implementation
     # In a real implementation, this would analyze the actual coverage data
     # collected during pytest execution
-    
+
     threshold = coverage_config.get("threshold", 0.0)
     output_format = coverage_config.get("format", "text")
-    
+
     if output_format == "json":
         import json
+
         report_data = {
             "coverage_analysis": {
                 "threshold": threshold,
@@ -928,7 +931,7 @@ def _generate_coverage_report(coverage_config: dict, verbose: bool) -> str:
             }
         }
         return json.dumps(report_data, indent=2)
-    elif output_format == "html":
+    if output_format == "html":
         return f"""
         <html>
         <head><title>Coverage Analysis Report</title></head>
@@ -939,8 +942,8 @@ def _generate_coverage_report(coverage_config: dict, verbose: bool) -> str:
         </body>
         </html>
         """
-    else:  # text format
-        return f"""
+    # text format
+    return f"""
 Coverage Analysis Report
 ========================
 Threshold: {threshold}
@@ -952,11 +955,11 @@ Timestamp: {Path.cwd()}
 def _write_coverage_report(report: str, output_file: str, output_format: str) -> None:
     """Write coverage report to file."""
     from pathlib import Path
-    
+
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    with open(output_path, 'w') as f:
+
+    with open(output_path, "w") as f:
         f.write(report)
 
 
@@ -976,20 +979,22 @@ def test(
         0, "--cov-fail-under", help="Minimum coverage percentage to pass"
     ),
     ds_coverage_threshold: float = typer.Option(
-        0.0, "--ds-coverage-threshold", help="Minimum CAR score threshold for coverage analysis"
+        0.0,
+        "--ds-coverage-threshold",
+        help="Minimum CAR score threshold for coverage analysis",
     ),
     ds_coverage_output: str = typer.Option(
         None, "--ds-coverage-output", help="Output file for coverage analysis results"
     ),
     ds_coverage_format: str = typer.Option(
-        "text", "--ds-coverage-format", help="Output format for coverage analysis (text, json, html)"
+        "text",
+        "--ds-coverage-format",
+        help="Output format for coverage analysis (text, json, html)",
     ),
     config_file: str = typer.Option(
         None, "--config", help="Configuration file for coverage settings"
     ),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Verbose output"
-    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
     rich_output: bool = typer.Option(
         True, "--rich/--plain", help="Use rich output formatting"
     ),
@@ -1024,47 +1029,49 @@ def test(
                 "output": ds_coverage_output,
                 "format": ds_coverage_format,
             }
-        
+
         # Set default paths if none provided
         if not paths:
             paths = ["tests/"]
-        
+
         # Build pytest command
         cmd = [sys.executable, "-m", "pytest"]
-        
+
         # Add paths
         cmd.extend(paths)
-        
+
         # Add verbose flag if requested
         if verbose:
             cmd.append("-v")
-        
+
         # Add coverage options if requested
         if coverage:
-            cmd.extend([
-                f"--cov={coverage_source}",
-                f"--cov-fail-under={coverage_fail_under}",
-            ])
+            cmd.extend(
+                [
+                    f"--cov={coverage_source}",
+                    f"--cov-fail-under={coverage_fail_under}",
+                ]
+            )
             typer.echo("🎯 Running tests with coverage analysis...")
         else:
             typer.echo("🧪 Running tests...")
-        
+
         typer.echo(f"Command: {' '.join(cmd)}")
         typer.echo("=" * 60)
-        
+
         # Run pytest
-        result = subprocess.run(cmd, cwd=Path.cwd())
-        
+        result = subprocess.run(cmd, cwd=Path.cwd(), check=False)
+
         # Process coverage analysis if coverage was enabled
         if coverage and result.returncode == 0:
             _process_coverage_analysis(coverage_config, verbose)
-        
+
         if result.returncode == 0:
             typer.echo("\n✅ All tests passed!")
         else:
             typer.echo(f"\n❌ Tests failed with exit code {result.returncode}")
             sys.exit(result.returncode)
-            
+
     except Exception as e:
         logger.error("Failed to run tests: %s", e)
         typer.echo(f"❌ Failed to run tests: {e}")

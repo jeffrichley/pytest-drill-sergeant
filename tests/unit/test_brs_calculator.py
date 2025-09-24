@@ -25,12 +25,12 @@ class TestBRSCalculator:
             bis_scores=[100.0, 100.0, 100.0, 100.0, 100.0],
             aaa_compliant_tests=50,
             duplicate_tests=0,
-            files_with_style_issues=0
+            files_with_style_issues=0,
         )
-        
+
         calculator = BRSCalculator()
         score = calculator.calculate_brs(metrics)
-        
+
         # Perfect test suite should score very high
         assert score >= 95
 
@@ -43,12 +43,12 @@ class TestBRSCalculator:
             bis_scores=[30.0, 40.0, 25.0, 35.0, 20.0],
             aaa_compliant_tests=10,
             duplicate_tests=20,
-            files_with_style_issues=8
+            files_with_style_issues=8,
         )
-        
+
         calculator = BRSCalculator()
         score = calculator.calculate_brs(metrics)
-        
+
         # Poor quality should result in low score
         assert score < 50
 
@@ -61,22 +61,22 @@ class TestBRSCalculator:
             bis_scores=[75.0, 80.0, 70.0, 85.0, 78.0],
             aaa_compliant_tests=35,
             duplicate_tests=5,
-            files_with_style_issues=3
+            files_with_style_issues=3,
         )
-        
+
         calculator = BRSCalculator()
         score = calculator.calculate_brs(metrics)
-        
+
         # Medium quality should result in medium score
         assert 60 <= score <= 85
 
     def test_calculate_brs_empty_metrics(self) -> None:
         """Test BRS calculation with empty metrics."""
         metrics = RunMetrics()
-        
+
         calculator = BRSCalculator()
         score = calculator.calculate_brs(metrics)
-        
+
         # Empty metrics should return perfect score
         assert score == 100.0
 
@@ -90,7 +90,7 @@ class TestBRSCalculator:
                 message="Private access detected",
                 file_path=Path("test1.py"),
                 line_number=10,
-                severity=Severity.WARNING
+                severity=Severity.WARNING,
             ),
             Finding(
                 code="DS302",
@@ -98,14 +98,16 @@ class TestBRSCalculator:
                 message="Missing AAA structure",
                 file_path=Path("test2.py"),
                 line_number=15,
-                severity=Severity.WARNING
-            )
+                severity=Severity.WARNING,
+            ),
         ]
         bis_scores = [85.0, 90.0, 95.0]
-        
+
         calculator = BRSCalculator()
-        metrics = calculator.extract_metrics_from_analysis(files_analyzed, findings, bis_scores)
-        
+        metrics = calculator.extract_metrics_from_analysis(
+            files_analyzed, findings, bis_scores
+        )
+
         assert metrics.total_files == 3
         assert metrics.total_violations == 2
         assert metrics.bis_scores == bis_scores
@@ -116,7 +118,7 @@ class TestBRSCalculator:
     def test_get_brs_interpretation(self) -> None:
         """Test BRS score interpretation."""
         calculator = BRSCalculator()
-        
+
         # Test different score ranges
         assert "CHAMPIONSHIP" in calculator.get_brs_interpretation(95)
         assert "EXCELLENT" in calculator.get_brs_interpretation(85)
@@ -129,7 +131,7 @@ class TestBRSCalculator:
         """Test BRS grade assignment."""
         # Arrange
         calculator = BRSCalculator()
-        
+
         # Act & Assert
         assert calculator.get_brs_grade(95) == "A+"
         assert calculator.get_brs_grade(90) == "A+"
@@ -153,18 +155,18 @@ class TestBRSCalculator:
             bis_scores=[80.0, 85.0, 90.0],
             aaa_compliant_tests=40,
             duplicate_tests=5,
-            files_with_style_issues=3
+            files_with_style_issues=3,
         )
-        
+
         calculator = BRSCalculator()
         breakdown = calculator.get_component_breakdown(metrics)
-        
+
         # Check that all expected components are present
         assert "bis_score" in breakdown
         assert "aaa_compliance" in breakdown
         assert "violation_density" in breakdown
         assert "style_quality" in breakdown
-        
+
         # Check reasonable values
         assert 0 <= breakdown["bis_score"] <= 100
         assert 0 <= breakdown["aaa_compliance"] <= 100
@@ -174,7 +176,7 @@ class TestBRSCalculator:
     def test_brs_score_bounds(self) -> None:
         """Test that BRS scores are always within 0-100 bounds."""
         calculator = BRSCalculator()
-        
+
         # Test extreme cases
         extreme_metrics = RunMetrics(
             total_files=100,
@@ -183,12 +185,12 @@ class TestBRSCalculator:
             bis_scores=[0.0] * 100,
             aaa_compliant_tests=0,
             duplicate_tests=500,
-            files_with_style_issues=100
+            files_with_style_issues=100,
         )
-        
+
         score = calculator.calculate_brs(extreme_metrics)
         assert 0 <= score <= 100
-        
+
         # Test with very high quality
         perfect_metrics = RunMetrics(
             total_files=100,
@@ -197,16 +199,16 @@ class TestBRSCalculator:
             bis_scores=[100.0] * 100,
             aaa_compliant_tests=1000,
             duplicate_tests=0,
-            files_with_style_issues=0
+            files_with_style_issues=0,
         )
-        
+
         score = calculator.calculate_brs(perfect_metrics)
         assert 0 <= score <= 100
 
     def test_bis_component_weighting(self) -> None:
         """Test that BIS scores are properly weighted in BRS calculation."""
         calculator = BRSCalculator()
-        
+
         # Test with high BIS scores
         high_bis_metrics = RunMetrics(
             total_files=5,
@@ -215,11 +217,11 @@ class TestBRSCalculator:
             bis_scores=[95.0, 98.0, 92.0, 96.0, 94.0],
             aaa_compliant_tests=20,
             duplicate_tests=0,
-            files_with_style_issues=1
+            files_with_style_issues=1,
         )
-        
+
         high_score = calculator.calculate_brs(high_bis_metrics)
-        
+
         # Test with low BIS scores
         low_bis_metrics = RunMetrics(
             total_files=5,
@@ -228,18 +230,18 @@ class TestBRSCalculator:
             bis_scores=[30.0, 35.0, 25.0, 40.0, 32.0],
             aaa_compliant_tests=20,
             duplicate_tests=0,
-            files_with_style_issues=1
+            files_with_style_issues=1,
         )
-        
+
         low_score = calculator.calculate_brs(low_bis_metrics)
-        
+
         # High BIS scores should result in higher BRS
         assert high_score > low_score
 
     def test_aaa_compliance_weighting(self) -> None:
         """Test that AAA compliance is properly weighted in BRS calculation."""
         calculator = BRSCalculator()
-        
+
         # Test with high AAA compliance
         high_aaa_metrics = RunMetrics(
             total_files=5,
@@ -248,11 +250,11 @@ class TestBRSCalculator:
             bis_scores=[80.0] * 5,
             aaa_compliant_tests=25,  # All tests compliant
             duplicate_tests=0,
-            files_with_style_issues=0
+            files_with_style_issues=0,
         )
-        
+
         high_score = calculator.calculate_brs(high_aaa_metrics)
-        
+
         # Test with low AAA compliance
         low_aaa_metrics = RunMetrics(
             total_files=5,
@@ -261,10 +263,10 @@ class TestBRSCalculator:
             bis_scores=[80.0] * 5,
             aaa_compliant_tests=5,  # Only 20% compliant
             duplicate_tests=0,
-            files_with_style_issues=0
+            files_with_style_issues=0,
         )
-        
+
         low_score = calculator.calculate_brs(low_aaa_metrics)
-        
+
         # High AAA compliance should result in higher BRS
         assert high_score > low_score

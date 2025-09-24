@@ -118,18 +118,44 @@ class JSONFormatter:
             "recoverable": error.recoverable,
             "retry_count": error.retry_count,
             "max_retries": error.max_retries,
-            "context": {
-                "file_path": str(error.context.file_path) if error.context and error.context.file_path else "",
-                "line_number": error.context.line_number if error.context else None,
-                "analyzer_name": error.context.analyzer_name if error.context else "",
-                "function_name": error.context.function_name if error.context else "",
-                "timestamp": error.context.timestamp.isoformat() if error.context else "",
-                "user_data": error.context.user_data if error.context else {},
-            } if error.context else {},
-            "original_exception": {
-                "type": type(error.original_exception).__name__ if error.original_exception else "",
-                "message": str(error.original_exception) if error.original_exception else "",
-            } if error.original_exception else None,
+            "context": (
+                {
+                    "file_path": (
+                        str(error.context.file_path)
+                        if error.context and error.context.file_path
+                        else ""
+                    ),
+                    "line_number": error.context.line_number if error.context else None,
+                    "analyzer_name": (
+                        error.context.analyzer_name if error.context else ""
+                    ),
+                    "function_name": (
+                        error.context.function_name if error.context else ""
+                    ),
+                    "timestamp": (
+                        error.context.timestamp.isoformat() if error.context else ""
+                    ),
+                    "user_data": error.context.user_data if error.context else {},
+                }
+                if error.context
+                else {}
+            ),
+            "original_exception": (
+                {
+                    "type": (
+                        type(error.original_exception).__name__
+                        if error.original_exception
+                        else ""
+                    ),
+                    "message": (
+                        str(error.original_exception)
+                        if error.original_exception
+                        else ""
+                    ),
+                }
+                if error.original_exception
+                else None
+            ),
         }
 
     def format_run_metrics(self, metrics: RunMetrics) -> JSONDict:
@@ -212,7 +238,7 @@ class JSONFormatter:
                 "quality_grade": metrics.brs_grade,
             },
         }
-        
+
         # Add error information if provided
         if errors:
             report["errors"] = {
@@ -221,21 +247,23 @@ class JSONFormatter:
                 "error_summary": {
                     "by_category": {},
                     "by_severity": {},
-                }
+                },
             }
-            
+
             # Calculate error summary
             for error in errors:
                 category = error.category.value
                 severity = error.severity.value
-                
+
                 report["errors"]["error_summary"]["by_category"][category] = (
-                    report["errors"]["error_summary"]["by_category"].get(category, 0) + 1
+                    report["errors"]["error_summary"]["by_category"].get(category, 0)
+                    + 1
                 )
                 report["errors"]["error_summary"]["by_severity"][severity] = (
-                    report["errors"]["error_summary"]["by_severity"].get(severity, 0) + 1
+                    report["errors"]["error_summary"]["by_severity"].get(severity, 0)
+                    + 1
                 )
-        
+
         return report
 
     def save_report(self, report: JSONDict, output_path: Path) -> None:

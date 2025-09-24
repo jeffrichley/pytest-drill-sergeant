@@ -12,7 +12,9 @@ def test_analyzers_module_imports():
     # Test __all__ content
     all_items = pytest_drill_sergeant.core.analyzers.__all__
     assert isinstance(all_items, list)
-    assert len(all_items) == 8  # This module exports AAACommentDetector, CARCalculator, CoverageCollector, CoverageSignatureGenerator, Detector, MockOverspecDetector, PrivateAccessDetector, and StructuralEqualityDetector
+    assert (
+        len(all_items) == 8
+    )  # This module exports AAACommentDetector, CARCalculator, CoverageCollector, CoverageSignatureGenerator, Detector, MockOverspecDetector, PrivateAccessDetector, and StructuralEqualityDetector
     assert "AAACommentDetector" in all_items
     assert "CARCalculator" in all_items
     assert "CoverageCollector" in all_items
@@ -36,7 +38,9 @@ def test_analyzers_module_all():
 
     # Test that __all__ is a list
     assert isinstance(__all__, list)
-    assert len(__all__) == 8  # This module exports AAACommentDetector, CARCalculator, CoverageCollector, CoverageSignatureGenerator, Detector, MockOverspecDetector, PrivateAccessDetector, and StructuralEqualityDetector
+    assert (
+        len(__all__) == 8
+    )  # This module exports AAACommentDetector, CARCalculator, CoverageCollector, CoverageSignatureGenerator, Detector, MockOverspecDetector, PrivateAccessDetector, and StructuralEqualityDetector
     assert "AAACommentDetector" in __all__
     assert "CARCalculator" in __all__
     assert "CoverageCollector" in __all__

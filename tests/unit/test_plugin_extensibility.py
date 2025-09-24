@@ -7,38 +7,36 @@ validation, builder patterns, and error handling.
 
 from __future__ import annotations
 
-import logging
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
-from unittest.mock import Mock, patch
-from collections.abc import Mapping
+from unittest.mock import Mock
 
 import pytest
 from pydantic import ValidationError
 
-from pytest_drill_sergeant.plugin.extensibility import (
-    BasePlugin,
-    TemplateError,
-    create_plugin_class,
-    _create_invalid_name_error,
-    _create_invalid_base_error,
-    _create_invalid_interface_error,
-    _create_invalid_attrs_error,
-    _create_invalid_subclass_error,
-    _to_bool,
-    _to_options,
-    PluginTemplate,
-    create_analyzer_plugin_class,
-    create_persona_plugin_class,
-    create_reporter_plugin_class,
-    PluginBuilder,
-    create_plugin_from_config,
-)
 from pytest_drill_sergeant.plugin.base import (
     AnalyzerPlugin,
     PersonaPlugin,
-    ReporterPlugin,
     PluginMetadata,
+    ReporterPlugin,
+)
+from pytest_drill_sergeant.plugin.extensibility import (
+    PluginBuilder,
+    PluginTemplate,
+    TemplateError,
+    _create_invalid_attrs_error,
+    _create_invalid_base_error,
+    _create_invalid_interface_error,
+    _create_invalid_name_error,
+    _create_invalid_subclass_error,
+    _to_bool,
+    _to_options,
+    create_analyzer_plugin_class,
+    create_persona_plugin_class,
+    create_plugin_class,
+    create_plugin_from_config,
+    create_reporter_plugin_class,
 )
 
 
@@ -150,9 +148,9 @@ class TestPluginTemplate:
             plugin_type="analyzer",
             name="Test Plugin",
             description="A test plugin",
-            author="Test Author"
+            author="Test Author",
         )
-        
+
         assert template.plugin_type == "analyzer"
         assert template.name == "Test Plugin"
         assert template.description == "A test plugin"
@@ -180,9 +178,9 @@ class TestPluginTemplate:
             rule_ids=["CUSTOM001", "CUSTOM002"],
             supported_contexts=["error", "warning"],
             personality_traits=["sarcastic", "helpful"],
-            supported_formats=["json", "html"]
+            supported_formats=["json", "html"],
         )
-        
+
         assert template.plugin_type == "persona"
         assert template.name == "Custom Persona"
         assert template.description == "A custom persona plugin"
@@ -201,7 +199,7 @@ class TestPluginTemplate:
         with pytest.raises(ValidationError):
             PluginTemplate(
                 plugin_type="analyzer",
-                name="Test Plugin"
+                name="Test Plugin",
                 # Missing required fields: description and author
             )
 
@@ -211,23 +209,27 @@ class TestCreatePluginClass:
 
     def test_create_plugin_class_valid(self):
         """Test creating a plugin class with valid parameters."""
+
         class MockBasePlugin:
             name = "MockPlugin"
+
             def configure(self, options: Mapping[str, Any]) -> None:
                 pass
 
         attrs = {"custom_method": lambda self: "custom"}
-        
+
         plugin_class = create_plugin_class("TestPlugin", MockBasePlugin, attrs)
-        
+
         assert plugin_class.__name__ == "TestPlugin"
         assert issubclass(plugin_class, MockBasePlugin)
         assert hasattr(plugin_class, "custom_method")
 
     def test_create_plugin_class_invalid_name_empty(self):
         """Test create_plugin_class with empty name."""
+
         class MockBasePlugin:
             name = "MockPlugin"
+
             def configure(self, options: Mapping[str, Any]) -> None:
                 pass
 
@@ -237,8 +239,10 @@ class TestCreatePluginClass:
 
     def test_create_plugin_class_invalid_name_not_string(self):
         """Test create_plugin_class with non-string name."""
+
         class MockBasePlugin:
             name = "MockPlugin"
+
             def configure(self, options: Mapping[str, Any]) -> None:
                 pass
 
@@ -254,6 +258,7 @@ class TestCreatePluginClass:
 
     def test_create_plugin_class_invalid_base_no_interface(self):
         """Test create_plugin_class with base that doesn't implement BasePlugin."""
+
         class MockBasePlugin:
             pass  # Missing name and configure
 
@@ -263,8 +268,10 @@ class TestCreatePluginClass:
 
     def test_create_plugin_class_invalid_attrs_not_mapping(self):
         """Test create_plugin_class with non-mapping attrs."""
+
         class MockBasePlugin:
             name = "MockPlugin"
+
             def configure(self, options: Mapping[str, Any]) -> None:
                 pass
 
@@ -274,22 +281,24 @@ class TestCreatePluginClass:
 
     def test_create_plugin_class_with_attrs(self):
         """Test create_plugin_class with custom attributes."""
+
         class MockBasePlugin:
             name = "MockPlugin"
+
             def configure(self, options: Mapping[str, Any]) -> None:
                 pass
 
         attrs = {
             "custom_attr": "custom_value",
-            "custom_method": lambda self: "custom_result"
+            "custom_method": lambda self: "custom_result",
         }
-        
+
         plugin_class = create_plugin_class("TestPlugin", MockBasePlugin, attrs)
-        
+
         assert plugin_class.__name__ == "TestPlugin"
         assert hasattr(plugin_class, "custom_attr")
         assert hasattr(plugin_class, "custom_method")
-        
+
         # Test instantiation
         instance = plugin_class()
         assert instance.custom_attr == "custom_value"
@@ -307,11 +316,11 @@ class TestCreateAnalyzerPluginClass:
             description="A test analyzer",
             author="Test Author",
             supported_extensions=[".py", ".js"],
-            rule_ids=["TEST001", "TEST002"]
+            rule_ids=["TEST001", "TEST002"],
         )
 
         plugin_class = create_analyzer_plugin_class(template)
-        
+
         assert issubclass(plugin_class, AnalyzerPlugin)
         assert plugin_class.__name__ == "CustomAnalyzerPlugin"
 
@@ -323,33 +332,33 @@ class TestCreateAnalyzerPluginClass:
             description="A test analyzer",
             author="Test Author",
             supported_extensions=[".py"],
-            rule_ids=["TEST001"]
+            rule_ids=["TEST001"],
         )
 
         plugin_class = create_analyzer_plugin_class(template)
-        
+
         # Mock config and metadata
         mock_config = Mock()
         mock_metadata = Mock()
-        
+
         plugin = plugin_class(mock_config, mock_metadata)
-        
+
         # Test initialization
         plugin.initialize()
         # Note: The template implementation doesn't call mark_initialized()
         # This is expected behavior for template implementations
-        
+
         # Test cleanup
         plugin.cleanup()
-        
+
         # Test supported extensions
         extensions = plugin.get_supported_extensions()
         assert extensions == {".py"}
-        
+
         # Test rule IDs
         rule_ids = plugin.get_rule_ids()
         assert rule_ids == {"TEST001"}
-        
+
         # Test analyze_file (template implementation)
         findings = plugin.analyze_file(Path("test.py"))
         assert findings == []
@@ -366,11 +375,11 @@ class TestCreatePersonaPluginClass:
             description="A test persona",
             author="Test Author",
             supported_contexts=["error", "warning"],
-            personality_traits=["sarcastic", "helpful"]
+            personality_traits=["sarcastic", "helpful"],
         )
 
         plugin_class = create_persona_plugin_class(template)
-        
+
         assert issubclass(plugin_class, PersonaPlugin)
         assert plugin_class.__name__ == "CustomPersonaPlugin"
 
@@ -382,29 +391,29 @@ class TestCreatePersonaPluginClass:
             description="A test persona",
             author="Test Author",
             supported_contexts=["error"],
-            personality_traits=["sarcastic"]
+            personality_traits=["sarcastic"],
         )
 
         plugin_class = create_persona_plugin_class(template)
-        
+
         # Mock config and metadata
         mock_config = Mock()
         mock_metadata = Mock()
-        
+
         plugin = plugin_class(mock_config, mock_metadata)
-        
+
         # Test initialization
         plugin.initialize()
         # Note: The template implementation doesn't call mark_initialized()
         # This is expected behavior for template implementations
-        
+
         # Test cleanup
         plugin.cleanup()
-        
+
         # Test supported contexts
         contexts = plugin.get_supported_contexts()
         assert contexts == {"error"}
-        
+
         # Test generate_message (template implementation)
         message = plugin.generate_message("error", severity="high")
         assert "[Test Persona]" in message
@@ -421,11 +430,11 @@ class TestCreateReporterPluginClass:
             name="Test Reporter",
             description="A test reporter",
             author="Test Author",
-            supported_formats=["json", "html"]
+            supported_formats=["json", "html"],
         )
 
         plugin_class = create_reporter_plugin_class(template)
-        
+
         assert issubclass(plugin_class, ReporterPlugin)
         assert plugin_class.__name__ == "CustomReporterPlugin"
 
@@ -436,29 +445,29 @@ class TestCreateReporterPluginClass:
             name="Test Reporter",
             description="A test reporter",
             author="Test Author",
-            supported_formats=["json"]
+            supported_formats=["json"],
         )
 
         plugin_class = create_reporter_plugin_class(template)
-        
+
         # Mock config and metadata
         mock_config = Mock()
         mock_metadata = Mock()
-        
+
         plugin = plugin_class(mock_config, mock_metadata)
-        
+
         # Test initialization
         plugin.initialize()
         # Note: The template implementation doesn't call mark_initialized()
         # This is expected behavior for template implementations
-        
+
         # Test cleanup
         plugin.cleanup()
-        
+
         # Test supported formats
         formats = plugin.get_supported_formats()
         assert formats == {"json"}
-        
+
         # Test generate_report (template implementation)
         mock_findings = [Mock(), Mock()]
         report = plugin.generate_report(mock_findings)
@@ -473,7 +482,7 @@ class TestPluginBuilder:
         """Test PluginBuilder initialization."""
         mock_config = Mock()
         builder = PluginBuilder(mock_config)
-        
+
         assert builder.config is mock_config
         assert builder._logger.name == "drill_sergeant.builder"
 
@@ -481,128 +490,130 @@ class TestPluginBuilder:
         """Test building an analyzer plugin."""
         mock_config = Mock()
         builder = PluginBuilder(mock_config)
-        
+
         template = PluginTemplate(
             plugin_type="analyzer",
             name="Test Analyzer",
             description="A test analyzer",
-            author="Test Author"
+            author="Test Author",
         )
-        
+
         def analyze_func(file_path: Path, config: Any) -> list:
             return [{"rule": "TEST001", "message": "Test finding"}]
-        
+
         # Note: This test reveals a bug in the current implementation
         # The create_plugin_class function incorrectly checks for BasePlugin protocol
         # when working with actual plugin base classes
         with pytest.raises(TypeError) as exc_info:
             builder.build_analyzer_plugin(template, analyze_func, ["TEST001"])
-        
+
         assert "does not implement BasePlugin interface" in str(exc_info.value)
 
     def test_build_analyzer_plugin_with_rule_ids(self):
         """Test building an analyzer plugin with custom rule IDs."""
         mock_config = Mock()
         builder = PluginBuilder(mock_config)
-        
+
         template = PluginTemplate(
             plugin_type="analyzer",
             name="Test Analyzer",
             description="A test analyzer",
-            author="Test Author"
+            author="Test Author",
         )
-        
+
         def analyze_func(file_path: Path, config: Any) -> list:
             return []
-        
+
         # Note: This test reveals a bug in the current implementation
         with pytest.raises(TypeError) as exc_info:
-            builder.build_analyzer_plugin(template, analyze_func, ["CUSTOM001", "CUSTOM002"])
-        
+            builder.build_analyzer_plugin(
+                template, analyze_func, ["CUSTOM001", "CUSTOM002"]
+            )
+
         assert "does not implement BasePlugin interface" in str(exc_info.value)
 
     def test_build_persona_plugin(self):
         """Test building a persona plugin."""
         mock_config = Mock()
         builder = PluginBuilder(mock_config)
-        
+
         template = PluginTemplate(
             plugin_type="persona",
             name="Test Persona",
             description="A test persona",
-            author="Test Author"
+            author="Test Author",
         )
-        
+
         def message_func(context: str, **kwargs: str) -> str:
             return f"Custom message for {context}: {kwargs}"
-        
+
         # Note: This test reveals a bug in the current implementation
         with pytest.raises(TypeError) as exc_info:
             builder.build_persona_plugin(template, message_func, ["error"])
-        
+
         assert "does not implement BasePlugin interface" in str(exc_info.value)
 
     def test_build_persona_plugin_with_contexts(self):
         """Test building a persona plugin with custom contexts."""
         mock_config = Mock()
         builder = PluginBuilder(mock_config)
-        
+
         template = PluginTemplate(
             plugin_type="persona",
             name="Test Persona",
             description="A test persona",
-            author="Test Author"
+            author="Test Author",
         )
-        
+
         def message_func(context: str, **kwargs: str) -> str:
             return f"Message for {context}"
-        
+
         # Note: This test reveals a bug in the current implementation
         with pytest.raises(TypeError) as exc_info:
             builder.build_persona_plugin(template, message_func, ["error", "warning"])
-        
+
         assert "does not implement BasePlugin interface" in str(exc_info.value)
 
     def test_build_reporter_plugin(self):
         """Test building a reporter plugin."""
         mock_config = Mock()
         builder = PluginBuilder(mock_config)
-        
+
         template = PluginTemplate(
             plugin_type="reporter",
             name="Test Reporter",
             description="A test reporter",
-            author="Test Author"
+            author="Test Author",
         )
-        
+
         def report_func(findings: list, output_path: Path | None, config: Any) -> str:
             return f"Custom report with {len(findings)} findings"
-        
+
         # Note: This test reveals a bug in the current implementation
         with pytest.raises(TypeError) as exc_info:
             builder.build_reporter_plugin(template, report_func, ["json"])
-        
+
         assert "does not implement BasePlugin interface" in str(exc_info.value)
 
     def test_build_reporter_plugin_with_formats(self):
         """Test building a reporter plugin with custom formats."""
         mock_config = Mock()
         builder = PluginBuilder(mock_config)
-        
+
         template = PluginTemplate(
             plugin_type="reporter",
             name="Test Reporter",
             description="A test reporter",
-            author="Test Author"
+            author="Test Author",
         )
-        
+
         def report_func(findings: list, output_path: Path | None, config: Any) -> str:
             return "Report"
-        
+
         # Note: This test reveals a bug in the current implementation
         with pytest.raises(TypeError) as exc_info:
             builder.build_reporter_plugin(template, report_func, ["json", "html"])
-        
+
         assert "does not implement BasePlugin interface" in str(exc_info.value)
 
 
@@ -615,11 +626,11 @@ class TestCreatePluginFromConfig:
             "plugin_type": "analyzer",
             "name": "Test Plugin",
             "description": "A test plugin",
-            "author": "Test Author"
+            "author": "Test Author",
         }
-        
+
         template = create_plugin_from_config(config_dict)
-        
+
         assert template.plugin_type == "analyzer"
         assert template.name == "Test Plugin"
         assert template.description == "A test plugin"
@@ -647,11 +658,11 @@ class TestCreatePluginFromConfig:
             "rule_ids": ["CUSTOM001"],
             "supported_contexts": ["error"],
             "personality_traits": ["sarcastic"],
-            "supported_formats": ["json"]
+            "supported_formats": ["json"],
         }
-        
+
         template = create_plugin_from_config(config_dict)
-        
+
         assert template.plugin_type == "persona"
         assert template.name == "Custom Persona"
         assert template.description == "A custom persona"
@@ -679,11 +690,11 @@ class TestCreatePluginFromConfig:
             "rule_ids": None,
             "supported_contexts": None,
             "personality_traits": None,
-            "supported_formats": None
+            "supported_formats": None,
         }
-        
+
         template = create_plugin_from_config(config_dict)
-        
+
         assert template.version == "None"  # str(None) = "None"
         assert template.category == "None"  # str(None) = "None"
         assert template.config == {}  # Default value
@@ -704,11 +715,11 @@ class TestCreatePluginFromConfig:
             "rule_ids": "not_a_list",
             "supported_contexts": "not_a_list",
             "personality_traits": "not_a_list",
-            "supported_formats": "not_a_list"
+            "supported_formats": "not_a_list",
         }
-        
+
         template = create_plugin_from_config(config_dict)
-        
+
         # Should fall back to default values for non-list items
         assert template.supported_extensions == [".py"]
         assert template.rule_ids == []
@@ -729,12 +740,12 @@ class TestIntegrationScenarios:
             description="A custom analyzer for testing",
             author="Test Author",
             supported_extensions=[".py"],
-            rule_ids=["CUSTOM001"]
+            rule_ids=["CUSTOM001"],
         )
-        
+
         # Create plugin class
         plugin_class = create_analyzer_plugin_class(template)
-        
+
         # Mock config and metadata
         mock_config = Mock()
         mock_metadata = PluginMetadata(
@@ -743,26 +754,26 @@ class TestIntegrationScenarios:
             version="1.0.0",
             description="A custom analyzer for testing",
             author="Test Author",
-            category="analyzer"
+            category="analyzer",
         )
-        
+
         # Create plugin instance
         plugin = plugin_class(mock_config, mock_metadata)
-        
+
         # Test full lifecycle
         plugin.initialize()
         # Note: The template implementation doesn't call mark_initialized()
         # This is expected behavior for template implementations
-        
+
         extensions = plugin.get_supported_extensions()
         assert extensions == {".py"}
-        
+
         rule_ids = plugin.get_rule_ids()
         assert rule_ids == {"CUSTOM001"}
-        
+
         findings = plugin.analyze_file(Path("test.py"))
         assert findings == []
-        
+
         plugin.cleanup()
 
     def test_end_to_end_persona_creation(self):
@@ -774,12 +785,12 @@ class TestIntegrationScenarios:
             description="A custom persona for testing",
             author="Test Author",
             supported_contexts=["error", "warning"],
-            personality_traits=["sarcastic", "helpful"]
+            personality_traits=["sarcastic", "helpful"],
         )
-        
+
         # Create plugin class
         plugin_class = create_persona_plugin_class(template)
-        
+
         # Mock config and metadata
         mock_config = Mock()
         mock_metadata = PluginMetadata(
@@ -788,23 +799,23 @@ class TestIntegrationScenarios:
             version="1.0.0",
             description="A custom persona for testing",
             author="Test Author",
-            category="persona"
+            category="persona",
         )
-        
+
         # Create plugin instance
         plugin = plugin_class(mock_config, mock_metadata)
-        
+
         # Test full lifecycle
         plugin.initialize()
         # Note: The template implementation doesn't call mark_initialized()
         # This is expected behavior for template implementations
-        
+
         contexts = plugin.get_supported_contexts()
         assert contexts == {"error", "warning"}
-        
+
         message = plugin.generate_message("error", severity="high")
         assert "[Custom Persona]" in message
-        
+
         plugin.cleanup()
 
     def test_end_to_end_reporter_creation(self):
@@ -815,12 +826,12 @@ class TestIntegrationScenarios:
             name="Custom Reporter",
             description="A custom reporter for testing",
             author="Test Author",
-            supported_formats=["json", "html"]
+            supported_formats=["json", "html"],
         )
-        
+
         # Create plugin class
         plugin_class = create_reporter_plugin_class(template)
-        
+
         # Mock config and metadata
         mock_config = Mock()
         mock_metadata = PluginMetadata(
@@ -829,76 +840,76 @@ class TestIntegrationScenarios:
             version="1.0.0",
             description="A custom reporter for testing",
             author="Test Author",
-            category="reporter"
+            category="reporter",
         )
-        
+
         # Create plugin instance
         plugin = plugin_class(mock_config, mock_metadata)
-        
+
         # Test full lifecycle
         plugin.initialize()
         # Note: The template implementation doesn't call mark_initialized()
         # This is expected behavior for template implementations
-        
+
         formats = plugin.get_supported_formats()
         assert formats == {"json", "html"}
-        
+
         mock_findings = [Mock(), Mock(), Mock()]
         report = plugin.generate_report(mock_findings)
         assert "[Custom Reporter]" in report
         assert "3 findings" in report
-        
+
         plugin.cleanup()
 
     def test_plugin_builder_end_to_end(self):
         """Test PluginBuilder end-to-end workflow."""
         mock_config = Mock()
         builder = PluginBuilder(mock_config)
-        
+
         # Create analyzer plugin
         analyzer_template = PluginTemplate(
             plugin_type="analyzer",
             name="Test Analyzer",
             description="A test analyzer",
-            author="Test Author"
+            author="Test Author",
         )
-        
+
         def analyze_func(file_path: Path, config: Any) -> list:
             return [{"rule": "TEST001", "message": f"Found issue in {file_path}"}]
-        
+
         # Note: This test reveals a bug in the current implementation
         # The PluginBuilder methods fail due to BasePlugin interface check
         with pytest.raises(TypeError) as exc_info:
             builder.build_analyzer_plugin(analyzer_template, analyze_func, ["TEST001"])
         assert "does not implement BasePlugin interface" in str(exc_info.value)
-        
+
         # Create persona plugin
         persona_template = PluginTemplate(
             plugin_type="persona",
             name="Test Persona",
             description="A test persona",
-            author="Test Author"
+            author="Test Author",
         )
-        
+
         def message_func(context: str, **kwargs: str) -> str:
             return f"Persona says: {context} - {kwargs}"
-        
+
         # Note: This test reveals a bug in the current implementation
         with pytest.raises(TypeError) as exc_info:
             builder.build_persona_plugin(persona_template, message_func, ["error"])
         assert "does not implement BasePlugin interface" in str(exc_info.value)
-        
+
         # Create reporter plugin
         reporter_template = PluginTemplate(
             plugin_type="reporter",
             name="Test Reporter",
             description="A test reporter",
-            author="Test Author"
+            author="Test Author",
         )
-        
+
         def report_func(findings: list, output_path: Path | None, config: Any) -> str:
             return f"Report: {len(findings)} findings found"
-        
+
         # Note: This test reveals a bug in the current implementation
         with pytest.raises(TypeError) as exc_info:
             builder.build_reporter_plugin(reporter_template, report_func, ["json"])

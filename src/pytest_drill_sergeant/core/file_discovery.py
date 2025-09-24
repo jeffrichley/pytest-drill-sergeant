@@ -19,41 +19,41 @@ logger = logging.getLogger(__name__)
 
 def parse_gitignore(project_root: Path) -> list[str]:
     """Parse .gitignore file and return patterns as exclude patterns.
-    
+
     Args:
         project_root: Root directory of the project
-        
+
     Returns:
         List of patterns from .gitignore that should be excluded
     """
     gitignore_path = project_root / ".gitignore"
     if not gitignore_path.exists():
         return []
-    
+
     patterns = []
     try:
-        with open(gitignore_path, 'r', encoding='utf-8') as f:
+        with open(gitignore_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 # Skip empty lines and comments
-                if not line or line.startswith('#'):
+                if not line or line.startswith("#"):
                     continue
-                
+
                 # Convert .gitignore patterns to glob patterns
                 # .gitignore patterns are already glob-like, but we need to handle directories
-                if line.endswith('/'):
+                if line.endswith("/"):
                     # Directory pattern - add ** to match recursively
                     patterns.append(f"{line}**")
-                elif '/' not in line:
+                elif "/" not in line:
                     # Simple pattern - add **/ prefix to match anywhere
                     patterns.append(f"**/{line}")
                 else:
                     # Pattern with path - use as-is
                     patterns.append(line)
-                    
+
     except Exception as e:
         logger.warning(f"Failed to parse .gitignore: {e}")
-        
+
     return patterns
 
 
@@ -99,7 +99,7 @@ class FilePattern:
 
             # Use fnmatch for pattern matching
             path_str = str(rel_path).replace("\\", "/")
-            
+
             # Handle different glob patterns
             if self.pattern.endswith("/**"):
                 # Pattern like "venv/**" or "**/.venv/**" should match any path starting with the prefix
@@ -108,60 +108,60 @@ class FilePattern:
                     # Pattern like "**/.venv/**" - check if path starts with the suffix
                     suffix_pattern = prefix_pattern[3:]  # Remove **/
                     # Check if path starts with the suffix followed by a directory separator
-                    return path_str.startswith(suffix_pattern + "/") or path_str == suffix_pattern
-                else:
-                    # Pattern like "venv/**" - use fnmatch
-                    return fnmatch.fnmatch(path_str, f"{prefix_pattern}*")
-            elif self.pattern.startswith("**/"):
+                    return (
+                        path_str.startswith(suffix_pattern + "/")
+                        or path_str == suffix_pattern
+                    )
+                # Pattern like "venv/**" - use fnmatch
+                return fnmatch.fnmatch(path_str, f"{prefix_pattern}*")
+            if self.pattern.startswith("**/"):
                 # Pattern like "**/test_*.py" should match any path ending with "test_*.py"
                 # Pattern like "**/.venv" should match any path starting with ".venv"
                 suffix_pattern = self.pattern[3:]  # Remove **/
                 if suffix_pattern.startswith("."):
                     # For patterns starting with ., check if path starts with that pattern
                     return path_str.startswith(suffix_pattern)
-                else:
-                    # For other patterns, check if path ends with that pattern
-                    return fnmatch.fnmatch(path_str, f"*{suffix_pattern}")
-            elif "**/" in self.pattern:
+                # For other patterns, check if path ends with that pattern
+                return fnmatch.fnmatch(path_str, f"*{suffix_pattern}")
+            if "**/" in self.pattern:
                 # Pattern like "tests/**/*.py" - handle recursive matching
                 return self._matches_recursive_pattern(path_str, self.pattern)
-            else:
-                # Simple pattern, use as-is
-                return fnmatch.fnmatch(path_str, self.pattern)
+            # Simple pattern, use as-is
+            return fnmatch.fnmatch(path_str, self.pattern)
         except ValueError:
             # File is not under project root
             return False
 
     def _matches_recursive_pattern(self, path_str: str, pattern: str) -> bool:
         """Match recursive patterns like 'tests/**/*.py'.
-        
+
         Args:
             path_str: Path string to match against
             pattern: Pattern with **/ to match
-            
+
         Returns:
             True if pattern matches the path
         """
         # Split pattern into parts
         pattern_parts = pattern.split("**/")
-        
+
         if len(pattern_parts) != 2:
             # Fallback to fnmatch if pattern is malformed
             return fnmatch.fnmatch(path_str, pattern)
-        
+
         prefix, suffix = pattern_parts
-        
+
         # Check if path starts with prefix
         if not path_str.startswith(prefix):
             return False
-        
+
         # Remove prefix from path
-        remaining_path = path_str[len(prefix):]
-        
+        remaining_path = path_str[len(prefix) :]
+
         # If suffix is empty, we're done
         if not suffix:
             return True
-        
+
         # Use fnmatch to check if remaining path matches the suffix pattern
         # The suffix might contain wildcards like *.py
         return fnmatch.fnmatch(remaining_path, suffix)
@@ -194,8 +194,10 @@ class FileDiscoveryConfig:
         except Exception as e:
             logger.warning(f"Failed to parse .gitignore file: {e}")
             gitignore_patterns = []
-        
-        all_exclude_patterns = config.ignore_patterns + config.exclude_patterns + gitignore_patterns
+
+        all_exclude_patterns = (
+            config.ignore_patterns + config.exclude_patterns + gitignore_patterns
+        )
         self.exclude_patterns = [
             FilePattern(pattern, enabled=True) for pattern in all_exclude_patterns
         ]

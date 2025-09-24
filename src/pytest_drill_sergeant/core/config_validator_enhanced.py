@@ -22,7 +22,9 @@ from pytest_drill_sergeant.core.models import Severity
 class ConfigurationValidationError(Exception):
     """Exception raised for configuration validation errors."""
 
-    def __init__(self, message: str, field: str | None = None, suggestion: str | None = None) -> None:
+    def __init__(
+        self, message: str, field: str | None = None, suggestion: str | None = None
+    ) -> None:
         """Initialize configuration validation error.
 
         Args:
@@ -57,30 +59,30 @@ class EnhancedConfigValidator:
             List of validation errors
         """
         self.validation_errors.clear()
-        
+
         # Validate basic structure
         self._validate_basic_structure(config)
-        
+
         # Validate profiles
         if "profiles" in config:
             self._validate_profiles(config["profiles"])
-        
+
         # Validate rules
         if "rules" in config:
             self._validate_rules(config["rules"])
-        
+
         # Validate paths
         if "paths" in config:
             self._validate_paths(config["paths"])
-        
+
         # Validate output settings
         if "output" in config:
             self._validate_output_settings(config["output"])
-        
+
         # Validate persona settings
         if "persona" in config:
             self._validate_persona_settings(config["persona"])
-        
+
         return self.validation_errors.copy()
 
     def _validate_basic_structure(self, config: dict[str, Any]) -> None:
@@ -95,7 +97,7 @@ class EnhancedConfigValidator:
                 self._add_validation_error(
                     f"Missing required field: {field}",
                     field=field,
-                    suggestion=f"Add '{field}' field to your configuration"
+                    suggestion=f"Add '{field}' field to your configuration",
                 )
 
     def _validate_profiles(self, profiles: dict[str, Any]) -> None:
@@ -108,7 +110,7 @@ class EnhancedConfigValidator:
             self._add_validation_error(
                 "Profiles must be a dictionary",
                 field="profiles",
-                suggestion="Ensure profiles is a dictionary with profile names as keys"
+                suggestion="Ensure profiles is a dictionary with profile names as keys",
             )
             return
 
@@ -117,14 +119,16 @@ class EnhancedConfigValidator:
                 self._add_validation_error(
                     f"Profile '{profile_name}' must be a dictionary",
                     field=f"profiles.{profile_name}",
-                    suggestion="Ensure each profile is a dictionary with configuration options"
+                    suggestion="Ensure each profile is a dictionary with configuration options",
                 )
                 continue
 
             # Validate profile structure
             self._validate_profile_structure(profile_name, profile_config)
 
-    def _validate_profile_structure(self, profile_name: str, profile_config: dict[str, Any]) -> None:
+    def _validate_profile_structure(
+        self, profile_name: str, profile_config: dict[str, Any]
+    ) -> None:
         """Validate individual profile structure.
 
         Args:
@@ -139,7 +143,7 @@ class EnhancedConfigValidator:
                 self._add_validation_error(
                     f"Invalid fail_on value '{fail_on}' in profile '{profile_name}'",
                     field=f"profiles.{profile_name}.fail_on",
-                    suggestion=f"Use one of: {', '.join(valid_fail_on)}"
+                    suggestion=f"Use one of: {', '.join(valid_fail_on)}",
                 )
 
         # Validate enable/disable rules
@@ -152,7 +156,7 @@ class EnhancedConfigValidator:
                     self._add_validation_error(
                         f"Invalid {rule_setting} value in profile '{profile_name}'",
                         field=f"profiles.{profile_name}.{rule_setting}",
-                        suggestion=f"Use a string or list of rule names for {rule_setting}"
+                        suggestion=f"Use a string or list of rule names for {rule_setting}",
                     )
                     continue
 
@@ -162,7 +166,7 @@ class EnhancedConfigValidator:
                         self._add_validation_error(
                             f"Invalid rule name '{rule}' in profile '{profile_name}'",
                             field=f"profiles.{profile_name}.{rule_setting}",
-                            suggestion="Use valid rule names (e.g., 'DS201', 'DS202')"
+                            suggestion="Use valid rule names (e.g., 'DS201', 'DS202')",
                         )
 
     def _validate_rules(self, rules: dict[str, Any]) -> None:
@@ -175,7 +179,7 @@ class EnhancedConfigValidator:
             self._add_validation_error(
                 "Rules must be a dictionary",
                 field="rules",
-                suggestion="Ensure rules is a dictionary with rule configurations"
+                suggestion="Ensure rules is a dictionary with rule configurations",
             )
             return
 
@@ -184,14 +188,16 @@ class EnhancedConfigValidator:
                 self._add_validation_error(
                     f"Rule '{rule_name}' must be a dictionary",
                     field=f"rules.{rule_name}",
-                    suggestion="Ensure each rule is a dictionary with configuration options"
+                    suggestion="Ensure each rule is a dictionary with configuration options",
                 )
                 continue
 
             # Validate rule structure
             self._validate_rule_structure(rule_name, rule_config)
 
-    def _validate_rule_structure(self, rule_name: str, rule_config: dict[str, Any]) -> None:
+    def _validate_rule_structure(
+        self, rule_name: str, rule_config: dict[str, Any]
+    ) -> None:
         """Validate individual rule structure.
 
         Args:
@@ -206,7 +212,7 @@ class EnhancedConfigValidator:
                 self._add_validation_error(
                     f"Invalid severity '{severity}' for rule '{rule_name}'",
                     field=f"rules.{rule_name}.severity",
-                    suggestion=f"Use one of: {', '.join(valid_severities)}"
+                    suggestion=f"Use one of: {', '.join(valid_severities)}",
                 )
 
         # Validate enabled flag
@@ -216,7 +222,7 @@ class EnhancedConfigValidator:
                 self._add_validation_error(
                     f"Invalid enabled value for rule '{rule_name}'",
                     field=f"rules.{rule_name}.enabled",
-                    suggestion="Use true or false for the enabled field"
+                    suggestion="Use true or false for the enabled field",
                 )
 
         # Validate threshold
@@ -226,7 +232,7 @@ class EnhancedConfigValidator:
                 self._add_validation_error(
                     f"Invalid threshold '{threshold}' for rule '{rule_name}'",
                     field=f"rules.{rule_name}.threshold",
-                    suggestion="Use a non-negative number for threshold"
+                    suggestion="Use a non-negative number for threshold",
                 )
 
     def _validate_paths(self, paths: str | list[str]) -> None:
@@ -241,7 +247,7 @@ class EnhancedConfigValidator:
             self._add_validation_error(
                 "Paths must be a string or list of strings",
                 field="paths",
-                suggestion="Use a string or list of strings for paths"
+                suggestion="Use a string or list of strings for paths",
             )
             return
 
@@ -250,7 +256,7 @@ class EnhancedConfigValidator:
                 self._add_validation_error(
                     f"Path at index {i} must be a string",
                     field=f"paths[{i}]",
-                    suggestion="Use string paths only"
+                    suggestion="Use string paths only",
                 )
                 continue
 
@@ -260,7 +266,7 @@ class EnhancedConfigValidator:
                 self._add_validation_error(
                     f"Path does not exist: {path_str}",
                     field=f"paths[{i}]",
-                    suggestion=f"Check if the path exists: {path.absolute()}"
+                    suggestion=f"Check if the path exists: {path.absolute()}",
                 )
 
     def _validate_output_settings(self, output: dict[str, Any]) -> None:
@@ -273,7 +279,7 @@ class EnhancedConfigValidator:
             self._add_validation_error(
                 "Output must be a dictionary",
                 field="output",
-                suggestion="Ensure output is a dictionary with output settings"
+                suggestion="Ensure output is a dictionary with output settings",
             )
             return
 
@@ -285,7 +291,7 @@ class EnhancedConfigValidator:
                 self._add_validation_error(
                     f"Invalid output format '{format_value}'",
                     field="output.format",
-                    suggestion=f"Use one of: {', '.join(valid_formats)}"
+                    suggestion=f"Use one of: {', '.join(valid_formats)}",
                 )
 
         # Validate output file
@@ -295,7 +301,7 @@ class EnhancedConfigValidator:
                 self._add_validation_error(
                     "Output file must be a string",
                     field="output.file",
-                    suggestion="Use a string path for the output file"
+                    suggestion="Use a string path for the output file",
                 )
             else:
                 # Check if output directory exists
@@ -304,7 +310,7 @@ class EnhancedConfigValidator:
                     self._add_validation_error(
                         f"Output directory does not exist: {output_path.parent}",
                         field="output.file",
-                        suggestion=f"Create the directory: {output_path.parent.absolute()}"
+                        suggestion=f"Create the directory: {output_path.parent.absolute()}",
                     )
 
     def _validate_persona_settings(self, persona: str | dict[str, Any]) -> None:
@@ -320,7 +326,7 @@ class EnhancedConfigValidator:
                 self._add_validation_error(
                     f"Invalid persona '{persona}'",
                     field="persona",
-                    suggestion=f"Use one of: {', '.join(valid_personas)}"
+                    suggestion=f"Use one of: {', '.join(valid_personas)}",
                 )
         elif isinstance(persona, dict):
             # Validate persona configuration
@@ -328,7 +334,7 @@ class EnhancedConfigValidator:
                 self._add_validation_error(
                     "Persona configuration must have a 'name' field",
                     field="persona.name",
-                    suggestion="Add a 'name' field to persona configuration"
+                    suggestion="Add a 'name' field to persona configuration",
                 )
             else:
                 self._validate_persona_settings(persona["name"])
@@ -336,7 +342,7 @@ class EnhancedConfigValidator:
             self._add_validation_error(
                 "Persona must be a string or dictionary",
                 field="persona",
-                suggestion="Use a string persona name or dictionary with persona configuration"
+                suggestion="Use a string persona name or dictionary with persona configuration",
             )
 
     def _add_validation_error(
@@ -386,7 +392,11 @@ class EnhancedConfigValidator:
 
         for error in self.validation_errors:
             # Count by field
-            field = error.context.user_data.get("field", "unknown") if error.context else "unknown"
+            field = (
+                error.context.user_data.get("field", "unknown")
+                if error.context
+                else "unknown"
+            )
             by_field[field] = by_field.get(field, 0) + 1
 
             # Count by severity
@@ -397,7 +407,11 @@ class EnhancedConfigValidator:
             "total_errors": len(self.validation_errors),
             "by_field": by_field,
             "by_severity": by_severity,
-            "critical_errors": sum(1 for e in self.validation_errors if e.severity == ErrorSeverity.CRITICAL),
+            "critical_errors": sum(
+                1
+                for e in self.validation_errors
+                if e.severity == ErrorSeverity.CRITICAL
+            ),
         }
 
     def clear_errors(self) -> None:
@@ -415,30 +429,35 @@ def validate_config_file(config_path: Path) -> list[AnalysisError]:
         List of validation errors
     """
     validator = EnhancedConfigValidator()
-    
+
     try:
         # Try to load the configuration file
         if config_path.suffix == ".json":
             import json
+
             with config_path.open("r") as f:
                 config = json.load(f)
         elif config_path.suffix in [".yaml", ".yml"]:
             import yaml
+
             with config_path.open("r") as f:
                 config = yaml.safe_load(f)
         else:
             # Try to load as Python module
             import importlib.util
+
             spec = importlib.util.spec_from_file_location("config", config_path)
             if spec and spec.loader:
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
                 config = getattr(module, "config", {})
             else:
-                raise ValueError(f"Unsupported configuration file format: {config_path.suffix}")
-        
+                raise ValueError(
+                    f"Unsupported configuration file format: {config_path.suffix}"
+                )
+
         return validator.validate_config(config)
-        
+
     except Exception as e:
         # Create error for file loading failure
         context = create_error_context(
@@ -446,7 +465,7 @@ def validate_config_file(config_path: Path) -> list[AnalysisError]:
             analyzer_name="config_validator",
             function_name="validate_config_file",
         )
-        
+
         error = AnalysisError(
             error_id="",
             category=ErrorCategory.CONFIGURATION_ERROR,
@@ -456,5 +475,5 @@ def validate_config_file(config_path: Path) -> list[AnalysisError]:
             suggestion="Check if the file exists and has valid syntax",
             recoverable=False,
         )
-        
+
         return [error]

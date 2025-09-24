@@ -25,7 +25,7 @@ class TestAAACommentDetector:
         """Test rule specification."""
         detector = AAACommentDetector()
         rule_spec = detector._get_rule_spec()
-        
+
         assert rule_spec.code == "DS302"
         assert rule_spec.name == "aaa_comments"
         assert rule_spec.default_level == "info"
@@ -40,10 +40,10 @@ class TestAAACommentDetector:
 def test_correct_aaa():
     # Arrange
     data = {"key": "value"}
-    
+
     # Act
     result = process_data(data)
-    
+
     # Assert
     assert result == expected
 """
@@ -88,10 +88,10 @@ def test_missing_aaa():
 def test_wrong_order():
     # Act
     result = process_data(data)
-    
+
     # Arrange
     data = {"key": "value"}
-    
+
     # Assert
     assert result == expected
 """
@@ -116,10 +116,10 @@ def test_wrong_order():
 def test_incomplete_aaa():
     # Arrange
     data = {"key": "value"}
-    
+
     # Act
     result = process_data(data)
-    
+
     assert result == expected  # No AAA comment here
 """
 
@@ -143,13 +143,13 @@ def test_incomplete_aaa():
 def test_duplicate_sections():
     # Arrange
     data = {"key": "value"}
-    
+
     # Arrange again
     more_data = {"other": "data"}
-    
+
     # Act
     result = process_data(data)
-    
+
     # Assert
     assert result == expected
 """
@@ -174,10 +174,10 @@ def test_duplicate_sections():
 def test_synonyms():
     # Setup
     data = {"key": "value"}
-    
+
     # When
     result = process_data(data)
-    
+
     # Then
     assert result == expected
 """
@@ -197,10 +197,10 @@ def test_synonyms():
 def test_good_function():
     # Arrange
     data = {"key": "value"}
-    
+
     # Act
     result = process_data(data)
-    
+
     # Assert
     assert result == expected
 
@@ -226,10 +226,10 @@ def test_bad_function():
 def helper_function():
     # Arrange
     data = {"key": "value"}
-    
+
     # Act
     result = process_data(data)
-    
+
     # Assert
     assert result == expected
 
@@ -285,7 +285,7 @@ def test_syntax_error():
     def test_analyze_file_nonexistent_file(self) -> None:
         """Test handling of nonexistent file."""
         detector = AAACommentDetector()
-        
+
         findings = detector.analyze_file(Path("nonexistent_file.py"))
         assert len(findings) == 0
 
@@ -320,21 +320,21 @@ def test_syntax_error():
 def test_function():
     # Arrange
     data = {"key": "value"}
-    
+
     # Act
     result = process_data(data)
-    
+
     # Assert
     assert result == expected
 """
 
         comments = detector._extract_comments(content)
-        
+
         assert 2 in comments  # First comment
         assert 4 in comments  # Arrange comment
         assert 7 in comments  # Act comment
         assert 10 in comments  # Assert comment
-        
+
         assert comments[4] == "arrange"
         assert comments[7] == "act"
         assert comments[10] == "assert"
@@ -389,29 +389,27 @@ def test_function():
         assert detector._is_correct_order(["assert", "act", "arrange"]) is False
 
         # Duplicates (should be handled gracefully)
-        assert detector._is_correct_order(["arrange", "act", "arrange", "assert"]) is False
-        assert detector._is_correct_order(["arrange", "arrange", "act", "assert"]) is False
+        assert (
+            detector._is_correct_order(["arrange", "act", "arrange", "assert"]) is False
+        )
+        assert (
+            detector._is_correct_order(["arrange", "arrange", "act", "assert"]) is False
+        )
 
     def test_analyze_aaa_structure(self) -> None:
         """Test AAA structure analysis."""
         detector = AAACommentDetector()
 
         # Mock function node
-        func_node = type("MockNode", (), {
-            "lineno": 1,
-            "end_lineno": 10,
-            "name": "test_function"
-        })()
+        func_node = type(
+            "MockNode", (), {"lineno": 1, "end_lineno": 10, "name": "test_function"}
+        )()
 
         # Test with correct structure
-        comments = {
-            2: "arrange",
-            5: "act",
-            8: "assert"
-        }
+        comments = {2: "arrange", 5: "act", 8: "assert"}
 
         result = detector._analyze_aaa_structure(func_node, comments)
-        
+
         assert isinstance(result, AAAResult)
         assert result.has_aaa_comments is True
         assert result.correct_order is True
@@ -424,20 +422,15 @@ def test_function():
         """Test AAA structure analysis with missing sections."""
         detector = AAACommentDetector()
 
-        func_node = type("MockNode", (), {
-            "lineno": 1,
-            "end_lineno": 10,
-            "name": "test_function"
-        })()
+        func_node = type(
+            "MockNode", (), {"lineno": 1, "end_lineno": 10, "name": "test_function"}
+        )()
 
         # Only arrange and act
-        comments = {
-            2: "arrange",
-            5: "act"
-        }
+        comments = {2: "arrange", 5: "act"}
 
         result = detector._analyze_aaa_structure(func_node, comments)
-        
+
         assert result.has_aaa_comments is True
         assert result.correct_order is True
         assert result.found_order == ["arrange", "act"]
@@ -448,22 +441,15 @@ def test_function():
         """Test AAA structure analysis with duplicate sections."""
         detector = AAACommentDetector()
 
-        func_node = type("MockNode", (), {
-            "lineno": 1,
-            "end_lineno": 15,
-            "name": "test_function"
-        })()
+        func_node = type(
+            "MockNode", (), {"lineno": 1, "end_lineno": 15, "name": "test_function"}
+        )()
 
         # Duplicate arrange sections
-        comments = {
-            2: "arrange",
-            5: "arrange",
-            8: "act",
-            11: "assert"
-        }
+        comments = {2: "arrange", 5: "arrange", 8: "act", 11: "assert"}
 
         result = detector._analyze_aaa_structure(func_node, comments)
-        
+
         assert result.has_aaa_comments is True
         assert result.correct_order is False  # Duplicates make order incorrect
         assert "arrange" in result.duplicate_sections
@@ -474,24 +460,51 @@ def test_function():
         detector = AAACommentDetector()
 
         # Test single section
-        assert detector._extract_aaa_sections_from_comment("act - need to call this method") == ["act"]
-        assert detector._extract_aaa_sections_from_comment("arrange data") == ["arrange"]
-        assert detector._extract_aaa_sections_from_comment("assert result") == ["assert"]
+        assert detector._extract_aaa_sections_from_comment(
+            "act - need to call this method"
+        ) == ["act"]
+        assert detector._extract_aaa_sections_from_comment("arrange data") == [
+            "arrange"
+        ]
+        assert detector._extract_aaa_sections_from_comment("assert result") == [
+            "assert"
+        ]
 
         # Test multiple sections on one line
-        assert detector._extract_aaa_sections_from_comment("arrange, act, assert") == ["arrange", "act", "assert"]
-        assert detector._extract_aaa_sections_from_comment("setup, when, then") == ["arrange", "act", "assert"]
+        assert detector._extract_aaa_sections_from_comment("arrange, act, assert") == [
+            "arrange",
+            "act",
+            "assert",
+        ]
+        assert detector._extract_aaa_sections_from_comment("setup, when, then") == [
+            "arrange",
+            "act",
+            "assert",
+        ]
 
         # Test with punctuation and additional text
-        assert detector._extract_aaa_sections_from_comment("act: do something") == ["act"]
-        assert detector._extract_aaa_sections_from_comment("act. do something") == ["act"]
-        assert detector._extract_aaa_sections_from_comment("act - do something") == ["act"]
+        assert detector._extract_aaa_sections_from_comment("act: do something") == [
+            "act"
+        ]
+        assert detector._extract_aaa_sections_from_comment("act. do something") == [
+            "act"
+        ]
+        assert detector._extract_aaa_sections_from_comment("act - do something") == [
+            "act"
+        ]
 
         # Test mixed sections
-        assert detector._extract_aaa_sections_from_comment("arrange data and act on it") == ["arrange", "act"]
+        assert detector._extract_aaa_sections_from_comment(
+            "arrange data and act on it"
+        ) == ["arrange", "act"]
 
         # Test non-AAA comments (should not match)
-        assert detector._extract_aaa_sections_from_comment("actually this is not an aaa comment") == []
+        assert (
+            detector._extract_aaa_sections_from_comment(
+                "actually this is not an aaa comment"
+            )
+            == []
+        )
         assert detector._extract_aaa_sections_from_comment("acting on the data") == []
         assert detector._extract_aaa_sections_from_comment("arrangement of data") == []
 
@@ -503,10 +516,10 @@ def test_function():
 def test_multi_section_comment():
     # Arrange, Act, Assert - all in one line
     data = {"key": "value"}
-    
+
     # Act - need to call this method to do something
     result = process_data(data)
-    
+
     # Assert result is correct
     assert result == expected
 """
@@ -530,7 +543,7 @@ def test_multi_section_comment():
 def test_mixed_sections():
     # Setup data and Act on it - mixed sections
     data = {"key": "value"}
-    
+
     # When we call the method, Then verify
     result = process_data(data)
     assert result == expected
@@ -555,10 +568,10 @@ def test_mixed_sections():
 def test_non_aaa_comments():
     # Actually this is not an AAA comment
     data = {"key": "value"}
-    
+
     # Acting on the data
     result = process_data(data)
-    
+
     # Assertion about the result
     assert result == expected
 """
@@ -590,7 +603,7 @@ def test_missing():
             f.write(test_code_missing)
             f.flush()
             findings = detector.analyze_file(Path(f.name))
-            
+
         assert len(findings) == 1
         assert findings[0].confidence == 0.9  # High confidence for missing AAA
 
@@ -599,10 +612,10 @@ def test_missing():
 def test_wrong_order():
     # Act
     result = process_data(data)
-    
+
     # Arrange
     data = {"key": "value"}
-    
+
     # Assert
     assert result == expected
 """
@@ -611,6 +624,6 @@ def test_wrong_order():
             f.write(test_code_order)
             f.flush()
             findings = detector.analyze_file(Path(f.name))
-            
+
         assert len(findings) == 1
         assert findings[0].confidence == 0.8  # Medium-high confidence for wrong order
