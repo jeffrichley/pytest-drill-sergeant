@@ -261,25 +261,25 @@ This implementation plan provides a detailed roadmap for building pytest-drill-s
 ### Deliverables Checklist
 
 #### Runtime Analysis
-- [ ] **Coverage Integration**
-  - [ ] Per-test coverage collection using coverage.py
-  - [ ] Coverage-to-Assertion Ratio (CAR) calculation
-  - [ ] Coverage signature generation for similarity detection
-  - [ ] Integration with pytest hooks
+- [x] **Coverage Integration** ✅ **COMPLETED**
+  - [x] Per-test coverage collection using coverage.py
+  - [x] Coverage-to-Assertion Ratio (CAR) calculation
+  - [x] Coverage signature generation for similarity detection
+  - [x] Integration with pytest hooks
 
-- [ ] **Dynamic Duplicate Detection**
-  - [ ] Coverage-based similarity per [Analysis Algorithms](planning/03_analysis_algorithms.md#dynamic-coverage-similarity-jaccard)
-  - [ ] Jaccard index calculation for test similarity
-  - [ ] Runtime mock assertion counting
-  - [ ] Exception message analysis
-  - [ ] Configurable similarity thresholds
+- [x] **Dynamic Duplicate Detection** ✅ **COMPLETED**
+  - [x] Coverage-based similarity per [Analysis Algorithms](planning/03_analysis_algorithms.md#dynamic-coverage-similarity-jaccard)
+  - [x] Jaccard index calculation for test similarity
+  - [x] Runtime mock assertion counting
+  - [x] Exception message analysis
+  - [x] Configurable similarity thresholds
 
-- [ ] **Behavior Integrity Score (BIS)**
-  - [ ] Implementation per [Scoring System](planning/04_scoring_system.md#behavior-integrity-score-bis)
-  - [ ] Feature extraction and weighting
-  - [ ] Score calculation algorithm
-  - [ ] Grade assignment (A-F)
-  - [ ] Per-test BIS reporting
+- [x] **Behavior Integrity Score (BIS)** ✅ **COMPLETED**
+  - [x] Implementation per [Scoring System](planning/04_scoring_system.md#behavior-integrity-score-bis)
+  - [x] Feature extraction and weighting
+  - [x] Score calculation algorithm
+  - [x] Grade assignment (A-F)
+  - [x] Per-test BIS reporting
 
 #### Enhanced Persona System
 - [ ] **Additional Personas**
