@@ -117,7 +117,7 @@ class CoverageCollector:
 
             self.logger.debug("Coverage collection started")
         except Exception as e:
-            self.logger.error(f"Failed to start coverage collection: {e}")
+            self.logger.error("Failed to start coverage collection: %s", e)
             raise
 
     def stop_coverage(self) -> None:
@@ -136,7 +136,7 @@ class CoverageCollector:
 
             self.logger.debug("Coverage collection stopped")
         except Exception as e:
-            self.logger.error(f"Failed to stop coverage collection: {e}")
+            self.logger.error("Failed to stop coverage collection: %s", e)
 
     def collect_test_coverage(
         self,
@@ -190,7 +190,7 @@ class CoverageCollector:
             return coverage_data
 
         except Exception as e:
-            self.logger.error(f"Failed to collect coverage for {test_name}: {e}")
+            self.logger.error("Failed to collect coverage for %s: %s", test_name, e)
             # Return empty coverage data on error
             return CoverageData(
                 test_name=test_name,
@@ -251,7 +251,7 @@ class CoverageCollector:
                 try:
                     source_files.extend(src_dir.rglob("*.py"))
                 except (PermissionError, OSError) as e:
-                    self.logger.debug(f"Cannot access src directory {src_dir}: {e}")
+                    self.logger.debug("Cannot access src directory %s: %s", src_dir, e)
 
             # Check for lib/ directory
             lib_dir = test_dir.parent / "lib"
@@ -259,7 +259,7 @@ class CoverageCollector:
                 try:
                     source_files.extend(lib_dir.rglob("*.py"))
                 except (PermissionError, OSError) as e:
-                    self.logger.debug(f"Cannot access lib directory {lib_dir}: {e}")
+                    self.logger.debug("Cannot access lib directory %s: %s", lib_dir, e)
 
             # Check for package directory at same level as tests
             # Limit traversal to avoid system directories
@@ -311,7 +311,7 @@ class CoverageCollector:
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to find source files for {test_file_path}: {e}")
+            self.logger.error("Failed to find source files for %s: %s", test_file_path, e)
             # Fallback to basic file discovery
             source_files = self._find_source_files_fallback(test_file_path)
 
@@ -344,7 +344,7 @@ class CoverageCollector:
             return False
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze test file for source code: {e}")
+            self.logger.error("Failed to analyze test file for source code: %s", e)
             return False
 
     def _safe_parent_traversal(self, start_path: Path) -> list[Path]:
@@ -409,7 +409,7 @@ class CoverageCollector:
                     list(parent.iterdir())
                     safe_parents.append(parent)
                 except (PermissionError, OSError) as e:
-                    self.logger.debug(f"Cannot access parent directory {parent}: {e}")
+                    self.logger.debug("Cannot access parent directory %s: %s", parent, e)
                     break
 
                 # Limit traversal depth to avoid going too far up
@@ -420,7 +420,7 @@ class CoverageCollector:
                     break
 
         except Exception as e:
-            self.logger.debug(f"Error during safe parent traversal: {e}")
+            self.logger.debug("Error during safe parent traversal: %s", e)
 
         return safe_parents
 
@@ -477,7 +477,7 @@ class CoverageCollector:
             return limited_files
 
         except Exception as e:
-            self.logger.error(f"Failed to select source files with analysis: {e}")
+            self.logger.error("Failed to select source files with analysis: %s", e)
             # Fallback to imported files or all files
             return imported_source_files if imported_source_files else all_source_files
 
@@ -526,7 +526,7 @@ class CoverageCollector:
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze imports in {test_file_path}: {e}")
+            self.logger.error("Failed to analyze imports in %s: %s", test_file_path, e)
 
         return imported_modules
 
@@ -643,7 +643,7 @@ class CoverageCollector:
             try:
                 source_files.extend(src_dir.rglob("*.py"))
             except (PermissionError, OSError) as e:
-                self.logger.debug(f"Cannot access src directory {src_dir}: {e}")
+                self.logger.debug("Cannot access src directory %s: %s", src_dir, e)
 
         # Check for lib/ directory
         lib_dir = test_dir.parent / "lib"
@@ -651,7 +651,7 @@ class CoverageCollector:
             try:
                 source_files.extend(lib_dir.rglob("*.py"))
             except (PermissionError, OSError) as e:
-                self.logger.debug(f"Cannot access lib directory {lib_dir}: {e}")
+                self.logger.debug("Cannot access lib directory %s: %s", lib_dir, e)
 
         # Check for package directory at same level as tests
         # Limit traversal to avoid system directories
@@ -749,7 +749,7 @@ class CoverageCollector:
             self._execute_test_under_coverage(test_file_path, test_name, source_files)
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze test coverage: {e}")
+            self.logger.error("Failed to analyze test coverage: %s", e)
 
     def _execute_test_under_coverage(
         self, test_file_path: Path, test_name: str, source_files: list[Path]
@@ -782,7 +782,7 @@ class CoverageCollector:
                 self.logger.warning("Coverage not initialized, skipping test execution")
 
         except Exception as e:
-            self.logger.error(f"Failed to execute test under coverage: {e}")
+            self.logger.error("Failed to execute test under coverage: %s", e)
 
     def _run_test_function(self, test_file_path: Path, test_name: str) -> None:
         """Run a specific test function.
@@ -799,7 +799,7 @@ class CoverageCollector:
             # Load the test module
             spec = importlib.util.spec_from_file_location("test_module", test_file_path)
             if spec is None or spec.loader is None:
-                self.logger.error(f"Could not load test module from {test_file_path}")
+                self.logger.error("Could not load test module from %s", test_file_path)
                 return
 
             test_module = importlib.util.module_from_spec(spec)
@@ -841,7 +841,7 @@ class CoverageCollector:
                     )
 
         except Exception as e:
-            self.logger.error(f"Failed to run test function {test_name}: {e}")
+            self.logger.error("Failed to run test function %s: %s", test_name, e)
 
     def _extract_coverage_data_with_analysis(
         self,
@@ -882,7 +882,7 @@ class CoverageCollector:
             return enhanced_coverage
 
         except Exception as e:
-            self.logger.error(f"Failed to extract coverage data with analysis: {e}")
+            self.logger.error("Failed to extract coverage data with analysis: %s", e)
             # Fallback to basic coverage data
             try:
                 return self._extract_coverage_data(
@@ -965,7 +965,7 @@ class CoverageCollector:
             return enhanced_data
 
         except Exception as e:
-            self.logger.error(f"Failed to enhance coverage with analysis: {e}")
+            self.logger.error("Failed to enhance coverage with analysis: %s", e)
             return coverage_data
 
     def _generate_analysis_insights(
@@ -1088,7 +1088,7 @@ class CoverageCollector:
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze test imports: {e}")
+            self.logger.error("Failed to analyze test imports: %s", e)
             # Store error state
             test_key = f"{test_func.name}_imports"
             self._analysis_results[test_key] = {
@@ -1150,7 +1150,7 @@ class CoverageCollector:
 
             # Store the called functions for this test
             self._called_functions.update(called_functions)
-            self.logger.debug(f"Test function calls {len(called_functions)} functions")
+            self.logger.debug("Test function calls %d functions", len(called_functions))
 
             # Store detailed analysis results
             test_key = f"{test_func.name}_calls"
@@ -1162,7 +1162,7 @@ class CoverageCollector:
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze test calls: {e}")
+            self.logger.error("Failed to analyze test calls: %s", e)
             # Store error state
             test_key = f"{test_func.name}_calls"
             self._analysis_results[test_key] = {
@@ -1307,7 +1307,7 @@ class CoverageCollector:
             return summary
 
         except Exception as e:
-            self.logger.error(f"Failed to get coverage analysis summary: {e}")
+            self.logger.error("Failed to get coverage analysis summary: %s", e)
             return None
 
     def _resolve_import_to_file(
@@ -1355,7 +1355,7 @@ class CoverageCollector:
             return None
 
         except Exception as e:
-            self.logger.error(f"Failed to resolve import {module_name}: {e}")
+            self.logger.error("Failed to resolve import %s: %s", module_name, e)
             return None
 
     def _get_attribute_chain(self, node: ast.Attribute) -> str:
@@ -1376,7 +1376,7 @@ class CoverageCollector:
             return f".{node.attr}"
 
         except Exception as e:
-            self.logger.error(f"Failed to get attribute chain: {e}")
+            self.logger.error("Failed to get attribute chain: %s", e)
             return "unknown"
 
     def _extract_coverage_data(
@@ -1413,10 +1413,10 @@ class CoverageCollector:
 
             # Analyze each source file
             for source_file in source_files:
-                self.logger.debug(f"Analyzing source file: {source_file}")
+                self.logger.debug("Analyzing source file: %s", source_file)
                 # Normalize the path to handle symlinks
                 normalized_path = str(source_file.resolve())
-                self.logger.debug(f"Normalized path: {normalized_path}")
+                self.logger.debug("Normalized path: %s", normalized_path)
 
                 # Check both the original path and normalized path
                 file_path_in_measured = (
@@ -1462,8 +1462,8 @@ class CoverageCollector:
                         self.logger.debug(
                             f"Executed lines (measured): {executed_lines}"
                         )
-                        self.logger.debug(f"Missing lines: {missing_lines}")
-                        self.logger.debug(f"Excluded lines: {excluded_lines}")
+                        self.logger.debug("Missing lines: %s", missing_lines)
+                        self.logger.debug("Excluded lines: %s", excluded_lines)
 
                         # Track covered and missing lines
                         for line in file_lines:
@@ -1507,7 +1507,7 @@ class CoverageCollector:
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to extract coverage data: {e}")
+            self.logger.error("Failed to extract coverage data: %s", e)
             # Return empty coverage data on error
             return CoverageData(
                 test_name=test_name,
@@ -1557,7 +1557,7 @@ class CoverageCollector:
             return "|".join(signature_parts)
 
         except Exception as e:
-            self.logger.error(f"Failed to generate coverage signature: {e}")
+            self.logger.error("Failed to generate coverage signature: %s", e)
             return ""
 
     def analyze_file(self, file_path: Path) -> list[Finding]:
@@ -1573,24 +1573,24 @@ class CoverageCollector:
 
         try:
             if not file_path.exists():
-                self.logger.warning(f"File does not exist: {file_path}")
+                self.logger.warning("File does not exist: %s", file_path)
                 return findings
 
             if file_path.suffix != ".py":
-                self.logger.debug(f"Skipping non-Python file: {file_path}")
+                self.logger.debug("Skipping non-Python file: %s", file_path)
                 return findings
 
             # Read and parse the file
             content = file_path.read_text(encoding="utf-8")
             if not content.strip():
-                self.logger.debug(f"Empty file: {file_path}")
+                self.logger.debug("Empty file: %s", file_path)
                 return findings
 
             # Parse AST
             try:
                 tree = ast.parse(content, filename=str(file_path))
             except SyntaxError as e:
-                self.logger.warning(f"Syntax error in {file_path}: {e}")
+                self.logger.warning("Syntax error in %s: %s", file_path, e)
                 return findings
 
             # Find test functions and analyze them
@@ -1606,7 +1606,7 @@ class CoverageCollector:
             )
 
         except Exception as e:
-            self.logger.error(f"Error analyzing {file_path}: {e}")
+            self.logger.error("Error analyzing %s: %s", file_path, e)
 
         return findings
 

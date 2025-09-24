@@ -376,7 +376,7 @@ class EnhancedConfigValidator:
         )
 
         self.validation_errors.append(error)
-        self.logger.warning(f"Configuration validation error: {message}")
+        self.logger.warning("Configuration validation error: %s", message)
 
     def get_validation_summary(self) -> dict[str, Any]:
         """Get a summary of validation errors.

@@ -52,7 +52,7 @@ class DiagnosticConverter:
                 if diagnostic:
                     diagnostics.append(diagnostic)
             except Exception as e:
-                self.logger.warning(f"Failed to convert finding {finding.code}: {e}")
+                self.logger.warning("Failed to convert finding %s: %s", finding.code, e)
                 continue
 
         return diagnostics

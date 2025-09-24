@@ -124,7 +124,7 @@ class MockOverspecDetector:
             content = file_path.read_text(encoding="utf-8")
             tree = ast.parse(content)
         except Exception as e:
-            self.logger.warning(f"Failed to parse {file_path}: {e}")
+            self.logger.warning("Failed to parse %s: %s", file_path, e)
             return findings
 
         # Get configuration

@@ -83,17 +83,17 @@ class AAACommentDetector:
 
         try:
             if not file_path.exists():
-                self.logger.warning(f"File does not exist: {file_path}")
+                self.logger.warning("File does not exist: %s", file_path)
                 return findings
 
             if file_path.suffix != ".py":
-                self.logger.debug(f"Skipping non-Python file: {file_path}")
+                self.logger.debug("Skipping non-Python file: %s", file_path)
                 return findings
 
             # Read and parse the file
             content = file_path.read_text(encoding="utf-8")
             if not content.strip():
-                self.logger.debug(f"Empty file: {file_path}")
+                self.logger.debug("Empty file: %s", file_path)
                 return findings
 
             # Extract comments with line numbers
@@ -103,7 +103,7 @@ class AAACommentDetector:
             try:
                 tree = ast.parse(content, filename=str(file_path))
             except SyntaxError as e:
-                self.logger.warning(f"Syntax error in {file_path}: {e}")
+                self.logger.warning("Syntax error in %s: %s", file_path, e)
                 return findings
 
             # Find test functions and analyze them
@@ -114,10 +114,10 @@ class AAACommentDetector:
                     )
                     findings.extend(func_findings)
 
-            self.logger.debug(f"AAA analysis of {file_path}: {len(findings)} findings")
+            self.logger.debug("AAA analysis of %s: %d findings", file_path, len(findings))
 
         except Exception as e:
-            self.logger.error(f"Error analyzing {file_path}: {e}")
+            self.logger.error("Error analyzing %s: %s", file_path, e)
             # Return empty findings rather than crashing
 
         return findings

@@ -92,7 +92,7 @@ class CARCalculator:
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to calculate CAR for {test_name}: {e}")
+            self.logger.error("Failed to calculate CAR for %s: %s", test_name, e)
             # Return default CAR result on error
             return CARResult(
                 test_name=test_name,
@@ -132,7 +132,7 @@ class CARCalculator:
 
             if not test_func:
                 self.logger.warning(
-                    f"Test function {test_name} not found in {test_file_path}"
+                    "Test function %s not found in %s", test_name, test_file_path
                 )
                 return 0
 
@@ -178,7 +178,7 @@ class CARCalculator:
             return assertion_count
 
         except Exception as e:
-            self.logger.error(f"Failed to count assertions in {test_name}: {e}")
+            self.logger.error("Failed to count assertions in %s: %s", test_name, e)
             return 0
 
     def _calculate_car_score(
@@ -260,24 +260,24 @@ class CARCalculator:
 
         try:
             if not file_path.exists():
-                self.logger.warning(f"File does not exist: {file_path}")
+                self.logger.warning("File does not exist: %s", file_path)
                 return findings
 
             if file_path.suffix != ".py":
-                self.logger.debug(f"Skipping non-Python file: {file_path}")
+                self.logger.debug("Skipping non-Python file: %s", file_path)
                 return findings
 
             # Read and parse the file
             content = file_path.read_text(encoding="utf-8")
             if not content.strip():
-                self.logger.debug(f"Empty file: {file_path}")
+                self.logger.debug("Empty file: %s", file_path)
                 return findings
 
             # Parse AST
             try:
                 tree = ast.parse(content, filename=str(file_path))
             except SyntaxError as e:
-                self.logger.warning(f"Syntax error in {file_path}: {e}")
+                self.logger.warning("Syntax error in %s: %s", file_path, e)
                 return findings
 
             # Find test functions and analyze them
@@ -286,10 +286,10 @@ class CARCalculator:
                     func_findings = self._analyze_test_function_car(node, file_path)
                     findings.extend(func_findings)
 
-            self.logger.debug(f"CAR analysis of {file_path}: {len(findings)} findings")
+            self.logger.debug("CAR analysis of %s: %d findings", file_path, len(findings))
 
         except Exception as e:
-            self.logger.error(f"Error analyzing {file_path}: {e}")
+            self.logger.error("Error analyzing %s: %s", file_path, e)
 
         return findings
 

@@ -112,11 +112,11 @@ class DynamicCloneDetector:
             # Find duplicate clusters
             clusters = self._find_duplicate_clusters()
 
-            self.logger.info(f"Found {len(clusters)} duplicate clusters")
+            self.logger.info("Found %d duplicate clusters", len(clusters))
             return clusters
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze test suite: {e}")
+            self.logger.error("Failed to analyze test suite: %s", e)
             return []
 
     def _analyze_test_file(self, test_file: Path) -> None:
@@ -150,7 +150,7 @@ class DynamicCloneDetector:
                     self._test_signatures[test_key] = signature
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze test file {test_file}: {e}")
+            self.logger.error("Failed to analyze test file %s: %s", test_file, e)
 
     def _count_mock_assertions(self, test_func: ast.FunctionDef) -> int:
         """Count mock assertions in a test function.
@@ -399,7 +399,7 @@ class DynamicCloneDetector:
             return intersection / union if union > 0 else 0.0
 
         except Exception as e:
-            self.logger.error(f"Failed to calculate coverage similarity: {e}")
+            self.logger.error("Failed to calculate coverage similarity: %s", e)
             return 0.0
 
     def _calculate_mock_similarity(self, test1_key: str, test2_key: str) -> float:
@@ -429,7 +429,7 @@ class DynamicCloneDetector:
             return min_mocks / max_mocks
 
         except Exception as e:
-            self.logger.error(f"Failed to calculate mock similarity: {e}")
+            self.logger.error("Failed to calculate mock similarity: %s", e)
             return 0.0
 
     def _calculate_exception_similarity(self, test1_key: str, test2_key: str) -> float:
@@ -462,7 +462,7 @@ class DynamicCloneDetector:
             return intersection / union if union > 0 else 0.0
 
         except Exception as e:
-            self.logger.error(f"Failed to calculate exception similarity: {e}")
+            self.logger.error("Failed to calculate exception similarity: %s", e)
             return 0.0
 
     def _calculate_structure_similarity(self, test1_key: str, test2_key: str) -> float:
@@ -495,7 +495,7 @@ class DynamicCloneDetector:
             return intersection / union if union > 0 else 0.0
 
         except Exception as e:
-            self.logger.error(f"Failed to calculate structure similarity: {e}")
+            self.logger.error("Failed to calculate structure similarity: %s", e)
             return 0.0
 
     def _create_cluster(self, test_keys: list[str]) -> DuplicateCluster | None:
@@ -559,7 +559,7 @@ class DynamicCloneDetector:
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to create cluster: {e}")
+            self.logger.error("Failed to create cluster: %s", e)
             return None
 
     def _generate_consolidation_suggestion(
@@ -593,24 +593,24 @@ class DynamicCloneDetector:
 
         try:
             if not file_path.exists():
-                self.logger.warning(f"File does not exist: {file_path}")
+                self.logger.warning("File does not exist: %s", file_path)
                 return findings
 
             if file_path.suffix != ".py":
-                self.logger.debug(f"Skipping non-Python file: {file_path}")
+                self.logger.debug("Skipping non-Python file: %s", file_path)
                 return findings
 
             # Read and parse the file
             content = file_path.read_text(encoding="utf-8")
             if not content.strip():
-                self.logger.debug(f"Empty file: {file_path}")
+                self.logger.debug("Empty file: %s", file_path)
                 return findings
 
             # Parse AST
             try:
                 tree = ast.parse(content, filename=str(file_path))
             except SyntaxError as e:
-                self.logger.warning(f"Syntax error in {file_path}: {e}")
+                self.logger.warning("Syntax error in %s: %s", file_path, e)
                 return findings
 
             # Find test functions and analyze them
@@ -626,7 +626,7 @@ class DynamicCloneDetector:
             )
 
         except Exception as e:
-            self.logger.error(f"Error analyzing {file_path}: {e}")
+            self.logger.error("Error analyzing %s: %s", file_path, e)
 
         return findings
 
@@ -670,7 +670,7 @@ class DynamicCloneDetector:
         for key, value in thresholds.items():
             if key in self.config and 0.0 <= value <= 1.0:
                 self.config[key] = value
-                self.logger.info(f"Updated {key} threshold to {value}")
+                self.logger.info("Updated %s threshold to %s", key, value)
 
         # Clear similarity cache when thresholds change
         self._similarity_cache.clear()

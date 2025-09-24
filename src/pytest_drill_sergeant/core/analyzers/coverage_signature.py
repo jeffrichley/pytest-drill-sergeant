@@ -77,7 +77,7 @@ class CoverageSignatureGenerator:
             return signature
 
         except Exception as e:
-            self.logger.error(f"Failed to generate signature for {test_name}: {e}")
+            self.logger.error("Failed to generate signature for %s: %s", test_name, e)
             # Return empty signature on error
             return CoverageSignature(
                 test_name=test_name,
@@ -113,7 +113,7 @@ class CoverageSignatureGenerator:
             return signature_hash
 
         except Exception as e:
-            self.logger.error(f"Failed to generate signature hash: {e}")
+            self.logger.error("Failed to generate signature hash: %s", e)
             return ""
 
     def _generate_signature_vector(self, coverage_data: CoverageData) -> list[float]:
@@ -165,7 +165,7 @@ class CoverageSignatureGenerator:
             return vector
 
         except Exception as e:
-            self.logger.error(f"Failed to generate signature vector: {e}")
+            self.logger.error("Failed to generate signature vector: %s", e)
             return []
 
     def _generate_coverage_pattern(self, coverage_data: CoverageData) -> str:
@@ -200,7 +200,7 @@ class CoverageSignatureGenerator:
             return "|".join(pattern_parts)
 
         except Exception as e:
-            self.logger.error(f"Failed to generate coverage pattern: {e}")
+            self.logger.error("Failed to generate coverage pattern: %s", e)
             return ""
 
     def calculate_similarity(
@@ -233,7 +233,7 @@ class CoverageSignatureGenerator:
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to calculate similarity: {e}")
+            self.logger.error("Failed to calculate similarity: %s", e)
             return 0.0
 
     def _cosine_similarity(self, vector1: list[float], vector2: list[float]) -> float:
@@ -268,7 +268,7 @@ class CoverageSignatureGenerator:
             return max(0.0, min(1.0, similarity))  # Clamp to [0, 1]
 
         except Exception as e:
-            self.logger.error(f"Failed to calculate cosine similarity: {e}")
+            self.logger.error("Failed to calculate cosine similarity: %s", e)
             return 0.0
 
     def _pattern_similarity(self, pattern1: str, pattern2: str) -> float:
@@ -299,7 +299,7 @@ class CoverageSignatureGenerator:
             return intersection / union
 
         except Exception as e:
-            self.logger.error(f"Failed to calculate pattern similarity: {e}")
+            self.logger.error("Failed to calculate pattern similarity: %s", e)
             return 0.0
 
     def find_similar_tests(
@@ -332,7 +332,7 @@ class CoverageSignatureGenerator:
             return similar_tests
 
         except Exception as e:
-            self.logger.error(f"Failed to find similar tests: {e}")
+            self.logger.error("Failed to find similar tests: %s", e)
             return []
 
     def analyze_file(self, file_path: Path) -> list[Finding]:
@@ -348,24 +348,24 @@ class CoverageSignatureGenerator:
 
         try:
             if not file_path.exists():
-                self.logger.warning(f"File does not exist: {file_path}")
+                self.logger.warning("File does not exist: %s", file_path)
                 return findings
 
             if file_path.suffix != ".py":
-                self.logger.debug(f"Skipping non-Python file: {file_path}")
+                self.logger.debug("Skipping non-Python file: %s", file_path)
                 return findings
 
             # Read and parse the file
             content = file_path.read_text(encoding="utf-8")
             if not content.strip():
-                self.logger.debug(f"Empty file: {file_path}")
+                self.logger.debug("Empty file: %s", file_path)
                 return findings
 
             # Parse AST
             try:
                 tree = ast.parse(content, filename=str(file_path))
             except SyntaxError as e:
-                self.logger.warning(f"Syntax error in {file_path}: {e}")
+                self.logger.warning("Syntax error in %s: %s", file_path, e)
                 return findings
 
             # Find test functions and analyze them
@@ -381,7 +381,7 @@ class CoverageSignatureGenerator:
             )
 
         except Exception as e:
-            self.logger.error(f"Error analyzing {file_path}: {e}")
+            self.logger.error("Error analyzing %s: %s", file_path, e)
 
         return findings
 

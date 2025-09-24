@@ -64,7 +64,7 @@ class AnalysisPipeline:
             analyzer: The analyzer to add
         """
         self.analyzers.append(analyzer)
-        self.logger.debug(f"Added analyzer: {type(analyzer).__name__}")
+        self.logger.debug("Added analyzer: %s", type(analyzer).__name__)
 
     def remove_analyzer(self, analyzer: Analyzer) -> None:
         """Remove an analyzer from the pipeline.
@@ -74,7 +74,7 @@ class AnalysisPipeline:
         """
         if analyzer in self.analyzers:
             self.analyzers.remove(analyzer)
-            self.logger.debug(f"Removed analyzer: {type(analyzer).__name__}")
+            self.logger.debug("Removed analyzer: %s", type(analyzer).__name__)
 
     def clear_analyzers(self) -> None:
         """Clear all analyzers from the pipeline."""
@@ -95,7 +95,7 @@ class AnalysisPipeline:
         findings: list[Finding] = []
         file_errors: list[AnalysisError] = []
 
-        self.logger.debug(f"Analyzing file: {file_path}")
+        self.logger.debug("Analyzing file: %s", file_path)
 
         for analyzer in self.analyzers:
             analyzer_name = type(analyzer).__name__
@@ -116,13 +116,13 @@ class AnalysisPipeline:
                 self.analysis_errors.append(error)
 
                 self.logger.warning(
-                    f"Analyzer {analyzer_name} failed for {file_path}: {error.message}"
+                    "Analyzer %s failed for %s: %s", analyzer_name, file_path, error.message
                 )
             else:
                 # Add successful findings
                 findings.extend(result)
                 self.logger.debug(
-                    f"{analyzer_name} found {len(result)} violations in {file_path}"
+                    "%s found %d violations in %s", analyzer_name, len(result), file_path
                 )
 
         return findings, file_errors
@@ -206,7 +206,7 @@ class AnalyzerRegistry:
             analyzer_class: The analyzer class to register
         """
         self._analyzer_classes[name] = analyzer_class
-        self.logger.debug(f"Registered analyzer: {name}")
+        self.logger.debug("Registered analyzer: %s", name)
 
     def create_analyzer(self, name: str) -> Analyzer:
         """Create an analyzer instance by name.
@@ -250,7 +250,7 @@ class AnalyzerRegistry:
                 analyzer = self.create_analyzer(name)
                 pipeline.add_analyzer(analyzer)
             except Exception as e:
-                self.logger.error(f"Failed to create analyzer {name}: {e}")
+                self.logger.error("Failed to create analyzer %s: %s", name, e)
 
         return pipeline
 
@@ -280,7 +280,7 @@ class AnalyzerRegistry:
             self.register_analyzer("structural_equality", StructuralEqualityDetector)
 
         except ImportError as e:
-            self.logger.warning(f"Failed to import analyzer: {e}")
+            self.logger.warning("Failed to import analyzer: %s", e)
 
 
 # Global registry instance

@@ -52,7 +52,7 @@ def parse_gitignore(project_root: Path) -> list[str]:
                     patterns.append(line)
 
     except Exception as e:
-        logger.warning(f"Failed to parse .gitignore: {e}")
+        logger.warning("Failed to parse .gitignore: %s", e)
 
     return patterns
 
@@ -192,7 +192,7 @@ class FileDiscoveryConfig:
         try:
             gitignore_patterns = parse_gitignore(self.project_root)
         except Exception as e:
-            logger.warning(f"Failed to parse .gitignore file: {e}")
+            logger.warning("Failed to parse .gitignore file: %s", e)
             gitignore_patterns = []
 
         all_exclude_patterns = (

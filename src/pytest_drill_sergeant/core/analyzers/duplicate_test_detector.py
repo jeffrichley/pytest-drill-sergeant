@@ -78,7 +78,7 @@ class DuplicateTestDetector:
             return findings
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze file {file_path}: {e}")
+            self.logger.error("Failed to analyze file %s: %s", file_path, e)
             return []
 
     def _extract_test_functions(self, content: str) -> list[str]:
@@ -184,7 +184,7 @@ class DuplicateTestDetector:
             List of findings for duplicate tests
         """
         try:
-            self.logger.info(f"Analyzing {len(test_files)} test files for duplicates")
+            self.logger.info("Analyzing %d test files for duplicates", len(test_files))
 
             # Use the full dynamic clone detector
             clusters = self.clone_detector.analyze_test_suite(test_files, coverage_data)
@@ -203,9 +203,9 @@ class DuplicateTestDetector:
                 )
                 findings.append(finding)
 
-            self.logger.info(f"Found {len(findings)} duplicate clusters")
+            self.logger.info("Found %d duplicate clusters", len(findings))
             return findings
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze test suite: {e}")
+            self.logger.error("Failed to analyze test suite: %s", e)
             return []
