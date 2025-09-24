@@ -129,7 +129,6 @@ class AnalysisContext:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit the analysis context."""
         # Cleanup if needed
-        pass
 
 
 class SUTFilter:
