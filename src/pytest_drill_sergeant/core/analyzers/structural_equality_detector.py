@@ -123,7 +123,7 @@ class StructuralEqualityDetector:
 
     def _analyze_test_function(
         self, func_node: ast.FunctionDef, file_path: Path
-    ) -> list[Finding]:  # noqa: C901
+    ) -> list[Finding]:
         """Analyze a single test function for structural equality violations.
 
         Args:
@@ -202,9 +202,7 @@ class StructuralEqualityDetector:
                     metadata={
                         "violation_type": "dict_access",
                         "method_name": "__dict__",
-                        "object_name": self.detector._get_object_name(
-                            node
-                        ),  # noqa: SLF001
+                        "object_name": self.detector._get_object_name(node),
                     },
                 )
                 self.findings.append(finding)
@@ -227,9 +225,7 @@ class StructuralEqualityDetector:
                     metadata={
                         "violation_type": "vars_call",
                         "method_name": "vars",
-                        "object_name": self.detector._get_object_name(
-                            node
-                        ),  # noqa: SLF001
+                        "object_name": self.detector._get_object_name(node),
                     },
                 )
                 self.findings.append(finding)
@@ -252,9 +248,7 @@ class StructuralEqualityDetector:
                     metadata={
                         "violation_type": "asdict_call",
                         "method_name": "asdict",
-                        "object_name": self.detector._get_object_name(
-                            node
-                        ),  # noqa: SLF001
+                        "object_name": self.detector._get_object_name(node),
                     },
                 )
                 self.findings.append(finding)
@@ -277,9 +271,7 @@ class StructuralEqualityDetector:
                     metadata={
                         "violation_type": "repr_comparison",
                         "method_name": "repr",
-                        "object_name": self.detector._get_object_name(
-                            node
-                        ),  # noqa: SLF001
+                        "object_name": self.detector._get_object_name(node),
                     },
                 )
                 self.findings.append(finding)
@@ -302,9 +294,7 @@ class StructuralEqualityDetector:
                     metadata={
                         "violation_type": "str_comparison",
                         "method_name": "str",
-                        "object_name": self.detector._get_object_name(
-                            node
-                        ),  # noqa: SLF001
+                        "object_name": self.detector._get_object_name(node),
                     },
                 )
                 self.findings.append(finding)
@@ -330,9 +320,7 @@ class StructuralEqualityDetector:
                         "attribute_name": node.args[
                             self.detector.GETATTR_ATTR_NAME_INDEX
                         ].value,
-                        "object_name": self.detector._get_object_name(
-                            node
-                        ),  # noqa: SLF001
+                        "object_name": self.detector._get_object_name(node),
                     },
                 )
                 self.findings.append(finding)
