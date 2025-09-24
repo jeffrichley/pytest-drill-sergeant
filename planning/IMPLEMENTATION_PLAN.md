@@ -188,9 +188,9 @@ This implementation plan provides a detailed roadmap for building pytest-drill-s
 - [x] Plugin can analyze its own codebase successfully ("eating our own dogfood")
 - [x] CLI commands work correctly (lint, personas, profiles, demo)
 - [x] Output formatting works (terminal, JSON, SARIF)
-- [x] Comprehensive test suite with 698+ tests and 54% coverage
+- [x] Comprehensive test suite with 1,308+ tests and 54% coverage
 
-### Current Status Summary (Updated 2025-09-24 - Dynamic Duplicate Detection Completed)
+### Current Status Summary (Updated 2025-09-24 - BIS Implementation Completed)
 
 **✅ COMPLETED (Phase 1 Foundation - 100% Complete, Phase 2 Runtime Analysis - ~95% Complete):**
 - Project structure and build system
@@ -209,7 +209,7 @@ This implementation plan provides a detailed roadmap for building pytest-drill-s
 - AAA Comment Advisor with full test suite (26 tests)
 - Drill Sergeant persona with military-themed feedback
 - Complete output formatting system (terminal, JSON, SARIF)
-- BIS (Behavior Integrity Score) calculation system with CLI integration
+- **ENHANCED: BIS (Behavior Integrity Score)** - Complete per-test BIS scoring with pytest hooks integration
 - BRS (Battlefield Readiness Score) calculation system with CLI integration
 - Basic "eating our own dogfood" capability
 - **NEW: Coverage Integration** - Per-test coverage collection with pytest-cov
@@ -222,6 +222,7 @@ This implementation plan provides a detailed roadmap for building pytest-drill-s
 - **NEW: LSP Server** - Complete language server with VS Code extension
 - **NEW: Snoop Dogg Persona** - Additional persona implementation
 - **NEW: Persona Manager** - Complete persona selection and configuration system
+- **NEW: Enhanced BIS System** - Per-test BIS scoring with AST-based feature extraction and pytest hooks integration
 
 **🔄 IN PROGRESS:**
 - Additional personas (Motivational Coach, Sarcastic Butler, Pirate)
@@ -244,10 +245,10 @@ This implementation plan provides a detailed roadmap for building pytest-drill-s
 - Cross-Cutting Systems: 100% Complete (logging, message formatting, CI/CD, output formatting, scoring systems, and error handling done)
 - Static Analyzers: 100% Complete (All 4 core detectors implemented with full test suites)
 - Persona System: 90% Complete (Drill Sergeant + Snoop Dogg implemented, 3 more personas needed)
-- Testing: 100% Complete (comprehensive test suite with 1252+ tests, 54% coverage)
+- Testing: 100% Complete (comprehensive test suite with 1,308+ tests, 54% coverage)
 - CLI System: 100% Complete (lint, personas, profiles, demo, test commands working)
 - Output Formatting: 100% Complete (terminal, JSON, SARIF formatters implemented)
-- Scoring Systems: 100% Complete (BIS and BRS calculation systems with CLI integration)
+- Scoring Systems: 100% Complete (Enhanced BIS with per-test scoring + BRS calculation systems with CLI integration)
 - **NEW: Runtime Analysis: 100% Complete** (Coverage integration, CAR calculation, dynamic duplicate detection with CLI/pytest integration)
 - **NEW: Coverage Data Storage: 100% Complete** (JSON persistence, retrieval API, trend analysis)
 - **NEW: Coverage CLI Integration: 100% Complete** (ds test --coverage with advanced options)
@@ -299,6 +300,12 @@ This implementation plan provides a detailed roadmap for building pytest-drill-s
   - [x] Score calculation algorithm
   - [x] Grade assignment (A-F)
   - [x] Per-test BIS reporting
+  - [x] **NEW: BISCalculator** - Main integration layer with plugin system
+  - [x] **NEW: TestFeatureExtractor** - AST-based feature extraction for individual tests
+  - [x] **NEW: Per-Test BIS Scoring** - Individual test-level BIS calculations
+  - [x] **NEW: Pytest Hooks Integration** - Real-time BIS reporting during pytest runs
+  - [x] **NEW: Enhanced Terminal Output** - Detailed BIS summaries with grade distributions
+  - [x] **NEW: Comprehensive Test Suite** - 51 new tests covering all BIS functionality
 
 - [x] **Coverage Data Storage and Retrieval** ✅ **COMPLETED**
   - [x] JSON file-based storage system with structured directory hierarchy
@@ -355,7 +362,7 @@ This implementation plan provides a detailed roadmap for building pytest-drill-s
   - [x] Historical data structure
 
 ### Success Criteria
-- [x] BIS scores are calculated and displayed ✅ **COMPLETED**
+- [x] BIS scores are calculated and displayed ✅ **COMPLETED** (Enhanced with per-test scoring and pytest hooks integration)
 - [x] Coverage-based duplicate detection works ✅ **COMPLETED**
 - [x] Coverage data storage and retrieval system works ✅ **COMPLETED**
 - [x] JSON reports are generated correctly ✅ **COMPLETED**
