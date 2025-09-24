@@ -241,7 +241,9 @@ def _inject_persona_feedback(report: pytest.TestReport) -> None:
         findings = storage.get_test_findings(test_file_path)
 
         # Get BIS score for this test
-        test_name = report.nodeid.split("::")[-1] if "::" in report.nodeid else report.nodeid
+        test_name = (
+            report.nodeid.split("::")[-1] if "::" in report.nodeid else report.nodeid
+        )
         bis_score = bis_calculator.get_test_bis_score(test_name)
         bis_grade = bis_calculator.get_test_bis_grade(test_name)
 
@@ -335,16 +337,22 @@ def _generate_persona_summary(terminalreporter: pytest.TerminalReporter) -> None
         # Add BIS summary
         if bis_summary["total_tests"] > 0:
             terminalreporter.write_sep("-", "BIS (Behavior Integrity Score) Summary")
-            terminalreporter.write_line(f"Average BIS Score: {bis_summary['average_score']:.1f}")
-            terminalreporter.write_line(f"Highest Score: {bis_summary['highest_score']:.1f}")
-            terminalreporter.write_line(f"Lowest Score: {bis_summary['lowest_score']:.1f}")
-            
+            terminalreporter.write_line(
+                f"Average BIS Score: {bis_summary['average_score']:.1f}"
+            )
+            terminalreporter.write_line(
+                f"Highest Score: {bis_summary['highest_score']:.1f}"
+            )
+            terminalreporter.write_line(
+                f"Lowest Score: {bis_summary['lowest_score']:.1f}"
+            )
+
             # Grade distribution
             terminalreporter.write_line("Grade Distribution:")
             for grade, count in bis_summary["grade_distribution"].items():
                 if count > 0:
                     terminalreporter.write_line(f"  {grade}: {count}")
-            
+
             # Top offenders
             if bis_summary["top_offenders"]:
                 terminalreporter.write_line("Top Offenders (Lowest BIS Scores):")

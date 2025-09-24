@@ -3,7 +3,11 @@
 from .bis_calculator import BISCalculator, get_bis_calculator, reset_bis_calculator
 from .brs_calculator import BRSCalculator, RunMetrics
 from .dynamic_bis_calculator import BISMetrics, DynamicBISCalculator
-from .feature_extractor import TestFeatureExtractor, get_feature_extractor, reset_feature_extractor
+from .feature_extractor import (
+    TestFeatureExtractor,
+    get_feature_extractor,
+    reset_feature_extractor,
+)
 
 __all__: list[str] = [
     "BISCalculator",

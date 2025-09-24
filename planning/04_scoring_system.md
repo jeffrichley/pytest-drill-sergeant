@@ -26,7 +26,7 @@ The BIS uses a **dynamic rule-based penalty system** that reads impact and weigh
 ```python
 class DynamicBISCalculator:
     """Dynamic BIS calculator that uses rule metadata for scoring."""
-    
+
     # Base penalty weights by impact category
     PENALTY_WEIGHTS = {
         "high_penalty": 15.0,  # Major behavior integrity issues
@@ -39,36 +39,36 @@ class DynamicBISCalculator:
     def calculate_bis(self, metrics: BISMetrics) -> float:
         """Calculate Behavior Integrity Score based on metrics."""
         base_score = 100.0
-        
+
         # Calculate penalties based on weighted counts
         total_penalty = 0.0
-        
+
         # High penalty violations (major behavior integrity issues)
         total_penalty += self.PENALTY_WEIGHTS["high_penalty"] * min(
             metrics.weighted_high_penalty, 5.0
         )
-        
+
         # Medium penalty violations (moderate behavior integrity issues)
         total_penalty += self.PENALTY_WEIGHTS["medium_penalty"] * min(
             metrics.weighted_medium_penalty, 8.0
         )
-        
+
         # Low penalty violations (minor behavior integrity issues)
         total_penalty += self.PENALTY_WEIGHTS["low_penalty"] * min(
             metrics.weighted_low_penalty, 10.0
         )
-        
+
         # Advisory violations (style/structure issues)
         total_penalty += self.PENALTY_WEIGHTS["advisory"] * min(
             metrics.weighted_advisory, 15.0
         )
-        
+
         # Reward for positive behavior indicators
         reward = self.PENALTY_WEIGHTS["reward"] * min(metrics.weighted_reward, 3.0)
-        
+
         # Calculate final score
         raw_score = base_score - total_penalty + reward
-        
+
         return max(0, min(100, round(raw_score, 1)))
 ```
 
@@ -126,7 +126,7 @@ The BIS system is implemented as a three-layer architecture:
 ```python
 class TestFeatureExtractor:
     """Extracts features from test files for BIS calculation."""
-    
+
     def extract_features_from_file(
         self, file_path: Path, findings: list[Finding]
     ) -> dict[str, FeaturesData]:
@@ -140,7 +140,7 @@ class TestFeatureExtractor:
 ```python
 class DynamicBISCalculator:
     """Core BIS calculator using rule metadata."""
-    
+
     def extract_metrics_from_findings(self, findings: list[Finding]) -> BISMetrics:
         """Extract BIS metrics from analysis findings using rule metadata."""
         # Group findings by impact category
@@ -152,7 +152,7 @@ class DynamicBISCalculator:
 ```python
 class BISCalculator:
     """Main BIS calculator integrating with plugin system."""
-    
+
     def calculate_file_bis(
         self, file_path: Path, findings: list[Finding]
     ) -> dict[str, ResultData]:
@@ -171,7 +171,7 @@ class FeaturesData:
     test_name: str
     file_path: Path
     line_number: int
-    
+
     # AST-based features
     has_aaa_comments: bool = False
     private_access_count: int = 0
@@ -362,11 +362,11 @@ The BIS system integrates with pytest hooks to provide real-time scoring:
 def _inject_persona_feedback(report: pytest.TestReport) -> None:
     """Inject persona feedback into test reports."""
     bis_calculator = get_bis_calculator()
-    
+
     # Get BIS score for this test
     test_name = report.nodeid.split("::")[-1]
     bis_score = bis_calculator.get_test_bis_score(test_name)
-    
+
     # Add BIS score information to the message
     bis_message = persona_manager.on_bis_score(test_name, bis_score)
     if bis_message:
@@ -379,13 +379,13 @@ def _generate_persona_summary(terminalreporter: pytest.TerminalReporter) -> None
     """Generate persona summary for terminal output."""
     bis_calculator = get_bis_calculator()
     bis_summary = bis_calculator.get_bis_summary()
-    
+
     # Add BIS summary
     terminalreporter.write_sep("-", "BIS (Behavior Integrity Score) Summary")
     terminalreporter.write_line(f"Average BIS Score: {bis_summary['average_score']:.1f}")
     terminalreporter.write_line(f"Highest Score: {bis_summary['highest_score']:.1f}")
     terminalreporter.write_line(f"Lowest Score: {bis_summary['lowest_score']:.1f}")
-    
+
     # Grade distribution
     terminalreporter.write_line("Grade Distribution:")
     for grade, count in bis_summary["grade_distribution"].items():
@@ -400,13 +400,13 @@ class ResultData:
     test_name: str
     file_path: Path
     line_number: int
-    
+
     # Analysis results
     findings: list[Finding]
     features: FeaturesData
     bis_score: float  # 0-100
     bis_grade: str  # "A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"
-    
+
     # Status
     analyzed: bool
     error_message: str | None

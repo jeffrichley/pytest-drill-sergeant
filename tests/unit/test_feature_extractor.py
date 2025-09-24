@@ -5,7 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from pytest_drill_sergeant.core.models import Finding, Severity
-from pytest_drill_sergeant.core.scoring import TestFeatureExtractor, get_feature_extractor, reset_feature_extractor
+from pytest_drill_sergeant.core.scoring import (
+    TestFeatureExtractor,
+    get_feature_extractor,
+    reset_feature_extractor,
+)
 
 
 class TestTestFeatureExtractor:
@@ -241,10 +245,10 @@ def test_with_setup():
     obj = SomeClass()
     obj.configure()
     obj.prepare()
-    
+
     # Act
     result = obj.method()
-    
+
     # Assert
     assert result is not None
 """
@@ -360,4 +364,6 @@ def test_length():
 
         # Test filtering (simplified implementation)
         filtered = extractor._filter_findings_for_test(findings, 5)
-        assert len(filtered) == len(findings)  # Current implementation returns all findings
+        assert len(filtered) == len(
+            findings
+        )  # Current implementation returns all findings

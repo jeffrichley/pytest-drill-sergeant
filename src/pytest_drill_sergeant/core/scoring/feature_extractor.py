@@ -45,7 +45,7 @@ class TestFeatureExtractor:
                 return {cache_key: self._cache[cache_key]}
 
             # Parse the file
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             if not content.strip():
@@ -112,7 +112,9 @@ class TestFeatureExtractor:
         teardown_lines = self._count_teardown_lines(test_node)
 
         # Check for AAA structure
-        has_aaa_comments = aaa_comments_count == 0  # No AAA violations means good structure
+        has_aaa_comments = (
+            aaa_comments_count == 0
+        )  # No AAA violations means good structure
 
         return FeaturesData(
             test_name=test_node.name,
@@ -158,9 +160,9 @@ class TestFeatureExtractor:
         complexity = 1  # Base complexity
 
         for node in ast.walk(test_node):
-            if isinstance(node, (ast.If, ast.While, ast.For, ast.AsyncFor)):
-                complexity += 1
-            elif isinstance(node, ast.ExceptHandler):
+            if isinstance(
+                node, (ast.If, ast.While, ast.For, ast.AsyncFor)
+            ) or isinstance(node, ast.ExceptHandler):
                 complexity += 1
             elif isinstance(node, ast.BoolOp):
                 complexity += len(node.values) - 1

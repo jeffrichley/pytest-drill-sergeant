@@ -4,8 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pytest_drill_sergeant.core.models import Finding, FeaturesData, Severity
-from pytest_drill_sergeant.core.scoring import BISCalculator, get_bis_calculator, reset_bis_calculator
+from pytest_drill_sergeant.core.models import FeaturesData, Finding, Severity
+from pytest_drill_sergeant.core.scoring import (
+    BISCalculator,
+    get_bis_calculator,
+    reset_bis_calculator,
+)
 
 
 class TestBISCalculator:
@@ -48,7 +52,19 @@ class TestBISCalculator:
         assert result.features == features
         assert result.bis_score > 0
         assert result.bis_score < 100  # Should be penalized
-        assert result.bis_grade in ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"]
+        assert result.bis_grade in [
+            "A+",
+            "A",
+            "A-",
+            "B+",
+            "B",
+            "B-",
+            "C+",
+            "C",
+            "C-",
+            "D",
+            "F",
+        ]
         assert result.analyzed is True
         assert result.error_message is None
 
@@ -94,8 +110,22 @@ class TestBISCalculator:
         calculator = BISCalculator()
 
         # Calculate a score first
-        findings = [Finding(code="DS301", name="private_access", message="Private access", file_path=Path("test.py"), line_number=10, severity=Severity.WARNING)]
-        features = FeaturesData(test_name="test_score", file_path=Path("test.py"), line_number=5, private_access_count=1)
+        findings = [
+            Finding(
+                code="DS301",
+                name="private_access",
+                message="Private access",
+                file_path=Path("test.py"),
+                line_number=10,
+                severity=Severity.WARNING,
+            )
+        ]
+        features = FeaturesData(
+            test_name="test_score",
+            file_path=Path("test.py"),
+            line_number=5,
+            private_access_count=1,
+        )
 
         calculator.calculate_test_bis("test_score", findings, features)
 
@@ -111,8 +141,22 @@ class TestBISCalculator:
         calculator = BISCalculator()
 
         # Calculate a score first
-        findings = [Finding(code="DS301", name="private_access", message="Private access", file_path=Path("test.py"), line_number=10, severity=Severity.WARNING)]
-        features = FeaturesData(test_name="test_grade", file_path=Path("test.py"), line_number=5, private_access_count=1)
+        findings = [
+            Finding(
+                code="DS301",
+                name="private_access",
+                message="Private access",
+                file_path=Path("test.py"),
+                line_number=10,
+                severity=Severity.WARNING,
+            )
+        ]
+        features = FeaturesData(
+            test_name="test_grade",
+            file_path=Path("test.py"),
+            line_number=5,
+            private_access_count=1,
+        )
 
         calculator.calculate_test_bis("test_grade", findings, features)
 
@@ -127,8 +171,22 @@ class TestBISCalculator:
         calculator = BISCalculator()
 
         # Calculate a score first
-        findings = [Finding(code="DS301", name="private_access", message="Private access", file_path=Path("test.py"), line_number=10, severity=Severity.WARNING)]
-        features = FeaturesData(test_name="test_metrics", file_path=Path("test.py"), line_number=5, private_access_count=1)
+        findings = [
+            Finding(
+                code="DS301",
+                name="private_access",
+                message="Private access",
+                file_path=Path("test.py"),
+                line_number=10,
+                severity=Severity.WARNING,
+            )
+        ]
+        features = FeaturesData(
+            test_name="test_metrics",
+            file_path=Path("test.py"),
+            line_number=5,
+            private_access_count=1,
+        )
 
         calculator.calculate_test_bis("test_metrics", findings, features)
 
@@ -145,8 +203,32 @@ class TestBISCalculator:
 
         # Calculate scores for multiple tests
         test_data = [
-            ("test1", [], FeaturesData(test_name="test1", file_path=Path("test.py"), line_number=5)),
-            ("test2", [Finding(code="DS301", name="private_access", message="Private access", file_path=Path("test.py"), line_number=10, severity=Severity.WARNING)], FeaturesData(test_name="test2", file_path=Path("test.py"), line_number=5, private_access_count=1)),
+            (
+                "test1",
+                [],
+                FeaturesData(
+                    test_name="test1", file_path=Path("test.py"), line_number=5
+                ),
+            ),
+            (
+                "test2",
+                [
+                    Finding(
+                        code="DS301",
+                        name="private_access",
+                        message="Private access",
+                        file_path=Path("test.py"),
+                        line_number=10,
+                        severity=Severity.WARNING,
+                    )
+                ],
+                FeaturesData(
+                    test_name="test2",
+                    file_path=Path("test.py"),
+                    line_number=5,
+                    private_access_count=1,
+                ),
+            ),
         ]
 
         for test_name, findings, features in test_data:
@@ -156,7 +238,9 @@ class TestBISCalculator:
         assert len(all_scores) == 2
         assert "test1" in all_scores
         assert "test2" in all_scores
-        assert all_scores["test1"] >= all_scores["test2"]  # test1 should have higher score
+        assert (
+            all_scores["test1"] >= all_scores["test2"]
+        )  # test1 should have higher score
 
     def test_get_all_test_grades(self) -> None:
         """Test retrieval of all test grades."""
@@ -164,8 +248,32 @@ class TestBISCalculator:
 
         # Calculate scores for multiple tests
         test_data = [
-            ("test1", [], FeaturesData(test_name="test1", file_path=Path("test.py"), line_number=5)),
-            ("test2", [Finding(code="DS301", name="private_access", message="Private access", file_path=Path("test.py"), line_number=10, severity=Severity.WARNING)], FeaturesData(test_name="test2", file_path=Path("test.py"), line_number=5, private_access_count=1)),
+            (
+                "test1",
+                [],
+                FeaturesData(
+                    test_name="test1", file_path=Path("test.py"), line_number=5
+                ),
+            ),
+            (
+                "test2",
+                [
+                    Finding(
+                        code="DS301",
+                        name="private_access",
+                        message="Private access",
+                        file_path=Path("test.py"),
+                        line_number=10,
+                        severity=Severity.WARNING,
+                    )
+                ],
+                FeaturesData(
+                    test_name="test2",
+                    file_path=Path("test.py"),
+                    line_number=5,
+                    private_access_count=1,
+                ),
+            ),
         ]
 
         for test_name, findings, features in test_data:
@@ -175,8 +283,32 @@ class TestBISCalculator:
         assert len(all_grades) == 2
         assert "test1" in all_grades
         assert "test2" in all_grades
-        assert all_grades["test1"] in ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"]
-        assert all_grades["test2"] in ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"]
+        assert all_grades["test1"] in [
+            "A+",
+            "A",
+            "A-",
+            "B+",
+            "B",
+            "B-",
+            "C+",
+            "C",
+            "C-",
+            "D",
+            "F",
+        ]
+        assert all_grades["test2"] in [
+            "A+",
+            "A",
+            "A-",
+            "B+",
+            "B",
+            "B-",
+            "C+",
+            "C",
+            "C-",
+            "D",
+            "F",
+        ]
 
     def test_get_average_bis_score(self) -> None:
         """Test average BIS score calculation."""
@@ -187,8 +319,20 @@ class TestBISCalculator:
 
         # Calculate scores for multiple tests
         test_data = [
-            ("test1", [], FeaturesData(test_name="test1", file_path=Path("test.py"), line_number=5)),
-            ("test2", [], FeaturesData(test_name="test2", file_path=Path("test.py"), line_number=5)),
+            (
+                "test1",
+                [],
+                FeaturesData(
+                    test_name="test1", file_path=Path("test.py"), line_number=5
+                ),
+            ),
+            (
+                "test2",
+                [],
+                FeaturesData(
+                    test_name="test2", file_path=Path("test.py"), line_number=5
+                ),
+            ),
         ]
 
         for test_name, findings, features in test_data:
@@ -204,9 +348,48 @@ class TestBISCalculator:
 
         # Calculate scores for tests with different grades
         test_data = [
-            ("test_a", [], FeaturesData(test_name="test_a", file_path=Path("test.py"), line_number=5)),
-            ("test_b", [Finding(code="DS302", name="aaa_comments", message="Missing AAA", file_path=Path("test.py"), line_number=10, severity=Severity.INFO)], FeaturesData(test_name="test_b", file_path=Path("test.py"), line_number=5)),
-            ("test_f", [Finding(code="DS301", name="private_access", message="Private access", file_path=Path("test.py"), line_number=15, severity=Severity.WARNING)], FeaturesData(test_name="test_f", file_path=Path("test.py"), line_number=5, private_access_count=1)),
+            (
+                "test_a",
+                [],
+                FeaturesData(
+                    test_name="test_a", file_path=Path("test.py"), line_number=5
+                ),
+            ),
+            (
+                "test_b",
+                [
+                    Finding(
+                        code="DS302",
+                        name="aaa_comments",
+                        message="Missing AAA",
+                        file_path=Path("test.py"),
+                        line_number=10,
+                        severity=Severity.INFO,
+                    )
+                ],
+                FeaturesData(
+                    test_name="test_b", file_path=Path("test.py"), line_number=5
+                ),
+            ),
+            (
+                "test_f",
+                [
+                    Finding(
+                        code="DS301",
+                        name="private_access",
+                        message="Private access",
+                        file_path=Path("test.py"),
+                        line_number=15,
+                        severity=Severity.WARNING,
+                    )
+                ],
+                FeaturesData(
+                    test_name="test_f",
+                    file_path=Path("test.py"),
+                    line_number=5,
+                    private_access_count=1,
+                ),
+            ),
         ]
 
         for test_name, findings, features in test_data:
@@ -230,8 +413,32 @@ class TestBISCalculator:
 
         # Calculate scores for multiple tests
         test_data = [
-            ("test_good", [], FeaturesData(test_name="test_good", file_path=Path("test.py"), line_number=5)),
-            ("test_bad", [Finding(code="DS301", name="private_access", message="Private access", file_path=Path("test.py"), line_number=10, severity=Severity.WARNING)], FeaturesData(test_name="test_bad", file_path=Path("test.py"), line_number=5, private_access_count=1)),
+            (
+                "test_good",
+                [],
+                FeaturesData(
+                    test_name="test_good", file_path=Path("test.py"), line_number=5
+                ),
+            ),
+            (
+                "test_bad",
+                [
+                    Finding(
+                        code="DS301",
+                        name="private_access",
+                        message="Private access",
+                        file_path=Path("test.py"),
+                        line_number=10,
+                        severity=Severity.WARNING,
+                    )
+                ],
+                FeaturesData(
+                    test_name="test_bad",
+                    file_path=Path("test.py"),
+                    line_number=5,
+                    private_access_count=1,
+                ),
+            ),
         ]
 
         for test_name, findings, features in test_data:
@@ -247,8 +454,32 @@ class TestBISCalculator:
 
         # Calculate scores for multiple tests
         test_data = [
-            ("test_good", [], FeaturesData(test_name="test_good", file_path=Path("test.py"), line_number=5)),
-            ("test_bad", [Finding(code="DS301", name="private_access", message="Private access", file_path=Path("test.py"), line_number=10, severity=Severity.WARNING)], FeaturesData(test_name="test_bad", file_path=Path("test.py"), line_number=5, private_access_count=1)),
+            (
+                "test_good",
+                [],
+                FeaturesData(
+                    test_name="test_good", file_path=Path("test.py"), line_number=5
+                ),
+            ),
+            (
+                "test_bad",
+                [
+                    Finding(
+                        code="DS301",
+                        name="private_access",
+                        message="Private access",
+                        file_path=Path("test.py"),
+                        line_number=10,
+                        severity=Severity.WARNING,
+                    )
+                ],
+                FeaturesData(
+                    test_name="test_bad",
+                    file_path=Path("test.py"),
+                    line_number=5,
+                    private_access_count=1,
+                ),
+            ),
         ]
 
         for test_name, findings, features in test_data:
@@ -269,8 +500,32 @@ class TestBISCalculator:
 
         # Calculate scores for multiple tests
         test_data = [
-            ("test1", [], FeaturesData(test_name="test1", file_path=Path("test.py"), line_number=5)),
-            ("test2", [Finding(code="DS301", name="private_access", message="Private access", file_path=Path("test.py"), line_number=10, severity=Severity.WARNING)], FeaturesData(test_name="test2", file_path=Path("test.py"), line_number=5, private_access_count=1)),
+            (
+                "test1",
+                [],
+                FeaturesData(
+                    test_name="test1", file_path=Path("test.py"), line_number=5
+                ),
+            ),
+            (
+                "test2",
+                [
+                    Finding(
+                        code="DS301",
+                        name="private_access",
+                        message="Private access",
+                        file_path=Path("test.py"),
+                        line_number=10,
+                        severity=Severity.WARNING,
+                    )
+                ],
+                FeaturesData(
+                    test_name="test2",
+                    file_path=Path("test.py"),
+                    line_number=5,
+                    private_access_count=1,
+                ),
+            ),
         ]
 
         for test_name, findings, features in test_data:
@@ -290,8 +545,22 @@ class TestBISCalculator:
         calculator = BISCalculator()
 
         # Calculate a score
-        findings = [Finding(code="DS301", name="private_access", message="Private access", file_path=Path("test.py"), line_number=10, severity=Severity.WARNING)]
-        features = FeaturesData(test_name="test_cache", file_path=Path("test.py"), line_number=5, private_access_count=1)
+        findings = [
+            Finding(
+                code="DS301",
+                name="private_access",
+                message="Private access",
+                file_path=Path("test.py"),
+                line_number=10,
+                severity=Severity.WARNING,
+            )
+        ]
+        features = FeaturesData(
+            test_name="test_cache",
+            file_path=Path("test.py"),
+            line_number=5,
+            private_access_count=1,
+        )
 
         calculator.calculate_test_bis("test_cache", findings, features)
         assert calculator.get_test_bis_score("test_cache") > 0

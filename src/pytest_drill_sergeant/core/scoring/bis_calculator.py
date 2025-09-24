@@ -47,7 +47,9 @@ class BISCalculator:
         """
         try:
             feature_extractor = get_feature_extractor()
-            test_features = feature_extractor.extract_features_from_file(file_path, findings)
+            test_features = feature_extractor.extract_features_from_file(
+                file_path, findings
+            )
 
             results = {}
             for test_name, features in test_features.items():
@@ -187,7 +189,19 @@ class BISCalculator:
         Returns:
             Dictionary mapping grades to counts
         """
-        distribution = {"A+": 0, "A": 0, "A-": 0, "B+": 0, "B": 0, "B-": 0, "C+": 0, "C": 0, "C-": 0, "D": 0, "F": 0}
+        distribution = {
+            "A+": 0,
+            "A": 0,
+            "A-": 0,
+            "B+": 0,
+            "B": 0,
+            "B-": 0,
+            "C+": 0,
+            "C": 0,
+            "C-": 0,
+            "D": 0,
+            "F": 0,
+        }
 
         for grade in self._test_grades.values():
             if grade in distribution:
@@ -216,7 +230,9 @@ class BISCalculator:
         Returns:
             List of (test_name, score) tuples, sorted by score (highest first)
         """
-        sorted_scores = sorted(self._test_scores.items(), key=lambda x: x[1], reverse=True)
+        sorted_scores = sorted(
+            self._test_scores.items(), key=lambda x: x[1], reverse=True
+        )
         return sorted_scores[:limit]
 
     def get_bis_summary(self) -> dict[str, float | int | str]:
