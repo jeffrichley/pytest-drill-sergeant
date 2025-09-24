@@ -7,6 +7,7 @@ strategies for the analysis pipeline.
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -430,8 +431,6 @@ class ErrorRecoveryManager:
 
                 # Wait before retry (except on last attempt)
                 if attempt < 2:  # Don't wait after the last attempt
-                    import time
-
                     time.sleep(self.retry_delays[attempt])
 
         return None, last_error

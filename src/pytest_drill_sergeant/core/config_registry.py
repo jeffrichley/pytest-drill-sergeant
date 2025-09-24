@@ -6,10 +6,11 @@ eliminating the need to pass configs around throughout the system.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 
-from .config_schema import DSConfig, create_default_config
+from .config_schema import DSConfig, SeverityLevel, create_default_config
 from .profile_loader import ProfileConfigLoader
 
 
@@ -60,8 +61,6 @@ class ConfigRegistry:
 
             # Log the error if we have logging available
             try:
-                import logging
-
                 logger = logging.getLogger(__name__)
                 logger.warning("Failed to load configuration, using defaults: %s", e)
             except ImportError:
@@ -216,11 +215,9 @@ def should_fail_on_severity(severity) -> bool:
     return severity_value == "error"
 
 
-def get_fail_on_level():
+def get_fail_on_level() -> SeverityLevel:
     """Get the current fail-on level."""
     # For now, always fail on ERROR level
-    from .config_schema import SeverityLevel
-
     return SeverityLevel.ERROR
 
 
