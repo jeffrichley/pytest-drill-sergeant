@@ -40,7 +40,8 @@ class PytestCovIntegration:
         if hasattr(config, "option") and hasattr(config.option, "cov"):
             self._coverage_enabled = config.option.cov is not None
             self.logger.info(
-                "pytest-cov integration %s", "enabled" if self._coverage_enabled else "disabled"
+                "pytest-cov integration %s",
+                "enabled" if self._coverage_enabled else "disabled",
             )
         else:
             self._coverage_enabled = False

@@ -79,7 +79,9 @@ class DrillSergeantLanguageServer(LanguageServer):
             # Convert findings to LSP diagnostics
             diagnostics = self._convert_findings_to_diagnostics(findings, document)
 
-            logger.debug("Analyzed %s: found %d diagnostics", file_path, len(diagnostics))
+            logger.debug(
+                "Analyzed %s: found %d diagnostics", file_path, len(diagnostics)
+            )
             return diagnostics
 
         except Exception as e:

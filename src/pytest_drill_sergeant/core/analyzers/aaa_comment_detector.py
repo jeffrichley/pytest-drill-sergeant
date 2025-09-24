@@ -10,8 +10,10 @@ import ast
 import logging
 import re
 from dataclasses import dataclass
-from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 if TYPE_CHECKING:
     from pytest_drill_sergeant.core.models import Finding
@@ -37,7 +39,7 @@ class AAACommentDetector:
     """Detects AAA comment structure in test functions using AST analysis."""
 
     # AAA comment keywords and synonyms
-    AAA_KEYWORDS = {
+    AAA_KEYWORDS: ClassVar[dict[str, list[str]]] = {
         "arrange": ["arrange", "setup", "given", "prepare", "initialize"],
         "act": ["act", "when", "execute", "perform", "run"],
         "assert": ["assert", "then", "verify", "check", "expect"],
@@ -117,7 +119,7 @@ class AAACommentDetector:
             )
 
         except Exception as e:
-            self.logger.error("Error analyzing %s: %s", file_path, e)
+            self.logger.exception("Error analyzing %s", file_path)
             # Return empty findings rather than crashing
 
         return findings
@@ -163,14 +165,12 @@ class AAACommentDetector:
 
         # Get function boundaries
         func_start = func_node.lineno
-        func_end = func_node.end_lineno or func_start
 
         # Extract AAA comments within function
         aaa_result = self._analyze_aaa_structure(func_node, comments)
 
         # Create a comprehensive AAA status message
         status_parts = []
-        all_sections = {"arrange", "act", "assert"}
 
         for section in ["arrange", "act", "assert"]:
             if section in aaa_result.found_order:
@@ -480,10 +480,7 @@ class AAACommentDetector:
 
         # If what's left is just other AAA keywords, it's not meaningful
         remaining_words = after_keyword.lower().split()
-        if all(word in other_keywords for word in remaining_words):
-            return False
-
-        return True
+        return not all(word in other_keywords for word in remaining_words)
 
     def _is_correct_order(self, found_order: list[str]) -> bool:
         """Check if the found order follows AAA pattern.
@@ -506,26 +503,17 @@ class AAACommentDetector:
         expected_order = ["arrange", "act", "assert"]
 
         # Find positions of each section in the found order
-        positions = {}
-        for i, section in enumerate(unique_order):
-            if section in expected_order:
-                positions[section] = i
+        positions = {section: i for i, section in enumerate(unique_order) if section in expected_order}
 
         # Check if arrange comes before act, and act comes before assert
-        if "arrange" in positions and "act" in positions:
-            if positions["arrange"] >= positions["act"]:
-                return False
-
-        if "act" in positions and "assert" in positions:
-            if positions["act"] >= positions["assert"]:
-                return False
-
-        if "arrange" in positions and "assert" in positions:
-            if positions["arrange"] >= positions["assert"]:
-                return False
-
-        # If we have duplicates in the original order, it's incorrect
-        if len(found_order) != len(unique_order):
+        if "arrange" in positions and "act" in positions and positions["arrange"] >= positions["act"]:
             return False
 
-        return True
+        if "act" in positions and "assert" in positions and positions["act"] >= positions["assert"]:
+            return False
+
+        if "arrange" in positions and "assert" in positions and positions["arrange"] >= positions["assert"]:
+            return False
+
+        # If we have duplicates in the original order, it's incorrect
+        return len(found_order) == len(unique_order)

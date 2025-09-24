@@ -7,7 +7,7 @@ making it maintainable and configurable without hardcoded rule codes.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from pytest_drill_sergeant.core.models import Finding
@@ -46,7 +46,7 @@ class DynamicBISCalculator:
     """Dynamic BIS calculator that uses rule metadata for scoring."""
 
     # Base penalty weights by impact category
-    PENALTY_WEIGHTS = {
+    PENALTY_WEIGHTS: ClassVar[dict[str, float]] = {
         "high_penalty": 15.0,  # Major behavior integrity issues
         "medium_penalty": 8.0,  # Moderate behavior integrity issues
         "low_penalty": 4.0,  # Minor behavior integrity issues
@@ -116,10 +116,11 @@ class DynamicBISCalculator:
 
         try:
             rule_spec = self._rule_registry.get_rule(rule_code)
-            return rule_spec.bis_impact.value, rule_spec.bis_weight
         except (KeyError, AttributeError):
             # Unknown rule - treat as medium penalty
             return "medium_penalty", 1.0
+        else:
+            return rule_spec.bis_impact.value, rule_spec.bis_weight
 
     def calculate_bis(self, metrics: BISMetrics) -> float:
         """Calculate Behavior Integrity Score based on metrics.
@@ -172,26 +173,14 @@ class DynamicBISCalculator:
         Returns:
             Letter grade (A-F)
         """
-        if score >= 90:
-            return "A+"
-        if score >= 85:
-            return "A"
-        if score >= 80:
-            return "A-"
-        if score >= 75:
-            return "B+"
-        if score >= 70:
-            return "B"
-        if score >= 65:
-            return "B-"
-        if score >= 60:
-            return "C+"
-        if score >= 55:
-            return "C"
-        if score >= 50:
-            return "C-"
-        if score >= 40:
-            return "D"
+        grade_thresholds = [
+            (90, "A+"), (85, "A"), (80, "A-"), (75, "B+"), (70, "B"),
+            (65, "B-"), (60, "C+"), (55, "C"), (50, "C-"), (40, "D")
+        ]
+        
+        for threshold, grade in grade_thresholds:
+            if score >= threshold:
+                return grade
         return "F"
 
     def get_score_interpretation(self, score: float) -> str:

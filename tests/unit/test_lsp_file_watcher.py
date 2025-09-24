@@ -208,7 +208,9 @@ class TestDocumentAnalysis:
 
                 # Should log error
                 mock_logger.error.assert_called_with(
-                    "Failed to analyze document %s: %s", "file:///path/to/test_file.py", ANY
+                    "Failed to analyze document %s: %s",
+                    "file:///path/to/test_file.py",
+                    ANY,
                 )
 
                 # Should clean up analyzing set even on error
@@ -585,7 +587,9 @@ class TestIntegrationScenarios:
                 "Document opened: %s", "file:///project/tests/test_example.py"
             )
             mock_logger.debug.assert_any_call(
-                "Published %d diagnostics for %s", 3, "file:///project/tests/test_example.py"
+                "Published %d diagnostics for %s",
+                3,
+                "file:///project/tests/test_example.py",
             )
 
     def test_file_watching_with_non_test_file(self):
@@ -648,7 +652,9 @@ class TestIntegrationScenarios:
 
             # Verify error was logged
             mock_logger.error.assert_called_with(
-                "Failed to analyze document %s: %s", "file:///project/tests/test_example.py", ANY
+                "Failed to analyze document %s: %s",
+                "file:///project/tests/test_example.py",
+                ANY,
             )
 
         # Verify analyzing files was cleaned up

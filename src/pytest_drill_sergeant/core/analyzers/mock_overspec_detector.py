@@ -9,8 +9,10 @@ from __future__ import annotations
 import ast
 import logging
 import re
-from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 if TYPE_CHECKING:
     from pytest_drill_sergeant.core.models import Finding
@@ -24,7 +26,7 @@ class MockOverspecDetector:
     """Detects excessive mock assertions that focus on HOW instead of WHAT."""
 
     # Mock assertion methods to detect
-    MOCK_ASSERTS = {
+    MOCK_ASSERTS: ClassVar[set[str]] = {
         "assert_called_once",
         "assert_called_with",
         "assert_has_calls",
@@ -102,7 +104,6 @@ class MockOverspecDetector:
             if isinstance(current, ast.Name):
                 parts.append(current.id)
                 return ".".join(reversed(parts))
-
             return None
         except Exception:
             return None
@@ -207,8 +208,7 @@ class MockOverspecDetector:
 
             def visit_Call(self, node):
                 # Look for method calls where the method name is a mock assertion
-                if isinstance(node.func, ast.Attribute):
-                    if node.func.attr in self.detector.MOCK_ASSERTS:
+                if isinstance(node.func, ast.Attribute) and node.func.attr in self.detector.MOCK_ASSERTS:
                         # Extract the mock target
                         mock_target = self.detector._extract_mock_target(node.func)
 
