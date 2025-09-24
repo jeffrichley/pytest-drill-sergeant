@@ -176,7 +176,7 @@ class CoverageStorage:
             self.config.signatures_dir,
         ]:
             directory.mkdir(parents=True, exist_ok=True)
-            self.logger.debug(f"Ensured directory exists: {directory}")
+            self.logger.debug("Ensured directory exists: %s", directory)
 
     def _cleanup_old_data(self) -> None:
         """Remove data older than retention period."""
@@ -191,10 +191,10 @@ class CoverageStorage:
             try:
                 if session_file.stat().st_mtime < cutoff_timestamp:
                     session_file.unlink()
-                    self.logger.debug(f"Removed old session file: {session_file}")
+                    self.logger.debug("Removed old session file: %s", session_file)
             except OSError as e:
                 self.logger.warning(
-                    f"Failed to remove old session file {session_file}: {e}"
+                    "Failed to remove old session file %s: %s", session_file, e
                 )
 
         # Clean up test files
@@ -202,9 +202,9 @@ class CoverageStorage:
             try:
                 if test_file.stat().st_mtime < cutoff_timestamp:
                     test_file.unlink()
-                    self.logger.debug(f"Removed old test file: {test_file}")
+                    self.logger.debug("Removed old test file: %s", test_file)
             except OSError as e:
-                self.logger.warning(f"Failed to remove old test file {test_file}: {e}")
+                self.logger.warning("Failed to remove old test file %s: %s", test_file, e)
 
     def _write_json_file(
         self, file_path: Path, data: BaseModel | dict[str, Any]
@@ -228,9 +228,9 @@ class CoverageStorage:
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(json_data, f, indent=2, default=str)
 
-            self.logger.debug(f"Wrote JSON file: {file_path}")
+            self.logger.debug("Wrote JSON file: %s", file_path)
         except Exception as e:
-            self.logger.error(f"Failed to write JSON file {file_path}: {e}")
+            self.logger.error("Failed to write JSON file %s: %s", file_path, e)
             raise
 
     def _read_json_file(self, file_path: Path) -> dict[str, Any] | None:
@@ -249,10 +249,10 @@ class CoverageStorage:
             with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
-            self.logger.debug(f"Read JSON file: {file_path}")
+            self.logger.debug("Read JSON file: %s", file_path)
             return data
         except Exception as e:
-            self.logger.warning(f"Failed to read JSON file {file_path}: {e}")
+            self.logger.warning("Failed to read JSON file %s: %s", file_path, e)
             return None
 
     def store_session_data(
@@ -291,7 +291,7 @@ class CoverageStorage:
 
         session_file = self.config.sessions_dir / f"{session_id}.json"
         self._write_json_file(session_file, session_data)
-        self.logger.info(f"Stored session data: {session_id}")
+        self.logger.info("Stored session data: %s", session_id)
 
     def store_test_data(
         self,
@@ -336,7 +336,7 @@ class CoverageStorage:
 
         test_file_path = self.config.tests_dir / f"{safe_test_name}.json"
         self._write_json_file(test_file_path, test_data)
-        self.logger.debug(f"Stored test data: {test_name}")
+        self.logger.debug("Stored test data: %s", test_name)
 
     def store_file_data(
         self,
@@ -372,7 +372,7 @@ class CoverageStorage:
 
         file_storage_path = self.config.files_dir / f"{safe_file_name}.json"
         self._write_json_file(file_storage_path, file_data)
-        self.logger.debug(f"Stored file data: {file_path}")
+        self.logger.debug("Stored file data: %s", file_path)
 
     def store_coverage_signature(
         self, test_name: str, signature: CoverageSignature, session_id: str
@@ -398,7 +398,7 @@ class CoverageStorage:
         # Append to signatures file
         signatures_file = self.config.signatures_dir / "signatures.json"
         self._append_to_signatures_file(signatures_file, signature_data)
-        self.logger.debug(f"Stored coverage signature: {test_name}")
+        self.logger.debug("Stored coverage signature: %s", test_name)
 
     def _append_to_signatures_file(
         self, file_path: Path, signature_data: CoverageSignatureData
@@ -423,7 +423,7 @@ class CoverageStorage:
             # Write back to file
             self._write_json_file(file_path, signatures_collection)
         except Exception as e:
-            self.logger.error(f"Failed to append signature to {file_path}: {e}")
+            self.logger.error("Failed to append signature to %s: %s", file_path, e)
             raise
 
     def _sanitize_filename(self, name: str) -> str:
@@ -545,7 +545,7 @@ class CoverageStorage:
                     signature_dict["similarity_score"] = similarity_score
                     similar_signatures.append(signature_dict)
             except Exception as e:
-                self.logger.warning(f"Failed to compare signature: {e}")
+                self.logger.warning("Failed to compare signature: %s", e)
                 continue
 
         # Sort by similarity score (highest first)
@@ -598,7 +598,7 @@ class CoverageStorage:
                     sessions.append(session_data)
                 except Exception as e:
                     self.logger.warning(
-                        f"Failed to parse session data from {session_file}: {e}"
+                        "Failed to parse session data from %s: %s", session_file, e
                     )
                     continue
 
