@@ -6,6 +6,7 @@ mock assertion counting, exception pattern analysis, and configurable similarity
 
 from __future__ import annotations
 
+import ast
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -90,8 +91,6 @@ class DuplicateTestDetector:
         Returns:
             List of test function names
         """
-        import ast
-
         try:
             tree = ast.parse(content)
             test_functions = []

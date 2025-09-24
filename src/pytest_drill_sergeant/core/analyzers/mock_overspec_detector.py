@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from pytest_drill_sergeant.core.models import Finding
 
 from pytest_drill_sergeant.core.models import Finding, Severity
-from pytest_drill_sergeant.core.rulespec import RuleRegistry, RuleSpec
+from pytest_drill_sergeant.core.rulespec import RuleCategory, RuleRegistry, RuleSpec, Severity as RuleSeverity
 
 
 class MockOverspecDetector:
@@ -46,9 +46,6 @@ class MockOverspecDetector:
             return RuleRegistry.get_rule("DS102")  # Mock overspec rule code
         except KeyError:
             # Fallback if rule not found
-            from pytest_drill_sergeant.core.rulespec import RuleCategory, RuleSpec
-            from pytest_drill_sergeant.core.rulespec import Severity as RuleSeverity
-
             return RuleSpec(
                 code="DS102",
                 name="mock_overspec",
