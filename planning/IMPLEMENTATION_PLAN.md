@@ -364,7 +364,7 @@ This implementation plan provides a detailed roadmap for building pytest-drill-s
 
 ### Goals
 - Implement Battlefield Readiness Score (BRS)
-- Add fixture extraction suggestions
+- Add fixture extraction suggesti
 - Create parametrization recommendations
 - Implement SARIF output for CI integration
 - Add static duplicate detection
