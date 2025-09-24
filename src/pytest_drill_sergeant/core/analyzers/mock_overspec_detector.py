@@ -208,17 +208,20 @@ class MockOverspecDetector:
 
             def visit_Call(self, node):
                 # Look for method calls where the method name is a mock assertion
-                if isinstance(node.func, ast.Attribute) and node.func.attr in self.detector.MOCK_ASSERTS:
-                        # Extract the mock target
-                        mock_target = self.detector._extract_mock_target(node.func)
+                if (
+                    isinstance(node.func, ast.Attribute)
+                    and node.func.attr in self.detector.MOCK_ASSERTS
+                ):
+                    # Extract the mock target
+                    mock_target = self.detector._extract_mock_target(node.func)
 
-                        # Skip if target is in allowlist
-                        if mock_target and self.detector._is_mock_target_allowed(
-                            mock_target, self.allowlist
-                        ):
-                            pass
-                        else:
-                            self.count += 1
+                    # Skip if target is in allowlist
+                    if mock_target and self.detector._is_mock_target_allowed(
+                        mock_target, self.allowlist
+                    ):
+                        pass
+                    else:
+                        self.count += 1
 
                 # Continue visiting child nodes
                 self.generic_visit(node)

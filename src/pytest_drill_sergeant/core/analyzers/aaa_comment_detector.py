@@ -118,7 +118,7 @@ class AAACommentDetector:
                 "AAA analysis of %s: %d findings", file_path, len(findings)
             )
 
-        except Exception as e:
+        except Exception:
             self.logger.exception("Error analyzing %s", file_path)
             # Return empty findings rather than crashing
 
@@ -503,16 +503,32 @@ class AAACommentDetector:
         expected_order = ["arrange", "act", "assert"]
 
         # Find positions of each section in the found order
-        positions = {section: i for i, section in enumerate(unique_order) if section in expected_order}
+        positions = {
+            section: i
+            for i, section in enumerate(unique_order)
+            if section in expected_order
+        }
 
         # Check if arrange comes before act, and act comes before assert
-        if "arrange" in positions and "act" in positions and positions["arrange"] >= positions["act"]:
+        if (
+            "arrange" in positions
+            and "act" in positions
+            and positions["arrange"] >= positions["act"]
+        ):
             return False
 
-        if "act" in positions and "assert" in positions and positions["act"] >= positions["assert"]:
+        if (
+            "act" in positions
+            and "assert" in positions
+            and positions["act"] >= positions["assert"]
+        ):
             return False
 
-        if "arrange" in positions and "assert" in positions and positions["arrange"] >= positions["assert"]:
+        if (
+            "arrange" in positions
+            and "assert" in positions
+            and positions["arrange"] >= positions["assert"]
+        ):
             return False
 
         # If we have duplicates in the original order, it's incorrect

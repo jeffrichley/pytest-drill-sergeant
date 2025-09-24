@@ -2,14 +2,35 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated
 
 import typer
+import yaml
 
+from pytest_drill_sergeant.core.analysis_pipeline import create_analysis_pipeline
+from pytest_drill_sergeant.core.config_context import (
+    get_config,
+    get_fail_on_level,
+    initialize_config,
+    should_fail_on_severity,
+)
+from pytest_drill_sergeant.core.config_schema import create_default_config
+from pytest_drill_sergeant.core.config_validator_enhanced import EnhancedConfigValidator
+from pytest_drill_sergeant.core.error_handler import get_error_handler
 from pytest_drill_sergeant.core.logging_utils import get_logger, setup_logging
+from pytest_drill_sergeant.core.scoring import BRSCalculator, DynamicBISCalculator
+from pytest_drill_sergeant.plugin.analysis_storage import (
+    AnalysisStorage,
+    get_analysis_storage,
+)
+from pytest_drill_sergeant.plugin.personas.manager import get_persona_manager
+from pytest_drill_sergeant.plugin.pytest_cov_integration import PytestCovIntegration
 
 app = typer.Typer(help="pytest-drill-sergeant: AI test quality enforcement")
 
@@ -38,9 +59,6 @@ class AnalysisContext:
 
     def __init__(self):
         """Initialize the analysis context."""
-        from pytest_drill_sergeant.plugin.analysis_storage import AnalysisStorage
-        from pytest_drill_sergeant.plugin.personas.manager import get_persona_manager
-
         self.storage = AnalysisStorage()
         self.persona_manager = get_persona_manager()
         self.analyzers = []
@@ -72,10 +90,6 @@ class AnalysisContext:
         """Filter findings based on profile fail-on setting."""
         # Use centralized config context
         try:
-            from pytest_drill_sergeant.core.config_context import (
-                should_fail_on_severity,
-            )
-
             should_fail_func = should_fail_on_severity
         except ImportError:
             # Fallback to passed-in config
@@ -94,8 +108,6 @@ class AnalysisContext:
         if findings and len(filtered_findings) != len(findings):
             logger = logging.getLogger(__name__)
             try:
-                from pytest_drill_sergeant.core.config_context import get_fail_on_level
-
                 fail_on = get_fail_on_level().value
             except ImportError:
                 fail_on = profile_config.fail_on.value if profile_config else "unknown"
@@ -207,15 +219,9 @@ def _run_lint_with_options(opts: LintConfig) -> int:
     logger = get_logger(__name__)
 
     # Initialize error handling
-    from pytest_drill_sergeant.core.error_handler import get_error_handler
-
     error_handler = get_error_handler()
 
     # Initialize centralized configuration
-    from pytest_drill_sergeant.core.config_context import get_config, initialize_config
-    from pytest_drill_sergeant.core.config_validator_enhanced import (
-        EnhancedConfigValidator,
-    )
 
     # Convert CLI options to config dict
     cli_config = {
@@ -302,11 +308,6 @@ def _run_lint_with_options(opts: LintConfig) -> int:
 
     try:
         # Import our analysis components
-        from pathlib import Path
-
-        from pytest_drill_sergeant.core.analysis_pipeline import (
-            create_analysis_pipeline,
-        )
 
         # Use context manager instead of globals
         with AnalysisContext() as ctx:
@@ -359,8 +360,6 @@ def _run_lint_with_options(opts: LintConfig) -> int:
                     total_files += 1
 
                     # Calculate BIS score for this file
-                    from pytest_drill_sergeant.core.scoring import DynamicBISCalculator
-
                     bis_calculator = DynamicBISCalculator()
                     metrics = bis_calculator.extract_metrics_from_findings(findings)
                     bis_score = bis_calculator.calculate_bis(metrics)
@@ -458,10 +457,6 @@ def _run_lint_with_options(opts: LintConfig) -> int:
                         total_files += 1
 
                         # Calculate BIS score for this file
-                        from pytest_drill_sergeant.core.scoring import (
-                            DynamicBISCalculator,
-                        )
-
                         bis_calculator = DynamicBISCalculator()
                         metrics = bis_calculator.extract_metrics_from_findings(findings)
                         bis_score = bis_calculator.calculate_bis(metrics)
@@ -506,8 +501,6 @@ def _run_lint_with_options(opts: LintConfig) -> int:
                     continue
 
             # Calculate BRS score
-            from pytest_drill_sergeant.core.scoring import BRSCalculator
-
             brs_calculator = BRSCalculator()
             metrics = brs_calculator.extract_metrics_from_analysis(
                 files_analyzed, all_findings, all_bis_scores
@@ -656,14 +649,6 @@ def demo(
     logger.info("Running demo with %s persona", persona)
 
     try:
-        from pathlib import Path
-
-        from pytest_drill_sergeant.core.analysis_pipeline import (
-            create_analysis_pipeline,
-        )
-        from pytest_drill_sergeant.plugin.analysis_storage import get_analysis_storage
-        from pytest_drill_sergeant.plugin.personas.manager import get_persona_manager
-
         typer.echo(f"🎖️  Running demo with {persona} persona...")
         typer.echo("=" * 60)
 
@@ -673,8 +658,6 @@ def demo(
 
         # Add analyzers using centralized pipeline
         # Initialize config context for demo
-        from pytest_drill_sergeant.core.config_context import initialize_config
-
         initialize_config()  # Use defaults for demo
         pipeline = create_analysis_pipeline()
 
@@ -751,8 +734,6 @@ def profiles(
     logger.info("Listing available profiles")
 
     try:
-        from pytest_drill_sergeant.core.config_schema import create_default_config
-
         config = create_default_config()
 
         typer.echo("🎯 Available Profiles:")
@@ -813,8 +794,6 @@ def personas(
     logger.info("Listing available personas")
 
     try:
-        from pytest_drill_sergeant.plugin.personas.manager import get_persona_manager
-
         persona_manager = get_persona_manager()
         available_personas = persona_manager.list_personas()
 
@@ -846,11 +825,6 @@ def personas(
 
 def _load_coverage_config(config_file: str) -> dict:
     """Load coverage configuration from file."""
-    import json
-    from pathlib import Path
-
-    import yaml
-
     config_path = Path(config_file)
     if not config_path.exists():
         typer.echo(f"⚠️  Configuration file not found: {config_file}")
@@ -876,10 +850,6 @@ def _load_coverage_config(config_file: str) -> dict:
 def _process_coverage_analysis(coverage_config: dict, verbose: bool) -> None:
     """Process coverage analysis results."""
     try:
-        from pytest_drill_sergeant.plugin.pytest_cov_integration import (
-            PytestCovIntegration,
-        )
-
         # Get coverage data from the integration
         integration = PytestCovIntegration()
 
@@ -920,8 +890,6 @@ def _generate_coverage_report(coverage_config: dict, verbose: bool) -> str:
     output_format = coverage_config.get("format", "text")
 
     if output_format == "json":
-        import json
-
         report_data = {
             "coverage_analysis": {
                 "threshold": threshold,
@@ -953,8 +921,6 @@ Timestamp: {Path.cwd()}
 
 def _write_coverage_report(report: str, output_file: str, output_format: str) -> None:
     """Write coverage report to file."""
-    from pathlib import Path
-
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -999,10 +965,6 @@ def test(
     ),
 ) -> None:
     """Run tests with pytest and optional coverage analysis."""
-    import subprocess
-    import sys
-    from pathlib import Path
-
     # Set up logging based on user preference and context
     setup_logging(use_rich=rich_output)
     logger = get_logger(__name__)
