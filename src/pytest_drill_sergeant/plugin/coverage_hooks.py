@@ -48,7 +48,7 @@ class CoverageHooks:
                 self.logger.debug("Coverage collection disabled")
 
         except Exception as e:
-            self.logger.error(f"Failed to configure coverage: {e}")
+            self.logger.error("Failed to configure coverage: %s", e)
 
     def pytest_unconfigure(self, config: pytest.Config) -> None:
         """Clean up coverage collection."""
@@ -58,7 +58,7 @@ class CoverageHooks:
                 self.logger.info("Coverage collection stopped")
 
         except Exception as e:
-            self.logger.error(f"Failed to cleanup coverage: {e}")
+            self.logger.error("Failed to cleanup coverage: %s", e)
 
     def pytest_runtest_setup(self, item: Item) -> None:
         """Setup before each test runs."""
@@ -74,10 +74,10 @@ class CoverageHooks:
             test_line_number = item.location[1] if item.location else 0
 
             # Start coverage collection for this test
-            self.logger.debug(f"Starting coverage collection for {test_name}")
+            self.logger.debug("Starting coverage collection for %s", test_name)
 
         except Exception as e:
-            self.logger.error(f"Failed to setup coverage for test: {e}")
+            self.logger.error("Failed to setup coverage for test: %s", e)
 
     def pytest_runtest_call(self, item: Item) -> None:
         """Execute the test with coverage collection."""
@@ -112,10 +112,10 @@ class CoverageHooks:
             item.ds_car_result = car_result
             item.ds_coverage_signature = signature
 
-            self.logger.debug(f"Coverage analysis completed for {test_name}")
+            self.logger.debug("Coverage analysis completed for %s", test_name)
 
         except Exception as e:
-            self.logger.error(f"Failed to collect coverage for test: {e}")
+            self.logger.error("Failed to collect coverage for test: %s", e)
 
     def pytest_runtest_teardown(self, item: Item) -> None:
         """Cleanup after each test runs."""
@@ -124,10 +124,10 @@ class CoverageHooks:
                 return
 
             # Cleanup any test-specific coverage data
-            self.logger.debug(f"Cleaning up coverage data for {item.name}")
+            self.logger.debug("Cleaning up coverage data for %s", item.name)
 
         except Exception as e:
-            self.logger.error(f"Failed to cleanup coverage for test: {e}")
+            self.logger.error("Failed to cleanup coverage for test: %s", e)
 
     def pytest_terminal_summary(
         self,
@@ -147,7 +147,7 @@ class CoverageHooks:
             self._generate_coverage_summary(terminalreporter)
 
         except Exception as e:
-            self.logger.error(f"Failed to generate coverage summary: {e}")
+            self.logger.error("Failed to generate coverage summary: %s", e)
 
     def _generate_coverage_summary(
         self, terminalreporter: pytest.TerminalReporter
@@ -269,7 +269,7 @@ class CoverageHooks:
             terminalreporter.write_sep("=", "END COVERAGE ANALYSIS SUMMARY")
 
         except Exception as e:
-            self.logger.error(f"Failed to generate coverage summary: {e}")
+            self.logger.error("Failed to generate coverage summary: %s", e)
 
     def _run_duplicate_detection(self) -> None:
         """Run duplicate detection analysis on collected coverage data."""
@@ -289,11 +289,11 @@ class CoverageHooks:
             )
 
             self.logger.info(
-                f"Duplicate detection found {len(self._duplicate_clusters)} clusters"
+                "Duplicate detection found %d clusters", len(self._duplicate_clusters)
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to run duplicate detection: {e}")
+            self.logger.error("Failed to run duplicate detection: %s", e)
             self._duplicate_clusters = []
 
 

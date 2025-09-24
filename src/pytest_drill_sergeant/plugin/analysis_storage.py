@@ -28,7 +28,7 @@ class AnalysisStorage:
             analyzer: Analyzer instance to add
         """
         self._analyzers.append(analyzer)
-        logger.debug(f"Added analyzer: {analyzer.__class__.__name__}")
+        logger.debug("Added analyzer: %s", analyzer.__class__.__name__)
 
     def analyze_test_file(self, test_file_path: Path) -> list[Finding]:
         """Analyze a test file and store results.
@@ -46,11 +46,11 @@ class AnalysisStorage:
                 findings = analyzer.analyze_file(test_file_path)
                 all_findings.extend(findings)
                 logger.debug(
-                    f"Analyzer {analyzer.__class__.__name__} found {len(findings)} violations in {test_file_path}"
+                    "Analyzer %s found %d violations in %s", analyzer.__class__.__name__, len(findings), test_file_path
                 )
             except Exception as e:
                 logger.warning(
-                    f"Analyzer {analyzer.__class__.__name__} failed on {test_file_path}: {e}"
+                    "Analyzer %s failed on %s: %s", analyzer.__class__.__name__, test_file_path, e
                 )
 
         # Store findings for this test file
@@ -79,7 +79,7 @@ class AnalysisStorage:
             metrics: Dictionary of metric names to values
         """
         self._test_metrics[test_name] = metrics
-        logger.debug(f"Set metrics for test {test_name}: {metrics}")
+        logger.debug("Set metrics for test %s: %s", test_name, metrics)
 
     def get_test_metrics(self, test_name: str) -> dict[str, float]:
         """Get metrics for a specific test.
@@ -99,7 +99,7 @@ class AnalysisStorage:
             metrics: Session metrics
         """
         self._session_metrics = metrics
-        logger.debug(f"Set session metrics: {metrics}")
+        logger.debug("Set session metrics: %s", metrics)
 
     def get_session_metrics(self) -> RunMetrics | None:
         """Get session-level metrics.

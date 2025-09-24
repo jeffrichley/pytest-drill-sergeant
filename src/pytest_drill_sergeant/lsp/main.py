@@ -86,7 +86,7 @@ async def main() -> None:
         await server.start_io()
 
     except Exception as e:
-        logger.error(f"Failed to start language server: {e}")
+        logger.error("Failed to start language server: %s", e)
         import traceback
 
         traceback.print_exc()
@@ -112,7 +112,7 @@ def run_server() -> None:
         server.start_io()
 
     except Exception as e:
-        logger.error(f"Failed to start language server: {e}")
+        logger.error("Failed to start language server: %s", e)
         import traceback
 
         traceback.print_exc()

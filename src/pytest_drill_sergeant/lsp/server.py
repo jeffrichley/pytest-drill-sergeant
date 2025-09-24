@@ -73,18 +73,18 @@ class DrillSergeantLanguageServer(LanguageServer):
                     findings.extend(analyzer_findings)
                 except Exception as e:
                     logger.warning(
-                        f"Analyzer {analyzer.__class__.__name__} failed: {e}"
+                        "Analyzer %s failed: %s", analyzer.__class__.__name__, e
                     )
                     continue
 
             # Convert findings to LSP diagnostics
             diagnostics = self._convert_findings_to_diagnostics(findings, document)
 
-            logger.debug(f"Analyzed {file_path}: found {len(diagnostics)} diagnostics")
+            logger.debug("Analyzed %s: found %d diagnostics", file_path, len(diagnostics))
             return diagnostics
 
         except Exception as e:
-            logger.error(f"Failed to analyze document {document.uri}: {e}")
+            logger.error("Failed to analyze document %s: %s", document.uri, e)
             return []
 
     def _convert_findings_to_diagnostics(
@@ -128,7 +128,7 @@ class DrillSergeantLanguageServer(LanguageServer):
                 diagnostics.append(diagnostic)
 
             except Exception as e:
-                logger.warning(f"Failed to convert finding to diagnostic: {e}")
+                logger.warning("Failed to convert finding to diagnostic: %s", e)
                 continue
 
         return diagnostics

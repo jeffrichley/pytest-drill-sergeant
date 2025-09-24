@@ -40,7 +40,7 @@ class FileWatcher:
         Args:
             document: The opened document
         """
-        self.logger.debug(f"Document opened: {document.uri}")
+        self.logger.debug("Document opened: %s", document.uri)
         self._analyze_document_if_needed(document)
 
     def on_document_save(self, document: Document) -> None:
@@ -49,7 +49,7 @@ class FileWatcher:
         Args:
             document: The saved document
         """
-        self.logger.debug(f"Document saved: {document.uri}")
+        self.logger.debug("Document saved: %s", document.uri)
         self._analyze_document_if_needed(document)
 
     def on_document_change(self, document: Document) -> None:
@@ -87,7 +87,7 @@ class FileWatcher:
                 self.server.publish_diagnostics(document.uri, diagnostics)
 
                 self.logger.debug(
-                    f"Published {len(diagnostics)} diagnostics for {document.uri}"
+                    "Published %d diagnostics for %s", len(diagnostics), document.uri
                 )
 
             finally:
@@ -95,7 +95,7 @@ class FileWatcher:
                 self._analyzing_files.discard(document.uri)
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze document {document.uri}: {e}")
+            self.logger.error("Failed to analyze document %s: %s", document.uri, e)
             # Clean up on error
             self._analyzing_files.discard(document.uri)
 
@@ -120,7 +120,7 @@ class FileWatcher:
             return self._is_test_file(file_path)
 
         except Exception as e:
-            self.logger.warning(f"Failed to check if document should be analyzed: {e}")
+            self.logger.warning("Failed to check if document should be analyzed: %s", e)
             return False
 
     def _is_test_file(self, file_path: Path) -> bool:
