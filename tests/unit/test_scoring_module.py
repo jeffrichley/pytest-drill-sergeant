@@ -33,8 +33,13 @@ def test_scoring_module_all():
     # Test that __all__ is a list
     assert isinstance(__all__, list)
     assert len(__all__) == 4  # This module exports 4 items
-    
+
     # Test that all expected items are present
-    expected_items = ["BRSCalculator", "RunMetrics", "DynamicBISCalculator", "BISMetrics"]
+    expected_items = [
+        "BRSCalculator",
+        "RunMetrics",
+        "DynamicBISCalculator",
+        "BISMetrics",
+    ]
     for item in expected_items:
         assert item in __all__

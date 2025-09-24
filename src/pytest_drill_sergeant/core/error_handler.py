@@ -69,7 +69,9 @@ class AnalysisError:
     def __post_init__(self) -> None:
         """Generate error ID if not provided."""
         if not self.error_id:
-            self.error_id = f"ERR_{self.category.value}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            self.error_id = (
+                f"ERR_{self.category.value}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            )
 
 
 class ErrorRecoveryStrategy(str, Enum):
@@ -150,7 +152,7 @@ class ErrorHandler:
         # Classify the error
         category = self._classify_error(exception)
         severity = self._determine_severity(category)
-        
+
         # Create error context
         if context is None:
             context = ErrorContext()
@@ -215,7 +217,9 @@ class ErrorHandler:
         }
         return severity_mapping.get(category, ErrorSeverity.MEDIUM)
 
-    def _generate_suggestion(self, exception: Exception, category: ErrorCategory, context: ErrorContext) -> str | None:
+    def _generate_suggestion(
+        self, exception: Exception, category: ErrorCategory, context: ErrorContext
+    ) -> str | None:
         """Generate a helpful suggestion for fixing the error.
 
         Args:
@@ -299,11 +303,11 @@ class ErrorHandler:
         """
         if not error.recoverable:
             return False
-        
+
         strategy = self.get_recovery_strategy(error)
         if strategy != ErrorRecoveryStrategy.RETRY:
             return False
-        
+
         return error.retry_count < error.max_retries
 
     def increment_retry_count(self, error: AnalysisError) -> None:
@@ -340,7 +344,9 @@ class ErrorHandler:
             "by_category": by_category,
             "by_severity": by_severity,
             "recoverable_errors": sum(1 for e in self.errors if e.recoverable),
-            "critical_errors": sum(1 for e in self.errors if e.severity == ErrorSeverity.CRITICAL),
+            "critical_errors": sum(
+                1 for e in self.errors if e.severity == ErrorSeverity.CRITICAL
+            ),
         }
 
     def clear_errors(self) -> None:
@@ -399,7 +405,7 @@ class ErrorRecoveryManager:
             Tuple of (result, error) where result is the function output or None
         """
         last_error = None
-        
+
         for attempt in range(3):  # Max 3 attempts
             try:
                 result = func(*args, **kwargs)
@@ -414,7 +420,7 @@ class ErrorRecoveryManager:
                 if last_error is None:
                     error = self.error_handler.handle_error(e, context)
                     last_error = error
-                
+
                 # Increment retry count for each attempt (including first)
                 self.error_handler.increment_retry_count(last_error)
 
@@ -425,6 +431,7 @@ class ErrorRecoveryManager:
                 # Wait before retry (except on last attempt)
                 if attempt < 2:  # Don't wait after the last attempt
                     import time
+
                     time.sleep(self.retry_delays[attempt])
 
         return None, last_error

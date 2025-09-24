@@ -17,19 +17,19 @@ def test_with_mock_overspec():
     mock_service.method2.return_value = None
     mock_service.method3.return_value = None
     mock_service.method4.return_value = None
-    
+
     # Call the methods so assertions don't fail
     mock_service.method1()
     mock_service.method2("arg")
     mock_service.method3("other")
     mock_service.method4()
-    
+
     # 4 mock assertions - over threshold of 3
     mock_service.method1.assert_called_once()
     mock_service.method2.assert_called_with("arg")
     mock_service.method3.assert_any_call("other")
     mock_service.method4.assert_called()
-    
+
     assert True
 
 

@@ -297,7 +297,9 @@ class TestHookIntegration:
     @patch("pytest_drill_sergeant.plugin.hooks.create_file_discovery")
     @patch("pytest_drill_sergeant.plugin.hooks.get_config")
     @patch("pytest_drill_sergeant.plugin.hooks.get_analysis_storage")
-    def test_analyze_test_file(self, mock_storage, mock_config, mock_create_file_discovery) -> None:
+    def test_analyze_test_file(
+        self, mock_storage, mock_config, mock_create_file_discovery
+    ) -> None:
         """Test test file analysis in hooks."""
         from pytest_drill_sergeant.plugin.hooks import _analyze_test_file
 

@@ -308,9 +308,12 @@ def _run_duplicate_detection_summary(terminalreporter: pytest.TerminalReporter) 
 
         # Get test files from the terminal reporter's config
         test_files = set()
-        
+
         # Try to get test files from the config
-        if hasattr(terminalreporter.config, "session") and terminalreporter.config.session:
+        if (
+            hasattr(terminalreporter.config, "session")
+            and terminalreporter.config.session
+        ):
             session = terminalreporter.config.session
             for item in session.items:
                 test_files.add(Path(item.fspath))
@@ -318,7 +321,7 @@ def _run_duplicate_detection_summary(terminalreporter: pytest.TerminalReporter) 
             # Fallback: get test files from the current working directory
             import os
             from pathlib import Path
-            
+
             # Look for test files in common test directories
             test_dirs = ["tests", "test", "tests/unit", "tests/integration"]
             for test_dir in test_dirs:
@@ -327,14 +330,14 @@ def _run_duplicate_detection_summary(terminalreporter: pytest.TerminalReporter) 
                         for file in files:
                             if file.startswith("test_") and file.endswith(".py"):
                                 test_files.add(Path(root) / file)
-        
+
         if not test_files:
             return
 
         # Run duplicate detection
         detector = DuplicateTestDetector()
         all_findings = []
-        
+
         for test_file in test_files:
             findings = detector.analyze_file(test_file)
             all_findings.extend(findings)
@@ -342,7 +345,7 @@ def _run_duplicate_detection_summary(terminalreporter: pytest.TerminalReporter) 
         # Display duplicate detection results
         if all_findings:
             terminalreporter.write_sep("=", "DUPLICATE TEST DETECTION")
-            
+
             # Group findings by file
             findings_by_file = {}
             for finding in all_findings:
@@ -350,14 +353,16 @@ def _run_duplicate_detection_summary(terminalreporter: pytest.TerminalReporter) 
                 if file_path not in findings_by_file:
                     findings_by_file[file_path] = []
                 findings_by_file[file_path].append(finding)
-            
+
             for file_path, findings in findings_by_file.items():
                 terminalreporter.write_line(f"📁 {file_path.name}:")
                 for finding in findings:
                     terminalreporter.write_line(f"  ⚠️  {finding.message}")
                 terminalreporter.write_line("")
-            
-            terminalreporter.write_line(f"Found {len(all_findings)} duplicate test groups")
+
+            terminalreporter.write_line(
+                f"Found {len(all_findings)} duplicate test groups"
+            )
             terminalreporter.write_sep("=", "END DUPLICATE TEST DETECTION")
         else:
             terminalreporter.write_sep("=", "DUPLICATE TEST DETECTION")
@@ -366,5 +371,6 @@ def _run_duplicate_detection_summary(terminalreporter: pytest.TerminalReporter) 
 
     except Exception as e:
         import logging
+
         logger = logging.getLogger(__name__)
         logger.warning(f"Failed to run duplicate detection summary: {e}")

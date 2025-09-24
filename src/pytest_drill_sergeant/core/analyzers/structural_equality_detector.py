@@ -69,16 +69,16 @@ class StructuralEqualityDetector:
             List of findings for structural equality violations
         """
         findings: list[Finding] = []
-        
+
         try:
             content = file_path.read_text(encoding="utf-8")
             tree = ast.parse(content, filename=str(file_path))
-            
+
             # Analyze each test function individually
             for node in tree.body:
                 if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
                     findings.extend(self._analyze_test_function(node, file_path))
-            
+
         except SyntaxError as e:
             # Create a finding for syntax errors
             rule_spec = self._get_rule_spec()
@@ -121,40 +121,44 @@ class StructuralEqualityDetector:
 
         return findings
 
-    def _analyze_test_function(self, func_node: ast.FunctionDef, file_path: Path) -> list[Finding]:  # noqa: C901
+    def _analyze_test_function(
+        self, func_node: ast.FunctionDef, file_path: Path
+    ) -> list[Finding]:  # noqa: C901
         """Analyze a single test function for structural equality violations.
-        
+
         Args:
             func_node: The test function AST node
             file_path: Path to the file being analyzed
-            
+
         Returns:
             List of findings for structural equality violations
         """
         findings: list[Finding] = []
-        
+
         # Use a visitor to find violations within the test function
         class StructuralEqualityVisitor(ast.NodeVisitor):
             def __init__(self, detector, file_path, findings):
                 self.detector = detector
                 self.file_path = file_path
                 self.findings = findings
-                
+
             def visit_Attribute(self, node):
                 # Check for __dict__ access
                 if node.attr == "__dict__":
                     self._add_dict_access_finding(node)
                 self.generic_visit(node)
-                
+
             def visit_Call(self, node):
                 # Check for vars() calls
                 if isinstance(node.func, ast.Name) and node.func.id == "vars":
                     self._add_vars_call_finding(node)
                 # Check for dataclasses.asdict() calls
-                elif (isinstance(node.func, ast.Attribute) and 
-                      isinstance(node.func.value, ast.Name) and 
-                      node.func.value.id == "dataclasses" and 
-                      node.func.attr == "asdict"):
+                elif (
+                    isinstance(node.func, ast.Attribute)
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "dataclasses"
+                    and node.func.attr == "asdict"
+                ):
                     self._add_asdict_call_finding(node)
                 # Check for repr() calls
                 elif isinstance(node.func, ast.Name) and node.func.id == "repr":
@@ -163,15 +167,23 @@ class StructuralEqualityDetector:
                 elif isinstance(node.func, ast.Name) and node.func.id == "str":
                     self._add_str_call_finding(node)
                 # Check for getattr() calls with private attributes
-                elif (isinstance(node.func, ast.Name) and 
-                      node.func.id == "getattr" and 
-                      len(node.args) >= self.detector.GETATTR_MIN_ARGS and 
-                      isinstance(node.args[self.detector.GETATTR_ATTR_NAME_INDEX], ast.Constant) and 
-                      isinstance(node.args[self.detector.GETATTR_ATTR_NAME_INDEX].value, str) and 
-                      node.args[self.detector.GETATTR_ATTR_NAME_INDEX].value.startswith("_")):
+                elif (
+                    isinstance(node.func, ast.Name)
+                    and node.func.id == "getattr"
+                    and len(node.args) >= self.detector.GETATTR_MIN_ARGS
+                    and isinstance(
+                        node.args[self.detector.GETATTR_ATTR_NAME_INDEX], ast.Constant
+                    )
+                    and isinstance(
+                        node.args[self.detector.GETATTR_ATTR_NAME_INDEX].value, str
+                    )
+                    and node.args[
+                        self.detector.GETATTR_ATTR_NAME_INDEX
+                    ].value.startswith("_")
+                ):
                     self._add_getattr_private_finding(node)
                 self.generic_visit(node)
-                
+
             def _add_dict_access_finding(self, node):
                 rule_spec = self.detector._get_rule_spec()  # noqa: SLF001
                 finding = Finding(
@@ -190,11 +202,13 @@ class StructuralEqualityDetector:
                     metadata={
                         "violation_type": "dict_access",
                         "method_name": "__dict__",
-                        "object_name": self.detector._get_object_name(node),  # noqa: SLF001
+                        "object_name": self.detector._get_object_name(
+                            node
+                        ),  # noqa: SLF001
                     },
                 )
                 self.findings.append(finding)
-                
+
             def _add_vars_call_finding(self, node):
                 rule_spec = self.detector._get_rule_spec()  # noqa: SLF001
                 finding = Finding(
@@ -213,11 +227,13 @@ class StructuralEqualityDetector:
                     metadata={
                         "violation_type": "vars_call",
                         "method_name": "vars",
-                        "object_name": self.detector._get_object_name(node),  # noqa: SLF001
+                        "object_name": self.detector._get_object_name(
+                            node
+                        ),  # noqa: SLF001
                     },
                 )
                 self.findings.append(finding)
-                
+
             def _add_asdict_call_finding(self, node):
                 rule_spec = self.detector._get_rule_spec()  # noqa: SLF001
                 finding = Finding(
@@ -236,11 +252,13 @@ class StructuralEqualityDetector:
                     metadata={
                         "violation_type": "asdict_call",
                         "method_name": "asdict",
-                        "object_name": self.detector._get_object_name(node),  # noqa: SLF001
+                        "object_name": self.detector._get_object_name(
+                            node
+                        ),  # noqa: SLF001
                     },
                 )
                 self.findings.append(finding)
-                
+
             def _add_repr_call_finding(self, node):
                 rule_spec = self.detector._get_rule_spec()  # noqa: SLF001
                 finding = Finding(
@@ -259,11 +277,13 @@ class StructuralEqualityDetector:
                     metadata={
                         "violation_type": "repr_comparison",
                         "method_name": "repr",
-                        "object_name": self.detector._get_object_name(node),  # noqa: SLF001
+                        "object_name": self.detector._get_object_name(
+                            node
+                        ),  # noqa: SLF001
                     },
                 )
                 self.findings.append(finding)
-                
+
             def _add_str_call_finding(self, node):
                 rule_spec = self.detector._get_rule_spec()  # noqa: SLF001
                 finding = Finding(
@@ -282,11 +302,13 @@ class StructuralEqualityDetector:
                     metadata={
                         "violation_type": "str_comparison",
                         "method_name": "str",
-                        "object_name": self.detector._get_object_name(node),  # noqa: SLF001
+                        "object_name": self.detector._get_object_name(
+                            node
+                        ),  # noqa: SLF001
                     },
                 )
                 self.findings.append(finding)
-                
+
             def _add_getattr_private_finding(self, node):
                 rule_spec = self.detector._get_rule_spec()  # noqa: SLF001
                 finding = Finding(
@@ -305,16 +327,20 @@ class StructuralEqualityDetector:
                     metadata={
                         "violation_type": "getattr_private",
                         "method_name": "getattr",
-                        "attribute_name": node.args[self.detector.GETATTR_ATTR_NAME_INDEX].value,
-                        "object_name": self.detector._get_object_name(node),  # noqa: SLF001
+                        "attribute_name": node.args[
+                            self.detector.GETATTR_ATTR_NAME_INDEX
+                        ].value,
+                        "object_name": self.detector._get_object_name(
+                            node
+                        ),  # noqa: SLF001
                     },
                 )
                 self.findings.append(finding)
-        
+
         # Use the visitor to analyze the test function
         visitor = StructuralEqualityVisitor(self, file_path, findings)
         visitor.visit(func_node)
-        
+
         return findings
 
     def _get_code_snippet(self, node: ast.AST) -> str | None:

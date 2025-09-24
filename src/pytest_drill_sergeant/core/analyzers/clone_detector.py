@@ -293,7 +293,7 @@ class DynamicCloneDetector:
                 # Convert test signature keys to coverage data keys
                 cov_key1 = self._convert_to_coverage_key(test1_key)
                 cov_key2 = self._convert_to_coverage_key(test2_key)
-                
+
                 # Calculate similarity
                 similarity = self._calculate_test_similarity(cov_key1, cov_key2)
 
@@ -311,10 +311,10 @@ class DynamicCloneDetector:
 
     def _convert_to_coverage_key(self, test_signature_key: str) -> str:
         """Convert test signature key to coverage data key format.
-        
+
         Args:
             test_signature_key: Key in format 'file.py:test_name'
-            
+
         Returns:
             Key in format 'test_name::file.py'
         """

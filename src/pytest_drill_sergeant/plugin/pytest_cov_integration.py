@@ -63,7 +63,9 @@ class PytestCovIntegration:
             )
 
             if coverage_data:
-                self.logger.info(f"Successfully extracted coverage data for {test_name}")
+                self.logger.info(
+                    f"Successfully extracted coverage data for {test_name}"
+                )
                 # Calculate CAR for this test
                 car_result = self._car_calculator.calculate_car(
                     test_file_path, test_name, test_line_number, coverage_data
@@ -233,7 +235,7 @@ class PytestCovIntegration:
             # Get items from the session
             items = terminalreporter.config.session.items
             self.logger.info(f"Found {len(items)} test items")
-            
+
             for item in items:
                 self.logger.debug(f"Checking item: {item.name}")
                 if hasattr(item, "ds_coverage_data") and item.ds_coverage_data:
@@ -274,13 +276,19 @@ class PytestCovIntegration:
                     terminalreporter.write_line(
                         f"  Cluster {cluster.cluster_id} ({cluster.cluster_type}):"
                     )
-                    terminalreporter.write_line(f"    Similarity: {cluster.similarity_score:.2f}")
+                    terminalreporter.write_line(
+                        f"    Similarity: {cluster.similarity_score:.2f}"
+                    )
                     terminalreporter.write_line(f"    Tests: {len(cluster.tests)}")
                     for test_name, test_file in cluster.tests:
-                        terminalreporter.write_line(f"      - {test_name} ({test_file.name})")
+                        terminalreporter.write_line(
+                            f"      - {test_name} ({test_file.name})"
+                        )
                     terminalreporter.write_line("")
                     if cluster.consolidation_suggestion:
-                        terminalreporter.write_line(f"    Suggestion: {cluster.consolidation_suggestion}")
+                        terminalreporter.write_line(
+                            f"    Suggestion: {cluster.consolidation_suggestion}"
+                        )
                     terminalreporter.write_line("")
             else:
                 terminalreporter.write_line("")
@@ -312,7 +320,9 @@ class PytestCovIntegration:
                 list(test_files), coverage_data_dict
             )
 
-            self.logger.info(f"Duplicate detection found {len(self._duplicate_clusters)} clusters")
+            self.logger.info(
+                f"Duplicate detection found {len(self._duplicate_clusters)} clusters"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to run duplicate detection: {e}")
