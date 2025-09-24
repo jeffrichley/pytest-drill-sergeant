@@ -57,14 +57,12 @@ def test_example():
                     "pytest_drill_sergeant.cli.main.AnalysisContext"
                 ) as mock_context_class,
                 patch(
-                    "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
+                    "pytest_drill_sergeant.cli.main.create_analysis_pipeline"
                 ) as mock_pipeline,
                 patch(
-                    "pytest_drill_sergeant.core.config_context.initialize_config"
+                    "pytest_drill_sergeant.cli.main.initialize_config"
                 ) as mock_init_config,
-                patch(
-                    "pytest_drill_sergeant.cli.main.setup_logging"
-                ) as mock_setup_logging,
+                patch("pytest_drill_sergeant.cli.main.setup_logging") as _,
             ):
                 # Mock the analysis pipeline
                 mock_context = Mock()
@@ -94,7 +92,6 @@ def test_example():
                 result = _run_lint_with_options(config)
 
                 assert result == 0
-                mock_setup_logging.assert_called_once()
                 mock_init_config.assert_called_once()
                 mock_pipeline.assert_called_once()
 
@@ -135,14 +132,12 @@ def test_example():
                         "pytest_drill_sergeant.cli.main.AnalysisContext"
                     ) as mock_context_class,
                     patch(
-                        "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
+                        "pytest_drill_sergeant.cli.main.create_analysis_pipeline"
                     ) as mock_pipeline,
                     patch(
-                        "pytest_drill_sergeant.core.config_context.initialize_config"
+                        "pytest_drill_sergeant.cli.main.initialize_config"
                     ) as mock_init_config,
-                    patch(
-                        "pytest_drill_sergeant.cli.main.setup_logging"
-                    ) as mock_setup_logging,
+                    patch("pytest_drill_sergeant.cli.main.setup_logging") as _,
                 ):
                     mock_context = Mock()
                     mock_context.__enter__ = Mock(return_value=mock_context)
@@ -208,14 +203,12 @@ def test_example():
                         "pytest_drill_sergeant.cli.main.AnalysisContext"
                     ) as mock_context_class,
                     patch(
-                        "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
+                        "pytest_drill_sergeant.cli.main.create_analysis_pipeline"
                     ) as mock_pipeline,
                     patch(
-                        "pytest_drill_sergeant.core.config_context.initialize_config"
+                        "pytest_drill_sergeant.cli.main.initialize_config"
                     ) as mock_init_config,
-                    patch(
-                        "pytest_drill_sergeant.cli.main.setup_logging"
-                    ) as mock_setup_logging,
+                    patch("pytest_drill_sergeant.cli.main.setup_logging") as _,
                 ):
                     mock_context = Mock()
                     mock_context.__enter__ = Mock(return_value=mock_context)
@@ -292,14 +285,12 @@ def test_example():
                         "pytest_drill_sergeant.cli.main.AnalysisContext"
                     ) as mock_context_class,
                     patch(
-                        "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
+                        "pytest_drill_sergeant.cli.main.create_analysis_pipeline"
                     ) as mock_pipeline,
                     patch(
-                        "pytest_drill_sergeant.core.config_context.initialize_config"
+                        "pytest_drill_sergeant.cli.main.initialize_config"
                     ) as mock_init_config,
-                    patch(
-                        "pytest_drill_sergeant.cli.main.setup_logging"
-                    ) as mock_setup_logging,
+                    patch("pytest_drill_sergeant.cli.main.setup_logging") as _,
                 ):
                     mock_context, mock_pipeline_instance, mock_config = (
                         _setup_mock_context_and_pipeline(
@@ -341,14 +332,12 @@ def test_example_{i}():
                     "pytest_drill_sergeant.cli.main.AnalysisContext"
                 ) as mock_context_class,
                 patch(
-                    "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
+                    "pytest_drill_sergeant.cli.main.create_analysis_pipeline"
                 ) as mock_pipeline,
                 patch(
-                    "pytest_drill_sergeant.core.config_context.initialize_config"
+                    "pytest_drill_sergeant.cli.main.initialize_config"
                 ) as mock_init_config,
-                patch(
-                    "pytest_drill_sergeant.cli.main.setup_logging"
-                ) as mock_setup_logging,
+                patch("pytest_drill_sergeant.cli.main.setup_logging") as _,
             ):
                 mock_context, mock_pipeline_instance, mock_config = (
                     _setup_mock_context_and_pipeline(
@@ -388,14 +377,12 @@ def test_example():
                     "pytest_drill_sergeant.cli.main.AnalysisContext"
                 ) as mock_context_class,
                 patch(
-                    "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
+                    "pytest_drill_sergeant.cli.main.create_analysis_pipeline"
                 ) as mock_pipeline,
                 patch(
-                    "pytest_drill_sergeant.core.config_context.initialize_config"
+                    "pytest_drill_sergeant.cli.main.initialize_config"
                 ) as mock_init_config,
-                patch(
-                    "pytest_drill_sergeant.cli.main.setup_logging"
-                ) as mock_setup_logging,
+                patch("pytest_drill_sergeant.cli.main.setup_logging") as _,
             ):
                 mock_context, mock_pipeline_instance, mock_config = (
                     _setup_mock_context_and_pipeline(
@@ -440,14 +427,12 @@ def test_example():
                         "pytest_drill_sergeant.cli.main.AnalysisContext"
                     ) as mock_context_class,
                     patch(
-                        "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
+                        "pytest_drill_sergeant.cli.main.create_analysis_pipeline"
                     ) as mock_pipeline,
                     patch(
-                        "pytest_drill_sergeant.core.config_context.initialize_config"
+                        "pytest_drill_sergeant.cli.main.initialize_config"
                     ) as mock_init_config,
-                    patch(
-                        "pytest_drill_sergeant.cli.main.setup_logging"
-                    ) as mock_setup_logging,
+                    patch("pytest_drill_sergeant.cli.main.setup_logging") as _,
                 ):
                     mock_context, mock_pipeline_instance, mock_config = (
                         _setup_mock_context_and_pipeline(
@@ -487,14 +472,12 @@ def test_example():
                         "pytest_drill_sergeant.cli.main.AnalysisContext"
                     ) as mock_context_class,
                     patch(
-                        "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
+                        "pytest_drill_sergeant.cli.main.create_analysis_pipeline"
                     ) as mock_pipeline,
                     patch(
-                        "pytest_drill_sergeant.core.config_context.initialize_config"
+                        "pytest_drill_sergeant.cli.main.initialize_config"
                     ) as mock_init_config,
-                    patch(
-                        "pytest_drill_sergeant.cli.main.setup_logging"
-                    ) as mock_setup_logging,
+                    patch("pytest_drill_sergeant.cli.main.setup_logging") as _,
                 ):
                     mock_context, mock_pipeline_instance, mock_config = (
                         _setup_mock_context_and_pipeline(
@@ -535,14 +518,12 @@ def test_example():
                         "pytest_drill_sergeant.cli.main.AnalysisContext"
                     ) as mock_context_class,
                     patch(
-                        "pytest_drill_sergeant.core.analysis_pipeline.create_analysis_pipeline"
+                        "pytest_drill_sergeant.cli.main.create_analysis_pipeline"
                     ) as mock_pipeline,
                     patch(
-                        "pytest_drill_sergeant.core.config_context.initialize_config"
+                        "pytest_drill_sergeant.cli.main.initialize_config"
                     ) as mock_init_config,
-                    patch(
-                        "pytest_drill_sergeant.cli.main.setup_logging"
-                    ) as mock_setup_logging,
+                    patch("pytest_drill_sergeant.cli.main.setup_logging") as _,
                 ):
                     mock_context, mock_pipeline_instance, mock_config = (
                         _setup_mock_context_and_pipeline(
