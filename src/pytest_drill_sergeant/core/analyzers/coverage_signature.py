@@ -377,7 +377,7 @@ class CoverageSignatureGenerator:
                     findings.extend(func_findings)
 
             self.logger.debug(
-                f"Coverage signature analysis of {file_path}: {len(findings)} findings"
+                "Coverage signature analysis of %s: %d findings", file_path, len(findings)
             )
 
         except Exception as e:

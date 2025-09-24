@@ -1483,7 +1483,7 @@ class CoverageCollector:
                         covered_branches += len(file_branches)
                 else:
                     self.logger.debug(
-                        f"Source file {source_file} is NOT in measured files"
+                        "Source file %s is NOT in measured files", source_file
                     )
 
             # Calculate coverage percentage
@@ -1606,7 +1606,7 @@ class CoverageCollector:
                     findings.extend(func_findings)
 
             self.logger.debug(
-                f"Coverage analysis of {file_path}: {len(findings)} findings"
+                "Coverage analysis of %s: %d findings", file_path, len(findings)
             )
 
         except Exception as e:
