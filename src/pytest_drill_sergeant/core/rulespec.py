@@ -32,6 +32,16 @@ class RuleCategory(str, Enum):
     MAINTAINABILITY = "maintainability"
 
 
+class BISImpact(str, Enum):
+    """BIS impact categories for scoring."""
+    
+    HIGH_PENALTY = "high_penalty"      # Major behavior integrity issues
+    MEDIUM_PENALTY = "medium_penalty"  # Moderate behavior integrity issues  
+    LOW_PENALTY = "low_penalty"        # Minor behavior integrity issues
+    ADVISORY = "advisory"              # Style/structure issues (minimal penalty)
+    REWARD = "reward"                  # Positive behavior indicators
+
+
 class RuleSpec(BaseModel):
     """Specification for a single rule with stable code and metadata."""
 
@@ -45,6 +55,14 @@ class RuleSpec(BaseModel):
         default=False, description="Whether rule violations can be auto-fixed"
     )
     category: RuleCategory = Field(description="Rule category")
+    bis_impact: BISImpact = Field(
+        default=BISImpact.MEDIUM_PENALTY, 
+        description="Impact on Behavior Integrity Score"
+    )
+    bis_weight: float = Field(
+        default=1.0,
+        description="Weight multiplier for BIS calculation (0.0-2.0)"
+    )
 
     @field_validator("code")
     @classmethod
@@ -205,6 +223,8 @@ PRIVATE_ACCESS = RuleSpec(
     tags=["encapsulation", "quality", "brittleness"],
     fixable=False,
     category=RuleCategory.CODE_QUALITY,
+    bis_impact=BISImpact.HIGH_PENALTY,
+    bis_weight=1.5,
 )
 
 AAA_COMMENTS = RuleSpec(
@@ -216,6 +236,8 @@ AAA_COMMENTS = RuleSpec(
     tags=["structure", "readability", "patterns"],
     fixable=True,
     category=RuleCategory.CODE_QUALITY,
+    bis_impact=BISImpact.ADVISORY,
+    bis_weight=0.3,
 )
 
 STATIC_CLONES = RuleSpec(
@@ -249,6 +271,8 @@ MOCK_OVERSPECIFICATION = RuleSpec(
     tags=["mocking", "brittleness", "quality"],
     fixable=False,
     category=RuleCategory.CODE_QUALITY,
+    bis_impact=BISImpact.HIGH_PENALTY,
+    bis_weight=1.2,
 )
 
 STRUCTURAL_EQUALITY = RuleSpec(
@@ -260,6 +284,8 @@ STRUCTURAL_EQUALITY = RuleSpec(
     tags=["assertions", "quality", "correctness"],
     fixable=False,
     category=RuleCategory.CODE_QUALITY,
+    bis_impact=BISImpact.MEDIUM_PENALTY,
+    bis_weight=1.0,
 )
 
 

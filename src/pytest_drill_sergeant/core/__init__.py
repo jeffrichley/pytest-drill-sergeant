@@ -1,5 +1,11 @@
 """Core analysis engine for pytest-drill-sergeant."""
 
+from pytest_drill_sergeant.core.analysis_pipeline import (
+    AnalysisPipeline,
+    AnalyzerRegistry,
+    create_analysis_pipeline,
+    get_analyzer_registry,
+)
 from pytest_drill_sergeant.core.cli_config import (
     DrillSergeantArgumentParser,
     create_pytest_config_from_args,
@@ -32,6 +38,11 @@ from pytest_drill_sergeant.core.config_manager import (
 from pytest_drill_sergeant.core.config_schema import DSConfig, create_default_config
 
 __all__ = [
+    # Analysis pipeline
+    "AnalysisPipeline",
+    "AnalyzerRegistry",
+    "create_analysis_pipeline",
+    "get_analyzer_registry",
     # Configuration manager
     "ConfigManager",
     "ConfigurationError",

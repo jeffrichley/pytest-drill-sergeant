@@ -6,9 +6,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from pytest_drill_sergeant.core.analyzers.private_access_detector import (
-    PrivateAccessDetector,
-)
+from pytest_drill_sergeant.core.analysis_pipeline import create_analysis_pipeline
 from pytest_drill_sergeant.core.cli_config import DrillSergeantArgumentParser
 from pytest_drill_sergeant.core.config_context import get_config, initialize_config
 from pytest_drill_sergeant.core.file_discovery import create_file_discovery
@@ -101,8 +99,13 @@ def _initialize_analyzers() -> None:
         from pytest_drill_sergeant.core.config_context import initialize_config
 
         initialize_config()  # Use defaults for plugin mode
-        detector = PrivateAccessDetector()
-        storage.add_analyzer(detector)
+        
+        # Create centralized analysis pipeline with all default analyzers
+        pipeline = create_analysis_pipeline()
+        
+        # Add all analyzers from pipeline to storage
+        for analyzer in pipeline.analyzers:
+            storage.add_analyzer(analyzer)
     except Exception as e:
         import logging
 

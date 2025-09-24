@@ -314,7 +314,7 @@ DS302 = { enabled = true, severity = "warning" }
 # Private Access rule - error level
 DS201 = { enabled = true, severity = "error" }
 
-# Mock Over-specification rule - warning level  
+# Mock Over-specification rule - warning level
 DS204 = { enabled = true, severity = "warning" }
 
 # Structural Equality rule - info level

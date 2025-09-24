@@ -6,12 +6,10 @@ as a standalone process that can be used by IDEs.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import sys
 from typing import Any
 
-from pygls.server import LanguageServer
 from lsprotocol.types import (
     InitializeParams,
     InitializeResult,
@@ -30,28 +28,30 @@ logger = logging.getLogger(__name__)
 
 def create_server() -> DrillSergeantLanguageServer:
     """Create and configure the drill sergeant language server.
-    
+
     Returns:
         Configured DrillSergeantLanguageServer instance
     """
     # Create server
     server = DrillSergeantLanguageServer()
-    
+
     # Set up file watching
     setup_file_watching(server)
-    
+
     # Configure server capabilities
     @server.feature("initialize")
-    def initialize(ls: DrillSergeantLanguageServer, params: InitializeParams) -> InitializeResult:
+    def initialize(
+        ls: DrillSergeantLanguageServer, params: InitializeParams
+    ) -> InitializeResult:
         """Initialize the language server."""
         logger.info("Initializing drill sergeant language server")
-        
+
         # Configure server capabilities
         capabilities = ServerCapabilities(
             text_document_sync=TextDocumentSyncKind.Full,
             diagnostic_provider=True,
         )
-        
+
         return InitializeResult(
             capabilities=capabilities,
             server_info={
@@ -59,12 +59,12 @@ def create_server() -> DrillSergeantLanguageServer:
                 "version": __version__,
             },
         )
-    
+
     @server.feature("initialized")
     def initialized(ls: DrillSergeantLanguageServer, params: Any) -> None:
         """Handle initialized notification."""
         logger.info("Drill sergeant language server initialized")
-    
+
     return server
 
 
@@ -76,18 +76,19 @@ async def main() -> None:
             level=logging.INFO,
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
-        
+
         logger.info("Starting drill sergeant language server")
-        
+
         # Create and run server
         server = create_server()
-        
+
         # Run the server
         await server.start_io()
-        
+
     except Exception as e:
         logger.error(f"Failed to start language server: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -100,19 +101,20 @@ def run_server() -> None:
             level=logging.INFO,
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
-        
+
         logger.info("Starting drill sergeant language server")
-        
+
         # Create server
         server = create_server()
-        
+
         # Use pygls's built-in event loop handling
         # This should handle existing event loops properly
         server.start_io()
-        
+
     except Exception as e:
         logger.error(f"Failed to start language server: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

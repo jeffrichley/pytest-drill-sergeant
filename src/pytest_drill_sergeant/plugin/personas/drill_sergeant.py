@@ -86,6 +86,13 @@ class DrillSergeantPersona(PersonaStrategy):
                 "Test {test_name} - UNACCEPTABLE! Stop calling PRIVATE methods, RECRUIT!",
                 "Test {test_name} is accessing PRIVATE methods! That's NOT how we operate, maggot!",
             ],
+            "test_fail_mock_overspec": [
+                "Test {test_name} is a MOCK-UP of incompetence! STOP micromanaging the internals, RECRUIT!",
+                "Test {test_name} is over-mocking like a rookie! Focus on the MISSION, not the details!",
+                "WHAT IS THIS AMATEUR HOUR?! Test {test_name} has TOO MANY mock assertions! Focus on BEHAVIOR, soldier!",
+                "Test {test_name} is micromanaging mocks like a control freak! Test the OUTCOME, not the process, maggot!",
+                "UNACCEPTABLE! Test {test_name} is drowning in mock assertions! Less mocking, more RESULTS!",
+            ],
             "summary_excellent": [
                 "EXCELLENT WORK, RECRUITS! Your test suite is BATTLE-READY! NOW MAINTAIN THIS STANDARD!",
                 "OUTSTANDING! BRS {brs_score:.1f} shows your unit is COMBAT-READY!",

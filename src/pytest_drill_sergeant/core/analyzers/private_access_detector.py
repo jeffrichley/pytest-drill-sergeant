@@ -79,6 +79,10 @@ class PrivateAccessDetector:
         """
         findings = []
 
+        # Only analyze test files - skip source code files
+        if not self._is_test_file(file_path):
+            return findings
+
         try:
             # Parse the file
             with open(file_path, encoding="utf-8") as f:
@@ -249,6 +253,10 @@ class PrivateAccessDetector:
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Attribute):
                     if self._is_private_method(node.func.attr):
+                        # Check if this is a self-call (class calling its own method)
+                        if self._is_self_call(node.func):
+                            continue  # Skip self-calls - they're allowed
+                        
                         rule_spec = self._get_rule_spec()
                         finding = Finding(
                             code=rule_spec.code,
@@ -282,6 +290,10 @@ class PrivateAccessDetector:
         Returns:
             True if the module is private
         """
+        # Skip standard Python modules that start with underscore
+        if module_name in ["__future__", "__main__", "__builtin__", "__builtins__"]:
+            return False
+        
         # Check for private modules (starting with underscore)
         if module_name.startswith("_"):
             return True
@@ -315,6 +327,53 @@ class PrivateAccessDetector:
             True if the method is private
         """
         return method_name.startswith("_")
+
+    def _is_self_call(self, func_attr: ast.Attribute) -> bool:
+        """Check if this is a self-call (class calling its own method).
+
+        Args:
+            func_attr: The function attribute node
+
+        Returns:
+            True if this is a self-call
+        """
+        # Check if the function is called on 'self'
+        if isinstance(func_attr.value, ast.Name) and func_attr.value.id == "self":
+            return True
+        
+        # Check if it's a chained call like self.something._private_method()
+        if isinstance(func_attr.value, ast.Attribute):
+            # Walk up the chain to see if it starts with 'self'
+            current = func_attr.value
+            while isinstance(current, ast.Attribute):
+                current = current.value
+            if isinstance(current, ast.Name) and current.id == "self":
+                return True
+        
+        return False
+
+    def _is_test_file(self, file_path: Path) -> bool:
+        """Check if a file is a test file.
+
+        Args:
+            file_path: Path to the file to check
+
+        Returns:
+            True if the file is a test file
+        """
+        # Check if the file is in a test directory
+        if "test" in file_path.parts:
+            return True
+        
+        # Check if the filename starts with test_
+        if file_path.name.startswith("test_"):
+            return True
+        
+        # Check if the filename ends with _test.py
+        if file_path.name.endswith("_test.py"):
+            return True
+        
+        return False
 
     def _get_code_snippet(self, node: ast.AST) -> str | None:
         """Get a code snippet around the given AST node.

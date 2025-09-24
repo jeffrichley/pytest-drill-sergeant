@@ -1,0 +1,1241 @@
+
+📁 Analyzing directory: tests (61 Python files)
+  ✅ conftest.py - BIS Score: 100.0 (A+)
+  ✅ constants.py - BIS Score: 100.0 (A+)
+  ✅ __init__.py - BIS Score: 100.0 (A+)
+
+  🔍 unit/test_dynamic_bis_calculator.py
+    ⚠️  1. tests/unit/test_dynamic_bis_calculator.py:14: Test 'test_init' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_dynamic_bis_calculator.py:19: Test 'test_extract_metrics_from_findings' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_dynamic_bis_calculator.py:59: Test 'test_calculate_bis_perfect_score' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_dynamic_bis_calculator.py:68: Test 'test_calculate_bis_with_violations' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_dynamic_bis_calculator.py:86: Test 'test_calculate_bis_with_rewards' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_dynamic_bis_calculator.py:99: Test 'test_get_grade' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_dynamic_bis_calculator.py:116: Test 'test_get_score_interpretation' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_dynamic_bis_calculator.py:126: Test 'test_get_breakdown' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_dynamic_bis_calculator.py:155: Test 'test_unknown_rule_code' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_dynamic_bis_calculator.py:175: Test 'test_score_bounds' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_dynamic_bis_calculator.py:201: Test 'test_penalty_capping' lacks AAA comment structure
+    📊 BIS Score: 96.7 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_final_coverage.py
+    ⚠️  1. tests/unit/test_final_coverage.py:8: Test 'test_direct_import_coverage' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_final_coverage.py:24: Test 'test_module_execution_coverage' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_final_coverage.py:41: Test 'test_string_operations_coverage' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_final_coverage.py:11: Accessing private attribute: __version__
+    ⚠️  5. tests/unit/test_final_coverage.py:15: Accessing private attribute: __all__
+    ⚠️  6. tests/unit/test_final_coverage.py:19: Accessing private attribute: __doc__
+    ⚠️  7. tests/unit/test_final_coverage.py:35: Accessing private attribute: __version__
+    ⚠️  8. tests/unit/test_final_coverage.py:38: Accessing private attribute: __all__
+    ⚠️  9. tests/unit/test_final_coverage.py:44: Accessing private attribute: __version__
+    ⚠️  10. tests/unit/test_final_coverage.py:48: Accessing private attribute: __all__
+    ⚠️  11. tests/unit/test_final_coverage.py:52: Accessing private attribute: __version__
+    ⚠️  12. tests/unit/test_final_coverage.py:53: Accessing private attribute: __all__
+    ⚠️  13. tests/unit/test_final_coverage.py:44: Comparing string representation: str()
+    📊 BIS Score: 16.1 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_structural_equality_detector.py
+    ⚠️  1. tests/unit/test_structural_equality_detector.py:37: Test 'test_init' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_structural_equality_detector.py:43: Test 'test_get_rule_spec' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_structural_equality_detector.py:50: Test 'test_detect_dict_access' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_structural_equality_detector.py:68: Test 'test_detect_vars_calls' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_structural_equality_detector.py:86: Test 'test_detect_dataclass_asdict' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_structural_equality_detector.py:104: Test 'test_detect_repr_comparisons' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_structural_equality_detector.py:122: Test 'test_detect_str_comparisons' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_structural_equality_detector.py:140: Test 'test_detect_getattr_private' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_structural_equality_detector.py:159: Test 'test_ignore_non_assert_context' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_structural_equality_detector.py:176: Test 'test_ignore_non_test_functions' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_structural_equality_detector.py:189: Test 'test_handle_nested_calls' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_structural_equality_detector.py:207: Test 'test_syntax_error_handling' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_structural_equality_detector.py:220: Test 'test_analysis_error_handling' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_structural_equality_detector.py:232: Test 'test_get_object_name' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_structural_equality_detector.py:254: Test 'test_get_code_snippet' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_structural_equality_detector.py:262: Test 'test_analyze_file_integration' missing AAA sections: act, arrange
+    ⚠️  17. tests/unit/test_structural_equality_detector.py:299: Test 'test_confidence_scoring' missing AAA sections: act, arrange
+    ⚠️  18. tests/unit/test_structural_equality_detector.py:321: Test 'test_finding_metadata' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_structural_equality_detector.py:341: Test 'test_rule_spec_integration' lacks AAA comment structure
+    📊 BIS Score: 94.3 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_aaa_comment_detector.py
+    ⚠️  1. tests/unit/test_aaa_comment_detector.py:18: Test 'test_init' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_aaa_comment_detector.py:24: Test 'test_rule_spec' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_aaa_comment_detector.py:83: Test 'test_analyze_file_incorrect_order' has incorrect AAA order: act → arrange → assert
+    ⚠️  4. tests/unit/test_aaa_comment_detector.py:111: Test 'test_analyze_file_incomplete_aaa' missing AAA sections: assert
+    ⚠️  5. tests/unit/test_aaa_comment_detector.py:138: Test 'test_analyze_file_duplicate_sections' has duplicate AAA sections: arrange
+    ⚠️  6. tests/unit/test_aaa_comment_detector.py:250: Test 'test_analyze_file_empty_function' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_aaa_comment_detector.py:267: Test 'test_analyze_file_syntax_error' missing AAA sections: act, assert
+    ⚠️  8. tests/unit/test_aaa_comment_detector.py:285: Test 'test_analyze_file_nonexistent_file' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_aaa_comment_detector.py:292: Test 'test_analyze_file_empty_file' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_aaa_comment_detector.py:303: Test 'test_analyze_file_non_python_file' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_aaa_comment_detector.py:314: Test 'test_extract_comments' has duplicate AAA sections: arrange, act, assert
+    ⚠️  12. tests/unit/test_aaa_comment_detector.py:376: Test 'test_is_correct_order' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_aaa_comment_detector.py:395: Test 'test_analyze_aaa_structure' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_aaa_comment_detector.py:423: Test 'test_analyze_aaa_structure_missing_sections' missing AAA sections: assert
+    ⚠️  15. tests/unit/test_aaa_comment_detector.py:447: Test 'test_analyze_aaa_structure_duplicates' missing AAA sections: act, assert
+    ⚠️  16. tests/unit/test_aaa_comment_detector.py:472: Test 'test_extract_aaa_sections_from_comment' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_aaa_comment_detector.py:498: Test 'test_analyze_file_multi_section_comments' has duplicate AAA sections: act, assert
+    ⚠️  18. tests/unit/test_aaa_comment_detector.py:525: Test 'test_analyze_file_mixed_aaa_sections' has duplicate AAA sections: act
+    ⚠️  19. tests/unit/test_aaa_comment_detector.py:550: Test 'test_analyze_file_non_aaa_comments' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_aaa_comment_detector.py:577: Test 'test_confidence_levels' has incorrect AAA order: act → arrange → assert
+    ⚠️  21. tests/unit/test_aaa_comment_detector.py:27: Calling private method: _get_rule_spec
+    ⚠️  22. tests/unit/test_aaa_comment_detector.py:331: Calling private method: _extract_comments
+    ⚠️  23. tests/unit/test_aaa_comment_detector.py:413: Calling private method: _analyze_aaa_structure
+    ⚠️  24. tests/unit/test_aaa_comment_detector.py:439: Calling private method: _analyze_aaa_structure
+    ⚠️  25. tests/unit/test_aaa_comment_detector.py:465: Calling private method: _analyze_aaa_structure
+    ⚠️  26. tests/unit/test_aaa_comment_detector.py:347: Calling private method: _identify_aaa_section
+    ⚠️  27. tests/unit/test_aaa_comment_detector.py:348: Calling private method: _identify_aaa_section
+    ⚠️  28. tests/unit/test_aaa_comment_detector.py:349: Calling private method: _identify_aaa_section
+    ⚠️  29. tests/unit/test_aaa_comment_detector.py:350: Calling private method: _identify_aaa_section
+    ⚠️  30. tests/unit/test_aaa_comment_detector.py:351: Calling private method: _identify_aaa_section
+    ⚠️  31. tests/unit/test_aaa_comment_detector.py:354: Calling private method: _identify_aaa_section
+    ⚠️  32. tests/unit/test_aaa_comment_detector.py:355: Calling private method: _identify_aaa_section
+    ⚠️  33. tests/unit/test_aaa_comment_detector.py:356: Calling private method: _identify_aaa_section
+    ⚠️  34. tests/unit/test_aaa_comment_detector.py:357: Calling private method: _identify_aaa_section
+    ⚠️  35. tests/unit/test_aaa_comment_detector.py:358: Calling private method: _identify_aaa_section
+    ⚠️  36. tests/unit/test_aaa_comment_detector.py:361: Calling private method: _identify_aaa_section
+    ⚠️  37. tests/unit/test_aaa_comment_detector.py:362: Calling private method: _identify_aaa_section
+    ⚠️  38. tests/unit/test_aaa_comment_detector.py:363: Calling private method: _identify_aaa_section
+    ⚠️  39. tests/unit/test_aaa_comment_detector.py:364: Calling private method: _identify_aaa_section
+    ⚠️  40. tests/unit/test_aaa_comment_detector.py:365: Calling private method: _identify_aaa_section
+    ⚠️  41. tests/unit/test_aaa_comment_detector.py:368: Calling private method: _identify_aaa_section
+    ⚠️  42. tests/unit/test_aaa_comment_detector.py:369: Calling private method: _identify_aaa_section
+    ⚠️  43. tests/unit/test_aaa_comment_detector.py:370: Calling private method: _identify_aaa_section
+    ⚠️  44. tests/unit/test_aaa_comment_detector.py:373: Calling private method: _identify_aaa_section
+    ⚠️  45. tests/unit/test_aaa_comment_detector.py:374: Calling private method: _identify_aaa_section
+    ⚠️  46. tests/unit/test_aaa_comment_detector.py:381: Calling private method: _is_correct_order
+    ⚠️  47. tests/unit/test_aaa_comment_detector.py:382: Calling private method: _is_correct_order
+    ⚠️  48. tests/unit/test_aaa_comment_detector.py:383: Calling private method: _is_correct_order
+    ⚠️  49. tests/unit/test_aaa_comment_detector.py:384: Calling private method: _is_correct_order
+    ⚠️  50. tests/unit/test_aaa_comment_detector.py:387: Calling private method: _is_correct_order
+    ⚠️  51. tests/unit/test_aaa_comment_detector.py:388: Calling private method: _is_correct_order
+    ⚠️  52. tests/unit/test_aaa_comment_detector.py:389: Calling private method: _is_correct_order
+    ⚠️  53. tests/unit/test_aaa_comment_detector.py:392: Calling private method: _is_correct_order
+    ⚠️  54. tests/unit/test_aaa_comment_detector.py:393: Calling private method: _is_correct_order
+    ⚠️  55. tests/unit/test_aaa_comment_detector.py:477: Calling private method: _extract_aaa_sections_from_comment
+    ⚠️  56. tests/unit/test_aaa_comment_detector.py:478: Calling private method: _extract_aaa_sections_from_comment
+    ⚠️  57. tests/unit/test_aaa_comment_detector.py:479: Calling private method: _extract_aaa_sections_from_comment
+    ⚠️  58. tests/unit/test_aaa_comment_detector.py:482: Calling private method: _extract_aaa_sections_from_comment
+    ⚠️  59. tests/unit/test_aaa_comment_detector.py:483: Calling private method: _extract_aaa_sections_from_comment
+    ⚠️  60. tests/unit/test_aaa_comment_detector.py:486: Calling private method: _extract_aaa_sections_from_comment
+    ⚠️  61. tests/unit/test_aaa_comment_detector.py:487: Calling private method: _extract_aaa_sections_from_comment
+    ⚠️  62. tests/unit/test_aaa_comment_detector.py:488: Calling private method: _extract_aaa_sections_from_comment
+    ⚠️  63. tests/unit/test_aaa_comment_detector.py:491: Calling private method: _extract_aaa_sections_from_comment
+    ⚠️  64. tests/unit/test_aaa_comment_detector.py:494: Calling private method: _extract_aaa_sections_from_comment
+    ⚠️  65. tests/unit/test_aaa_comment_detector.py:495: Calling private method: _extract_aaa_sections_from_comment
+    ⚠️  66. tests/unit/test_aaa_comment_detector.py:496: Calling private method: _extract_aaa_sections_from_comment
+    📊 BIS Score: 19.0 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_plugin_manager.py
+    ⚠️  1. tests/unit/test_plugin_manager.py:143: Test 'test_init' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_plugin_manager.py:149: Test 'test_register_plugin' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_plugin_manager.py:175: Test 'test_register_plugin_duplicate' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_plugin_manager.py:196: Test 'test_unregister_plugin' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_plugin_manager.py:219: Test 'test_unregister_plugin_not_found' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_plugin_manager.py:228: Test 'test_get_plugin' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_plugin_manager.py:249: Test 'test_get_plugins_by_category' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_plugin_manager.py:291: Test 'test_get_enabled_plugins' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_plugin_manager.py:325: Test 'test_initialize_all' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_plugin_manager.py:349: Test 'test_initialize_all_with_exception' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_plugin_manager.py:372: Test 'test_cleanup_all' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_plugin_manager.py:392: Test 'test_cleanup_all_with_exception' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_plugin_manager.py:415: Test 'test_list_plugins' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_plugin_manager.py:443: Test 'test_init' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_plugin_manager.py:448: Test 'test_load_plugin' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_plugin_manager.py:468: Test 'test_load_plugin_with_exception' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_plugin_manager.py:496: Test 'test_get_analyzers' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_plugin_manager.py:517: Test 'test_get_personas' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_plugin_manager.py:538: Test 'test_get_reporters' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_plugin_manager.py:559: Test 'test_initialize_all' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_plugin_manager.py:565: Test 'test_cleanup_all' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_plugin_manager.py:33: Accessing private attribute: _initialized
+    ⚠️  23. tests/unit/test_plugin_manager.py:36: Accessing private attribute: _initialized
+    ⚠️  24. tests/unit/test_plugin_manager.py:39: Accessing private attribute: _initialized
+    ⚠️  25. tests/unit/test_plugin_manager.py:43: Accessing private attribute: _initialized
+    ⚠️  26. tests/unit/test_plugin_manager.py:46: Accessing private attribute: _initialized
+    ⚠️  27. tests/unit/test_plugin_manager.py:54: Accessing private attribute: _initialized
+    ⚠️  28. tests/unit/test_plugin_manager.py:57: Accessing private attribute: _initialized
+    ⚠️  29. tests/unit/test_plugin_manager.py:60: Accessing private attribute: _initialized
+    ⚠️  30. tests/unit/test_plugin_manager.py:64: Accessing private attribute: _initialized
+    ⚠️  31. tests/unit/test_plugin_manager.py:67: Accessing private attribute: _initialized
+    ⚠️  32. tests/unit/test_plugin_manager.py:84: Accessing private attribute: _initialized
+    ⚠️  33. tests/unit/test_plugin_manager.py:87: Accessing private attribute: _initialized
+    ⚠️  34. tests/unit/test_plugin_manager.py:90: Accessing private attribute: _initialized
+    ⚠️  35. tests/unit/test_plugin_manager.py:94: Accessing private attribute: _initialized
+    ⚠️  36. tests/unit/test_plugin_manager.py:97: Accessing private attribute: _initialized
+    ⚠️  37. tests/unit/test_plugin_manager.py:112: Accessing private attribute: _initialized
+    ⚠️  38. tests/unit/test_plugin_manager.py:115: Accessing private attribute: _initialized
+    ⚠️  39. tests/unit/test_plugin_manager.py:118: Accessing private attribute: _initialized
+    ⚠️  40. tests/unit/test_plugin_manager.py:122: Accessing private attribute: _initialized
+    ⚠️  41. tests/unit/test_plugin_manager.py:125: Accessing private attribute: _initialized
+    ⚠️  42. tests/unit/test_plugin_manager.py:145: Accessing private attribute: _plugins
+    ⚠️  43. tests/unit/test_plugin_manager.py:146: Accessing private attribute: _metadata
+    ⚠️  44. tests/unit/test_plugin_manager.py:147: Accessing private attribute: _by_category
+    ⚠️  45. tests/unit/test_plugin_manager.py:162: Accessing private attribute: _logger
+    ⚠️  46. tests/unit/test_plugin_manager.py:165: Accessing private attribute: _plugins
+    ⚠️  47. tests/unit/test_plugin_manager.py:167: Accessing private attribute: _metadata
+    ⚠️  48. tests/unit/test_plugin_manager.py:169: Accessing private attribute: _by_category
+    ⚠️  49. tests/unit/test_plugin_manager.py:211: Accessing private attribute: _logger
+    ⚠️  50. tests/unit/test_plugin_manager.py:214: Accessing private attribute: _plugins
+    ⚠️  51. tests/unit/test_plugin_manager.py:215: Accessing private attribute: _metadata
+    ⚠️  52. tests/unit/test_plugin_manager.py:221: Accessing private attribute: _logger
+    ⚠️  53. tests/unit/test_plugin_manager.py:366: Accessing private attribute: _logger
+    ⚠️  54. tests/unit/test_plugin_manager.py:409: Accessing private attribute: _logger
+    ⚠️  55. tests/unit/test_plugin_manager.py:461: Accessing private attribute: _logger
+    ⚠️  56. tests/unit/test_plugin_manager.py:490: Accessing private attribute: _logger
+    ⚠️  57. tests/unit/test_plugin_manager.py:166: Accessing private attribute: _plugins
+    ⚠️  58. tests/unit/test_plugin_manager.py:168: Accessing private attribute: _metadata
+    ⚠️  59. tests/unit/test_plugin_manager.py:170: Accessing private attribute: _by_category
+    ⚠️  60. tests/unit/test_plugin_manager.py:216: Accessing private attribute: _by_category
+    ⚠️  61. tests/unit/test_plugin_manager.py:32: Calling private method: __init__
+    ⚠️  62. tests/unit/test_plugin_manager.py:53: Calling private method: __init__
+    ⚠️  63. tests/unit/test_plugin_manager.py:83: Calling private method: __init__
+    ⚠️  64. tests/unit/test_plugin_manager.py:111: Calling private method: __init__
+    ⚠️  65. tests/unit/test_plugin_manager.py:481: Calling private method: __init__
+    📊 BIS Score: 18.7 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_core_init_direct.py
+    ⚠️  1. tests/unit/test_core_init_direct.py:6: Test 'test_core_init_direct' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_core_init_direct.py:13: Accessing private attribute: __all__
+    ⚠️  3. tests/unit/test_core_init_direct.py:38: Accessing private attribute: __file__
+    📊 BIS Score: 54.7 (C-) - Poor - Too focused on implementation details
+
+  🔍 unit/test_extensibility_simple.py
+    ⚠️  1. tests/unit/test_extensibility_simple.py:28: Test 'test_to_bool_with_none' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_extensibility_simple.py:36: Test 'test_to_bool_with_boolean' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_extensibility_simple.py:44: Test 'test_to_bool_with_string_true_values' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_extensibility_simple.py:51: Test 'test_to_bool_with_string_false_values' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_extensibility_simple.py:58: Test 'test_to_bool_with_invalid_string' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_extensibility_simple.py:66: Test 'test_to_bool_with_invalid_type' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_extensibility_simple.py:74: Test 'test_to_options_with_none' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_extensibility_simple.py:79: Test 'test_to_options_with_mapping' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_extensibility_simple.py:85: Test 'test_to_options_with_dict' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_extensibility_simple.py:91: Test 'test_to_options_with_invalid_type' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_extensibility_simple.py:101: Test 'test_plugin_template_creation_minimal' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_extensibility_simple.py:122: Test 'test_plugin_template_creation_full' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_extensibility_simple.py:147: Test 'test_plugin_template_validation_missing_required' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_extensibility_simple.py:159: Test 'test_plugin_template_serialization' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_extensibility_simple.py:179: Test 'test_plugin_template_deserialization' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_extensibility_simple.py:209: Test 'test_analyzer_plugin_template' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_extensibility_simple.py:229: Test 'test_persona_plugin_template' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_extensibility_simple.py:249: Test 'test_reporter_plugin_template' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_extensibility_simple.py:271: Test 'test_plugin_template_with_empty_config' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_extensibility_simple.py:283: Test 'test_plugin_template_with_none_config' missing AAA sections: assert, arrange
+    ⚠️  21. tests/unit/test_extensibility_simple.py:296: Test 'test_plugin_template_with_complex_config' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_extensibility_simple.py:315: Test 'test_plugin_template_with_empty_lists' lacks AAA comment structure
+    ⚠️  23. tests/unit/test_extensibility_simple.py:335: Test 'test_plugin_template_with_large_lists' lacks AAA comment structure
+    ⚠️  24. tests/unit/test_extensibility_simple.py:351: Test 'test_plugin_template_with_unicode' lacks AAA comment structure
+    ⚠️  25. tests/unit/test_extensibility_simple.py:369: Test 'test_plugin_template_with_special_characters' lacks AAA comment structure
+    📊 BIS Score: 92.5 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_plugin_hooks.py
+    ⚠️  1. tests/unit/test_plugin_hooks.py:28: Test 'test_pytest_addoption' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_plugin_hooks.py:43: Test 'test_pytest_configure' has duplicate AAA sections: assert, assert
+    ⚠️  3. tests/unit/test_plugin_hooks.py:81: Test 'test_pytest_configure_no_ds_options' has duplicate AAA sections: assert, assert
+    ⚠️  4. tests/unit/test_plugin_hooks.py:113: Test 'test_plan_item_order_pure_function' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_plugin_hooks.py:124: Test 'test_pytest_collection_modifyitems_mutates_boundary' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_plugin_hooks.py:137: Test 'test_pytest_runtest_setup' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_plugin_hooks.py:144: Test 'test_pytest_runtest_call' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_plugin_hooks.py:151: Test 'test_pytest_runtest_logreport' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_plugin_hooks.py:158: Test 'test_pytest_terminal_summary' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_plugin_hooks.py:167: Test 'test_pytest_sessionfinish' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_plugin_hooks.py:175: Test 'test_pytest_configure_with_mixed_options' has duplicate AAA sections: assert, assert
+    ⚠️  12. tests/unit/test_plugin_hooks.py:235: Test 'test_pytest_configure_environment_preservation' has duplicate AAA sections: assert
+    ⚠️  13. tests/unit/test_plugin_hooks.py:253: Test 'test_pytest_configure_exception_handling' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_plugin_hooks.py:10: Importing private module: _pytest.nodes
+    ⚠️  15. tests/unit/test_plugin_hooks.py:47: Accessing private attribute: __dict__
+    ⚠️  16. tests/unit/test_plugin_hooks.py:85: Accessing private attribute: __dict__
+    ⚠️  17. tests/unit/test_plugin_hooks.py:179: Accessing private attribute: __dict__
+    ⚠️  18. tests/unit/test_plugin_hooks.py:239: Accessing private attribute: __dict__
+    ⚠️  19. tests/unit/test_plugin_hooks.py:257: Accessing private attribute: __dict__
+    📊 BIS Score: 21.1 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_plugin_module.py
+    ⚠️  1. tests/unit/test_plugin_module.py:23: Test 'test_plugin_module_imports' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_plugin_module.py:43: Test 'test_plugin_module_all' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_plugin_module.py:45: Accessing private attribute: __all__
+    📊 BIS Score: 76.9 (B+) - Good - Mostly behavior-focused with minor implementation details
+
+  🔍 unit/test_output_manager_simple.py
+    ⚠️  1. tests/unit/test_output_manager_simple.py:36: Test 'test_output_manager_initialization' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_output_manager_simple.py:48: Test 'test_output_manager_initialization_with_custom_config' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_output_manager_simple.py:79: Test 'test_add_single_test_result' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_output_manager_simple.py:91: Test 'test_add_multiple_test_results' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_output_manager_simple.py:107: Test 'test_add_test_results_empty_list' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_output_manager_simple.py:116: Test 'test_clear_results' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_output_manager_simple.py:136: Test 'test_set_metrics' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_output_manager_simple.py:157: Test 'test_set_metrics_twice' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_output_manager_simple.py:204: Test 'test_print_finding_with_terminal_format' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_output_manager_simple.py:223: Test 'test_print_finding_without_terminal_format' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_output_manager_simple.py:242: Test 'test_print_test_result_with_terminal_format' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_output_manager_simple.py:253: Test 'test_print_test_result_without_terminal_format' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_output_manager_simple.py:264: Test 'test_print_summary_with_terminal_format' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_output_manager_simple.py:287: Test 'test_print_summary_without_terminal_format' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_output_manager_simple.py:310: Test 'test_print_summary_without_metrics' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_output_manager_simple.py:325: Test 'test_generate_json_report' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_output_manager_simple.py:348: Test 'test_generate_json_report_without_metrics' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_output_manager_simple.py:361: Test 'test_generate_sarif_report' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_output_manager_simple.py:384: Test 'test_generate_sarif_report_without_metrics' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_output_manager_simple.py:397: Test 'test_generate_all_outputs' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_output_manager_simple.py:429: Test 'test_generate_all_outputs_without_metrics' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_output_manager_simple.py:440: Test 'test_generate_all_outputs_empty_formats' lacks AAA comment structure
+    ⚠️  23. tests/unit/test_output_manager_simple.py:463: Test 'test_save_json_report_with_path' lacks AAA comment structure
+    ⚠️  24. tests/unit/test_output_manager_simple.py:485: Test 'test_save_json_report_with_config_path' lacks AAA comment structure
+    ⚠️  25. tests/unit/test_output_manager_simple.py:505: Test 'test_save_json_report_without_path' lacks AAA comment structure
+    ⚠️  26. tests/unit/test_output_manager_simple.py:527: Test 'test_save_json_report_without_metrics' lacks AAA comment structure
+    ⚠️  27. tests/unit/test_output_manager_simple.py:540: Test 'test_save_sarif_report_with_path' lacks AAA comment structure
+    ⚠️  28. tests/unit/test_output_manager_simple.py:562: Test 'test_save_sarif_report_with_config_path' lacks AAA comment structure
+    ⚠️  29. tests/unit/test_output_manager_simple.py:582: Test 'test_save_sarif_report_without_path' lacks AAA comment structure
+    ⚠️  30. tests/unit/test_output_manager_simple.py:604: Test 'test_save_sarif_report_without_metrics' lacks AAA comment structure
+    ⚠️  31. tests/unit/test_output_manager_simple.py:635: Test 'test_full_workflow' missing AAA sections: act, arrange
+    ⚠️  32. tests/unit/test_output_manager_simple.py:723: Test 'test_error_recovery' missing AAA sections: assert, arrange
+    ⚠️  33. tests/unit/test_output_manager_simple.py:45: Accessing private attribute: _test_results
+    ⚠️  34. tests/unit/test_output_manager_simple.py:46: Accessing private attribute: _metrics
+    ⚠️  35. tests/unit/test_output_manager_simple.py:155: Accessing private attribute: _metrics
+    ⚠️  36. tests/unit/test_output_manager_simple.py:181: Accessing private attribute: _metrics
+    ⚠️  37. tests/unit/test_output_manager_simple.py:184: Accessing private attribute: _metrics
+    ⚠️  38. tests/unit/test_output_manager_simple.py:721: Accessing private attribute: _metrics
+    ⚠️  39. tests/unit/test_output_manager_simple.py:88: Accessing private attribute: _test_results
+    ⚠️  40. tests/unit/test_output_manager_simple.py:89: Accessing private attribute: _test_results
+    ⚠️  41. tests/unit/test_output_manager_simple.py:103: Accessing private attribute: _test_results
+    ⚠️  42. tests/unit/test_output_manager_simple.py:104: Accessing private attribute: _test_results
+    ⚠️  43. tests/unit/test_output_manager_simple.py:105: Accessing private attribute: _test_results
+    ⚠️  44. tests/unit/test_output_manager_simple.py:114: Accessing private attribute: _test_results
+    ⚠️  45. tests/unit/test_output_manager_simple.py:127: Accessing private attribute: _test_results
+    ⚠️  46. tests/unit/test_output_manager_simple.py:130: Accessing private attribute: _test_results
+    ⚠️  47. tests/unit/test_output_manager_simple.py:720: Accessing private attribute: _test_results
+    📊 BIS Score: 15.4 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_mock_overspec_detector.py
+    ⚠️  1. tests/unit/test_mock_overspec_detector.py:25: Test 'test_detector_initialization' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_mock_overspec_detector.py:33: Test 'test_rule_spec' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_mock_overspec_detector.py:44: Test 'test_is_mock_target_allowed_basic_patterns' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_mock_overspec_detector.py:58: Test 'test_is_mock_target_allowed_complex_patterns' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_mock_overspec_detector.py:71: Test 'test_extract_mock_target_simple_name' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_mock_overspec_detector.py:82: Test 'test_extract_mock_target_chained_calls' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_mock_overspec_detector.py:93: Test 'test_extract_mock_target_complex_expression' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_mock_overspec_detector.py:104: Test 'test_count_mock_assertions_under_threshold' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_mock_overspec_detector.py:123: Test 'test_count_mock_assertions_over_threshold' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_mock_overspec_detector.py:153: Test 'test_allowlist_filtering' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_mock_overspec_detector.py:177: Test 'test_mixed_allowed_and_disallowed_mocks' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_mock_overspec_detector.py:198: Test 'test_multiple_test_functions' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_mock_overspec_detector.py:235: Test 'test_different_mock_assertion_types' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_mock_overspec_detector.py:259: Test 'test_syntax_error_handling' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_mock_overspec_detector.py:273: Test 'test_empty_file' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_mock_overspec_detector.py:281: Test 'test_file_without_tests' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_mock_overspec_detector.py:302: Test 'test_nested_functions_ignored' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_mock_overspec_detector.py:324: Test 'test_finding_details' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_mock_overspec_detector.py:354: Test 'test_configuration_integration' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_mock_overspec_detector.py:35: Calling private method: _get_rule_spec
+    ⚠️  21. tests/unit/test_mock_overspec_detector.py:79: Calling private method: _extract_mock_target
+    ⚠️  22. tests/unit/test_mock_overspec_detector.py:90: Calling private method: _extract_mock_target
+    ⚠️  23. tests/unit/test_mock_overspec_detector.py:101: Calling private method: _extract_mock_target
+    ⚠️  24. tests/unit/test_mock_overspec_detector.py:49: Calling private method: _is_mock_target_allowed
+    ⚠️  25. tests/unit/test_mock_overspec_detector.py:50: Calling private method: _is_mock_target_allowed
+    ⚠️  26. tests/unit/test_mock_overspec_detector.py:51: Calling private method: _is_mock_target_allowed
+    ⚠️  27. tests/unit/test_mock_overspec_detector.py:52: Calling private method: _is_mock_target_allowed
+    ⚠️  28. tests/unit/test_mock_overspec_detector.py:55: Calling private method: _is_mock_target_allowed
+    ⚠️  29. tests/unit/test_mock_overspec_detector.py:56: Calling private method: _is_mock_target_allowed
+    ⚠️  30. tests/unit/test_mock_overspec_detector.py:63: Calling private method: _is_mock_target_allowed
+    ⚠️  31. tests/unit/test_mock_overspec_detector.py:64: Calling private method: _is_mock_target_allowed
+    ⚠️  32. tests/unit/test_mock_overspec_detector.py:65: Calling private method: _is_mock_target_allowed
+    ⚠️  33. tests/unit/test_mock_overspec_detector.py:68: Calling private method: _is_mock_target_allowed
+    ⚠️  34. tests/unit/test_mock_overspec_detector.py:69: Calling private method: _is_mock_target_allowed
+    📊 BIS Score: 19.3 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_private_access_detector.py
+    ⚠️  1. tests/unit/test_private_access_detector.py:18: Test 'test_init' missing AAA sections: act, assert
+    ⚠️  2. tests/unit/test_private_access_detector.py:25: Test 'test_analyze_file_private_imports' has duplicate AAA sections: assert
+    ⚠️  3. tests/unit/test_private_access_detector.py:63: Test 'test_analyze_file_private_attributes' missing AAA sections: act, arrange
+    ⚠️  4. tests/unit/test_private_access_detector.py:92: Test 'test_analyze_file_private_methods' missing AAA sections: act, arrange
+    ⚠️  5. tests/unit/test_private_access_detector.py:121: Test 'test_analyze_file_sut_package_private_imports' missing AAA sections: act, arrange
+    ⚠️  6. tests/unit/test_private_access_detector.py:144: Test 'test_analyze_file_no_violations' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_private_access_detector.py:167: Test 'test_analyze_file_syntax_error' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_private_access_detector.py:193: Test 'test_analyze_file_analysis_error' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_private_access_detector.py:210: Test 'test_is_private_module' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_private_access_detector.py:229: Test 'test_is_private_module_with_sut_package' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_private_access_detector.py:244: Test 'test_is_private_attribute' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_private_access_detector.py:258: Test 'test_is_private_method' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_private_access_detector.py:272: Test 'test_get_object_name' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_private_access_detector.py:298: Test 'test_comprehensive_analysis' missing AAA sections: act, arrange
+    ⚠️  15. tests/unit/test_private_access_detector.py:215: Calling private method: _is_private_module
+    ⚠️  16. tests/unit/test_private_access_detector.py:216: Calling private method: _is_private_module
+    ⚠️  17. tests/unit/test_private_access_detector.py:217: Calling private method: _is_private_module
+    ⚠️  18. tests/unit/test_private_access_detector.py:218: Calling private method: _is_private_module
+    ⚠️  19. tests/unit/test_private_access_detector.py:221: Calling private method: _is_private_module
+    ⚠️  20. tests/unit/test_private_access_detector.py:222: Calling private method: _is_private_module
+    ⚠️  21. tests/unit/test_private_access_detector.py:234: Calling private method: _is_private_module
+    ⚠️  22. tests/unit/test_private_access_detector.py:235: Calling private method: _is_private_module
+    ⚠️  23. tests/unit/test_private_access_detector.py:238: Calling private method: _is_private_module
+    ⚠️  24. tests/unit/test_private_access_detector.py:249: Calling private method: _is_private_attribute
+    ⚠️  25. tests/unit/test_private_access_detector.py:250: Calling private method: _is_private_attribute
+    ⚠️  26. tests/unit/test_private_access_detector.py:251: Calling private method: _is_private_attribute
+    ⚠️  27. tests/unit/test_private_access_detector.py:263: Calling private method: _is_private_method
+    ⚠️  28. tests/unit/test_private_access_detector.py:264: Calling private method: _is_private_method
+    ⚠️  29. tests/unit/test_private_access_detector.py:265: Calling private method: _is_private_method
+    ⚠️  30. tests/unit/test_private_access_detector.py:225: Calling private method: _is_private_module
+    ⚠️  31. tests/unit/test_private_access_detector.py:226: Calling private method: _is_private_module
+    ⚠️  32. tests/unit/test_private_access_detector.py:227: Calling private method: _is_private_module
+    ⚠️  33. tests/unit/test_private_access_detector.py:241: Calling private method: _is_private_module
+    ⚠️  34. tests/unit/test_private_access_detector.py:242: Calling private method: _is_private_module
+    ⚠️  35. tests/unit/test_private_access_detector.py:254: Calling private method: _is_private_attribute
+    ⚠️  36. tests/unit/test_private_access_detector.py:255: Calling private method: _is_private_attribute
+    ⚠️  37. tests/unit/test_private_access_detector.py:256: Calling private method: _is_private_attribute
+    ⚠️  38. tests/unit/test_private_access_detector.py:268: Calling private method: _is_private_method
+    ⚠️  39. tests/unit/test_private_access_detector.py:269: Calling private method: _is_private_method
+    ⚠️  40. tests/unit/test_private_access_detector.py:270: Calling private method: _is_private_method
+    ⚠️  41. tests/unit/test_private_access_detector.py:280: Calling private method: _get_object_name
+    ⚠️  42. tests/unit/test_private_access_detector.py:286: Calling private method: _get_object_name
+    ⚠️  43. tests/unit/test_private_access_detector.py:296: Calling private method: _get_object_name
+    📊 BIS Score: 20.8 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_plugin_discovery.py
+    ⚠️  1. tests/unit/test_plugin_discovery.py:28: Test 'test_default_config' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_plugin_discovery.py:42: Test 'test_custom_config' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_plugin_discovery.py:58: Test 'test_config_validation' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_plugin_discovery.py:73: Test 'test_init_with_default_config' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_plugin_discovery.py:83: Test 'test_init_with_custom_config' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_plugin_discovery.py:93: Test 'test_init_logger_setup' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_plugin_discovery.py:103: Test 'test_discover_plugins_disabled' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_plugin_discovery.py:113: Test 'test_discover_plugins_all_enabled' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_plugin_discovery.py:125: Test 'test_discover_plugins_partial_enabled' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_plugin_discovery.py:151: Test 'test_discover_builtin_plugins_success' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_plugin_discovery.py:195: Test 'test_discover_builtin_plugins_analyzer_error' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_plugin_discovery.py:211: Test 'test_discover_builtin_plugins_import_error' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_plugin_discovery.py:222: Test 'test_discover_entry_point_plugins_success' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_plugin_discovery.py:270: Test 'test_discover_entry_point_plugins_load_error' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_plugin_discovery.py:287: Test 'test_discover_entry_point_plugins_iter_error' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_plugin_discovery.py:301: Test 'test_discover_path_plugins_empty_paths' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_plugin_discovery.py:310: Test 'test_discover_path_plugins_nonexistent_path' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_plugin_discovery.py:327: Test 'test_discover_path_plugins_success' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_plugin_discovery.py:346: Test 'test_discover_plugins_from_path' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_plugin_discovery.py:366: Test 'test_load_plugin_from_file_success' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_plugin_discovery.py:391: Test 'test_load_plugin_from_file_error' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_plugin_discovery.py:413: Test 'test_get_module_path' lacks AAA comment structure
+    ⚠️  23. tests/unit/test_plugin_discovery.py:424: Test 'test_extract_plugin_from_module_success' lacks AAA comment structure
+    ⚠️  24. tests/unit/test_plugin_discovery.py:459: Test 'test_extract_plugin_from_module_no_valid_plugin' lacks AAA comment structure
+    ⚠️  25. tests/unit/test_plugin_discovery.py:481: Test 'test_is_valid_plugin_class_valid' lacks AAA comment structure
+    ⚠️  26. tests/unit/test_plugin_discovery.py:491: Test 'test_is_valid_plugin_class_invalid' lacks AAA comment structure
+    ⚠️  27. tests/unit/test_plugin_discovery.py:506: Test 'test_create_plugin_instance' lacks AAA comment structure
+    ⚠️  28. tests/unit/test_plugin_discovery.py:529: Test 'test_get_discovered_plugins' lacks AAA comment structure
+    ⚠️  29. tests/unit/test_plugin_discovery.py:539: Test 'test_reload_plugin_success' lacks AAA comment structure
+    ⚠️  30. tests/unit/test_plugin_discovery.py:555: Test 'test_reload_plugin_failure' lacks AAA comment structure
+    ⚠️  31. tests/unit/test_plugin_discovery.py:158: Accessing private attribute: __name__
+    ⚠️  32. tests/unit/test_plugin_discovery.py:167: Accessing private attribute: __name__
+    ⚠️  33. tests/unit/test_plugin_discovery.py:429: Accessing private attribute: __name__
+    ⚠️  34. tests/unit/test_plugin_discovery.py:531: Accessing private attribute: _discovered_plugins
+    ⚠️  35. tests/unit/test_plugin_discovery.py:81: Accessing private attribute: _discovered_plugins
+    ⚠️  36. tests/unit/test_plugin_discovery.py:101: Accessing private attribute: _logger
+    ⚠️  37. tests/unit/test_plugin_discovery.py:537: Accessing private attribute: _discovered_plugins
+    ⚠️  38. tests/unit/test_plugin_discovery.py:107: Accessing private attribute: _logger
+    ⚠️  39. tests/unit/test_plugin_discovery.py:202: Accessing private attribute: _logger
+    ⚠️  40. tests/unit/test_plugin_discovery.py:256: Accessing private attribute: _logger
+    ⚠️  41. tests/unit/test_plugin_discovery.py:267: Accessing private attribute: _discovered_plugins
+    ⚠️  42. tests/unit/test_plugin_discovery.py:280: Accessing private attribute: _logger
+    ⚠️  43. tests/unit/test_plugin_discovery.py:295: Accessing private attribute: _logger
+    ⚠️  44. tests/unit/test_plugin_discovery.py:318: Accessing private attribute: _logger
+    ⚠️  45. tests/unit/test_plugin_discovery.py:401: Accessing private attribute: _logger
+    ⚠️  46. tests/unit/test_plugin_discovery.py:516: Accessing private attribute: _logger
+    ⚠️  47. tests/unit/test_plugin_discovery.py:527: Accessing private attribute: _discovered_plugins
+    ⚠️  48. tests/unit/test_plugin_discovery.py:546: Accessing private attribute: _logger
+    ⚠️  49. tests/unit/test_plugin_discovery.py:562: Accessing private attribute: _logger
+    ⚠️  50. tests/unit/test_plugin_discovery.py:486: Calling private method: __init__
+    📊 BIS Score: 16.0 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_analysis_pipeline.py
+    ⚠️  1. tests/unit/test_analysis_pipeline.py:51: Test 'test_pipeline_initialization' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_analysis_pipeline.py:58: Test 'test_add_analyzer' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_analysis_pipeline.py:70: Test 'test_remove_analyzer' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_analysis_pipeline.py:85: Test 'test_clear_analyzers' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_analysis_pipeline.py:97: Test 'test_analyze_file_single_analyzer' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_analysis_pipeline.py:109: Test 'test_analyze_file_multiple_analyzers' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_analysis_pipeline.py:143: Test 'test_analyze_file_error_handling' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_analysis_pipeline.py:171: Test 'test_analyze_files_multiple' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_analysis_pipeline.py:223: Test 'test_registry_initialization' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_analysis_pipeline.py:228: Test 'test_register_analyzer' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_analysis_pipeline.py:236: Test 'test_create_analyzer' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_analysis_pipeline.py:243: Test 'test_create_unknown_analyzer' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_analysis_pipeline.py:248: Test 'test_create_default_pipeline' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_analysis_pipeline.py:264: Test 'test_get_analyzer_registry_singleton' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_analysis_pipeline.py:271: Test 'test_create_analysis_pipeline' lacks AAA comment structure
+    📊 BIS Score: 95.5 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_plugin_init.py
+    ⚠️  1. tests/unit/test_plugin_init.py:9: Test 'test_module_imports' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_plugin_init.py:13: Test 'test_module_has_file' lacks AAA comment structure
+    📊 BIS Score: 99.4 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_drill_sergeant_persona.py
+    ⚠️  1. tests/unit/test_drill_sergeant_persona.py:14: Test 'test_init' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_drill_sergeant_persona.py:21: Test 'test_persona_config' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_drill_sergeant_persona.py:36: Test 'test_test_pass_message' missing AAA sections: act, arrange
+    ⚠️  4. tests/unit/test_drill_sergeant_persona.py:62: Test 'test_test_fail_message_general' missing AAA sections: act, arrange
+    ⚠️  5. tests/unit/test_drill_sergeant_persona.py:96: Test 'test_test_fail_message_private_import' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_drill_sergeant_persona.py:119: Test 'test_test_fail_message_private_attribute' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_drill_sergeant_persona.py:142: Test 'test_test_fail_message_private_method' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_drill_sergeant_persona.py:165: Test 'test_summary_excellent' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_drill_sergeant_persona.py:191: Test 'test_summary_good' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_drill_sergeant_persona.py:209: Test 'test_summary_poor' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_drill_sergeant_persona.py:236: Test 'test_bis_score_excellent' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_drill_sergeant_persona.py:249: Test 'test_bis_score_good' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_drill_sergeant_persona.py:263: Test 'test_bis_score_poor' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_drill_sergeant_persona.py:277: Test 'test_brs_score_excellent' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_drill_sergeant_persona.py:290: Test 'test_brs_score_good' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_drill_sergeant_persona.py:300: Test 'test_brs_score_poor' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_drill_sergeant_persona.py:313: Test 'test_get_message_unknown_type' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_drill_sergeant_persona.py:321: Test 'test_get_message_missing_variable' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_drill_sergeant_persona.py:330: Test 'test_message_randomization' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_drill_sergeant_persona.py:342: Test 'test_all_templates_have_required_variables' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_drill_sergeant_persona.py:381: Test 'test_message_length_constraints' lacks AAA comment structure
+    📊 BIS Score: 93.7 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_ultimate_coverage.py
+    ⚠️  1. tests/unit/test_ultimate_coverage.py:10: Test 'test_scoring_models_import' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_ultimate_coverage.py:15: Test 'test_plugin_extensibility_import' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_ultimate_coverage.py:20: Test 'test_personas_models_import' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_ultimate_coverage.py:25: Test 'test_core_init_import' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_ultimate_coverage.py:30: Test 'test_plugin_init_import' lacks AAA comment structure
+    📊 BIS Score: 98.5 (A+) - Excellent - Focuses on behavior, not implementation
+  ✅ unit/__init__.py - BIS Score: 100.0 (A+)
+
+  🔍 unit/test_core_init.py
+    ⚠️  1. tests/unit/test_core_init.py:9: Test 'test_module_imports' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_core_init.py:13: Test 'test_module_has_version' lacks AAA comment structure
+    📊 BIS Score: 99.4 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_scoring_init.py
+    ⚠️  1. tests/unit/test_scoring_init.py:9: Test 'test_module_imports' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_scoring_init.py:13: Test 'test_module_has_file' lacks AAA comment structure
+    📊 BIS Score: 99.4 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_scoring_module.py
+    ⚠️  1. tests/unit/test_scoring_module.py:6: Test 'test_scoring_module_imports' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_scoring_module.py:29: Test 'test_scoring_module_all' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_scoring_module.py:13: Accessing private attribute: __all__
+    ⚠️  4. tests/unit/test_scoring_module.py:31: Accessing private attribute: __all__
+    ⚠️  5. tests/unit/test_scoring_module.py:26: Accessing private attribute: __file__
+    📊 BIS Score: 31.9 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_analyzers_init.py
+    ⚠️  1. tests/unit/test_analyzers_init.py:9: Test 'test_module_imports' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_analyzers_init.py:13: Test 'test_module_has_file' lacks AAA comment structure
+    📊 BIS Score: 99.4 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_persona_integration.py
+    ⚠️  1. tests/unit/test_persona_integration.py:18: Test 'test_init' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_persona_integration.py:23: Test 'test_get_persona_default' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_persona_integration.py:29: Test 'test_get_persona_by_name' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_persona_integration.py:35: Test 'test_get_persona_not_found' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_persona_integration.py:41: Test 'test_list_personas' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_persona_integration.py:47: Test 'test_get_persona_info' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_persona_integration.py:55: Test 'test_on_test_pass' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_persona_integration.py:62: Test 'test_on_test_fail' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_persona_integration.py:77: Test 'test_on_summary' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_persona_integration.py:84: Test 'test_on_bis_score' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_persona_integration.py:91: Test 'test_on_brs_score' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_persona_integration.py:101: Test 'test_init' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_persona_integration.py:109: Test 'test_add_analyzer' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_persona_integration.py:116: Test 'test_analyze_test_file' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_persona_integration.py:141: Test 'test_get_test_findings' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_persona_integration.py:159: Test 'test_set_get_test_metrics' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_persona_integration.py:168: Test 'test_set_get_session_metrics' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_persona_integration.py:177: Test 'test_get_all_findings' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_persona_integration.py:204: Test 'test_get_total_violations' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_persona_integration.py:229: Test 'test_clear' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_persona_integration.py:242: Test 'test_get_summary_stats' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_persona_integration.py:280: Test 'test_initialize_analyzers' missing AAA sections: act, arrange
+    ⚠️  23. tests/unit/test_persona_integration.py:300: Test 'test_analyze_test_file' missing AAA sections: act, arrange
+    ⚠️  24. tests/unit/test_persona_integration.py:332: Test 'test_inject_persona_feedback_passed' missing AAA sections: act, arrange
+    ⚠️  25. tests/unit/test_persona_integration.py:367: Test 'test_inject_persona_feedback_failed' missing AAA sections: act, arrange
+    ⚠️  26. tests/unit/test_persona_integration.py:410: Test 'test_generate_persona_summary' missing AAA sections: act, arrange
+    ⚠️  27. tests/unit/test_persona_integration.py:234: Accessing private attribute: _session_metrics
+    ⚠️  28. tests/unit/test_persona_integration.py:316: Accessing private attribute: _test_findings
+    ⚠️  29. tests/unit/test_persona_integration.py:104: Accessing private attribute: _test_findings
+    ⚠️  30. tests/unit/test_persona_integration.py:105: Accessing private attribute: _test_metrics
+    ⚠️  31. tests/unit/test_persona_integration.py:106: Accessing private attribute: _session_metrics
+    ⚠️  32. tests/unit/test_persona_integration.py:107: Accessing private attribute: _analyzers
+    ⚠️  33. tests/unit/test_persona_integration.py:114: Accessing private attribute: _analyzers
+    ⚠️  34. tests/unit/test_persona_integration.py:139: Accessing private attribute: _test_findings
+    ⚠️  35. tests/unit/test_persona_integration.py:153: Accessing private attribute: _test_findings
+    ⚠️  36. tests/unit/test_persona_integration.py:196: Accessing private attribute: _test_findings
+    ⚠️  37. tests/unit/test_persona_integration.py:197: Accessing private attribute: _test_findings
+    ⚠️  38. tests/unit/test_persona_integration.py:223: Accessing private attribute: _test_findings
+    ⚠️  39. tests/unit/test_persona_integration.py:224: Accessing private attribute: _test_findings
+    ⚠️  40. tests/unit/test_persona_integration.py:232: Accessing private attribute: _test_findings
+    ⚠️  41. tests/unit/test_persona_integration.py:233: Accessing private attribute: _test_metrics
+    ⚠️  42. tests/unit/test_persona_integration.py:238: Accessing private attribute: _test_findings
+    ⚠️  43. tests/unit/test_persona_integration.py:239: Accessing private attribute: _test_metrics
+    ⚠️  44. tests/unit/test_persona_integration.py:240: Accessing private attribute: _session_metrics
+    ⚠️  45. tests/unit/test_persona_integration.py:261: Accessing private attribute: _test_findings
+    ⚠️  46. tests/unit/test_persona_integration.py:262: Accessing private attribute: _test_findings
+    ⚠️  47. tests/unit/test_persona_integration.py:263: Accessing private attribute: _test_metrics
+    ⚠️  48. tests/unit/test_persona_integration.py:264: Accessing private attribute: _test_metrics
+    📊 BIS Score: 17.2 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_coverage_boost.py
+    ⚠️  1. tests/unit/test_coverage_boost.py:12: Test 'test_import_coverage' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_coverage_boost.py:20: Test 'test_module_attributes_coverage' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_coverage_boost.py:35: Test 'test_string_operations' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_coverage_boost.py:48: Test 'test_list_operations' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_coverage_boost.py:59: Test 'test_boolean_operations' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_coverage_boost.py:28: Accessing private attribute: __version__
+    ⚠️  7. tests/unit/test_coverage_boost.py:32: Accessing private attribute: __all__
+    ⚠️  8. tests/unit/test_coverage_boost.py:38: Accessing private attribute: __version__
+    ⚠️  9. tests/unit/test_coverage_boost.py:43: Accessing private attribute: __doc__
+    ⚠️  10. tests/unit/test_coverage_boost.py:51: Accessing private attribute: __all__
+    ⚠️  11. tests/unit/test_coverage_boost.py:63: Accessing private attribute: __version__
+    ⚠️  12. tests/unit/test_coverage_boost.py:64: Accessing private attribute: __all__
+    📊 BIS Score: 23.5 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_sarif_formatter_simple.py
+    ⚠️  1. tests/unit/test_sarif_formatter_simple.py:48: Test 'test_sarif_formatter_default_initialization' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_sarif_formatter_simple.py:56: Test 'test_sarif_formatter_custom_base_uri' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_sarif_formatter_simple.py:64: Test 'test_sarif_formatter_base_uri_normalization' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_sarif_formatter_simple.py:76: Test 'test_get_rule_id' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_sarif_formatter_simple.py:84: Test 'test_get_rule_name' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_sarif_formatter_simple.py:101: Test 'test_get_rule_description' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_sarif_formatter_simple.py:111: Test 'test_get_severity_level' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_sarif_formatter_simple.py:120: Test 'test_get_help_uri' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_sarif_formatter_simple.py:132: Test 'test_format_finding_basic' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_sarif_formatter_simple.py:155: Test 'test_format_finding_with_code_snippet' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_sarif_formatter_simple.py:174: Test 'test_format_finding_without_column' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_sarif_formatter_simple.py:191: Test 'test_format_finding_different_severities' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_sarif_formatter_simple.py:213: Test 'test_format_finding_different_rule_types' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_sarif_formatter_simple.py:255: Test 'test_format_report_basic' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_sarif_formatter_simple.py:301: Test 'test_format_report_with_config' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_sarif_formatter_simple.py:340: Test 'test_format_report_empty' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_sarif_formatter_simple.py:361: Test 'test_format_run_metrics' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_sarif_formatter_simple.py:390: Test 'test_format_test_result' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_sarif_formatter_simple.py:418: Test 'test_save_report' missing AAA sections: act, arrange
+    ⚠️  20. tests/unit/test_sarif_formatter_simple.py:470: Test 'test_to_string' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_sarif_formatter_simple.py:531: Test 'test_builder_initialization' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_sarif_formatter_simple.py:540: Test 'test_builder_initialization_with_custom_uri' lacks AAA comment structure
+    ⚠️  23. tests/unit/test_sarif_formatter_simple.py:546: Test 'test_add_test_result' lacks AAA comment structure
+    ⚠️  24. tests/unit/test_sarif_formatter_simple.py:556: Test 'test_add_test_results' lacks AAA comment structure
+    ⚠️  25. tests/unit/test_sarif_formatter_simple.py:570: Test 'test_set_metrics' lacks AAA comment structure
+    ⚠️  26. tests/unit/test_sarif_formatter_simple.py:587: Test 'test_set_config' lacks AAA comment structure
+    ⚠️  27. tests/unit/test_sarif_formatter_simple.py:596: Test 'test_build_report' lacks AAA comment structure
+    ⚠️  28. tests/unit/test_sarif_formatter_simple.py:633: Test 'test_build_report_without_metrics' lacks AAA comment structure
+    ⚠️  29. tests/unit/test_sarif_formatter_simple.py:646: Test 'test_save_report' lacks AAA comment structure
+    ⚠️  30. tests/unit/test_sarif_formatter_simple.py:687: Test 'test_to_string' lacks AAA comment structure
+    ⚠️  31. tests/unit/test_sarif_formatter_simple.py:728: Test 'test_unicode_in_findings' lacks AAA comment structure
+    ⚠️  32. tests/unit/test_sarif_formatter_simple.py:747: Test 'test_very_long_messages' lacks AAA comment structure
+    ⚠️  33. tests/unit/test_sarif_formatter_simple.py:766: Test 'test_special_characters_in_paths' lacks AAA comment structure
+    ⚠️  34. tests/unit/test_sarif_formatter_simple.py:783: Test 'test_absolute_paths' lacks AAA comment structure
+    ⚠️  35. tests/unit/test_sarif_formatter_simple.py:803: Test 'test_very_large_line_numbers' lacks AAA comment structure
+    ⚠️  36. tests/unit/test_sarif_formatter_simple.py:822: Test 'test_zero_line_numbers' lacks AAA comment structure
+    ⚠️  37. tests/unit/test_sarif_formatter_simple.py:841: Test 'test_empty_code_snippet' lacks AAA comment structure
+    ⚠️  38. tests/unit/test_sarif_formatter_simple.py:860: Test 'test_none_code_snippet' lacks AAA comment structure
+    ⚠️  39. tests/unit/test_sarif_formatter_simple.py:536: Accessing private attribute: _test_results
+    ⚠️  40. tests/unit/test_sarif_formatter_simple.py:537: Accessing private attribute: _metrics
+    ⚠️  41. tests/unit/test_sarif_formatter_simple.py:538: Accessing private attribute: _config
+    ⚠️  42. tests/unit/test_sarif_formatter_simple.py:585: Accessing private attribute: _metrics
+    ⚠️  43. tests/unit/test_sarif_formatter_simple.py:594: Accessing private attribute: _config
+    ⚠️  44. tests/unit/test_sarif_formatter_simple.py:553: Accessing private attribute: _test_results
+    ⚠️  45. tests/unit/test_sarif_formatter_simple.py:554: Accessing private attribute: _test_results
+    ⚠️  46. tests/unit/test_sarif_formatter_simple.py:566: Accessing private attribute: _test_results
+    ⚠️  47. tests/unit/test_sarif_formatter_simple.py:567: Accessing private attribute: _test_results
+    ⚠️  48. tests/unit/test_sarif_formatter_simple.py:568: Accessing private attribute: _test_results
+    ⚠️  49. tests/unit/test_sarif_formatter_simple.py:105: Calling private method: _get_rule_description
+    ⚠️  50. tests/unit/test_sarif_formatter_simple.py:108: Calling private method: _get_rule_description
+    ⚠️  51. tests/unit/test_sarif_formatter_simple.py:124: Calling private method: _get_help_uri
+    ⚠️  52. tests/unit/test_sarif_formatter_simple.py:80: Calling private method: _get_rule_id
+    ⚠️  53. tests/unit/test_sarif_formatter_simple.py:81: Calling private method: _get_rule_id
+    ⚠️  54. tests/unit/test_sarif_formatter_simple.py:82: Calling private method: _get_rule_id
+    ⚠️  55. tests/unit/test_sarif_formatter_simple.py:89: Calling private method: _get_rule_name
+    ⚠️  56. tests/unit/test_sarif_formatter_simple.py:93: Calling private method: _get_rule_name
+    ⚠️  57. tests/unit/test_sarif_formatter_simple.py:97: Calling private method: _get_rule_name
+    ⚠️  58. tests/unit/test_sarif_formatter_simple.py:115: Calling private method: _get_severity_level
+    ⚠️  59. tests/unit/test_sarif_formatter_simple.py:116: Calling private method: _get_severity_level
+    ⚠️  60. tests/unit/test_sarif_formatter_simple.py:117: Calling private method: _get_severity_level
+    ⚠️  61. tests/unit/test_sarif_formatter_simple.py:118: Calling private method: _get_severity_level
+    📊 BIS Score: 13.6 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_brs_calculator.py
+    ⚠️  1. tests/unit/test_brs_calculator.py:14: Test 'test_init' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_brs_calculator.py:19: Test 'test_calculate_brs_perfect_score' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_brs_calculator.py:37: Test 'test_calculate_brs_poor_quality' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_brs_calculator.py:55: Test 'test_calculate_brs_medium_quality' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_brs_calculator.py:73: Test 'test_calculate_brs_empty_metrics' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_brs_calculator.py:83: Test 'test_extract_metrics_from_analysis' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_brs_calculator.py:116: Test 'test_get_brs_interpretation' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_brs_calculator.py:128: Test 'test_get_brs_grade' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_brs_calculator.py:145: Test 'test_get_component_breakdown' has duplicate AAA sections: assert
+    ⚠️  10. tests/unit/test_brs_calculator.py:172: Test 'test_brs_score_bounds' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_brs_calculator.py:204: Test 'test_bis_component_weighting' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_brs_calculator.py:237: Test 'test_aaa_compliance_weighting' lacks AAA comment structure
+    📊 BIS Score: 96.4 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_lsp_init.py
+    ⚠️  1. tests/unit/test_lsp_init.py:9: Test 'test_module_imports' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_lsp_init.py:13: Test 'test_module_has_file' lacks AAA comment structure
+    📊 BIS Score: 99.4 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_config_schema.py
+    ⚠️  1. tests/unit/test_config_schema.py:24: Test 'test_valid_rule_config' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_config_schema.py:40: Test 'test_rule_config_extra_fields_forbidden' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_config_schema.py:48: Test 'test_rule_config_invalid_threshold' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_config_schema.py:59: Test 'test_rule_config_invalid_tags' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_config_schema.py:74: Test 'test_valid_profile_config' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_config_schema.py:92: Test 'test_profile_config_invalid_rule_code' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_config_schema.py:104: Test 'test_profile_config_extra_fields_forbidden' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_config_schema.py:120: Test 'test_valid_output_config' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_config_schema.py:131: Test 'test_output_config_extra_fields_forbidden' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_config_schema.py:143: Test 'test_valid_analysis_config' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_config_schema.py:159: Test 'test_analysis_config_invalid_workers' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_config_schema.py:167: Test 'test_analysis_config_extra_fields_forbidden' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_config_schema.py:179: Test 'test_valid_ds_config' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_config_schema.py:198: Test 'test_ds_config_extra_fields_forbidden' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_config_schema.py:211: Test 'test_ds_config_invalid_rule_codes' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_config_schema.py:224: Test 'test_ds_config_invalid_per_file_ignores' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_config_schema.py:237: Test 'test_ds_config_empty_patterns' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_config_schema.py:250: Test 'test_ds_config_profile_not_found' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_config_schema.py:266: Test 'test_ds_config_output_path_validation' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_config_schema.py:290: Test 'test_validate_valid_config' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_config_schema.py:307: Test 'test_validate_invalid_config_with_suggestions' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_config_schema.py:336: Test 'test_create_default_config' missing AAA sections: act, arrange
+    ⚠️  23. tests/unit/test_config_schema.py:354: Test 'test_default_profiles_differ' lacks AAA comment structure
+    ⚠️  24. tests/unit/test_config_schema.py:378: Test 'test_schema_version_required' lacks AAA comment structure
+    ⚠️  25. tests/unit/test_config_schema.py:393: Test 'test_schema_version_validation' lacks AAA comment structure
+    ⚠️  26. tests/unit/test_config_schema.py:409: Test 'test_helpful_rule_code_suggestions' lacks AAA comment structure
+    ⚠️  27. tests/unit/test_config_schema.py:424: Test 'test_helpful_field_suggestions' lacks AAA comment structure
+    📊 BIS Score: 91.9 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_config_validator.py
+    ⚠️  1. tests/unit/test_config_validator.py:25: Test 'test_validate_config_valid' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_config_validator.py:40: Test 'test_validate_mode_invalid' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_config_validator.py:53: Test 'test_validate_mode_valid' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_config_validator.py:61: Test 'test_validate_persona_invalid' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_config_validator.py:70: Test 'test_validate_persona_valid' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_config_validator.py:84: Test 'test_validate_budgets_invalid' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_config_validator.py:93: Test 'test_validate_budgets_invalid_type' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_config_validator.py:104: Test 'test_validate_budgets_valid' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_config_validator.py:112: Test 'test_validate_thresholds_invalid_ranges' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_config_validator.py:128: Test 'test_validate_thresholds_invalid_types' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_config_validator.py:142: Test 'test_validate_thresholds_valid' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_config_validator.py:155: Test 'test_validate_rules_unknown_rules' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_config_validator.py:173: Test 'test_validate_rules_suppressed_not_enabled' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_config_validator.py:184: Test 'test_validate_rules_valid' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_config_validator.py:193: Test 'test_validate_output_paths_missing_directories' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_config_validator.py:205: Test 'test_validate_output_paths_valid' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_config_validator.py:223: Test 'test_validate_consistency_verbose_and_quiet' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_config_validator.py:237: Test 'test_validate_consistency_threshold_order' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_config_validator.py:257: Test 'test_validate_consistency_budget_order' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_config_validator.py:271: Test 'test_validate_consistency_valid' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_config_validator.py:284: Test 'test_validate_file_paths_sut_package_import_error' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_config_validator.py:297: Test 'test_validate_file_paths_sut_package_valid' lacks AAA comment structure
+    ⚠️  23. tests/unit/test_config_validator.py:306: Test 'test_validate_file_paths_no_sut_package' lacks AAA comment structure
+    ⚠️  24. tests/unit/test_config_validator.py:314: Test 'test_suggest_fixes_common_errors' lacks AAA comment structure
+    ⚠️  25. tests/unit/test_config_validator.py:336: Test 'test_suggest_fixes_unknown_errors' lacks AAA comment structure
+    ⚠️  26. tests/unit/test_config_validator.py:348: Test 'test_validate_configuration_valid' lacks AAA comment structure
+    ⚠️  27. tests/unit/test_config_validator.py:367: Test 'test_validate_configuration_invalid' lacks AAA comment structure
+    ⚠️  28. tests/unit/test_config_validator.py:382: Test 'test_validate_configuration_with_file_errors' lacks AAA comment structure
+    📊 BIS Score: 91.6 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_config_context.py
+    ⚠️  1. tests/unit/test_config_context.py:27: Test 'test_context_isolation' missing AAA sections: act
+    ⚠️  2. tests/unit/test_config_context.py:48: Test 'test_thread_isolation' missing AAA sections: act, assert
+    ⚠️  3. tests/unit/test_config_context.py:69: Test 'test_context_with_different_configs' missing AAA sections: act, assert
+    ⚠️  4. tests/unit/test_config_context.py:94: Test 'test_auto_initialization' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_config_context.py:103: Test 'test_initialization_with_project_root' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_config_context.py:111: Test 'test_reload_config' missing AAA sections: act, assert
+    ⚠️  7. tests/unit/test_config_context.py:121: Test 'test_context_reset' has duplicate AAA sections: arrange
+    ⚠️  8. tests/unit/test_config_context.py:133: Test 'test_convenience_functions' missing AAA sections: act, assert
+    ⚠️  9. tests/unit/test_config_context.py:163: Test 'test_error_handling' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_config_context.py:169: Test 'test_context_with_exception' missing AAA sections: act, assert
+    📊 BIS Score: 97.0 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_analyzers_module.py
+    ⚠️  1. tests/unit/test_analyzers_module.py:6: Test 'test_analyzers_module_imports' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_analyzers_module.py:30: Test 'test_analyzers_module_all' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_analyzers_module.py:13: Accessing private attribute: __all__
+    ⚠️  4. tests/unit/test_analyzers_module.py:32: Accessing private attribute: __all__
+    ⚠️  5. tests/unit/test_analyzers_module.py:27: Accessing private attribute: __file__
+    📊 BIS Score: 31.9 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_message_formatting.py
+    ⚠️  1. tests/unit/test_message_formatting.py:38: Test 'test_template_context_creation' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_message_formatting.py:57: Test 'test_template_context_custom_vars' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_message_formatting.py:72: Test 'test_template_rendering' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_message_formatting.py:79: Test 'test_template_with_context' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_message_formatting.py:91: Test 'test_template_missing_variable' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_message_formatting.py:98: Test 'test_template_override_context' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_message_formatting.py:110: Test 'test_template_registration' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_message_formatting.py:120: Test 'test_template_rendering' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_message_formatting.py:129: Test 'test_template_not_found' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_message_formatting.py:136: Test 'test_default_templates_loaded' missing AAA sections: act, arrange
+    ⚠️  11. tests/unit/test_message_formatting.py:150: Test 'test_rich_formatter_creation' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_message_formatting.py:157: Test 'test_rich_formatter_with_console' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_message_formatting.py:164: Test 'test_format_finding' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_message_formatting.py:189: Test 'test_format_test_result' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_message_formatting.py:238: Test 'test_json_formatter_creation' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_message_formatting.py:245: Test 'test_format_finding' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_message_formatting.py:273: Test 'test_format_test_result' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_message_formatting.py:322: Test 'test_sarif_formatter_creation' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_message_formatting.py:330: Test 'test_format_finding' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_message_formatting.py:366: Test 'test_output_manager_creation' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_message_formatting.py:378: Test 'test_add_test_result' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_message_formatting.py:421: Test 'test_get_summary_stats_without_metrics' lacks AAA comment structure
+    ⚠️  23. tests/unit/test_message_formatting.py:429: Test 'test_clear_results' lacks AAA comment structure
+    ⚠️  24. tests/unit/test_message_formatting.py:376: Accessing private attribute: _metrics
+    ⚠️  25. tests/unit/test_message_formatting.py:474: Accessing private attribute: _metrics
+    ⚠️  26. tests/unit/test_message_formatting.py:375: Accessing private attribute: _test_results
+    ⚠️  27. tests/unit/test_message_formatting.py:418: Accessing private attribute: _test_results
+    ⚠️  28. tests/unit/test_message_formatting.py:419: Accessing private attribute: _test_results
+    ⚠️  29. tests/unit/test_message_formatting.py:469: Accessing private attribute: _test_results
+    ⚠️  30. tests/unit/test_message_formatting.py:473: Accessing private attribute: _test_results
+    📊 BIS Score: 18.1 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_config.py
+    ⚠️  1. tests/unit/test_config.py:55: Test 'test_default_config' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_config.py:95: Test 'test_config_validation_mode' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_config.py:106: Test 'test_config_validation_persona' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_config.py:124: Test 'test_config_validation_budgets' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_config.py:134: Test 'test_config_validation_thresholds' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_config.py:158: Test 'test_config_consistency_validation' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_config.py:172: Test 'test_is_rule_enabled' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_config.py:183: Test 'test_get_threshold' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_config.py:193: Test 'test_get_budget' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_config.py:207: Test 'test_get_defaults' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_config.py:237: Test 'test_load_environment_variables' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_config.py:261: Test 'test_convert_pyproject_config' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_config.py:287: Test 'test_convert_pytest_ini_config' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_config.py:313: Test 'test_load_config_hierarchy' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_config.py:368: Test 'test_load_config_missing_files' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_config.py:379: Test 'test_load_config_invalid_toml' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_config.py:397: Test 'test_load_config_basic' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_config.py:405: Test 'test_load_config_with_cli_args' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_config.py:415: Test 'test_load_config_error_handling' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_config.py:431: Test 'test_configuration_error_creation' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_config.py:436: Test 'test_configuration_error_with_cause' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_config.py:440: Accessing private attribute: __cause__
+    ⚠️  23. tests/unit/test_config.py:443: Accessing private attribute: __cause__
+    ⚠️  24. tests/unit/test_config.py:210: Calling private method: _get_defaults
+    ⚠️  25. tests/unit/test_config.py:277: Calling private method: _convert_pyproject_config
+    ⚠️  26. tests/unit/test_config.py:302: Calling private method: _convert_pytest_ini_config
+    ⚠️  27. tests/unit/test_config.py:252: Calling private method: _load_environment_variables
+    📊 BIS Score: 18.7 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_plugin_factory.py
+    ⚠️  1. tests/unit/test_plugin_factory.py:72: Test 'test_plugin_spec_creation' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_plugin_factory.py:99: Test 'test_init' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_plugin_factory.py:104: Test 'test_create_analyzer_plugin_basic' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_plugin_factory.py:126: Test 'test_create_analyzer_plugin_with_kwargs' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_plugin_factory.py:158: Test 'test_to_bool_true_values' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_plugin_factory.py:166: Test 'test_to_bool_false_values' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_plugin_factory.py:174: Test 'test_to_bool_default' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_plugin_factory.py:179: Test 'test_to_bool_invalid' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_plugin_factory.py:184: Test 'test_to_mapping_valid' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_plugin_factory.py:190: Test 'test_to_mapping_none' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_plugin_factory.py:195: Test 'test_to_mapping_invalid' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_plugin_factory.py:200: Test 'test_create_plugin_config_error' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_plugin_factory.py:208: Test 'test_create_import_error' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_plugin_factory.py:215: Test 'test_create_attribute_error' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_plugin_factory.py:222: Test 'test_create_invalid_class_error' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_plugin_factory.py:228: Test 'test_extract_string_field' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_plugin_factory.py:234: Test 'test_extract_string_field_default' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_plugin_factory.py:240: Test 'test_extract_string_field_invalid' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_plugin_factory.py:246: Test 'test_extract_dependencies_field_valid' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_plugin_factory.py:252: Test 'test_extract_dependencies_field_invalid' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_plugin_factory.py:258: Test 'test_extract_bool_field' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_plugin_factory.py:264: Test 'test_extract_bool_field_default' lacks AAA comment structure
+    ⚠️  23. tests/unit/test_plugin_factory.py:270: Test 'test_extract_int_field' lacks AAA comment structure
+    ⚠️  24. tests/unit/test_plugin_factory.py:276: Test 'test_extract_int_field_default' lacks AAA comment structure
+    ⚠️  25. tests/unit/test_plugin_factory.py:282: Test 'test_parse_plugin_metadata' lacks AAA comment structure
+    ⚠️  26. tests/unit/test_plugin_factory.py:309: Test 'test_is_plugin_class_valid' lacks AAA comment structure
+    ⚠️  27. tests/unit/test_plugin_factory.py:318: Test 'test_is_plugin_class_invalid' lacks AAA comment structure
+    ⚠️  28. tests/unit/test_plugin_factory.py:328: Test 'test_load_plugin_from_module_success' lacks AAA comment structure
+    ⚠️  29. tests/unit/test_plugin_factory.py:365: Test 'test_load_plugin_from_module_import_error' lacks AAA comment structure
+    ⚠️  30. tests/unit/test_plugin_factory.py:385: Test 'test_load_plugin_from_module_attribute_error' lacks AAA comment structure
+    ⚠️  31. tests/unit/test_plugin_factory.py:418: Test 'test_load_plugin_from_module_invalid_class' lacks AAA comment structure
+    ⚠️  32. tests/unit/test_plugin_factory.py:51: Calling private method: __init__
+    ⚠️  33. tests/unit/test_plugin_factory.py:314: Calling private method: __init__
+    ⚠️  34. tests/unit/test_plugin_factory.py:342: Calling private method: __init__
+    📊 BIS Score: 23.2 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_models.py
+    ⚠️  1. tests/unit/test_models.py:35: Test 'test_severity_values' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_models.py:42: Test 'test_severity_string_conversion' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_models.py:51: Test 'test_rule_type_values' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_models.py:65: Test 'test_finding_creation' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_models.py:93: Test 'test_finding_minimal' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_models.py:116: Test 'test_finding_confidence_validation' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_models.py:164: Test 'test_finding_required_fields' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_models.py:173: Test 'test_cluster_creation' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_models.py:201: Test 'test_cluster_minimal' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_models.py:215: Test 'test_cluster_similarity_score_validation' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_models.py:251: Test 'test_rule_creation' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_models.py:275: Test 'test_rule_defaults' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_models.py:294: Test 'test_features_data_creation' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_models.py:324: Test 'test_features_data_defaults' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_models.py:342: Test 'test_features_data_coverage_validation' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_models.py:378: Test 'test_features_data_required_fields' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_models.py:387: Test 'test_finding_in_cluster' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_models.py:408: Test 'test_rule_with_finding' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_models.py:430: Test 'test_features_data_with_finding' lacks AAA comment structure
+    📊 BIS Score: 94.3 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_lsp_module.py
+    ⚠️  1. tests/unit/test_lsp_module.py:6: Test 'test_lsp_module_imports' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_lsp_module.py:25: Test 'test_lsp_module_all' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_lsp_module.py:13: Accessing private attribute: __all__
+    ⚠️  4. tests/unit/test_lsp_module.py:27: Accessing private attribute: __all__
+    ⚠️  5. tests/unit/test_lsp_module.py:22: Accessing private attribute: __file__
+    📊 BIS Score: 31.9 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_personas_module.py
+    ⚠️  1. tests/unit/test_personas_module.py:6: Test 'test_personas_module_imports' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_personas_module.py:25: Test 'test_personas_module_all' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_personas_module.py:13: Accessing private attribute: __all__
+    ⚠️  4. tests/unit/test_personas_module.py:27: Accessing private attribute: __all__
+    ⚠️  5. tests/unit/test_personas_module.py:22: Accessing private attribute: __file__
+    📊 BIS Score: 31.9 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_paths.py
+    ⚠️  1. tests/unit/test_paths.py:19: Test 'test_normalize_module_path_cross_platform' lacks AAA comment structure
+    📊 BIS Score: 99.7 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_logging_utils.py
+    ⚠️  1. tests/unit/test_logging_utils.py:22: Test 'test_is_cli_mode_pytest_in_modules' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_logging_utils.py:27: Test 'test_is_cli_mode_plugin_mode_env_var' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_logging_utils.py:34: Test 'test_is_cli_mode_library_mode_args' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_logging_utils.py:42: Test 'test_is_cli_mode_drill_sergeant_script' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_logging_utils.py:51: Test 'test_is_cli_mode_main_py_script' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_logging_utils.py:60: Test 'test_is_cli_mode_main_module' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_logging_utils.py:69: Test 'test_is_cli_mode_empty_argv' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_logging_utils.py:74: Test 'test_is_cli_mode_other_script' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_logging_utils.py:79: Test 'test_is_cli_mode_module_without_drill_sergeant' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_logging_utils.py:88: Test 'test_setup_logging_cli_mode_with_rich' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_logging_utils.py:107: Test 'test_setup_logging_cli_mode_without_rich' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_logging_utils.py:126: Test 'test_setup_logging_library_mode' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_logging_utils.py:149: Test 'test_setup_rich_logging_rich_available' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_logging_utils.py:176: Test 'test_setup_rich_logging_rich_not_available' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_logging_utils.py:192: Test 'test_setup_standard_logging' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_logging_utils.py:207: Test 'test_setup_standard_logging_default_level' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_logging_utils.py:226: Test 'test_get_logger' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_logging_utils.py:233: Test 'test_get_logger_different_names' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_logging_utils.py:242: Test 'test_get_logger_same_name' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_logging_utils.py:253: Test 'test_create_progress_logger_rich_available' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_logging_utils.py:280: Test 'test_create_progress_logger_rich_not_available' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_logging_utils.py:288: Test 'test_create_progress_logger_with_logger' lacks AAA comment structure
+    ⚠️  23. tests/unit/test_logging_utils.py:310: Test 'test_rich_available_constant' lacks AAA comment structure
+    ⚠️  24. tests/unit/test_logging_utils.py:314: Test 'test_rich_available_import_behavior' lacks AAA comment structure
+    ⚠️  25. tests/unit/test_logging_utils.py:324: Test 'test_logging_setup_integration' missing AAA sections: act, arrange
+    ⚠️  26. tests/unit/test_logging_utils.py:341: Test 'test_logging_level_configuration' lacks AAA comment structure
+    📊 BIS Score: 92.2 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_analysis_result.py
+    ⚠️  1. tests/unit/test_analysis_result.py:55: Test 'test_creation_with_required_fields' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_analysis_result.py:68: Test 'test_creation_with_all_fields' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_analysis_result.py:85: Test 'test_creation_with_required_fields' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_analysis_result.py:95: Test 'test_creation_with_arguments' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_analysis_result.py:109: Test 'test_creation' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_analysis_result.py:126: Test 'test_creation' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_analysis_result.py:139: Test 'test_creation_with_required_fields' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_analysis_result.py:158: Test 'test_creation_with_all_fields' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_analysis_result.py:195: Test 'test_creation_with_required_fields' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_analysis_result.py:211: Test 'test_creation_with_coverage_data' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_analysis_result.py:236: Test 'test_creation' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_analysis_result.py:253: Test 'test_creation_with_required_fields' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_analysis_result.py:269: Test 'test_creation_with_similarity_data' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_analysis_result.py:303: Test 'test_creation' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_analysis_result.py:320: Test 'test_creation' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_analysis_result.py:337: Test 'test_creation_with_required_fields' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_analysis_result.py:352: Test 'test_creation_with_parametrization_data' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_analysis_result.py:390: Test 'test_creation' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_analysis_result.py:409: Test 'test_creation' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_analysis_result.py:428: Test 'test_creation' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_analysis_result.py:447: Test 'test_creation_with_required_fields' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_analysis_result.py:462: Test 'test_creation_with_fixture_data' lacks AAA comment structure
+    ⚠️  23. tests/unit/test_analysis_result.py:509: Test 'test_creation_with_required_fields' lacks AAA comment structure
+    ⚠️  24. tests/unit/test_analysis_result.py:552: Test 'test_creation_with_analysis_results' lacks AAA comment structure
+    📊 BIS Score: 92.8 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_rulespec.py
+    ⚠️  1. tests/unit/test_rulespec.py:18: Test 'test_rule_spec_creation' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_rulespec.py:37: Test 'test_rule_spec_validation' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_rulespec.py:75: Test 'test_rule_registration' missing AAA sections: act, arrange
+    ⚠️  4. tests/unit/test_rulespec.py:87: Test 'test_get_rule_by_code' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_rulespec.py:94: Test 'test_get_rule_by_name' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_rulespec.py:100: Test 'test_get_rule_not_found' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_rulespec.py:108: Test 'test_get_all_rules' missing AAA sections: act, arrange
+    ⚠️  8. tests/unit/test_rulespec.py:118: Test 'test_get_rules_by_category' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_rulespec.py:130: Test 'test_get_rules_by_tag' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_rulespec.py:142: Test 'test_duplicate_tests_rule' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_rulespec.py:151: Test 'test_private_access_rule' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_rulespec.py:160: Test 'test_rule_consistency' lacks AAA comment structure
+    📊 BIS Score: 96.4 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_tiny_coverage.py
+    ⚠️  1. tests/unit/test_tiny_coverage.py:6: Test 'test_tiny_coverage_boost' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_tiny_coverage.py:9: Accessing private attribute: __version__
+    ⚠️  3. tests/unit/test_tiny_coverage.py:12: Accessing private attribute: __all__
+    ⚠️  4. tests/unit/test_tiny_coverage.py:15: Accessing private attribute: __doc__
+    ⚠️  5. tests/unit/test_tiny_coverage.py:18: Accessing private attribute: __version__
+    ⚠️  6. tests/unit/test_tiny_coverage.py:22: Accessing private attribute: __all__
+    ⚠️  7. tests/unit/test_tiny_coverage.py:26: Accessing private attribute: __version__
+    ⚠️  8. tests/unit/test_tiny_coverage.py:27: Accessing private attribute: __all__
+    ⚠️  9. tests/unit/test_tiny_coverage.py:28: Accessing private attribute: __doc__
+    ⚠️  10. tests/unit/test_tiny_coverage.py:18: Comparing string representation: str()
+    📊 BIS Score: 16.7 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_reporting_types.py
+    ⚠️  1. tests/unit/test_reporting_types.py:11: Test 'test_reporting_types_module_imports' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_reporting_types.py:24: Test 'test_reporting_types_module_content' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_reporting_types.py:21: Accessing private attribute: __file__
+    📊 BIS Score: 76.9 (B+) - Good - Mostly behavior-focused with minor implementation details
+
+  🔍 unit/test_main.py
+    ⚠️  1. tests/unit/test_main.py:20: Test 'test_main_module_import' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_main.py:25: Test 'test_cli_function_exists' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_main.py:29: Test 'test_cli_function_calls_cli_main' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_main.py:35: Test 'test_main_module_execution' missing AAA sections: assert, arrange
+    ⚠️  5. tests/unit/test_main.py:43: Test 'test_cli_function_signature' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_main.py:49: Test 'test_cli_function_docstring' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_main.py:54: Test 'test_main_module_docstring' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_main.py:60: Test 'test_main_module_has_main_guard' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_main.py:68: Test 'test_cli_function_import_path' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_main.py:73: Test 'test_main_module_structure' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_main.py:51: Accessing private attribute: __doc__
+    ⚠️  12. tests/unit/test_main.py:56: Accessing private attribute: __doc__
+    ⚠️  13. tests/unit/test_main.py:57: Accessing private attribute: __doc__
+    ⚠️  14. tests/unit/test_main.py:58: Accessing private attribute: __doc__
+    ⚠️  15. tests/unit/test_main.py:52: Accessing private attribute: __doc__
+    📊 BIS Score: 22.0 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_init.py
+    ⚠️  1. tests/unit/test_init.py:9: Test 'test_version_attribute' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_init.py:14: Test 'test_all_attribute' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_init.py:20: Test 'test_docstring' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_init.py:27: Test 'test_module_import' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_init.py:35: Test 'test_version_format' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_init.py:48: Test 'test_all_contains_only_public_attributes' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_init.py:64: Test 'test_module_attributes' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_init.py:71: Test 'test_version_consistency' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_init.py:78: Test 'test_all_is_immutable' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_init.py:92: Test 'test_docstring_content' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_init.py:110: Test 'test_module_metadata' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_init.py:120: Test 'test_additional_coverage' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_init.py:130: Test 'test_module_execution' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_init.py:151: Test 'test_version_assignment_coverage' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_init.py:37: Accessing private attribute: __version__
+    ⚠️  16. tests/unit/test_init.py:50: Accessing private attribute: __all__
+    ⚠️  17. tests/unit/test_init.py:80: Accessing private attribute: __all__
+    ⚠️  18. tests/unit/test_init.py:94: Accessing private attribute: __doc__
+    ⚠️  19. tests/unit/test_init.py:136: Accessing private attribute: __version__
+    ⚠️  20. tests/unit/test_init.py:140: Accessing private attribute: __all__
+    ⚠️  21. tests/unit/test_init.py:144: Accessing private attribute: __doc__
+    ⚠️  22. tests/unit/test_init.py:154: Accessing private attribute: __version__
+    ⚠️  23. tests/unit/test_init.py:158: Accessing private attribute: __all__
+    ⚠️  24. tests/unit/test_init.py:12: Accessing private attribute: __version__
+    ⚠️  25. tests/unit/test_init.py:17: Accessing private attribute: __all__
+    ⚠️  26. tests/unit/test_init.py:18: Accessing private attribute: __all__
+    ⚠️  27. tests/unit/test_init.py:22: Accessing private attribute: __doc__
+    ⚠️  28. tests/unit/test_init.py:23: Accessing private attribute: __doc__
+    ⚠️  29. tests/unit/test_init.py:24: Accessing private attribute: __doc__
+    ⚠️  30. tests/unit/test_init.py:25: Accessing private attribute: __doc__
+    ⚠️  31. tests/unit/test_init.py:76: Accessing private attribute: __version__
+    ⚠️  32. tests/unit/test_init.py:76: Accessing private attribute: __version__
+    ⚠️  33. tests/unit/test_init.py:118: Accessing private attribute: __name__
+    ⚠️  34. tests/unit/test_init.py:124: Accessing private attribute: __file__
+    ⚠️  35. tests/unit/test_init.py:128: Accessing private attribute: __package__
+    📊 BIS Score: 20.8 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_models_coverage.py
+    ⚠️  1. tests/unit/test_models_coverage.py:19: Test 'test_models_import' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_models_coverage.py:24: Test 'test_severity_enum' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_models_coverage.py:31: Test 'test_rule_type_enum' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_models_coverage.py:42: Test 'test_finding_model' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_models_coverage.py:60: Test 'test_cluster_model' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_models_coverage.py:74: Test 'test_rule_model' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_models_coverage.py:94: Test 'test_features_data_model' lacks AAA comment structure
+    📊 BIS Score: 97.9 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_core_module.py
+    ⚠️  1. tests/unit/test_core_module.py:22: Test 'test_core_module_imports' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_core_module.py:41: Test 'test_core_module_all' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_core_module.py:43: Accessing private attribute: __all__
+    📊 BIS Score: 76.9 (B+) - Good - Mostly behavior-focused with minor implementation details
+
+  🔍 unit/test_final_push.py
+    ⚠️  1. tests/unit/test_final_push.py:6: Test 'test_final_coverage_push' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_final_push.py:17: Accessing private attribute: __version__
+    ⚠️  3. tests/unit/test_final_push.py:23: Accessing private attribute: __all__
+    ⚠️  4. tests/unit/test_final_push.py:29: Accessing private attribute: __doc__
+    ⚠️  5. tests/unit/test_final_push.py:36: Comparing string representation: str()
+    📊 BIS Score: 24.2 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_personas_init.py
+    ⚠️  1. tests/unit/test_personas_init.py:9: Test 'test_module_imports' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_personas_init.py:13: Test 'test_module_has_file' lacks AAA comment structure
+    📊 BIS Score: 99.4 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 unit/test_file_discovery.py
+    ⚠️  1. tests/unit/test_file_discovery.py:29: Test 'test_file_pattern_creation' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_file_discovery.py:37: Test 'test_file_pattern_with_options' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_file_discovery.py:50: Test 'test_file_pattern_matches' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_file_discovery.py:64: Test 'test_file_pattern_disabled' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_file_discovery.py:73: Test 'test_file_pattern_outside_project_root' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_file_discovery.py:86: Test 'test_config_creation' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_file_discovery.py:113: Test 'test_should_analyze_file' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_file_discovery.py:137: Test 'test_get_ignored_rules' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_file_discovery.py:166: Test 'test_get_severity_override' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_file_discovery.py:197: Test 'test_get_rule_overrides' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_file_discovery.py:231: Test 'test_discovery_creation' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_file_discovery.py:240: Test 'test_discover_files' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_file_discovery.py:270: Test 'test_should_analyze_file' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_file_discovery.py:290: Test 'test_get_file_config' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_file_discovery.py:328: Test 'test_is_rule_ignored_for_file' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_file_discovery.py:350: Test 'test_get_effective_severity' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_file_discovery.py:396: Test 'test_get_effective_rule_config' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_file_discovery.py:432: Test 'test_get_analysis_files' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_file_discovery.py:473: Test 'test_clear_cache' has duplicate AAA sections: assert
+    ⚠️  20. tests/unit/test_file_discovery.py:497: Test 'test_get_discovery_stats' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_file_discovery.py:531: Test 'test_create_file_discovery' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_file_discovery.py:539: Test 'test_validate_file_patterns_valid' lacks AAA comment structure
+    ⚠️  23. tests/unit/test_file_discovery.py:551: Test 'test_validate_file_patterns_invalid' lacks AAA comment structure
+    ⚠️  24. tests/unit/test_file_discovery.py:569: Test 'test_complex_file_discovery_scenario' missing AAA sections: act, arrange
+    ⚠️  25. tests/unit/test_file_discovery.py:238: Accessing private attribute: _discovered_files
+    ⚠️  26. tests/unit/test_file_discovery.py:487: Accessing private attribute: _discovered_files
+    ⚠️  27. tests/unit/test_file_discovery.py:494: Accessing private attribute: _discovered_files
+    ⚠️  28. tests/unit/test_file_discovery.py:488: Accessing private attribute: _file_cache
+    ⚠️  29. tests/unit/test_file_discovery.py:495: Accessing private attribute: _file_cache
+    📊 BIS Score: 17.8 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+  🔍 unit/test_cli_config.py
+    ⚠️  1. tests/unit/test_cli_config.py:29: Test 'test_parser_creation' has duplicate AAA sections: act
+    ⚠️  2. tests/unit/test_cli_config.py:38: Test 'test_parse_args_basic' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_cli_config.py:47: Test 'test_parse_args_boolean_flags' lacks AAA comment structure
+    ⚠️  4. tests/unit/test_cli_config.py:57: Test 'test_parse_args_rules' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_cli_config.py:76: Test 'test_parse_args_thresholds' lacks AAA comment structure
+    ⚠️  6. tests/unit/test_cli_config.py:105: Test 'test_parse_args_budgets' lacks AAA comment structure
+    ⚠️  7. tests/unit/test_cli_config.py:118: Test 'test_parse_args_output' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_cli_config.py:139: Test 'test_parse_args_mock_config' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_cli_config.py:157: Test 'test_convert_args_to_config' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_cli_config.py:218: Test 'test_add_pytest_options' has duplicate AAA sections: assert
+    ⚠️  11. tests/unit/test_cli_config.py:239: Test 'test_parse_cli_args_basic' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_cli_config.py:246: Test 'test_parse_cli_args_no_args' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_cli_config.py:253: Test 'test_parse_cli_args_none' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_cli_config.py:264: Test 'test_create_pytest_config_from_args' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_cli_config.py:305: Test 'test_validate_cli_args_valid' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_cli_config.py:324: Test 'test_validate_cli_args_conflicting_verbose_quiet' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_cli_config.py:333: Test 'test_validate_cli_args_invalid_thresholds' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_cli_config.py:348: Test 'test_validate_cli_args_negative_budgets' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_cli_config.py:359: Test 'test_validate_cli_args_empty_args' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_cli_config.py:367: Test 'test_validate_cli_args_mixed_errors' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_cli_config.py:163: Calling private method: __init__
+    📊 BIS Score: 71.5 (B) - Good - Mostly behavior-focused with minor implementation details
+
+  🔍 unit/test_config_manager.py
+    ⚠️  1. tests/unit/test_config_manager.py:34: Test 'test_singleton_pattern' lacks AAA comment structure
+    ⚠️  2. tests/unit/test_config_manager.py:42: Test 'test_initialize_config' lacks AAA comment structure
+    ⚠️  3. tests/unit/test_config_manager.py:61: Test 'test_initialize_config_twice' missing AAA sections: act, assert
+    ⚠️  4. tests/unit/test_config_manager.py:88: Test 'test_get_config_not_initialized' lacks AAA comment structure
+    ⚠️  5. tests/unit/test_config_manager.py:95: Test 'test_reload_config' missing AAA sections: act, assert
+    ⚠️  6. tests/unit/test_config_manager.py:122: Test 'test_update_config' missing AAA sections: act, assert
+    ⚠️  7. tests/unit/test_config_manager.py:143: Test 'test_update_config_not_initialized' lacks AAA comment structure
+    ⚠️  8. tests/unit/test_config_manager.py:150: Test 'test_is_rule_enabled' lacks AAA comment structure
+    ⚠️  9. tests/unit/test_config_manager.py:169: Test 'test_get_threshold' lacks AAA comment structure
+    ⚠️  10. tests/unit/test_config_manager.py:187: Test 'test_get_budget' lacks AAA comment structure
+    ⚠️  11. tests/unit/test_config_manager.py:203: Test 'test_get_persona' lacks AAA comment structure
+    ⚠️  12. tests/unit/test_config_manager.py:217: Test 'test_get_mode' lacks AAA comment structure
+    ⚠️  13. tests/unit/test_config_manager.py:231: Test 'test_is_verbose' lacks AAA comment structure
+    ⚠️  14. tests/unit/test_config_manager.py:245: Test 'test_is_quiet' lacks AAA comment structure
+    ⚠️  15. tests/unit/test_config_manager.py:259: Test 'test_should_fail_on_how' lacks AAA comment structure
+    ⚠️  16. tests/unit/test_config_manager.py:273: Test 'test_get_sut_package' lacks AAA comment structure
+    ⚠️  17. tests/unit/test_config_manager.py:287: Test 'test_get_output_formats' lacks AAA comment structure
+    ⚠️  18. tests/unit/test_config_manager.py:301: Test 'test_get_json_report_path' lacks AAA comment structure
+    ⚠️  19. tests/unit/test_config_manager.py:315: Test 'test_get_sarif_report_path' lacks AAA comment structure
+    ⚠️  20. tests/unit/test_config_manager.py:329: Test 'test_get_mock_allowlist' lacks AAA comment structure
+    ⚠️  21. tests/unit/test_config_manager.py:343: Test 'test_get_enabled_rules' lacks AAA comment structure
+    ⚠️  22. tests/unit/test_config_manager.py:359: Test 'test_get_suppressed_rules' lacks AAA comment structure
+    ⚠️  23. tests/unit/test_config_manager.py:382: Test 'test_get_config_not_initialized' lacks AAA comment structure
+    ⚠️  24. tests/unit/test_config_manager.py:390: Test 'test_initialize_config' lacks AAA comment structure
+    ⚠️  25. tests/unit/test_config_manager.py:406: Test 'test_is_rule_enabled_global' lacks AAA comment structure
+    ⚠️  26. tests/unit/test_config_manager.py:422: Test 'test_get_threshold_global' lacks AAA comment structure
+    ⚠️  27. tests/unit/test_config_manager.py:441: Test 'test_get_budget_global' lacks AAA comment structure
+    ⚠️  28. tests/unit/test_config_manager.py:31: Accessing private attribute: _instance
+    ⚠️  29. tests/unit/test_config_manager.py:32: Accessing private attribute: _config
+    ⚠️  30. tests/unit/test_config_manager.py:379: Accessing private attribute: _instance
+    ⚠️  31. tests/unit/test_config_manager.py:380: Accessing private attribute: _config
+    ⚠️  32. tests/unit/test_config_manager.py:409: Accessing private attribute: _instance
+    ⚠️  33. tests/unit/test_config_manager.py:410: Accessing private attribute: _config
+    ⚠️  34. tests/unit/test_config_manager.py:425: Accessing private attribute: _instance
+    ⚠️  35. tests/unit/test_config_manager.py:426: Accessing private attribute: _config
+    ⚠️  36. tests/unit/test_config_manager.py:444: Accessing private attribute: _instance
+    ⚠️  37. tests/unit/test_config_manager.py:445: Accessing private attribute: _config
+    ⚠️  38. tests/unit/test_config_manager.py:40: Accessing private attribute: _instance
+    📊 BIS Score: 16.9 (F) - Critical - Heavily implementation-focused, needs major refactoring
+  ✅ integration/__init__.py - BIS Score: 100.0 (A+)
+
+  🔍 integration/test_config_integration.py
+    ⚠️  1. tests/integration/test_config_integration.py:34: Test 'test_full_configuration_loading_workflow' lacks AAA comment structure
+    ⚠️  2. tests/integration/test_config_integration.py:101: Test 'test_configuration_hierarchy_without_cli_args' lacks AAA comment structure
+    ⚠️  3. tests/integration/test_config_integration.py:132: Test 'test_configuration_with_pytest_integration' missing AAA sections: act, assert
+    ⚠️  4. tests/integration/test_config_integration.py:173: Test 'test_cli_args_parsing_and_conversion' has duplicate AAA sections: assert
+    ⚠️  5. tests/integration/test_config_integration.py:255: Test 'test_configuration_validation_integration' lacks AAA comment structure
+    ⚠️  6. tests/integration/test_config_integration.py:290: Test 'test_configuration_error_handling' lacks AAA comment structure
+    ⚠️  7. tests/integration/test_config_integration.py:311: Test 'test_configuration_consistency_validation' lacks AAA comment structure
+    ⚠️  8. tests/integration/test_config_integration.py:338: Test 'test_configuration_utility_methods' lacks AAA comment structure
+    📊 BIS Score: 97.6 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 sample_files/test_mock_overspec_sample.py
+    ⚠️  1. tests/sample_files/test_mock_overspec_sample.py:6: Test 'test_good_mock_usage' lacks AAA comment structure
+    ⚠️  2. tests/sample_files/test_mock_overspec_sample.py:21: Test 'test_mock_overspecification' lacks AAA comment structure
+    ⚠️  3. tests/sample_files/test_mock_overspec_sample.py:40: Test 'test_allowlisted_mock' lacks AAA comment structure
+    ⚠️  4. tests/sample_files/test_mock_overspec_sample.py:60: Test 'test_mixed_mocks' lacks AAA comment structure
+    ⚠️  5. tests/sample_files/test_mock_overspec_sample.py:21: Test 'test_mock_overspecification' has 4 mock assertions (threshold: 3). Consider focusing on behavior outcomes instead of implementation details.
+    ⚠️  6. tests/sample_files/test_mock_overspec_sample.py:40: Test 'test_allowlisted_mock' has 4 mock assertions (threshold: 3). Consider focusing on behavior outcomes instead of implementation details.
+    📊 BIS Score: 82.8 (A-) - Good - Mostly behavior-focused with minor implementation details
+
+  🔍 sample_files/test_aaa_sample.py
+    ⚠️  1. tests/sample_files/test_aaa_sample.py:35: Test 'test_missing_aaa_comments' lacks AAA comment structure
+    ⚠️  2. tests/sample_files/test_aaa_sample.py:53: Test 'test_wrong_aaa_order' has incorrect AAA order: act → arrange → assert
+    ⚠️  3. tests/sample_files/test_aaa_sample.py:65: Test 'test_duplicate_aaa_sections' has duplicate AAA sections: arrange
+    ⚠️  4. tests/sample_files/test_aaa_sample.py:92: Test 'test_partial_aaa' missing AAA sections: act
+    ⚠️  5. tests/sample_files/test_aaa_sample.py:103: Test 'test_aaa_with_extra_comments' has duplicate AAA sections: assert
+    ⚠️  6. tests/sample_files/test_aaa_sample.py:119: Test 'test_edge_case_empty_function' lacks AAA comment structure
+    ⚠️  7. tests/sample_files/test_aaa_sample.py:123: Test 'test_edge_case_single_line' missing AAA sections: act, assert
+    ⚠️  8. tests/sample_files/test_aaa_sample.py:129: Test 'test_edge_case_no_assertions' missing AAA sections: assert
+    📊 BIS Score: 97.6 (A+) - Excellent - Focuses on behavior, not implementation
+
+  🔍 sample_files/test_dogfood.py
+    ⚠️  1. tests/sample_files/test_dogfood.py:6: Test 'test_with_private_access' lacks AAA comment structure
+    ⚠️  2. tests/sample_files/test_dogfood.py:13: Test 'test_with_mock_overspec' lacks AAA comment structure
+    ⚠️  3. tests/sample_files/test_dogfood.py:36: Test 'test_clean_test' lacks AAA comment structure
+    ⚠️  4. tests/sample_files/test_dogfood.py:13: Test 'test_with_mock_overspec' has 4 mock assertions (threshold: 3). Consider focusing on behavior outcomes instead of implementation details.
+    ⚠️  5. tests/sample_files/test_dogfood.py:9: Calling private method: _private_method
+    📊 BIS Score: 68.6 (B-) - Fair - Some implementation details but generally behavior-focused
+
+  🔍 sample_files/test_structural_equality_sample.py
+    ⚠️  1. tests/sample_files/test_structural_equality_sample.py:12: Test 'test_dict_comparison' lacks AAA comment structure
+    ⚠️  2. tests/sample_files/test_structural_equality_sample.py:17: Test 'test_vars_comparison' lacks AAA comment structure
+    ⚠️  3. tests/sample_files/test_structural_equality_sample.py:22: Test 'test_asdict_comparison' lacks AAA comment structure
+    ⚠️  4. tests/sample_files/test_structural_equality_sample.py:27: Test 'test_repr_comparison' lacks AAA comment structure
+    ⚠️  5. tests/sample_files/test_structural_equality_sample.py:32: Test 'test_str_comparison' lacks AAA comment structure
+    ⚠️  6. tests/sample_files/test_structural_equality_sample.py:37: Test 'test_getattr_private' lacks AAA comment structure
+    ⚠️  7. tests/sample_files/test_structural_equality_sample.py:43: Test 'test_clean_behavior_test' lacks AAA comment structure
+    ⚠️  8. tests/sample_files/test_structural_equality_sample.py:49: Test 'test_multiple_violations' lacks AAA comment structure
+    ⚠️  9. tests/sample_files/test_structural_equality_sample.py:56: Test 'test_non_test_function' lacks AAA comment structure
+    ⚠️  10. tests/sample_files/test_structural_equality_sample.py:61: Test 'test_nested_calls' lacks AAA comment structure
+    ⚠️  11. tests/sample_files/test_structural_equality_sample.py:15: Accessing private attribute: __dict__
+    ⚠️  12. tests/sample_files/test_structural_equality_sample.py:52: Accessing private attribute: __dict__
+    ⚠️  13. tests/sample_files/test_structural_equality_sample.py:59: Accessing private attribute: __dict__
+    ⚠️  14. tests/sample_files/test_structural_equality_sample.py:15: Comparing internal structure: __dict__
+    ⚠️  15. tests/sample_files/test_structural_equality_sample.py:20: Comparing internal structure: vars()
+    ⚠️  16. tests/sample_files/test_structural_equality_sample.py:25: Comparing internal structure: dataclasses.asdict()
+    ⚠️  17. tests/sample_files/test_structural_equality_sample.py:30: Comparing string representation: repr()
+    ⚠️  18. tests/sample_files/test_structural_equality_sample.py:35: Comparing string representation: str()
+    ⚠️  19. tests/sample_files/test_structural_equality_sample.py:41: Accessing private attribute: _private_attr
+    ⚠️  20. tests/sample_files/test_structural_equality_sample.py:52: Comparing internal structure: __dict__
+    ⚠️  21. tests/sample_files/test_structural_equality_sample.py:53: Comparing internal structure: vars()
+    ⚠️  22. tests/sample_files/test_structural_equality_sample.py:54: Comparing internal structure: dataclasses.asdict()
+    ⚠️  23. tests/sample_files/test_structural_equality_sample.py:59: Comparing internal structure: __dict__
+    ⚠️  24. tests/sample_files/test_structural_equality_sample.py:65: Comparing internal structure: vars()
+    ⚠️  25. tests/sample_files/test_structural_equality_sample.py:66: Comparing internal structure: dataclasses.asdict()
+    📊 BIS Score: 0.0 (F) - Critical - Heavily implementation-focused, needs major refactoring
+
+============================================================
+🎖️  UNACCEPTABLE! BRS 30.9 means this unit is NOT READY FOR COMBAT!
+📊 BRS Score: 30.9 (F) - DISASTER! Your test suite is completely broken!
+📊 Total violations found: 0
+📁 Files analyzed: 61

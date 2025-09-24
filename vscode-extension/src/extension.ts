@@ -14,10 +14,10 @@ function findPythonCommand(): string {
     const pythonCommands = [
         'uv',  // Use uv run for better dependency management
         'python3',
-        'python', 
+        'python',
         'py'
     ];
-    
+
     for (const cmd of pythonCommands) {
         try {
             // Check if command exists and can import our module
@@ -37,13 +37,13 @@ function findPythonCommand(): string {
             continue;
         }
     }
-    
+
     // If no command works, show helpful error message
     vscode.window.showErrorMessage(
         'Drill Sergeant: Could not find Python with pytest-drill-sergeant installed. ' +
         'Please make sure pytest-drill-sergeant is installed: pip install pytest-drill-sergeant[lsp]'
     );
-    
+
     // Fallback to python3 (most common on macOS/Linux)
     console.log('Using fallback Python command: python3');
     return 'python3';
@@ -63,12 +63,12 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Find Python executable
     const pythonCommand = findPythonCommand();
-    
+
     // Server options - run our Python LSP server
     const serverOptions: ServerOptions = {
         run: {
             command: pythonCommand,
-            args: pythonCommand === 'uv' 
+            args: pythonCommand === 'uv'
                 ? ['run', 'python', '-m', 'pytest_drill_sergeant.lsp.main']
                 : ['-m', 'pytest_drill_sergeant.lsp.main'],
             transport: TransportKind.stdio,
@@ -81,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
         },
         debug: {
             command: pythonCommand,
-            args: pythonCommand === 'uv' 
+            args: pythonCommand === 'uv'
                 ? ['run', 'python', '-m', 'pytest_drill_sergeant.lsp.main']
                 : ['-m', 'pytest_drill_sergeant.lsp.main'],
             transport: TransportKind.stdio,

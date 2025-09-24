@@ -33,7 +33,7 @@ from _private_module import something
 from myapp.public import normal_function
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix="_test.py", delete=False) as f:
             f.write(test_code)
             f.flush()
 
@@ -72,7 +72,7 @@ def test_something():
     normal_attr = obj.public_attr
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix="_test.py", delete=False) as f:
             f.write(test_code)
             f.flush()
 
@@ -101,7 +101,7 @@ def test_something():
     obj.public_method()
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix="_test.py", delete=False) as f:
             f.write(test_code)
             f.flush()
 
@@ -128,7 +128,7 @@ from myapp.public import normal_function
 from other._internal import something
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix="_test.py", delete=False) as f:
             f.write(test_code)
             f.flush()
 
@@ -155,7 +155,7 @@ def test_something():
     assert result == "expected"
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix="_test.py", delete=False) as f:
             f.write(test_code)
             f.flush()
 
@@ -174,7 +174,7 @@ def test_something(
     assert True
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix="_test.py", delete=False) as f:
             f.write(test_code)
             f.flush()
 
@@ -195,7 +195,7 @@ def test_something(
         detector = PrivateAccessDetector()
 
         with patch("builtins.open", side_effect=PermissionError("Permission denied")):
-            findings = detector.analyze_file(Path("nonexistent.py"))
+            findings = detector.analyze_file(Path("test_nonexistent.py"))
 
             # Should find 1 analysis error
             assert len(findings) == 1
@@ -315,7 +315,7 @@ def test_something():
     obj.nested._private_method()
 """
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix="_test.py", delete=False) as f:
             f.write(test_code)
             f.flush()
 

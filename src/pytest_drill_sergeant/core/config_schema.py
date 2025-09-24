@@ -180,6 +180,9 @@ class DSConfig(BaseModel):
     similarity_threshold: float = Field(
         0.8, ge=0.0, le=1.0, description="Similarity threshold"
     )
+    mock_overspec_threshold: int = Field(
+        3, ge=1, le=20, description="Mock over-specification threshold"
+    )
 
     # Project settings
     project_root: Path | None = Field(None, description="Project root directory")
@@ -397,6 +400,7 @@ def _suggest_field_name(invalid_field: str) -> list[str]:
         "bis_threshold",
         "brs_threshold",
         "similarity_threshold",
+        "mock_overspec_threshold",
         "project_root",
         "sut_package",
         "test_patterns",
@@ -418,7 +422,7 @@ def _suggest_field_name(invalid_field: str) -> list[str]:
 
     # Common typos
     common_typos = {
-        "threshold": ["bis_threshold", "brs_threshold", "similarity_threshold"],
+        "threshold": ["bis_threshold", "brs_threshold", "similarity_threshold", "mock_overspec_threshold"],
         "pattern": ["test_patterns", "ignore_patterns"],
         "ignore": ["ignore_patterns", "per_file_ignores"],
         "rule": ["rules"],
@@ -456,6 +460,7 @@ def create_default_config() -> DSConfig:
             "bis_threshold": 70.0,
             "brs_threshold": 60.0,
             "similarity_threshold": 0.8,
+            "mock_overspec_threshold": 3,
         },
         settings={
             "strict_mode": False,
@@ -480,6 +485,7 @@ def create_default_config() -> DSConfig:
             "bis_threshold": 85.0,
             "brs_threshold": 75.0,
             "similarity_threshold": 0.9,
+            "mock_overspec_threshold": 2,
         },
         settings={
             "strict_mode": True,
@@ -503,6 +509,7 @@ def create_default_config() -> DSConfig:
             "bis_threshold": 50.0,
             "brs_threshold": 40.0,
             "similarity_threshold": 0.7,
+            "mock_overspec_threshold": 5,
         },
         settings={
             "strict_mode": False,
@@ -524,6 +531,7 @@ def create_default_config() -> DSConfig:
         bis_threshold=70.0,
         brs_threshold=60.0,
         similarity_threshold=0.8,
+        mock_overspec_threshold=3,
         test_patterns=["test_*.py", "*_test.py"],
         ignore_patterns=[],
         per_file_ignores={},

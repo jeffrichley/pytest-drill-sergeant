@@ -64,7 +64,7 @@ from myapp._internal import secret_function  # ← Red squiggle
 def test_something():
     obj = SomeClass()
     obj._private_method()  # ← Red squiggle
-    
+
     # Structural equality violation
     assert obj.__dict__ == expected_dict  # ← Red squiggle
 ```

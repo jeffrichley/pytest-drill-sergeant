@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
     from pytest_drill_sergeant.core.models import Finding, ResultData, RunMetrics
     from pytest_drill_sergeant.core.reporting.types import JSONDict
+    from pytest_drill_sergeant.core.error_handler import AnalysisError
 
 
 class JSONFormatter:
@@ -99,6 +100,38 @@ class JSONFormatter:
             "created_at": result.created_at.isoformat(),
         }
 
+    def format_analysis_error(self, error: AnalysisError) -> JSONDict:
+        """Format an analysis error as JSON.
+
+        Args:
+            error: Analysis error to format
+
+        Returns:
+            JSON-serializable dictionary
+        """
+        return {
+            "error_id": error.error_id,
+            "category": error.category.value,
+            "severity": error.severity.value,
+            "message": error.message,
+            "suggestion": error.suggestion or "",
+            "recoverable": error.recoverable,
+            "retry_count": error.retry_count,
+            "max_retries": error.max_retries,
+            "context": {
+                "file_path": str(error.context.file_path) if error.context and error.context.file_path else "",
+                "line_number": error.context.line_number if error.context else None,
+                "analyzer_name": error.context.analyzer_name if error.context else "",
+                "function_name": error.context.function_name if error.context else "",
+                "timestamp": error.context.timestamp.isoformat() if error.context else "",
+                "user_data": error.context.user_data if error.context else {},
+            } if error.context else {},
+            "original_exception": {
+                "type": type(error.original_exception).__name__ if error.original_exception else "",
+                "message": str(error.original_exception) if error.original_exception else "",
+            } if error.original_exception else None,
+        }
+
     def format_run_metrics(self, metrics: RunMetrics) -> JSONDict:
         """Format run metrics as JSON.
 
@@ -146,6 +179,7 @@ class JSONFormatter:
         test_results: list[ResultData],
         metrics: RunMetrics,
         config: JSONDict | None = None,
+        errors: list[AnalysisError] | None = None,
     ) -> JSONDict:
         """Format a complete report as JSON.
 
@@ -153,11 +187,12 @@ class JSONFormatter:
             test_results: List of test results
             metrics: Run metrics
             config: Configuration used for analysis
+            errors: List of analysis errors
 
         Returns:
             Complete JSON report
         """
-        return {
+        report = {
             "report_metadata": {
                 "tool": "pytest-drill-sergeant",
                 "version": "1.0.0-dev",
@@ -177,6 +212,31 @@ class JSONFormatter:
                 "quality_grade": metrics.brs_grade,
             },
         }
+        
+        # Add error information if provided
+        if errors:
+            report["errors"] = {
+                "total_errors": len(errors),
+                "errors": [self.format_analysis_error(error) for error in errors],
+                "error_summary": {
+                    "by_category": {},
+                    "by_severity": {},
+                }
+            }
+            
+            # Calculate error summary
+            for error in errors:
+                category = error.category.value
+                severity = error.severity.value
+                
+                report["errors"]["error_summary"]["by_category"][category] = (
+                    report["errors"]["error_summary"]["by_category"].get(category, 0) + 1
+                )
+                report["errors"]["error_summary"]["by_severity"][severity] = (
+                    report["errors"]["error_summary"]["by_severity"].get(severity, 0) + 1
+                )
+        
+        return report
 
     def save_report(self, report: JSONDict, output_path: Path) -> None:
         """Save a report to a JSON file.
@@ -219,6 +279,7 @@ class JSONReportBuilder:
         self._test_results: list[ResultData] = []
         self._metrics: RunMetrics | None = None
         self._config: JSONDict | None = None
+        self._errors: list[AnalysisError] = []
 
     def add_test_result(self, result: ResultData) -> None:
         """Add a test result to the report.
@@ -252,6 +313,30 @@ class JSONReportBuilder:
         """
         self._config = config
 
+    def add_error(self, error: AnalysisError) -> None:
+        """Add an analysis error to the report.
+
+        Args:
+            error: Analysis error to add
+        """
+        self._errors.append(error)
+
+    def add_errors(self, errors: list[AnalysisError]) -> None:
+        """Add multiple analysis errors to the report.
+
+        Args:
+            errors: List of analysis errors to add
+        """
+        self._errors.extend(errors)
+
+    def set_errors(self, errors: list[AnalysisError]) -> None:
+        """Set the analysis errors for the report.
+
+        Args:
+            errors: List of analysis errors
+        """
+        self._errors = errors
+
     def build(self) -> JSONDict:
         """Build the complete JSON report.
 
@@ -263,7 +348,7 @@ class JSONReportBuilder:
             raise ValueError(msg)
 
         return self.formatter.format_report(
-            self._test_results, self._metrics, self._config
+            self._test_results, self._metrics, self._config, self._errors
         )
 
     def save(self, output_path: Path) -> None:

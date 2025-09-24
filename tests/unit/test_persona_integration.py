@@ -36,7 +36,7 @@ class TestPersonaManager:
         """Test getting non-existent persona."""
         manager = PersonaManager()
         with pytest.raises(ValueError, match="Persona 'nonexistent' not found"):
-            manager.get_persona("nonexistent")
+            manager.get_persona("nonexistent", fallback_on_missing=False)
 
     def test_list_personas(self) -> None:
         """Test listing available personas."""
@@ -291,13 +291,25 @@ class TestHookIntegration:
         # Call the function
         _initialize_analyzers()
 
-        # Verify analyzer was added
-        mock_storage_instance.add_analyzer.assert_called_once()
+        # Verify analyzers were added (now we have 4 analyzers: private access, mock overspec, AAA comment, structural equality)
+        assert mock_storage_instance.add_analyzer.call_count == 4
 
+    @patch("pytest_drill_sergeant.plugin.hooks.create_file_discovery")
+    @patch("pytest_drill_sergeant.plugin.hooks.get_config")
     @patch("pytest_drill_sergeant.plugin.hooks.get_analysis_storage")
-    def test_analyze_test_file(self, mock_storage) -> None:
+    def test_analyze_test_file(self, mock_storage, mock_config, mock_create_file_discovery) -> None:
         """Test test file analysis in hooks."""
         from pytest_drill_sergeant.plugin.hooks import _analyze_test_file
+
+        # Mock file discovery to return True for should_analyze_file
+        mock_file_discovery = Mock()
+        mock_file_discovery.should_analyze_file.return_value = True
+        mock_file_discovery.get_file_config.return_value = {"ignored_rules": []}
+        mock_create_file_discovery.return_value = mock_file_discovery
+
+        # Mock config
+        mock_config_instance = Mock()
+        mock_config.return_value = mock_config_instance
 
         # Mock storage
         mock_storage_instance = Mock()
@@ -307,7 +319,7 @@ class TestHookIntegration:
 
         # Mock test item
         mock_item = Mock()
-        mock_item.fspath = "/path/to/test.py"
+        mock_item.fspath = "/path/test_example.py"
 
         # Call the function
         _analyze_test_file(mock_item)

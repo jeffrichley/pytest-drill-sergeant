@@ -55,8 +55,17 @@ class AnalysisContext:
         self.sut_filter = SUTFilter(sut_pattern)
 
     def analyze_file(self, path: Path) -> list:
-        """Analyze a single file."""
-        return self.storage.analyze_test_file(path)
+        """Analyze a single file using the analysis pipeline."""
+        # Use the analysis pipeline directly instead of storage
+        findings = []
+        for analyzer in self.analyzers:
+            try:
+                analyzer_findings = analyzer.analyze_file(path)
+                findings.extend(analyzer_findings)
+            except Exception as e:
+                # Log error but continue with other analyzers
+                print(f"Error in {type(analyzer).__name__}: {e}")
+        return findings
 
     def filter_findings_by_severity(self, findings: list, profile_config=None) -> list:
         """Filter findings based on profile fail-on setting."""
@@ -199,8 +208,13 @@ def _run_lint_with_options(opts: LintConfig) -> int:
     setup_logging(use_rich=opts.rich_output)
     logger = get_logger(__name__)
 
+    # Initialize error handling
+    from pytest_drill_sergeant.core.error_handler import get_error_handler
+    error_handler = get_error_handler()
+
     # Initialize centralized configuration
     from pytest_drill_sergeant.core.config_context import get_config, initialize_config
+    from pytest_drill_sergeant.core.config_validator_enhanced import EnhancedConfigValidator
 
     # Convert CLI options to config dict
     cli_config = {
@@ -223,6 +237,18 @@ def _run_lint_with_options(opts: LintConfig) -> int:
                 treat_overrides[rule_name.strip()] = {"level": severity.strip()}
         if treat_overrides:
             cli_config["rules"] = treat_overrides
+
+    # Validate configuration
+    config_validator = EnhancedConfigValidator()
+    validation_errors = config_validator.validate_config(cli_config)
+    
+    if validation_errors:
+        typer.echo("❌ Configuration validation errors:")
+        for error in validation_errors:
+            typer.echo(f"  • {error.message}")
+            if error.suggestion:
+                typer.echo(f"    💡 Suggestion: {error.suggestion}")
+        return 1
 
     # Initialize configuration
     try:
@@ -276,8 +302,8 @@ def _run_lint_with_options(opts: LintConfig) -> int:
         # Import our analysis components
         from pathlib import Path
 
-        from pytest_drill_sergeant.core.analyzers.private_access_detector import (
-            PrivateAccessDetector,
+        from pytest_drill_sergeant.core.analysis_pipeline import (
+            create_analysis_pipeline,
         )
 
         # Use context manager instead of globals
@@ -285,37 +311,82 @@ def _run_lint_with_options(opts: LintConfig) -> int:
             # Set up SUT filter
             ctx.set_sut_filter(opts.sut_filter)
 
-            # Add analyzer - context handles all filtering through SUT filter
-            # Detector will use centralized config registry
-            detector = PrivateAccessDetector()
-            ctx.add_analyzer(detector)
+            # Create centralized analysis pipeline with error handling
+            pipeline = create_analysis_pipeline(error_handler=error_handler)
+            
+            # Add the pipeline to context (context will handle individual analyzers)
+            for analyzer in pipeline.analyzers:
+                ctx.add_analyzer(analyzer)
 
             # Analyze each path
             total_violations = 0
             total_files = 0
+            all_findings = []
+            all_bis_scores = []
+            files_analyzed = []
 
             for path_str in opts.paths:
                 path = Path(path_str)
 
                 if path.is_file():
-                    # Analyze single file
-                    findings = ctx.analyze_file(path)
-                    # Filter findings based on profile fail-on setting
-                    filtered_findings = ctx.filter_findings_by_severity(findings)
-                    total_violations += len(filtered_findings)
+                    # Analyze single file with error handling
+                    findings, file_errors = pipeline.analyze_file(path)
+                    
+                    # Report any analysis errors
+                    if file_errors:
+                        typer.echo(f"\n⚠️  Analysis errors in {path}:")
+                        for error in file_errors:
+                            typer.echo(f"  • {error.message}")
+                            if error.suggestion:
+                                typer.echo(f"    💡 Suggestion: {error.suggestion}")
+                    
+                    # In advisory mode, show all findings; in strict mode, filter by severity
+                    if opts.fail_on == "error":
+                        # Advisory mode - show all findings but don't fail on warnings
+                        display_findings = findings
+                        filtered_findings = ctx.filter_findings_by_severity(findings)
+                        total_violations += len(filtered_findings)  # Only count failures for exit code
+                    else:
+                        # Strict mode - filter and count all
+                        display_findings = ctx.filter_findings_by_severity(findings)
+                        filtered_findings = display_findings
+                        total_violations += len(filtered_findings)
+                    
                     total_files += 1
 
+                    # Calculate BIS score for this file
+                    from pytest_drill_sergeant.core.scoring import DynamicBISCalculator
+                    bis_calculator = DynamicBISCalculator()
+                    metrics = bis_calculator.extract_metrics_from_findings(findings)
+                    bis_score = bis_calculator.calculate_bis(metrics)
+                    bis_grade = bis_calculator.get_grade(bis_score)
+                    
+                    # Collect data for BRS calculation
+                    all_findings.extend(findings)
+                    all_bis_scores.append(bis_score)
+                    files_analyzed.append(path)
+                    
                     # Display results for this file
-                    if filtered_findings:
+                    if display_findings:
                         typer.echo(f"\n🔍 Analyzing: {path}")
-                        for i, finding in enumerate(filtered_findings, 1):
-                            message = ctx.persona_manager.on_test_fail(
-                                f"{path.name}:{finding.line_number}", finding
-                            )
-                            typer.echo(f"  {i}. {message}")
+                        for i, finding in enumerate(display_findings, 1):
+                            # Use appropriate message based on severity
+                            severity_str = finding.severity if isinstance(finding.severity, str) else finding.severity.value
+                            if severity_str in ["error"]:
+                                message = ctx.persona_manager.on_test_fail(
+                                    f"{path.name}:{finding.line_number}", finding
+                                )
+                                typer.echo(f"  ❌ {i}. {message}")
+                            else:
+                                # For warnings/info, show advisory message with IDE-clickable format
+                                typer.echo(f"  ⚠️  {i}. {path}:{finding.line_number}: {finding.message}")
+                        
+                        # Show BIS score
+                        typer.echo(f"  📊 BIS Score: {bis_score:.1f} ({bis_grade}) - {bis_calculator.get_score_interpretation(bis_score)}")
                     else:
                         success_msg = ctx.persona_manager.on_test_pass(str(path))
                         typer.echo(f"\n✅ {success_msg}")
+                        typer.echo(f"  📊 BIS Score: {bis_score:.1f} ({bis_grade}) - {bis_calculator.get_score_interpretation(bis_score)}")
 
                 elif path.is_dir():
                     # Use SUT filter to get files to analyze
@@ -339,55 +410,106 @@ def _run_lint_with_options(opts: LintConfig) -> int:
                         )
 
                     for py_file in files_to_analyze:
-                        findings = ctx.analyze_file(py_file)
-                        # Filter findings based on profile fail-on setting
-                        filtered_findings = ctx.filter_findings_by_severity(findings)
-                        total_violations += len(filtered_findings)
+                        findings, file_errors = pipeline.analyze_file(py_file)
+                        
+                        # Report any analysis errors
+                        if file_errors:
+                            typer.echo(f"\n  ⚠️  Analysis errors in {py_file.relative_to(path)}:")
+                            for error in file_errors:
+                                typer.echo(f"    • {error.message}")
+                                if error.suggestion:
+                                    typer.echo(f"      💡 Suggestion: {error.suggestion}")
+                        
+                        # In advisory mode, show all findings; in strict mode, filter by severity
+                        if opts.fail_on == "error":
+                            # Advisory mode - show all findings but don't fail on warnings
+                            display_findings = findings
+                            filtered_findings = ctx.filter_findings_by_severity(findings)
+                            total_violations += len(filtered_findings)  # Only count failures for exit code
+                        else:
+                            # Strict mode - filter and count all
+                            display_findings = ctx.filter_findings_by_severity(findings)
+                            filtered_findings = display_findings
+                            total_violations += len(filtered_findings)
+                        
                         total_files += 1
 
-                        if filtered_findings:
+                        # Calculate BIS score for this file
+                        from pytest_drill_sergeant.core.scoring import DynamicBISCalculator
+                        bis_calculator = DynamicBISCalculator()
+                        metrics = bis_calculator.extract_metrics_from_findings(findings)
+                        bis_score = bis_calculator.calculate_bis(metrics)
+                        bis_grade = bis_calculator.get_grade(bis_score)
+                        
+                        # Collect data for BRS calculation
+                        all_findings.extend(findings)
+                        all_bis_scores.append(bis_score)
+                        files_analyzed.append(py_file)
+                        
+                        if display_findings:
                             typer.echo(f"\n  🔍 {py_file.relative_to(path)}")
-                            for i, finding in enumerate(filtered_findings, 1):
-                                message = ctx.persona_manager.on_test_fail(
-                                    f"{py_file.name}:{finding.line_number}", finding
-                                )
-                                typer.echo(f"    {i}. {message}")
+                            for i, finding in enumerate(display_findings, 1):
+                                # Use appropriate message based on severity
+                                severity_str = finding.severity if isinstance(finding.severity, str) else finding.severity.value
+                                if severity_str in ["error"]:
+                                    message = ctx.persona_manager.on_test_fail(
+                                        f"{py_file.name}:{finding.line_number}", finding
+                                    )
+                                    typer.echo(f"    ❌ {i}. {message}")
+                                else:
+                                    # For warnings/info, show advisory message with IDE-clickable format
+                                    typer.echo(f"    ⚠️  {i}. {py_file}:{finding.line_number}: {finding.message}")
+                            
+                            # Show BIS score
+                            typer.echo(f"    📊 BIS Score: {bis_score:.1f} ({bis_grade}) - {bis_calculator.get_score_interpretation(bis_score)}")
+                        else:
+                            # Show BIS score for clean files too
+                            typer.echo(f"  ✅ {py_file.relative_to(path)} - BIS Score: {bis_score:.1f} ({bis_grade})")
                 else:
                     typer.echo(f"⚠️  Path not found: {path}")
                     continue
 
+            # Calculate BRS score
+            from pytest_drill_sergeant.core.scoring import BRSCalculator
+            brs_calculator = BRSCalculator()
+            metrics = brs_calculator.extract_metrics_from_analysis(files_analyzed, all_findings, all_bis_scores)
+            brs_score = brs_calculator.calculate_brs(metrics)
+            brs_grade = brs_calculator.get_brs_grade(brs_score)
+            brs_interpretation = brs_calculator.get_brs_interpretation(brs_score)
+            
             # Display summary
             typer.echo(f"\n{'='*60}")
-            if total_violations == 0:
-                summary_msg = ctx.persona_manager.on_summary(
-                    type(
-                        "MockMetrics",
-                        (),
-                        {
-                            "total_tests": total_files,
-                            "total_violations": 0,
-                            "brs_score": 100.0,
-                        },
-                    )()
-                )
-                typer.echo(f"🎖️  {summary_msg}")
-            else:
-                brs_score = max(0, 100 - (total_violations * 15))
-                summary_msg = ctx.persona_manager.on_summary(
-                    type(
-                        "MockMetrics",
-                        (),
-                        {
-                            "total_tests": total_files,
-                            "total_violations": total_violations,
-                            "brs_score": brs_score,
-                        },
-                    )()
-                )
-                typer.echo(f"🎖️  {summary_msg}")
+            summary_msg = ctx.persona_manager.on_summary(
+                type(
+                    "MockMetrics",
+                    (),
+                    {
+                        "total_tests": total_files,
+                        "total_violations": total_violations,
+                        "brs_score": brs_score,
+                    },
+                )()
+            )
+            typer.echo(f"🎖️  {summary_msg}")
+            typer.echo(f"📊 BRS Score: {brs_score:.1f} ({brs_grade}) - {brs_interpretation}")
 
             typer.echo(f"📊 Total violations found: {total_violations}")
             typer.echo(f"📁 Files analyzed: {total_files}")
+
+            # Display error summary if there were any analysis errors
+            analysis_errors = pipeline.get_analysis_errors()
+            if analysis_errors:
+                typer.echo(f"\n⚠️  Analysis errors encountered: {len(analysis_errors)}")
+                error_summary = pipeline.get_error_summary()
+                typer.echo(f"   • Critical errors: {error_summary.get('critical_errors', 0)}")
+                typer.echo(f"   • Recoverable errors: {error_summary.get('recoverable_errors', 0)}")
+                
+                # Show error breakdown by category
+                by_category = error_summary.get('by_category', {})
+                if by_category:
+                    typer.echo("   • Errors by category:")
+                    for category, count in by_category.items():
+                        typer.echo(f"     - {category}: {count}")
 
             return 0 if total_violations == 0 else 1
 
@@ -491,8 +613,8 @@ def demo(
     try:
         from pathlib import Path
 
-        from pytest_drill_sergeant.core.analyzers.private_access_detector import (
-            PrivateAccessDetector,
+        from pytest_drill_sergeant.core.analysis_pipeline import (
+            create_analysis_pipeline,
         )
         from pytest_drill_sergeant.plugin.analysis_storage import get_analysis_storage
         from pytest_drill_sergeant.plugin.personas.manager import get_persona_manager
@@ -504,13 +626,16 @@ def demo(
         storage = get_analysis_storage()
         persona_manager = get_persona_manager()
 
-        # Add analyzer - detect violations in any package for demo
+        # Add analyzers using centralized pipeline
         # Initialize config context for demo
         from pytest_drill_sergeant.core.config_context import initialize_config
 
         initialize_config()  # Use defaults for demo
-        detector = PrivateAccessDetector()
-        storage.add_analyzer(detector)
+        pipeline = create_analysis_pipeline()
+        
+        # Add all analyzers from pipeline to storage
+        for analyzer in pipeline.analyzers:
+            storage.add_analyzer(analyzer)
 
         # Demo with sample files
         sample_files = [

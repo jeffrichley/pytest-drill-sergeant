@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from pytest_drill_sergeant.core.config_manager import get_config
 from pytest_drill_sergeant.plugin.personas.drill_sergeant import DrillSergeantPersona
+from pytest_drill_sergeant.plugin.personas.snoop_dogg import SnoopDoggPersona
 from pytest_drill_sergeant.plugin.personas.strategy import PersonaStrategy
 
 if TYPE_CHECKING:
@@ -29,27 +30,42 @@ class PersonaManager:
         # Register built-in personas
         drill_sergeant = DrillSergeantPersona()
         self._personas[drill_sergeant.name] = drill_sergeant
+        
+        snoop_dogg = SnoopDoggPersona()
+        self._personas[snoop_dogg.name] = snoop_dogg
 
         logger.debug(f"Registered persona: {drill_sergeant.name}")
+        logger.debug(f"Registered persona: {snoop_dogg.name}")
 
-    def get_persona(self, name: str | None = None) -> PersonaStrategy:
+    def get_persona(self, name: str | None = None, fallback_on_missing: bool = True) -> PersonaStrategy:
         """Get a persona by name or the configured default.
 
         Args:
             name: Persona name to get. If None, uses configured default.
+            fallback_on_missing: If True, fall back to drill_sergeant when persona not found.
+                                If False, raise ValueError for missing personas.
 
         Returns:
             PersonaStrategy instance
 
         Raises:
-            ValueError: If persona not found
+            ValueError: If persona not found and fallback_on_missing is False
         """
         if name is None:
             name = self._get_default_persona_name()
+            # For config-driven selection, always allow fallback
+            fallback_on_missing = True
 
         if name not in self._personas:
             available = ", ".join(self._personas.keys())
-            raise ValueError(f"Persona '{name}' not found. Available: {available}")
+            if fallback_on_missing:
+                logger.warning(f"Persona '{name}' not found. Available: {available}. Using 'drill_sergeant' as fallback.")
+                # Fall back to drill_sergeant if requested persona not found
+                name = "drill_sergeant"
+                if name not in self._personas:
+                    raise ValueError(f"Default persona '{name}' not found. Available: {available}")
+            else:
+                raise ValueError(f"Persona '{name}' not found. Available: {available}")
 
         return self._personas[name]
 
@@ -59,7 +75,7 @@ class PersonaManager:
             config = get_config()
             return getattr(config, "persona", "drill_sergeant")
         except Exception:
-            logger.warning("Could not get persona from config, using default")
+            logger.debug("Could not get persona from config, using default")
             return "drill_sergeant"
 
     def list_personas(self) -> list[str]:
