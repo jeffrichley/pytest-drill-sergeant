@@ -141,13 +141,13 @@ select = [
     "PGH",  # pygrep-hooks
     "PTH",  # flake8-use-pathlib
     "ERA",  # eradicate
-    "PLR",  # pylint refactor
     "PLW",  # pylint warnings
     "PLE",  # pylint errors
 ]
 ignore = [
     "E501",    # Line too long (Black handles this)
     "RUF001",  # Allow emoji characters (we love emojis! 🎉)
+    "PLR2004", # Magic value used in comparison (we allow magic numbers)
 ]
 
 fixable = ["ALL"]
@@ -173,6 +173,7 @@ unfixable = []
     "PT018",   # Assertion breakdown (tests can be looser)
     "SLF001",  # Private member access (tests can be looser)
     "TRY300",  # Try/except patterns (tests can be looser)
+    "PLR2004", # Magic value used in comparison (tests can use magic numbers)
 ]
 
 [tool.ruff.lint.flake8-tidy-imports]
