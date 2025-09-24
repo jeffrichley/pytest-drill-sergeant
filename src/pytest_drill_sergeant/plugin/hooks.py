@@ -148,7 +148,7 @@ def _initialize_analyzers() -> None:
         import logging
 
         logger = logging.getLogger(__name__)
-        logger.warning(f"Failed to initialize analyzers: {e}")
+        logger.warning("Failed to initialize analyzers: %s", e)
 
 
 def _analyze_test_file(item: pytest.Item) -> None:
@@ -196,7 +196,7 @@ def _analyze_test_file(item: pytest.Item) -> None:
         import logging
 
         logger = logging.getLogger(__name__)
-        logger.warning(f"Failed to analyze test file {item.fspath}: {e}")
+        logger.warning("Failed to analyze test file %s: %s", item.fspath, e)
 
 
 def _calculate_bis_scores_for_file(item: pytest.Item, findings: list[Finding]) -> None:
@@ -222,7 +222,7 @@ def _calculate_bis_scores_for_file(item: pytest.Item, findings: list[Finding]) -
         import logging
 
         logger = logging.getLogger(__name__)
-        logger.warning(f"Failed to calculate BIS scores for file {item.fspath}: {e}")
+        logger.warning("Failed to calculate BIS scores for file %s: %s", item.fspath, e)
 
 
 def _inject_persona_feedback(report: pytest.TestReport) -> None:
@@ -291,7 +291,7 @@ def _inject_persona_feedback(report: pytest.TestReport) -> None:
         import logging
 
         logger = logging.getLogger(__name__)
-        logger.warning(f"Failed to inject persona feedback: {e}")
+        logger.warning("Failed to inject persona feedback: %s", e)
 
 
 def _generate_persona_summary(terminalreporter: pytest.TerminalReporter) -> None:
@@ -370,7 +370,7 @@ def _generate_persona_summary(terminalreporter: pytest.TerminalReporter) -> None
         import logging
 
         logger = logging.getLogger(__name__)
-        logger.warning(f"Failed to generate persona summary: {e}")
+        logger.warning("Failed to generate persona summary: %s", e)
 
 
 def _run_duplicate_detection_summary(terminalreporter: pytest.TerminalReporter) -> None:
@@ -447,4 +447,4 @@ def _run_duplicate_detection_summary(terminalreporter: pytest.TerminalReporter) 
         import logging
 
         logger = logging.getLogger(__name__)
-        logger.warning(f"Failed to run duplicate detection summary: {e}")
+        logger.warning("Failed to run duplicate detection summary: %s", e)

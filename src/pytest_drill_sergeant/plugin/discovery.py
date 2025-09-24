@@ -354,7 +354,7 @@ class PluginDiscovery:
             )
         except TypeError as e:
             # Handle case where attr is not a class or DrillSergeantPlugin is not a class
-            self._logger.debug(f"Invalid plugin class check: {e}")
+            self._logger.debug("Invalid plugin class check: %s", e)
             return False
 
     def _create_plugin_instance(
