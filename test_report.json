@@ -2,6 +2,6 @@
   "coverage_analysis": {
     "threshold": 65.0,
     "summary": "Coverage analysis completed",
-    "timestamp": "/Users/jeffrichley/workspace/tools/pytest-drill-sergeant"
+    "timestamp": "/Users/jeffrichley/workspace/tools/worktrees/feature_65f6c81b_dynamic-duplicate-detection"
   }
 }

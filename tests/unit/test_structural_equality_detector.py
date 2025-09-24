@@ -28,10 +28,10 @@ class TestStructuralEqualityDetector:
             if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
                 test_func = node
                 break
-        
+
         if test_func is None:
             return []
-        
+
         return self.detector._analyze_test_function(test_func, file_path)
 
     def test_init(self) -> None:
@@ -56,7 +56,7 @@ def test_dict_access():
 """
         file_path = Path("test_file.py")
         findings = self._analyze_test_code(code, file_path)
-        
+
         assert len(findings) == 1
         finding = findings[0]
         assert finding.code == "DS306"
@@ -74,7 +74,7 @@ def test_vars_call():
 """
         file_path = Path("test_file.py")
         findings = self._analyze_test_code(code, file_path)
-        
+
         assert len(findings) == 1
         finding = findings[0]
         assert finding.code == "DS306"
@@ -92,7 +92,7 @@ def test_asdict_call():
 """
         file_path = Path("test_file.py")
         findings = self._analyze_test_code(code, file_path)
-        
+
         assert len(findings) == 1
         finding = findings[0]
         assert finding.code == "DS306"
@@ -110,7 +110,7 @@ def test_repr_comparison():
 """
         file_path = Path("test_file.py")
         findings = self._analyze_test_code(code, file_path)
-        
+
         assert len(findings) == 1
         finding = findings[0]
         assert finding.code == "DS306"
@@ -128,7 +128,7 @@ def test_str_comparison():
 """
         file_path = Path("test_file.py")
         findings = self._analyze_test_code(code, file_path)
-        
+
         assert len(findings) == 1
         finding = findings[0]
         assert finding.code == "DS306"
@@ -146,7 +146,7 @@ def test_getattr_private():
 """
         file_path = Path("test_file.py")
         findings = self._analyze_test_code(code, file_path)
-        
+
         assert len(findings) == 1
         finding = findings[0]
         assert finding.code == "DS306"
@@ -166,7 +166,7 @@ def test_non_assert_context():
 """
         file_path = Path("test_file.py")
         findings = self._analyze_test_code(code, file_path)
-        
+
         # Should find both violations
         assert len(findings) == 2
         violation_types = {f.metadata["violation_type"] for f in findings}
@@ -182,7 +182,7 @@ def regular_function():
 """
         file_path = Path("test_file.py")
         findings = self._analyze_test_code(code, file_path)
-        
+
         # Should find no violations since it's not a test function
         assert len(findings) == 0
 
@@ -197,7 +197,7 @@ def test_nested_calls():
 """
         file_path = Path("test_file.py")
         findings = self._analyze_test_code(code, file_path)
-        
+
         # Should find both violations
         assert len(findings) == 2
         violation_types = {f.metadata["violation_type"] for f in findings}
@@ -207,11 +207,14 @@ def test_nested_calls():
     def test_syntax_error_handling(self) -> None:
         """Test graceful handling of syntax errors."""
         file_path = Path("syntax_error.py")
-        
+
         # Create a file with syntax error
-        with patch("pathlib.Path.read_text", return_value="def test_invalid_syntax:\n    assert True"):
+        with patch(
+            "pathlib.Path.read_text",
+            return_value="def test_invalid_syntax:\n    assert True",
+        ):
             findings = self.detector.analyze_file(file_path)
-        
+
         assert len(findings) == 1
         finding = findings[0]
         assert finding.severity == Severity.ERROR
@@ -220,10 +223,10 @@ def test_nested_calls():
     def test_analysis_error_handling(self) -> None:
         """Test graceful handling of analysis errors."""
         file_path = Path("analysis_error.py")
-        
+
         with patch("pathlib.Path.read_text", side_effect=OSError("File not found")):
             findings = self.detector.analyze_file(file_path)
-        
+
         assert len(findings) == 1
         finding = findings[0]
         assert finding.severity == Severity.ERROR
@@ -234,20 +237,18 @@ def test_nested_calls():
         # Test with Name node
         name_node = ast.Name(id="user", ctx=ast.Load())
         assert self.detector._get_object_name(name_node) == "user"
-        
+
         # Test with Attribute node
         attr_node = ast.Attribute(
-            value=ast.Name(id="user", ctx=ast.Load()),
-            attr="name",
-            ctx=ast.Load()
+            value=ast.Name(id="user", ctx=ast.Load()), attr="name", ctx=ast.Load()
         )
         assert self.detector._get_object_name(attr_node) == "user"
-        
+
         # Test with Call node
         call_node = ast.Call(
             func=ast.Name(id="vars", ctx=ast.Load()),
             args=[ast.Name(id="user", ctx=ast.Load())],
-            keywords=[]
+            keywords=[],
         )
         assert self.detector._get_object_name(call_node) == "vars"
 
@@ -255,7 +256,7 @@ def test_nested_calls():
         """Test code snippet extraction."""
         node = ast.Name(id="test", ctx=ast.Load())
         node.lineno = 10
-        
+
         snippet = self.detector._get_code_snippet(node)
         assert snippet == "Line 10"
 
@@ -283,14 +284,14 @@ def test_clean_test():
     assert user.name == "Bob"
     assert user.email == "bob@example.com"
 """
-        
+
         file_path = Path("integration_test.py")
         with patch("pathlib.Path.read_text", return_value=code):
             findings = self.detector.analyze_file(file_path)
-        
+
         # Should find 2 violations (dict access and vars call)
         assert len(findings) >= 2
-        
+
         # Check that violations are properly categorized
         violation_types = {f.metadata.get("violation_type") for f in findings}
         assert "dict_access" in violation_types
@@ -308,10 +309,10 @@ def test_confidence_levels():
 """
         file_path = Path("test_file.py")
         findings = self._analyze_test_code(code, file_path)
-        
+
         # Should find 4 violations
         assert len(findings) == 4
-        
+
         # Check confidence levels
         confidence_levels = {f.confidence for f in findings}
         assert 0.9 in confidence_levels  # dict and vars
@@ -327,11 +328,11 @@ def test_metadata():
 """
         file_path = Path("test_file.py")
         findings = self._analyze_test_code(code, file_path)
-        
+
         assert len(findings) == 1
         finding = findings[0]
         metadata = finding.metadata
-        
+
         assert "violation_type" in metadata
         assert "method_name" in metadata
         assert "object_name" in metadata
@@ -341,7 +342,7 @@ def test_metadata():
     def test_rule_spec_integration(self) -> None:
         """Test integration with rule specification system."""
         rule_spec = self.detector._get_rule_spec()
-        
+
         assert rule_spec.code == "DS306"
         assert rule_spec.name == "structural_equality"
         assert rule_spec.tags == ["assertions", "quality", "correctness"]

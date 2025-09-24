@@ -34,12 +34,12 @@ class RuleCategory(str, Enum):
 
 class BISImpact(str, Enum):
     """BIS impact categories for scoring."""
-    
-    HIGH_PENALTY = "high_penalty"      # Major behavior integrity issues
-    MEDIUM_PENALTY = "medium_penalty"  # Moderate behavior integrity issues  
-    LOW_PENALTY = "low_penalty"        # Minor behavior integrity issues
-    ADVISORY = "advisory"              # Style/structure issues (minimal penalty)
-    REWARD = "reward"                  # Positive behavior indicators
+
+    HIGH_PENALTY = "high_penalty"  # Major behavior integrity issues
+    MEDIUM_PENALTY = "medium_penalty"  # Moderate behavior integrity issues
+    LOW_PENALTY = "low_penalty"  # Minor behavior integrity issues
+    ADVISORY = "advisory"  # Style/structure issues (minimal penalty)
+    REWARD = "reward"  # Positive behavior indicators
 
 
 class RuleSpec(BaseModel):
@@ -56,12 +56,11 @@ class RuleSpec(BaseModel):
     )
     category: RuleCategory = Field(description="Rule category")
     bis_impact: BISImpact = Field(
-        default=BISImpact.MEDIUM_PENALTY, 
-        description="Impact on Behavior Integrity Score"
+        default=BISImpact.MEDIUM_PENALTY,
+        description="Impact on Behavior Integrity Score",
     )
     bis_weight: float = Field(
-        default=1.0,
-        description="Weight multiplier for BIS calculation (0.0-2.0)"
+        default=1.0, description="Weight multiplier for BIS calculation (0.0-2.0)"
     )
 
     @field_validator("code")

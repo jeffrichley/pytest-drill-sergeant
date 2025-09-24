@@ -1,0 +1,7 @@
+{
+    "archon_project_id": "16ec00be-e9ca-4c2d-b161-c8d90021d1fc",
+    "archon_task_id": "65f6c81b-77c7-4434-8321-72c43becb6c4",
+    "branch": "feature/65f6c81b_dynamic-duplicate-detection",
+    "worktree_path": "../worktrees/feature_65f6c81b_dynamic-duplicate-detection",
+    "base_branch": "rewrite/main"
+}

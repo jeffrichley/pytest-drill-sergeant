@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from _pytest.nodes import Item
 
 from pytest_drill_sergeant.core.analyzers.car_calculator import CARCalculator
+from pytest_drill_sergeant.core.analyzers.clone_detector import DynamicCloneDetector
 from pytest_drill_sergeant.core.analyzers.coverage_collector import CoverageData
 from pytest_drill_sergeant.core.analyzers.coverage_signature import (
     CoverageSignatureGenerator,
@@ -29,6 +30,8 @@ class PytestCovIntegration:
         self._coverage_data: dict[str, CoverageData] = {}
         self._car_calculator = CARCalculator()
         self._signature_generator = CoverageSignatureGenerator()
+        self._clone_detector = DynamicCloneDetector()
+        self._duplicate_clusters = []
         self._coverage_enabled = False
 
     def pytest_configure(self, config) -> None:
@@ -60,6 +63,9 @@ class PytestCovIntegration:
             )
 
             if coverage_data:
+                self.logger.info(
+                    f"Successfully extracted coverage data for {test_name}"
+                )
                 # Calculate CAR for this test
                 car_result = self._car_calculator.calculate_car(
                     test_file_path, test_name, test_line_number, coverage_data
@@ -75,7 +81,8 @@ class PytestCovIntegration:
                 item.ds_car_result = car_result
                 item.ds_coverage_signature = signature
 
-                self.logger.debug(f"Coverage analysis completed for {test_name}")
+                self.logger.info(f"Coverage analysis completed for {test_name}")
+                self.logger.info(f"Coverage data: {coverage_data}")
 
         except Exception as e:
             self.logger.error(f"Failed to extract coverage data: {e}")
@@ -225,17 +232,20 @@ class PytestCovIntegration:
             coverage_data_list = []
             car_results = []
 
-            for item in terminalreporter.config.hook.pytest_collection_modifyitems(
-                session=terminalreporter.config.session,
-                config=terminalreporter.config,
-                items=terminalreporter.config.session.items,
-            ):
+            # Get items from the session
+            items = terminalreporter.config.session.items
+            self.logger.info(f"Found {len(items)} test items")
+
+            for item in items:
+                self.logger.debug(f"Checking item: {item.name}")
                 if hasattr(item, "ds_coverage_data") and item.ds_coverage_data:
+                    self.logger.info(f"Found coverage data for {item.name}")
                     coverage_data_list.append(item.ds_coverage_data)
                 if hasattr(item, "ds_car_result") and item.ds_car_result:
                     car_results.append(item.ds_car_result)
 
             if not coverage_data_list:
+                self.logger.info("No coverage data found for analysis")
                 return
 
             # Calculate summary statistics
@@ -249,11 +259,71 @@ class PytestCovIntegration:
                 else 0.0
             )
 
+            # Run duplicate detection
+            self._run_duplicate_detection(coverage_data_list)
+
             # Generate summary
             terminalreporter.write_sep("=", "COVERAGE ANALYSIS SUMMARY")
             terminalreporter.write_line(f"Total tests analyzed: {total_tests}")
             terminalreporter.write_line(f"Average coverage: {avg_coverage:.1f}%")
             terminalreporter.write_line(f"Average CAR score: {avg_car:.1f}")
 
+            # Display duplicate clusters
+            if self._duplicate_clusters:
+                terminalreporter.write_line("")
+                terminalreporter.write_line("Duplicate Test Clusters:")
+                for cluster in self._duplicate_clusters:
+                    terminalreporter.write_line(
+                        f"  Cluster {cluster.cluster_id} ({cluster.cluster_type}):"
+                    )
+                    terminalreporter.write_line(
+                        f"    Similarity: {cluster.similarity_score:.2f}"
+                    )
+                    terminalreporter.write_line(f"    Tests: {len(cluster.tests)}")
+                    for test_name, test_file in cluster.tests:
+                        terminalreporter.write_line(
+                            f"      - {test_name} ({test_file.name})"
+                        )
+                    terminalreporter.write_line("")
+                    if cluster.consolidation_suggestion:
+                        terminalreporter.write_line(
+                            f"    Suggestion: {cluster.consolidation_suggestion}"
+                        )
+                    terminalreporter.write_line("")
+            else:
+                terminalreporter.write_line("")
+                terminalreporter.write_line("No duplicate test clusters found")
+
         except Exception as e:
             self.logger.error(f"Failed to generate coverage summary: {e}")
+
+    def _run_duplicate_detection(self, coverage_data_list: list[CoverageData]) -> None:
+        """Run duplicate detection analysis on collected coverage data."""
+        try:
+            if not coverage_data_list:
+                self.logger.debug("No coverage data available for duplicate detection")
+                return
+
+            # Convert coverage data list to the format expected by clone detector
+            coverage_data_dict = {}
+            for coverage_data in coverage_data_list:
+                key = f"{coverage_data.test_name}::{coverage_data.file_path}"
+                coverage_data_dict[key] = coverage_data
+
+            # Get test files from coverage data
+            test_files = set()
+            for coverage_data in coverage_data_list:
+                test_files.add(coverage_data.file_path)
+
+            # Run duplicate detection
+            self._duplicate_clusters = self._clone_detector.analyze_test_suite(
+                list(test_files), coverage_data_dict
+            )
+
+            self.logger.info(
+                f"Duplicate detection found {len(self._duplicate_clusters)} clusters"
+            )
+
+        except Exception as e:
+            self.logger.error(f"Failed to run duplicate detection: {e}")
+            self._duplicate_clusters = []

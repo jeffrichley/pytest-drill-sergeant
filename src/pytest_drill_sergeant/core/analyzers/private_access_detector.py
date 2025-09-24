@@ -256,7 +256,7 @@ class PrivateAccessDetector:
                         # Check if this is a self-call (class calling its own method)
                         if self._is_self_call(node.func):
                             continue  # Skip self-calls - they're allowed
-                        
+
                         rule_spec = self._get_rule_spec()
                         finding = Finding(
                             code=rule_spec.code,
@@ -293,7 +293,7 @@ class PrivateAccessDetector:
         # Skip standard Python modules that start with underscore
         if module_name in ["__future__", "__main__", "__builtin__", "__builtins__"]:
             return False
-        
+
         # Check for private modules (starting with underscore)
         if module_name.startswith("_"):
             return True
@@ -340,7 +340,7 @@ class PrivateAccessDetector:
         # Check if the function is called on 'self'
         if isinstance(func_attr.value, ast.Name) and func_attr.value.id == "self":
             return True
-        
+
         # Check if it's a chained call like self.something._private_method()
         if isinstance(func_attr.value, ast.Attribute):
             # Walk up the chain to see if it starts with 'self'
@@ -349,7 +349,7 @@ class PrivateAccessDetector:
                 current = current.value
             if isinstance(current, ast.Name) and current.id == "self":
                 return True
-        
+
         return False
 
     def _is_test_file(self, file_path: Path) -> bool:
@@ -364,15 +364,15 @@ class PrivateAccessDetector:
         # Check if the file is in a test directory
         if "test" in file_path.parts:
             return True
-        
+
         # Check if the filename starts with test_
         if file_path.name.startswith("test_"):
             return True
-        
+
         # Check if the filename ends with _test.py
         if file_path.name.endswith("_test.py"):
             return True
-        
+
         return False
 
     def _get_code_snippet(self, node: ast.AST) -> str | None:

@@ -30,14 +30,16 @@ class PersonaManager:
         # Register built-in personas
         drill_sergeant = DrillSergeantPersona()
         self._personas[drill_sergeant.name] = drill_sergeant
-        
+
         snoop_dogg = SnoopDoggPersona()
         self._personas[snoop_dogg.name] = snoop_dogg
 
         logger.debug(f"Registered persona: {drill_sergeant.name}")
         logger.debug(f"Registered persona: {snoop_dogg.name}")
 
-    def get_persona(self, name: str | None = None, fallback_on_missing: bool = True) -> PersonaStrategy:
+    def get_persona(
+        self, name: str | None = None, fallback_on_missing: bool = True
+    ) -> PersonaStrategy:
         """Get a persona by name or the configured default.
 
         Args:
@@ -59,11 +61,15 @@ class PersonaManager:
         if name not in self._personas:
             available = ", ".join(self._personas.keys())
             if fallback_on_missing:
-                logger.warning(f"Persona '{name}' not found. Available: {available}. Using 'drill_sergeant' as fallback.")
+                logger.warning(
+                    f"Persona '{name}' not found. Available: {available}. Using 'drill_sergeant' as fallback."
+                )
                 # Fall back to drill_sergeant if requested persona not found
                 name = "drill_sergeant"
                 if name not in self._personas:
-                    raise ValueError(f"Default persona '{name}' not found. Available: {available}")
+                    raise ValueError(
+                        f"Default persona '{name}' not found. Available: {available}"
+                    )
             else:
                 raise ValueError(f"Persona '{name}' not found. Available: {available}")
 

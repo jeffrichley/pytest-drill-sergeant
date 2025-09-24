@@ -9,7 +9,7 @@ I've created a complete VS Code extension that integrates our LSP server. Here's
 ```
 vscode-extension/
 ├── package.json              # Extension manifest
-├── tsconfig.json             # TypeScript configuration  
+├── tsconfig.json             # TypeScript configuration
 ├── src/
 │   ├── extension.ts          # Main extension code
 │   └── test/                 # Test files
@@ -25,7 +25,7 @@ vscode-extension/
    ```bash
    # Make sure you have Node.js installed
    node --version  # Should be 16+
-   
+
    # Make sure pytest-drill-sergeant is installed
    pip install pytest-drill-sergeant[lsp]
    ```

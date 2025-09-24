@@ -8,13 +8,13 @@ def test_good_mock_usage():
     mock_service = Mock()
     mock_service.process.return_value = None
     mock_service.validate.return_value = None
-    
+
     result = process_data(mock_service)
-    
+
     # Only 2 mock assertions - under threshold
     mock_service.process.assert_called_once_with("data")
     mock_service.validate.assert_called_once()
-    
+
     assert result == "processed"
 
 
@@ -25,57 +25,57 @@ def test_mock_overspecification():
     mock_service.method1.return_value = None
     mock_service.method2.return_value = None
     mock_service.method3.return_value = None
-    
+
     result = process_data(mock_service)
-    
+
     # 4 mock assertions - over threshold of 3
     mock_service.method1.assert_called_once()
     mock_service.method2.assert_called_with("arg")
     mock_service.assert_has_calls([call.method1(), call.method2("arg")])
     mock_service.method3.assert_any_call("other")
-    
+
     assert result == "processed"
 
 
 def test_allowlisted_mock():
     """Test with allowlisted mock target - should not trigger detector."""
     mock_requests = Mock()
-    
+
     # Set up mock returns to avoid failures
     mock_requests.get.return_value = None
     mock_requests.post.return_value = None
     mock_requests.session.return_value = None
-    
+
     result = make_http_request(mock_requests)
-    
+
     # 4 mock assertions on requests.* - should be filtered out by allowlist
     mock_requests.get.assert_called_once()
     mock_requests.post.assert_called_with("data")
     mock_requests.assert_has_calls([call.get(), call.post("data")])
     mock_requests.session.assert_any_call()
-    
+
     assert result == "success"
 
 
 def test_mixed_mocks():
     """Test with mixed allowed and disallowed mocks."""
-    mock_service = Mock()   # Should not be allowed
-    
+    mock_service = Mock()  # Should not be allowed
+
     # Set up mock returns to avoid failures
     mock_service.method1.return_value = None
     mock_service.method2.return_value = None
     mock_service.method3.return_value = None
-    
+
     # Call the methods so assertions don't fail
     mock_service.method1()
     mock_service.method2("arg")
     mock_service.method3("other")
-    
+
     # 3 service mocks (not allowed) = 3 violations
     mock_service.method1.assert_called_once()
     mock_service.method2.assert_called_with("arg")
     mock_service.method3.assert_any_call("other")
-    
+
     assert True
 
 
