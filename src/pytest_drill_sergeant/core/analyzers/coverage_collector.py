@@ -311,7 +311,9 @@ class CoverageCollector:
             )
 
         except Exception as e:
-            self.logger.error("Failed to find source files for %s: %s", test_file_path, e)
+            self.logger.error(
+                "Failed to find source files for %s: %s", test_file_path, e
+            )
             # Fallback to basic file discovery
             source_files = self._find_source_files_fallback(test_file_path)
 
@@ -409,7 +411,9 @@ class CoverageCollector:
                     list(parent.iterdir())
                     safe_parents.append(parent)
                 except (PermissionError, OSError) as e:
-                    self.logger.debug("Cannot access parent directory %s: %s", parent, e)
+                    self.logger.debug(
+                        "Cannot access parent directory %s: %s", parent, e
+                    )
                     break
 
                 # Limit traversal depth to avoid going too far up

@@ -116,13 +116,19 @@ class AnalysisPipeline:
                 self.analysis_errors.append(error)
 
                 self.logger.warning(
-                    "Analyzer %s failed for %s: %s", analyzer_name, file_path, error.message
+                    "Analyzer %s failed for %s: %s",
+                    analyzer_name,
+                    file_path,
+                    error.message,
                 )
             else:
                 # Add successful findings
                 findings.extend(result)
                 self.logger.debug(
-                    "%s found %d violations in %s", analyzer_name, len(result), file_path
+                    "%s found %d violations in %s",
+                    analyzer_name,
+                    len(result),
+                    file_path,
                 )
 
         return findings, file_errors

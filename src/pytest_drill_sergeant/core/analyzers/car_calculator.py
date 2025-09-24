@@ -286,7 +286,9 @@ class CARCalculator:
                     func_findings = self._analyze_test_function_car(node, file_path)
                     findings.extend(func_findings)
 
-            self.logger.debug("CAR analysis of %s: %d findings", file_path, len(findings))
+            self.logger.debug(
+                "CAR analysis of %s: %d findings", file_path, len(findings)
+            )
 
         except Exception as e:
             self.logger.error("Error analyzing %s: %s", file_path, e)
