@@ -34,8 +34,8 @@ class PersonaManager:
         snoop_dogg = SnoopDoggPersona()
         self._personas[snoop_dogg.name] = snoop_dogg
 
-        logger.debug(f"Registered persona: {drill_sergeant.name}")
-        logger.debug(f"Registered persona: {snoop_dogg.name}")
+        logger.debug("Registered persona: %s", drill_sergeant.name)
+        logger.debug("Registered persona: %s", snoop_dogg.name)
 
     def get_persona(
         self, name: str | None = None, fallback_on_missing: bool = True
@@ -62,7 +62,7 @@ class PersonaManager:
             available = ", ".join(self._personas.keys())
             if fallback_on_missing:
                 logger.warning(
-                    f"Persona '{name}' not found. Available: {available}. Using 'drill_sergeant' as fallback."
+                    "Persona '%s' not found. Available: %s. Using 'drill_sergeant' as fallback.", name, available
                 )
                 # Fall back to drill_sergeant if requested persona not found
                 name = "drill_sergeant"

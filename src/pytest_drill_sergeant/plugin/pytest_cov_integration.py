@@ -40,7 +40,7 @@ class PytestCovIntegration:
         if hasattr(config, "option") and hasattr(config.option, "cov"):
             self._coverage_enabled = config.option.cov is not None
             self.logger.info(
-                f"pytest-cov integration {'enabled' if self._coverage_enabled else 'disabled'}"
+                "pytest-cov integration %s", 'enabled' if self._coverage_enabled else 'disabled'
             )
         else:
             self._coverage_enabled = False
@@ -64,7 +64,7 @@ class PytestCovIntegration:
 
             if coverage_data:
                 self.logger.info(
-                    f"Successfully extracted coverage data for {test_name}"
+                    "Successfully extracted coverage data for %s", test_name
                 )
                 # Calculate CAR for this test
                 car_result = self._car_calculator.calculate_car(
@@ -81,11 +81,11 @@ class PytestCovIntegration:
                 item.ds_car_result = car_result
                 item.ds_coverage_signature = signature
 
-                self.logger.info(f"Coverage analysis completed for {test_name}")
-                self.logger.info(f"Coverage data: {coverage_data}")
+                self.logger.info("Coverage analysis completed for %s", test_name)
+                self.logger.info("Coverage data: %s", coverage_data)
 
         except Exception as e:
-            self.logger.error(f"Failed to extract coverage data: {e}")
+            self.logger.error("Failed to extract coverage data: %s", e)
 
     def _extract_coverage_from_pytest_cov(
         self, test_file_path: Path, test_name: str, test_line_number: int
@@ -183,7 +183,7 @@ class PytestCovIntegration:
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to extract coverage data from pytest-cov: {e}")
+            self.logger.error("Failed to extract coverage data from pytest-cov: %s", e)
             return None
 
     def _is_test_file(self, file_path: Path) -> bool:
@@ -219,7 +219,7 @@ class PytestCovIntegration:
             return "|".join(signature_parts)
 
         except Exception as e:
-            self.logger.error(f"Failed to generate coverage signature: {e}")
+            self.logger.error("Failed to generate coverage signature: %s", e)
             return ""
 
     def pytest_terminal_summary(self, terminalreporter, exitstatus, config) -> None:
@@ -234,12 +234,12 @@ class PytestCovIntegration:
 
             # Get items from the session
             items = terminalreporter.config.session.items
-            self.logger.info(f"Found {len(items)} test items")
+            self.logger.info("Found %d test items", len(items))
 
             for item in items:
-                self.logger.debug(f"Checking item: {item.name}")
+                self.logger.debug("Checking item: %s", item.name)
                 if hasattr(item, "ds_coverage_data") and item.ds_coverage_data:
-                    self.logger.info(f"Found coverage data for {item.name}")
+                    self.logger.info("Found coverage data for %s", item.name)
                     coverage_data_list.append(item.ds_coverage_data)
                 if hasattr(item, "ds_car_result") and item.ds_car_result:
                     car_results.append(item.ds_car_result)
@@ -295,7 +295,7 @@ class PytestCovIntegration:
                 terminalreporter.write_line("No duplicate test clusters found")
 
         except Exception as e:
-            self.logger.error(f"Failed to generate coverage summary: {e}")
+            self.logger.error("Failed to generate coverage summary: %s", e)
 
     def _run_duplicate_detection(self, coverage_data_list: list[CoverageData]) -> None:
         """Run duplicate detection analysis on collected coverage data."""
@@ -321,9 +321,9 @@ class PytestCovIntegration:
             )
 
             self.logger.info(
-                f"Duplicate detection found {len(self._duplicate_clusters)} clusters"
+                "Duplicate detection found %d clusters", len(self._duplicate_clusters)
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to run duplicate detection: {e}")
+            self.logger.error("Failed to run duplicate detection: %s", e)
             self._duplicate_clusters = []
