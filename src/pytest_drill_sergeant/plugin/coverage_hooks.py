@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from _pytest.nodes import Item
 
 from pytest_drill_sergeant.core.analyzers.car_calculator import CARCalculator
+from pytest_drill_sergeant.core.analyzers.clone_detector import DynamicCloneDetector
 from pytest_drill_sergeant.core.analyzers.coverage_collector import CoverageCollector
 from pytest_drill_sergeant.core.analyzers.coverage_signature import (
     CoverageSignatureGenerator,
@@ -30,7 +31,9 @@ class CoverageHooks:
         self.coverage_collector = CoverageCollector()
         self.car_calculator = CARCalculator()
         self.signature_generator = CoverageSignatureGenerator()
+        self.clone_detector = DynamicCloneDetector()
         self._coverage_enabled = False
+        self._duplicate_clusters = []
 
     def pytest_configure(self, config: pytest.Config) -> None:
         """Configure coverage collection."""
@@ -137,6 +140,9 @@ class CoverageHooks:
             if not self._coverage_enabled:
                 return
 
+            # Run duplicate detection analysis
+            self._run_duplicate_detection()
+
             # Generate coverage summary
             self._generate_coverage_summary(terminalreporter)
 
@@ -234,6 +240,21 @@ class CoverageHooks:
                             )
                     else:
                         terminalreporter.write_line("  No highly similar tests found")
+
+                # Display duplicate clusters
+                if self._duplicate_clusters:
+                    terminalreporter.write_line("Duplicate Test Clusters:")
+                    for cluster in self._duplicate_clusters:
+                        terminalreporter.write_line(f"  Cluster {cluster.cluster_id} ({cluster.cluster_type}):")
+                        terminalreporter.write_line(f"    Similarity: {cluster.similarity_score:.2f}")
+                        terminalreporter.write_line(f"    Tests: {len(cluster.tests)}")
+                        for test_name, test_file in cluster.tests:
+                            terminalreporter.write_line(f"      - {test_name} ({test_file.name})")
+                        if cluster.consolidation_suggestion:
+                            terminalreporter.write_line(f"    Suggestion: {cluster.consolidation_suggestion}")
+                        terminalreporter.write_line("")
+                else:
+                    terminalreporter.write_line("No duplicate test clusters found")
             else:
                 terminalreporter.write_line("No coverage data collected")
 
@@ -241,6 +262,29 @@ class CoverageHooks:
 
         except Exception as e:
             self.logger.error(f"Failed to generate coverage summary: {e}")
+
+    def _run_duplicate_detection(self) -> None:
+        """Run duplicate detection analysis on collected coverage data."""
+        try:
+            if not self.coverage_collector._coverage_data:
+                self.logger.debug("No coverage data available for duplicate detection")
+                return
+
+            # Get test files from coverage data
+            test_files = set()
+            for coverage_data in self.coverage_collector._coverage_data.values():
+                test_files.add(coverage_data.file_path)
+
+            # Run duplicate detection
+            self._duplicate_clusters = self.clone_detector.analyze_test_suite(
+                list(test_files), self.coverage_collector._coverage_data
+            )
+
+            self.logger.info(f"Duplicate detection found {len(self._duplicate_clusters)} clusters")
+
+        except Exception as e:
+            self.logger.error(f"Failed to run duplicate detection: {e}")
+            self._duplicate_clusters = []
 
 
 # Global instance for use by pytest hooks
