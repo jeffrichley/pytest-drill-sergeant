@@ -143,7 +143,7 @@ class TestCoverageReportWriting:
             _write_coverage_report(report_content, output_file, "text")
 
             assert Path(output_file).exists()
-            with open(output_file) as f:
+            with Path(output_file).open() as f:
                 content = f.read()
             assert content == report_content
         finally:
@@ -159,7 +159,7 @@ class TestCoverageReportWriting:
             _write_coverage_report(report_content, output_file, "json")
 
             assert Path(output_file).exists()
-            with open(output_file) as f:
+            with Path(output_file).open() as f:
                 content = f.read()
             assert content == report_content
         finally:
@@ -191,8 +191,11 @@ class TestCoverageAnalysisProcessing:
         """Test coverage analysis processing with exception."""
         config = {"threshold": 70.0, "output": None, "format": "text"}
 
-        # Mock the import to raise an exception
-        with patch("builtins.__import__", side_effect=ImportError("Test error")):
+        # Mock PytestCovIntegration to raise an exception
+        with patch(
+            "pytest_drill_sergeant.cli.main.PytestCovIntegration",
+            side_effect=Exception("Test error"),
+        ):
             _process_coverage_analysis(config, False)
 
         # Verify error message was echoed
