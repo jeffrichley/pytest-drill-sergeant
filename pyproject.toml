@@ -296,6 +296,9 @@ security = [
 
 # Drill Sergeant Configuration
 [tool.pytest-drill-sergeant]
+# Configuration version
+version = "1.0"
+
 # Profile to use (standard, strict, relaxed)
 profile = "standard"
 

@@ -214,10 +214,13 @@ def _run_lint_with_options(opts: LintConfig) -> int:
 
     # Initialize centralized configuration
     from pytest_drill_sergeant.core.config_context import get_config, initialize_config
-    from pytest_drill_sergeant.core.config_validator_enhanced import EnhancedConfigValidator
+    from pytest_drill_sergeant.core.config_validator_enhanced import (
+        EnhancedConfigValidator,
+    )
 
     # Convert CLI options to config dict
     cli_config = {
+        "version": "1.0",  # Required field for validation
         "profile": opts.profile,
         "fail_on": opts.fail_on,
         "output_formats": [opts.output_format],
@@ -312,7 +315,7 @@ def _run_lint_with_options(opts: LintConfig) -> int:
             ctx.set_sut_filter(opts.sut_filter)
 
             # Create centralized analysis pipeline with error handling
-            pipeline = create_analysis_pipeline(error_handler=error_handler)
+            pipeline = create_analysis_pipeline()
             
             # Add the pipeline to context (context will handle individual analyzers)
             for analyzer in pipeline.analyzers:
@@ -435,7 +438,9 @@ def _run_lint_with_options(opts: LintConfig) -> int:
                         total_files += 1
 
                         # Calculate BIS score for this file
-                        from pytest_drill_sergeant.core.scoring import DynamicBISCalculator
+                        from pytest_drill_sergeant.core.scoring import (
+                            DynamicBISCalculator,
+                        )
                         bis_calculator = DynamicBISCalculator()
                         metrics = bis_calculator.extract_metrics_from_findings(findings)
                         bis_score = bis_calculator.calculate_bis(metrics)
@@ -505,7 +510,7 @@ def _run_lint_with_options(opts: LintConfig) -> int:
                 typer.echo(f"   • Recoverable errors: {error_summary.get('recoverable_errors', 0)}")
                 
                 # Show error breakdown by category
-                by_category = error_summary.get('by_category', {})
+                by_category = error_summary.get("by_category", {})
                 if by_category:
                     typer.echo("   • Errors by category:")
                     for category, count in by_category.items():

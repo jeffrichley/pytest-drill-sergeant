@@ -171,13 +171,25 @@ class AAACommentDetector:
         # Extract AAA comments within function
         aaa_result = self._analyze_aaa_structure(func_node, comments)
         
+        # Create a comprehensive AAA status message
+        status_parts = []
+        all_sections = {"arrange", "act", "assert"}
+        
+        for section in ["arrange", "act", "assert"]:
+            if section in aaa_result.found_order:
+                status_parts.append(f"✅ {section.title()}")
+            else:
+                status_parts.append(f"❌ {section.title()}")
+        
+        status_message = " | ".join(status_parts)
+        
         if not aaa_result.has_aaa_comments:
             # No AAA comments found
             finding = Finding(
                 code="DS302",
                 name="aaa_comments",
                 severity=Severity.INFO,
-                message=f"Test '{func_node.name}' lacks AAA comment structure",
+                message=f"Test '{func_node.name}' lacks AAA comment structure: {status_message}",
                 suggestion="Add # Arrange, # Act, # Assert comments to improve test readability",
                 file_path=file_path,
                 line_number=func_start,
@@ -194,7 +206,7 @@ class AAACommentDetector:
                 code="DS302",
                 name="aaa_comments",
                 severity=Severity.INFO,
-                message=f"Test '{func_node.name}' has duplicate AAA sections: {duplicate_str}",
+                message=f"Test '{func_node.name}' has duplicate AAA sections: {duplicate_str} | {status_message}",
                 suggestion="Remove duplicate AAA comment sections",
                 file_path=file_path,
                 line_number=func_start,
@@ -211,7 +223,7 @@ class AAACommentDetector:
                 code="DS302",
                 name="aaa_comments",
                 severity=Severity.INFO,
-                message=f"Test '{func_node.name}' has incorrect AAA order: {found_order_str}",
+                message=f"Test '{func_node.name}' has incorrect AAA order: {found_order_str} | {status_message}",
                 suggestion="Reorder comments to follow Arrange → Act → Assert pattern",
                 file_path=file_path,
                 line_number=func_start,
@@ -222,13 +234,13 @@ class AAACommentDetector:
             findings.append(finding)
             
         elif aaa_result.missing_sections:
-            # Missing sections
+            # Missing sections (partial AAA structure)
             missing_str = ", ".join(aaa_result.missing_sections)
             finding = Finding(
                 code="DS302",
                 name="aaa_comments",
                 severity=Severity.INFO,
-                message=f"Test '{func_node.name}' missing AAA sections: {missing_str}",
+                message=f"Test '{func_node.name}' missing AAA sections: {missing_str} | {status_message}",
                 suggestion="Add missing AAA comment sections",
                 file_path=file_path,
                 line_number=func_start,
@@ -319,6 +331,19 @@ class AAACommentDetector:
                 # Check if comment starts with keyword followed by word boundary
                 # This handles cases like "Act - need to call this method"
                 if re.match(rf"^{keyword}\b", comment):
+                    # Additional validation: ensure it's an explicit AAA marker
+                    # Must have meaningful content after the keyword (not just the keyword alone)
+                    remaining_text = comment[len(keyword):].strip()
+                    
+                    # Skip if it's just the keyword alone or with minimal content
+                    if len(remaining_text) < 3:
+                        continue
+                    
+                    # Skip if it looks like a regular sentence that happens to start with the keyword
+                    # (e.g., "when run under pytest..." should not be an "act" section)
+                    if remaining_text.startswith(("run ", "is ", "are ", "was ", "were ", "will ", "would ", "should ", "could ", "might ", "may ")):
+                        continue
+                    
                     return section_type
                         
         return None
@@ -341,14 +366,23 @@ class AAACommentDetector:
         comment = re.sub(r"^#\s*", "", comment)
         comment = comment.strip()
         
-        # Check each keyword against the entire comment
+        # Check each keyword - must be at the start of the comment
         for section_type, keywords in self.AAA_KEYWORDS.items():
             for keyword in keywords:
-                # Look for the keyword anywhere in the comment with word boundaries
-                if re.search(rf"\b{keyword}\b", comment):
+                # Look for the keyword at the start of the comment with word boundaries
+                if re.match(rf"^{keyword}\b", comment):
                     # Check if there's meaningful content after the keyword
-                    if self._has_meaningful_content(comment, keyword):
-                        sections_found.append(section_type)
+                    remaining_text = comment[len(keyword):].strip()
+                    
+                    # Skip if it's just the keyword alone or with minimal content
+                    if len(remaining_text) < 3:
+                        continue
+                    
+                    # Skip if it looks like a regular sentence that happens to start with the keyword
+                    if remaining_text.startswith(("run ", "is ", "are ", "was ", "were ", "will ", "would ", "should ", "could ", "might ", "may ")):
+                        continue
+                    
+                    sections_found.append(section_type)
                     break  # Only add each section type once per comment
         
         return sections_found
