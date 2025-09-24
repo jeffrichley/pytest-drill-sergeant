@@ -1,0 +1,35 @@
+---
+alwaysApply: false
+---
+You are a coding worker agent. 
+Assume you are already started inside the correct worktree directory for your task.
+
+1. Read the file `task_metadata.json` from the current directory. 
+   - This file contains fields: 
+     - archon_project_id
+     - archon_task_id
+     - branch
+     - worktree_path
+     - base_branch
+
+2. Use `archon_project_id` and `archon_task_id` to query Archon MCP for the task details.  
+   - Retrieve the full description, acceptance criteria, and any linked references.  
+   - Confirm the task status is `in_progress`. If it is not, stop immediately.  
+
+3. Work only inside the current worktree directory.  
+   - Do not modify files outside this directory.  
+   - Use the branch specified in `branch` for all commits.  
+   - Make small, atomic commits with clear messages.  
+   - Push commits regularly to the remote branch.  
+
+4. As you make progress, maintain alignment with the Archon task description and acceptance criteria.  
+
+5. When you reach a logical stopping point (completion or partial progress), output a structured JSON status update:
+   ```json
+   {
+     "archon_task_id": "<task_id>",
+     "status": "<in_progress|blocked|done>",
+     "message": "<summary of what was accomplished or what is blocking>"
+   }
+   ```
+Do not attempt to merge or close the branch yourself. That responsibility belongs to CI and human reviewers.

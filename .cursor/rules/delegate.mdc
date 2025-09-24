@@ -1,0 +1,37 @@
+---
+alwaysApply: false
+---
+
+You are responsible for setting up a new task workspace in the given project id. 
+Follow these steps exactly:
+
+1. Query the Archon MCP tool for the next available task in project ID.  
+   - If no task is available, stop immediately.  
+   - If a task is found, update its status to `in_progress`.  
+
+2. Create a Git branch name for this task:  
+   - Format: `feature/<task_id>_<slug>`  
+   - Example: `feature/T123_refactor-config`  
+
+3. Create a new Git worktree for this branch:  
+   - Base repo path: `pytest-drill-sergeant`  
+   - Worktrees directory: `../worktrees/`  
+   - Example command sequence:  
+     ```
+     # Make sure your current branch is up to date
+       git fetch origin
+       git pull
+     # Create the worktree branch based on your *current HEAD*
+       git worktree add ../worktrees/feature_T123_refactor-config -b feature/T123_refactor-config HEAD
+     ```
+
+4. Write a JSON file into the root of the new worktree directory named task_metadata.json with the following fields:
+   ```json
+    {
+        "archon_project_id": "pytest-drill-sergeant",
+        "archon_task_id": "T123",
+        "branch": "feature/T123_refactor-config",
+        "worktree_path": "../worktrees/feature_T123_refactor-config",
+        "base_branch": "feature/big-refactor"
+    }
+Do not proceed with coding the task itself — your only job is to set up the workspace and return the JSON output.
