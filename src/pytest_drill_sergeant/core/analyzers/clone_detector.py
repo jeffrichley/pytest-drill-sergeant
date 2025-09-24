@@ -99,7 +99,7 @@ class DynamicCloneDetector:
         """
         try:
             self.logger.info(
-                f"Starting dynamic duplicate detection for {len(test_files)} test files"
+                "Starting dynamic duplicate detection for %d test files", len(test_files)
             )
 
             # Store coverage data
@@ -360,7 +360,7 @@ class DynamicCloneDetector:
 
         except Exception as e:
             self.logger.error(
-                f"Failed to calculate similarity between {test1_key} and {test2_key}: {e}"
+                "Failed to calculate similarity between %s and %s: %s", test1_key, test2_key, e
             )
             return 0.0
 
@@ -622,7 +622,7 @@ class DynamicCloneDetector:
                     findings.extend(func_findings)
 
             self.logger.debug(
-                f"Duplicate detection analysis of {file_path}: {len(findings)} findings"
+                "Duplicate detection analysis of %s: %d findings", file_path, len(findings)
             )
 
         except Exception as e:

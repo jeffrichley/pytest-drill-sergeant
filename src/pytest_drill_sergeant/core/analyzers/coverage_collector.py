@@ -236,7 +236,7 @@ class CoverageCollector:
             if self._test_file_contains_source_code(test_file_path):
                 source_files.append(test_file_path)
                 self.logger.debug(
-                    f"Test file {test_file_path} contains source code, including it in coverage"
+                    "Test file %s contains source code, including it in coverage", test_file_path
                 )
 
             # Analyze the test file to find imported modules
@@ -277,17 +277,17 @@ class CoverageCollector:
                                         source_files.extend(item.rglob("*.py"))
                                     except (PermissionError, OSError) as e:
                                         self.logger.debug(
-                                            f"Cannot access package directory {item}: {e}"
+                                            "Cannot access package directory %s: %s", item, e
                                         )
                                         continue
                             except (PermissionError, OSError) as e:
                                 self.logger.debug(
-                                    f"Skipping directory {item} due to permission error: {e}"
+                                    "Skipping directory %s due to permission error: %s", item, e
                                 )
                                 continue
                 except (PermissionError, OSError) as e:
                     self.logger.debug(
-                        f"Skipping parent directory {parent} due to permission error: {e}"
+                        "Skipping parent directory %s due to permission error: %s", parent, e
                     )
                     continue
 
@@ -307,7 +307,7 @@ class CoverageCollector:
             )
 
             self.logger.debug(
-                f"Found {len(source_files)} source files for {test_file_path}"
+                "Found %d source files for %s", len(source_files), test_file_path
             )
 
         except Exception as e:
@@ -397,7 +397,7 @@ class CoverageCollector:
                 # Skip if we've reached the root or a system directory
                 if parent_str in system_dirs or parent_str in windows_system_dirs:
                     self.logger.debug(
-                        f"Stopping traversal at system directory: {parent_str}"
+                        "Stopping traversal at system directory: %s", parent_str
                     )
                     break
 
@@ -419,7 +419,7 @@ class CoverageCollector:
                 # Limit traversal depth to avoid going too far up
                 if len(safe_parents) >= 5:  # Reasonable limit for project structure
                     self.logger.debug(
-                        f"Reached maximum traversal depth: {len(safe_parents)}"
+                        "Reached maximum traversal depth: %d", len(safe_parents)
                     )
                     break
 
@@ -468,7 +468,7 @@ class CoverageCollector:
                     selected_files = selected_files[:20]
 
                 self.logger.debug(
-                    f"Selected {len(selected_files)} files based on import analysis"
+                    "Selected %d files based on import analysis", len(selected_files)
                 )
                 return selected_files
 
@@ -476,7 +476,7 @@ class CoverageCollector:
             # Limit to reasonable number to avoid performance issues
             limited_files = all_source_files[:50]  # Reasonable limit
             self.logger.debug(
-                f"Using {len(limited_files)} files (no import analysis available)"
+                "Using %d files (no import analysis available)", len(limited_files)
             )
             return limited_files
 
@@ -526,7 +526,7 @@ class CoverageCollector:
             ]
 
             self.logger.debug(
-                f"Test file {test_file_path} imports {len(imported_modules)} modules"
+                "Test file %s imports %d modules", test_file_path, len(imported_modules)
             )
 
         except Exception as e:
@@ -673,17 +673,17 @@ class CoverageCollector:
                                     source_files.extend(item.rglob("*.py"))
                                 except (PermissionError, OSError) as e:
                                     self.logger.debug(
-                                        f"Cannot access package directory {item}: {e}"
+                                        "Cannot access package directory %s: %s", item, e
                                     )
                                     continue
                         except (PermissionError, OSError) as e:
                             self.logger.debug(
-                                f"Skipping directory {item} due to permission error: {e}"
+                                "Skipping directory %s due to permission error: %s", item, e
                             )
                             continue
             except (PermissionError, OSError) as e:
                 self.logger.debug(
-                    f"Skipping parent directory {parent} due to permission error: {e}"
+                    "Skipping parent directory %s due to permission error: %s", parent, e
                 )
                 continue
 
@@ -741,7 +741,7 @@ class CoverageCollector:
 
             if not test_func:
                 self.logger.warning(
-                    f"Test function {test_name} not found in {test_file_path}"
+                    "Test function %s not found in %s", test_name, test_file_path
                 )
                 return
 
@@ -777,7 +777,7 @@ class CoverageCollector:
                     # Set the source files for coverage tracking
                     self.cov.source = source_file_paths
                     self.logger.debug(
-                        f"Coverage source files set to: {source_file_paths}"
+                        "Coverage source files set to: %s", source_file_paths
                     )
 
                 # Execute the test by importing and running it
@@ -818,7 +818,7 @@ class CoverageCollector:
                 test_func = getattr(test_module, test_name)
                 test_func()
                 self.logger.debug(
-                    f"Successfully executed standalone test function {test_name}"
+                    "Successfully executed standalone test function %s", test_name
                 )
             else:
                 # Try to find it as a method in a test class
@@ -834,14 +834,14 @@ class CoverageCollector:
                         test_method = getattr(test_instance, test_name)
                         test_method()
                         self.logger.debug(
-                            f"Successfully executed class method {test_name} in {name}"
+                            "Successfully executed class method %s in %s", test_name, name
                         )
                         test_func = test_method
                         break
 
                 if test_func is None:
                     self.logger.warning(
-                        f"Test function {test_name} not found in {test_file_path}"
+                        "Test function %s not found in %s", test_name, test_file_path
                     )
 
         except Exception as e:
@@ -894,7 +894,7 @@ class CoverageCollector:
                 )
             except Exception as fallback_error:
                 self.logger.error(
-                    f"Fallback coverage extraction also failed: {fallback_error}"
+                    "Fallback coverage extraction also failed: %s", fallback_error
                 )
                 # Return minimal coverage data
                 from pytest_drill_sergeant.core.analyzers.coverage_collector import (
@@ -963,7 +963,7 @@ class CoverageCollector:
 
             # Log analysis insights
             self.logger.debug(
-                f"Analysis insights for {coverage_data.test_name}: {analysis_insights}"
+                "Analysis insights for %s: %s", coverage_data.test_name, analysis_insights
             )
 
             return enhanced_data
@@ -1077,7 +1077,7 @@ class CoverageCollector:
             # Store the imported files for this test
             self._imported_files.update(imported_files)
             self.logger.debug(
-                f"Test function imports {len(imported_files)} source files"
+                "Test function imports %d source files", len(imported_files)
             )
 
             # Store detailed analysis results
@@ -1405,7 +1405,7 @@ class CoverageCollector:
             # Get coverage data from coverage.py
             coverage_data = self.cov.get_data()
             self.logger.debug(
-                f"Coverage data retrieved, measured files: {coverage_data.measured_files()}"
+                "Coverage data retrieved, measured files: %s", coverage_data.measured_files()
             )
 
             total_lines = 0
@@ -1436,12 +1436,12 @@ class CoverageCollector:
                         str(source_file) if file_path_in_measured else normalized_path
                     )
                     self.logger.debug(
-                        f"Source file {source_file} is in measured files (using path: {actual_path})"
+                        "Source file %s is in measured files (using path: %s)", source_file, actual_path
                     )
                     file_lines = coverage_data.lines(actual_path)
                     file_branches = coverage_data.arcs(actual_path)
                     self.logger.debug(
-                        f"File lines: {file_lines}, file branches: {file_branches}"
+                        "File lines: %s, file branches: %s", file_lines, file_branches
                     )
 
                     if file_lines:
@@ -1458,13 +1458,13 @@ class CoverageCollector:
                         ]
                         covered_lines += len(executed_lines)
                         self.logger.debug(
-                            f"Total lines: {total_lines}, covered lines: {covered_lines}"
+                            "Total lines: %d, covered lines: %d", total_lines, covered_lines
                         )
                         self.logger.debug(
-                            f"All executable lines: {all_executable_lines}"
+                            "All executable lines: %s", all_executable_lines
                         )
                         self.logger.debug(
-                            f"Executed lines (measured): {executed_lines}"
+                            "Executed lines (measured): %s", executed_lines
                         )
                         self.logger.debug("Missing lines: %s", missing_lines)
                         self.logger.debug("Excluded lines: %s", excluded_lines)
