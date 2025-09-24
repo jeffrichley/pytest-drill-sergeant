@@ -6,18 +6,18 @@ from pathlib import Path
 
 from pytest_drill_sergeant.core.models import Finding, Severity
 from pytest_drill_sergeant.core.scoring import (
-    TestFeatureExtractor,
+    FeatureExtractor,
     get_feature_extractor,
     reset_feature_extractor,
 )
 
 
-class TestTestFeatureExtractor:
-    """Test the TestFeatureExtractor functionality."""
+class TestFeatureExtractor:
+    """Test the FeatureExtractor functionality."""
 
     def test_init(self) -> None:
         """Test extractor initialization."""
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
         assert extractor is not None
 
     def test_extract_features_from_file(self, tmp_path: Path) -> None:
@@ -46,7 +46,7 @@ def test_complex():
 '''
         test_file.write_text(test_content)
 
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
         findings = []  # No findings for this test
 
         features = extractor.extract_features_from_file(test_file, findings)
@@ -83,7 +83,7 @@ def test_bad():
 '''
         test_file.write_text(test_content)
 
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
 
         # Create findings for the bad test
         findings = [
@@ -122,7 +122,7 @@ def test_bad():
         test_file = tmp_path / "empty_test.py"
         test_file.write_text("")
 
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
         findings = []
 
         features = extractor.extract_features_from_file(test_file, findings)
@@ -145,7 +145,7 @@ class SomeClass:
 '''
         test_file.write_text(test_content)
 
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
         findings = []
 
         features = extractor.extract_features_from_file(test_file, findings)
@@ -166,7 +166,7 @@ def test_broken():
 '''
         test_file.write_text(test_content)
 
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
         findings = []
 
         # Should not raise exception but return default features
@@ -178,7 +178,7 @@ def test_broken():
 
     def test_calculate_complexity(self) -> None:
         """Test complexity calculation."""
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
 
         # Create a simple test node (simplified)
         import ast
@@ -212,7 +212,7 @@ def test_complex():
 
     def test_count_assertions(self) -> None:
         """Test assertion counting."""
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
 
         # Create a test node with assertions
         import ast
@@ -234,7 +234,7 @@ def test_with_assertions():
 
     def test_count_setup_lines(self) -> None:
         """Test setup line counting."""
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
 
         # Create a test node
         import ast
@@ -260,7 +260,7 @@ def test_with_setup():
 
     def test_count_teardown_lines(self) -> None:
         """Test teardown line counting."""
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
 
         # Create a test node
         import ast
@@ -282,7 +282,7 @@ def test_with_teardown():
 
     def test_calculate_test_length(self) -> None:
         """Test test length calculation."""
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
 
         # Create a test node
         import ast
@@ -303,7 +303,7 @@ def test_length():
 
     def test_create_default_features(self) -> None:
         """Test default features creation."""
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
         test_file = Path("test.py")
 
         features = extractor._create_default_features(test_file)
@@ -314,7 +314,7 @@ def test_length():
 
     def test_clear_cache(self) -> None:
         """Test cache clearing."""
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
 
         # Add something to cache
         test_file = Path("test.py")
@@ -341,7 +341,7 @@ def test_length():
 
     def test_filter_findings_for_test(self) -> None:
         """Test findings filtering for specific test."""
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
 
         findings = [
             Finding(

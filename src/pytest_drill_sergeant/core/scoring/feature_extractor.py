@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class TestFeatureExtractor:
+class FeatureExtractor:
     """Extracts features from test files for BIS calculation."""
 
     def __init__(self) -> None:
@@ -257,18 +257,18 @@ class TestFeatureExtractor:
 
 
 # Global feature extractor instance
-_feature_extractor: TestFeatureExtractor | None = None
+_feature_extractor: FeatureExtractor | None = None
 
 
-def get_feature_extractor() -> TestFeatureExtractor:
+def get_feature_extractor() -> FeatureExtractor:
     """Get the global feature extractor instance.
 
     Returns:
-        TestFeatureExtractor instance
+        FeatureExtractor instance
     """
     global _feature_extractor
     if _feature_extractor is None:
-        _feature_extractor = TestFeatureExtractor()
+        _feature_extractor = FeatureExtractor()
     return _feature_extractor
 
 

@@ -18,7 +18,7 @@ def test_scoring_module_imports():
     assert "DynamicBISCalculator" in all_items
     assert "BISMetrics" in all_items
     assert "BISCalculator" in all_items
-    assert "TestFeatureExtractor" in all_items
+    assert "FeatureExtractor" in all_items
     assert "get_bis_calculator" in all_items
     assert "reset_bis_calculator" in all_items
     assert "get_feature_extractor" in all_items
@@ -47,7 +47,7 @@ def test_scoring_module_all():
         "DynamicBISCalculator",
         "BISMetrics",
         "BISCalculator",
-        "TestFeatureExtractor",
+        "FeatureExtractor",
         "get_bis_calculator",
         "reset_bis_calculator",
         "get_feature_extractor",

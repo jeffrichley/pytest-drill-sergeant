@@ -13,7 +13,7 @@ from pytest_drill_sergeant.core.models import FeaturesData, Finding, Severity
 from pytest_drill_sergeant.core.scoring import (
     BISCalculator,
     DynamicBISCalculator,
-    TestFeatureExtractor,
+    FeatureExtractor,
     get_bis_calculator,
     get_feature_extractor,
 )
@@ -33,7 +33,7 @@ class TestBISIntegration:
 
     def test_feature_extractor_initialization(self) -> None:
         """Test feature extractor initialization."""
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
         assert extractor is not None
 
     def test_global_bis_calculator_singleton(self) -> None:
@@ -531,7 +531,7 @@ def test_complex():
 '''
         test_file.write_text(test_content)
 
-        extractor = TestFeatureExtractor()
+        extractor = FeatureExtractor()
         findings = []  # No findings for this test
 
         features = extractor.extract_features_from_file(test_file, findings)
