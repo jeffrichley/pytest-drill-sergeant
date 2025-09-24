@@ -11,6 +11,7 @@ from pytest_drill_sergeant.core.cli_config import DrillSergeantArgumentParser
 from pytest_drill_sergeant.core.config_context import get_config, initialize_config
 from pytest_drill_sergeant.core.file_discovery import create_file_discovery
 from pytest_drill_sergeant.core.logging_utils import setup_standard_logging
+from pytest_drill_sergeant.core.scoring import get_bis_calculator
 from pytest_drill_sergeant.plugin.analysis_storage import get_analysis_storage
 from pytest_drill_sergeant.plugin.internals import plan_item_order
 from pytest_drill_sergeant.plugin.personas.manager import get_persona_manager
@@ -151,7 +152,7 @@ def _initialize_analyzers() -> None:
 
 
 def _analyze_test_file(item: pytest.Item) -> None:
-    """Analyze a test file for violations."""
+    """Analyze a test file for violations and calculate BIS scores."""
     try:
         test_file_path = Path(item.fspath).resolve()  # Make path absolute
         storage = get_analysis_storage()
@@ -183,6 +184,9 @@ def _analyze_test_file(item: pytest.Item) -> None:
             test_key = str(test_file_path)
             storage._test_findings[test_key] = filtered_findings
 
+            # Calculate BIS scores for each test in the file
+            _calculate_bis_scores_for_file(item, filtered_findings)
+
             # Store findings in the item for later use
             if not hasattr(item, "ds_findings"):
                 item.ds_findings = filtered_findings
@@ -195,6 +199,32 @@ def _analyze_test_file(item: pytest.Item) -> None:
         logger.warning(f"Failed to analyze test file {item.fspath}: {e}")
 
 
+def _calculate_bis_scores_for_file(item: pytest.Item, findings: list[Finding]) -> None:
+    """Calculate BIS scores for all tests in a file.
+
+    Args:
+        item: Pytest item representing the test file
+        findings: List of findings from static analysis
+    """
+    try:
+        bis_calculator = get_bis_calculator()
+        test_file_path = Path(item.fspath)
+
+        # Use the improved feature extraction and BIS calculation
+        results = bis_calculator.calculate_file_bis(test_file_path, findings)
+
+        # Store results for later retrieval
+        for test_name, result in results.items():
+            bis_calculator._test_scores[test_name] = result.bis_score
+            bis_calculator._test_grades[test_name] = result.bis_grade
+
+    except Exception as e:
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to calculate BIS scores for file {item.fspath}: {e}")
+
+
 def _inject_persona_feedback(report: pytest.TestReport) -> None:
     """Inject persona feedback into test reports."""
     try:
@@ -204,10 +234,18 @@ def _inject_persona_feedback(report: pytest.TestReport) -> None:
 
         persona_manager = get_persona_manager()
         storage = get_analysis_storage()
+        bis_calculator = get_bis_calculator()
 
         # Get findings for this test file
         test_file_path = Path(report.fspath)
         findings = storage.get_test_findings(test_file_path)
+
+        # Get BIS score for this test
+        test_name = (
+            report.nodeid.split("::")[-1] if "::" in report.nodeid else report.nodeid
+        )
+        bis_score = bis_calculator.get_test_bis_score(test_name)
+        bis_grade = bis_calculator.get_test_bis_grade(test_name)
 
         # Generate appropriate message based on test result
         if report.outcome == "passed":
@@ -224,16 +262,22 @@ def _inject_persona_feedback(report: pytest.TestReport) -> None:
             message = persona_manager.on_test_fail(report.nodeid, findings[0])
         else:
             # Test failed for other reasons (not our violations)
-            from pytest_drill_sergeant.core.models import Finding, RuleType, Severity
+            from pytest_drill_sergeant.core.models import Finding, Severity
 
             dummy_finding = Finding(
-                rule_type=RuleType.PRIVATE_ACCESS,
+                code="DS999",
+                name="unknown_failure",
                 severity=Severity.WARNING,
                 message="Test failed for unknown reasons",
                 file_path=test_file_path,
                 line_number=0,
             )
             message = persona_manager.on_test_fail(report.nodeid, dummy_finding)
+
+        # Add BIS score information to the message
+        bis_message = persona_manager.on_bis_score(test_name, bis_score)
+        if bis_message:
+            message = f"{message}\n\n{bis_message}"
 
         # Add the message to the report
         if hasattr(report, "longrepr") and report.longrepr:
@@ -255,9 +299,13 @@ def _generate_persona_summary(terminalreporter: pytest.TerminalReporter) -> None
     try:
         storage = get_analysis_storage()
         persona_manager = get_persona_manager()
+        bis_calculator = get_bis_calculator()
 
         # Get summary statistics
         stats = storage.get_summary_stats()
+
+        # Get BIS summary
+        bis_summary = bis_calculator.get_bis_summary()
 
         # Create mock metrics for summary
         from pytest_drill_sergeant.core.models import RunMetrics
@@ -268,6 +316,7 @@ def _generate_persona_summary(terminalreporter: pytest.TerminalReporter) -> None
             brs_score=max(
                 0, 100 - (stats["total_violations"] * 15)
             ),  # Simple BRS calculation
+            average_bis=bis_summary["average_score"],
         )
 
         # Generate summary message
@@ -284,6 +333,31 @@ def _generate_persona_summary(terminalreporter: pytest.TerminalReporter) -> None
         )
         terminalreporter.write_line(f"Test files analyzed: {stats['total_test_files']}")
         terminalreporter.write_line(f"Tests run: {stats['total_tests']}")
+
+        # Add BIS summary
+        if bis_summary["total_tests"] > 0:
+            terminalreporter.write_sep("-", "BIS (Behavior Integrity Score) Summary")
+            terminalreporter.write_line(
+                f"Average BIS Score: {bis_summary['average_score']:.1f}"
+            )
+            terminalreporter.write_line(
+                f"Highest Score: {bis_summary['highest_score']:.1f}"
+            )
+            terminalreporter.write_line(
+                f"Lowest Score: {bis_summary['lowest_score']:.1f}"
+            )
+
+            # Grade distribution
+            terminalreporter.write_line("Grade Distribution:")
+            for grade, count in bis_summary["grade_distribution"].items():
+                if count > 0:
+                    terminalreporter.write_line(f"  {grade}: {count}")
+
+            # Top offenders
+            if bis_summary["top_offenders"]:
+                terminalreporter.write_line("Top Offenders (Lowest BIS Scores):")
+                for test_name, score in bis_summary["top_offenders"]:
+                    terminalreporter.write_line(f"  {test_name}: {score:.1f}")
 
         if stats["rule_counts"]:
             terminalreporter.write_line("Violations by type:")

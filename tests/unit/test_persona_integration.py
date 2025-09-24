@@ -362,7 +362,8 @@ class TestHookIntegration:
         mock_persona_manager_instance.on_test_pass.assert_called_once_with(
             "test_something"
         )
-        assert mock_report.longrepr == "Test passed!"
+        # BIS integration adds extra content, so we check it contains the original message
+        assert "Test passed!" in str(mock_report.longrepr)
 
     @patch("pytest_drill_sergeant.plugin.hooks.get_persona_manager")
     @patch("pytest_drill_sergeant.plugin.hooks.get_analysis_storage")
@@ -405,7 +406,8 @@ class TestHookIntegration:
         mock_persona_manager_instance.on_test_fail.assert_called_once_with(
             "test_something", mock_finding
         )
-        assert mock_report.longrepr == "Test failed!"
+        # BIS integration adds extra content, so we check it contains the original message
+        assert "Test failed!" in str(mock_report.longrepr)
 
     @patch("pytest_drill_sergeant.plugin.hooks.get_persona_manager")
     @patch("pytest_drill_sergeant.plugin.hooks.get_analysis_storage")

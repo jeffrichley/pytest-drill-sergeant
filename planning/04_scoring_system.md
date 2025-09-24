@@ -11,61 +11,105 @@ The scoring system provides two main metrics:
 ### Purpose
 Measures how well a test focuses on **WHAT** the code does rather than **HOW** it works internally.
 
-### Scoring Formula (Mathematically Grounded)
+### Implementation Overview
 
-The BIS uses a **weighted penalty system** based on empirical analysis of test quality patterns:
+The BIS system consists of three main components:
+
+1. **DynamicBISCalculator**: Core scoring algorithm using rule metadata
+2. **BISCalculator**: Main calculator integrating with plugin hooks
+3. **TestFeatureExtractor**: AST-based feature extraction from test files
+
+### Scoring Formula (Rule-Based Dynamic System)
+
+The BIS uses a **dynamic rule-based penalty system** that reads impact and weights from rule definitions:
 
 ```python
-def calculate_bis(features: TestFeatures) -> float:
-    """
-    Behavior Integrity Score calculation based on test quality research:
-    - Penalties based on frequency analysis of problematic patterns
-    - Rewards based on positive test quality indicators
-    - Normalized to 0-100 scale using sigmoid function for smooth transitions
-    """
+class DynamicBISCalculator:
+    """Dynamic BIS calculator that uses rule metadata for scoring."""
 
-    # Base score
-    base_score = 100.0
-
-    # Calculate penalty weights (based on empirical analysis)
-    penalties = {
-        'private_access': 0.25,      # High penalty: breaks encapsulation
-        'mock_overspec': 0.15,       # Medium penalty: brittle tests
-        'patched_internal': 0.20,    # High penalty: implementation coupling
-        'structural_equality': 0.12, # Medium penalty: fragile comparisons
-        'exception_overspec': 0.08   # Low penalty: minor brittleness
+    # Base penalty weights by impact category
+    PENALTY_WEIGHTS = {
+        "high_penalty": 15.0,  # Major behavior integrity issues
+        "medium_penalty": 8.0,  # Moderate behavior integrity issues
+        "low_penalty": 4.0,  # Minor behavior integrity issues
+        "advisory": 1.0,  # Style/structure issues (minimal)
+        "reward": -5.0,  # Positive behavior indicators
     }
 
-    # Calculate total penalty (normalized by test complexity)
-    total_penalty = 0
-    total_penalty += penalties['private_access'] * min(features.private_access_count, 5)
-    total_penalty += penalties['mock_overspec'] * min(features.mock_assert_count, 8)
-    total_penalty += penalties['patched_internal'] * min(features.patched_internal_count, 4)
-    total_penalty += penalties['structural_equality'] * min(features.structural_compare_count, 6)
-    total_penalty += penalties['exception_overspec'] * min(features.exception_message_length // 50, 3)
+    def calculate_bis(self, metrics: BISMetrics) -> float:
+        """Calculate Behavior Integrity Score based on metrics."""
+        base_score = 100.0
 
-    # Calculate reward (diminishing returns)
-    reward = 0.10 * math.log(1 + features.public_api_assert_count)
+        # Calculate penalties based on weighted counts
+        total_penalty = 0.0
 
-    # Apply sigmoid normalization for smooth score transitions
-    raw_score = base_score - (total_penalty * 100) + (reward * 100)
-    normalized_score = 100 / (1 + math.exp(-0.1 * (raw_score - 50)))
+        # High penalty violations (major behavior integrity issues)
+        total_penalty += self.PENALTY_WEIGHTS["high_penalty"] * min(
+            metrics.weighted_high_penalty, 5.0
+        )
 
-    return max(0, min(100, round(normalized_score, 1)))
+        # Medium penalty violations (moderate behavior integrity issues)
+        total_penalty += self.PENALTY_WEIGHTS["medium_penalty"] * min(
+            metrics.weighted_medium_penalty, 8.0
+        )
+
+        # Low penalty violations (minor behavior integrity issues)
+        total_penalty += self.PENALTY_WEIGHTS["low_penalty"] * min(
+            metrics.weighted_low_penalty, 10.0
+        )
+
+        # Advisory violations (style/structure issues)
+        total_penalty += self.PENALTY_WEIGHTS["advisory"] * min(
+            metrics.weighted_advisory, 15.0
+        )
+
+        # Reward for positive behavior indicators
+        reward = self.PENALTY_WEIGHTS["reward"] * min(metrics.weighted_reward, 3.0)
+
+        # Calculate final score
+        raw_score = base_score - total_penalty + reward
+
+        return max(0, min(100, round(raw_score, 1)))
+```
+
+### Rule-Based Impact System
+
+The BIS system uses rule metadata to determine impact categories and weights:
+
+**Impact Categories**:
+- **High Penalty (15.0)**: Major behavior integrity issues (DS301 - Private Access, DS305 - Mock Over-specification)
+- **Medium Penalty (8.0)**: Moderate behavior integrity issues (DS306 - Structural Equality)
+- **Low Penalty (4.0)**: Minor behavior integrity issues
+- **Advisory (1.0)**: Style/structure issues (DS302 - AAA Comments)
+- **Reward (-5.0)**: Positive behavior indicators
+
+**Rule Configuration Example**:
+```python
+PRIVATE_ACCESS = RuleSpec(
+    code="DS301",
+    name="private_access",
+    default_level=Severity.WARNING,
+    short_desc="Detect access to private members in tests",
+    long_desc="Flags tests that access private methods, attributes, or modules.",
+    tags=["encapsulation", "quality", "brittleness"],
+    fixable=False,
+    category=RuleCategory.CODE_QUALITY,
+    bis_impact=BISImpact.HIGH_PENALTY,  # High penalty for BIS
+    bis_weight=1.5,  # Weight multiplier
+)
 ```
 
 ### Mathematical Justification
 
 **Penalty Weights** (based on test quality research):
-- **Private Access (0.25)**: Breaks encapsulation, highest maintenance cost
-- **Patched Internal (0.20)**: Creates tight coupling to implementation
-- **Mock Over-specification (0.15)**: Leads to brittle, hard-to-maintain tests
-- **Structural Equality (0.12)**: Fragile comparisons that break on refactoring
-- **Exception Over-specification (0.08)**: Minor brittleness, easily fixed
+- **High Penalty (15.0)**: Breaks encapsulation, creates tight coupling to implementation
+- **Medium Penalty (8.0)**: Leads to brittle, hard-to-maintain tests
+- **Low Penalty (4.0)**: Minor brittleness, easily fixed
+- **Advisory (1.0)**: Style/structure issues, minimal impact
 
 **Reward Calculation**:
-- Uses logarithmic scaling to prevent score inflation
-- Diminishing returns encourage quality over quantity
+- Uses negative weights to provide bonuses for positive behavior
+- Capped at 3.0 to prevent score inflation
 
 ### Score Interpretation
 - **85-100**: Excellent - Focuses on behavior, not implementation
@@ -74,19 +118,70 @@ def calculate_bis(features: TestFeatures) -> float:
 - **40-54**: Poor - Testing implementation details
 - **0-39**: Critical - Heavily focused on internal workings
 
+### BIS Implementation Architecture
+
+The BIS system is implemented as a three-layer architecture:
+
+#### 1. Feature Extraction Layer (`TestFeatureExtractor`)
+```python
+class TestFeatureExtractor:
+    """Extracts features from test files for BIS calculation."""
+
+    def extract_features_from_file(
+        self, file_path: Path, findings: list[Finding]
+    ) -> dict[str, FeaturesData]:
+        """Extract features for all tests in a file."""
+        # Parse AST and extract test functions
+        # Count assertions, complexity, setup/teardown lines
+        # Map findings to specific tests
+```
+
+#### 2. Core Calculation Layer (`DynamicBISCalculator`)
+```python
+class DynamicBISCalculator:
+    """Core BIS calculator using rule metadata."""
+
+    def extract_metrics_from_findings(self, findings: list[Finding]) -> BISMetrics:
+        """Extract BIS metrics from analysis findings using rule metadata."""
+        # Group findings by impact category
+        # Apply rule-specific weights
+        # Calculate weighted totals
+```
+
+#### 3. Integration Layer (`BISCalculator`)
+```python
+class BISCalculator:
+    """Main BIS calculator integrating with plugin system."""
+
+    def calculate_file_bis(
+        self, file_path: Path, findings: list[Finding]
+    ) -> dict[str, ResultData]:
+        """Calculate BIS scores for all tests in a file."""
+        # Use feature extractor to get test features
+        # Use dynamic calculator for scoring
+        # Store results for retrieval
+```
+
 ### Feature Extraction
 
-#### Private Access Detection
+#### AST-Based Feature Analysis
 ```python
 @dataclass
-class PrivateAccessFeatures:
-    private_imports: int = 0
-    private_attributes: int = 0
-    private_methods: int = 0
+class FeaturesData:
+    test_name: str
+    file_path: Path
+    line_number: int
 
-    @property
-    def total_count(self) -> int:
-        return self.private_imports + self.private_attributes + self.private_methods
+    # AST-based features
+    has_aaa_comments: bool = False
+    private_access_count: int = 0
+    mock_assertion_count: int = 0
+    structural_equality_count: int = 0
+    test_length: int = 0
+    complexity_score: float = 0.0
+    assertion_count: int = 0
+    setup_lines: int = 0
+    teardown_lines: int = 0
 ```
 
 #### Mock Over-Specification
@@ -258,25 +353,64 @@ def calculate_style_smell_rate(files_analyzed: List[Path], findings: List[Findin
 
 ## Score Reporting
 
-### Per-Test BIS Report
+### BIS Reporting and Integration
+
+#### Per-Test BIS Reporting
+The BIS system integrates with pytest hooks to provide real-time scoring:
+
+```python
+def _inject_persona_feedback(report: pytest.TestReport) -> None:
+    """Inject persona feedback into test reports."""
+    bis_calculator = get_bis_calculator()
+
+    # Get BIS score for this test
+    test_name = report.nodeid.split("::")[-1]
+    bis_score = bis_calculator.get_test_bis_score(test_name)
+
+    # Add BIS score information to the message
+    bis_message = persona_manager.on_bis_score(test_name, bis_score)
+    if bis_message:
+        message = f"{message}\n\n{bis_message}"
+```
+
+#### Terminal Summary Integration
+```python
+def _generate_persona_summary(terminalreporter: pytest.TerminalReporter) -> None:
+    """Generate persona summary for terminal output."""
+    bis_calculator = get_bis_calculator()
+    bis_summary = bis_calculator.get_bis_summary()
+
+    # Add BIS summary
+    terminalreporter.write_sep("-", "BIS (Behavior Integrity Score) Summary")
+    terminalreporter.write_line(f"Average BIS Score: {bis_summary['average_score']:.1f}")
+    terminalreporter.write_line(f"Highest Score: {bis_summary['highest_score']:.1f}")
+    terminalreporter.write_line(f"Lowest Score: {bis_summary['lowest_score']:.1f}")
+
+    # Grade distribution
+    terminalreporter.write_line("Grade Distribution:")
+    for grade, count in bis_summary["grade_distribution"].items():
+        if count > 0:
+            terminalreporter.write_line(f"  {grade}: {count}")
+```
+
+#### BIS Result Data Structure
 ```python
 @dataclass
-class BISReport:
+class ResultData:
     test_name: str
-    score: float
-    grade: str  # "A", "B", "C", "D", "F"
-    breakdown: Dict[str, float]
-    suggestions: List[str]
+    file_path: Path
+    line_number: int
 
-    def generate_breakdown(self, features: TestFeatures) -> Dict[str, float]:
-        return {
-            "private_access_penalty": -15 * features.private_access_count,
-            "mock_overspec_penalty": -10 * features.mock_assert_count,
-            "internal_patching_penalty": -15 * features.patched_internal_count,
-            "structural_equality_penalty": -8 * features.structural_compare_count,
-            "exception_overspec_penalty": -5 * (features.exception_message_length // 40),
-            "public_api_bonus": 8 * min(features.public_api_assert_count, 5)
-        }
+    # Analysis results
+    findings: list[Finding]
+    features: FeaturesData
+    bis_score: float  # 0-100
+    bis_grade: str  # "A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"
+
+    # Status
+    analyzed: bool
+    error_message: str | None
+    analysis_time: float
 ```
 
 ### BRS Summary Report
