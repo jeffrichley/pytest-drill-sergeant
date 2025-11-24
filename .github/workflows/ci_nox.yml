@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Python and Nox
-        uses: wntrblm/nox@2025.05.01
+        uses: wntrblm/nox@2025.11.12
         with:
           python-versions: ${{ matrix.python-version }}
 
