@@ -17,8 +17,7 @@ class TestPluginIntegration:
         """
         # Arrange - Create test environment (plugin loads automatically via entry point)
 
-        pytester.makepyfile(
-            test_dummy="""
+        pytester.makepyfile(test_dummy="""
             import pytest
 
             @pytest.mark.unit
@@ -35,8 +34,7 @@ class TestPluginIntegration:
 
                 # Assert - Verify result
                 assert result == 84
-        """
-        )
+        """)
 
         # Act - Run pytest with drill sergeant enabled
         result = pytester.runpytest("-v", "-p", "drill_sergeant")
@@ -69,9 +67,7 @@ markers =
         pytester.mkdir("tests/unit")
 
         unit_test = pytester.path / "tests" / "unit" / "test_auto_decoration.py"
-        unit_test.write_text(
-            textwrap.dedent(
-                """
+        unit_test.write_text(textwrap.dedent("""
             def test_auto_decorated() -> None:
                 '''Test without explicit marker - should be auto-decorated.'''
                 # Arrange - Simple test data
@@ -82,9 +78,7 @@ markers =
 
                 # Assert - Verify result
                 assert result == 15
-        """
-            )
-        )
+        """))
 
         # Act - Run pytest
         result = pytester.runpytest("-v", "-p", "drill_sergeant", "--tb=short")
@@ -100,8 +94,7 @@ markers =
         """
         # Arrange - Create test without AAA structure
 
-        pytester.makepyfile(
-            test_bad_structure="""
+        pytester.makepyfile(test_bad_structure="""
             import pytest
 
             @pytest.mark.unit
@@ -110,8 +103,7 @@ markers =
                 value = 42
                 result = value * 2
                 assert result == 84
-        """
-        )
+        """)
 
         # Act - Run pytest
         result = pytester.runpytest("-v", "-p", "drill_sergeant", "--tb=short")
@@ -129,8 +121,7 @@ markers =
         """
         # Arrange - Create test without marker in root
 
-        pytester.makepyfile(
-            test_no_marker="""
+        pytester.makepyfile(test_no_marker="""
             def test_no_marker() -> None:
                 '''Test without marker in non-detectable location.'''
                 # Arrange - Simple test data
@@ -141,8 +132,7 @@ markers =
 
                 # Assert - Verify result
                 assert result == 15
-        """
-        )
+        """)
 
         # Act - Run pytest
         result = pytester.runpytest("-v", "-p", "drill_sergeant", "--tb=short")
@@ -160,15 +150,13 @@ markers =
         """
         # Arrange - Create test with both violations
 
-        pytester.makepyfile(
-            test_multiple_violations="""
+        pytester.makepyfile(test_multiple_violations="""
             def test_multiple_violations() -> None:
                 '''Test with both marker and AAA violations.'''
                 value = 42
                 result = value * 2
                 assert result == 84
-        """
-        )
+        """)
 
         # Act - Run pytest
         result = pytester.runpytest("-v", "-p", "drill_sergeant", "--tb=short")
@@ -192,8 +180,7 @@ markers =
         # Arrange - Create test environment
 
         # Create a test class instead of function to test exception handling
-        pytester.makepyfile(
-            test_exception_handling="""
+        pytester.makepyfile(test_exception_handling="""
             import pytest
 
             @pytest.mark.unit
@@ -209,8 +196,7 @@ markers =
 
                     # Assert - Verify result
                     assert result == 15
-        """
-        )
+        """)
 
         # Act - Run pytest
         result = pytester.runpytest("-v", "-p", "drill_sergeant", "--tb=short")
@@ -227,8 +213,7 @@ markers =
         """
         # Arrange - Create properly structured test
 
-        pytester.makepyfile(
-            test_valid="""
+        pytester.makepyfile(test_valid="""
             import pytest
 
             @pytest.mark.unit
@@ -243,8 +228,7 @@ markers =
 
                 # Assert - Verify the expected outcome
                 assert actual_result == expected_result
-        """
-        )
+        """)
 
         # Act - Run pytest with drill sergeant enabled
         result = pytester.runpytest("-v", "-p", "drill_sergeant")
