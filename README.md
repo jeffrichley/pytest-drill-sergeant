@@ -203,6 +203,22 @@ just verify
 
 Coverage is informational, not a required merge gate.
 
+## Release Workflow (Current)
+
+Release flow is `release-please` + GitHub Releases:
+
+1. Conventional commits land on `main`.
+2. `release-please` opens/updates a release PR with version + changelog.
+3. Merge the release PR.
+4. GitHub Release + tag are created automatically.
+5. `.github/workflows/release.yml` publishes to PyPI on `release.published`.
+
+Operational rule:
+
+- do not hand-edit versions or changelog outside the release PR
+- do not publish manually unless recovery is explicitly needed
+- keep release notes derived from conventional commits
+
 ## Failure Intel
 
 If a rule fails, use:
