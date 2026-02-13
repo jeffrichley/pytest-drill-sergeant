@@ -127,14 +127,14 @@ Purpose: get this project back to predictable, low-drama operation with clear ga
 
 ### Steps
 
-- [ ] Define canonical commands:
-  - [ ] `uv run pytest -q`
-  - [ ] `uv run ruff check src tests`
-  - [ ] `uv run mypy src tests --config-file=pyproject.toml`
-- [ ] Align `just`, `nox`, and GitHub workflows to these same commands.
-- [ ] Remove or quarantine novelty/non-critical CI jobs from required checks.
-- [ ] Add a single `just verify` target that mirrors required CI gates.
-- [ ] Ensure Python version matrix only where it adds real signal.
+- [x] Define canonical commands:
+  - [x] `uv run pytest -q`
+  - [x] `uv run ruff check src tests`
+  - [x] `uv run mypy src tests --config-file=pyproject.toml`
+- [x] Align `just` and GitHub workflows to these same commands.
+- [x] Remove or quarantine novelty/non-critical CI jobs from required checks.
+- [x] Add a single `just verify` target that mirrors required CI gates.
+- [x] Ensure Python version matrix only where it adds real signal.
 
 ### Exit Criteria
 

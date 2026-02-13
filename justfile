@@ -1,9 +1,8 @@
 # Development shortcuts for pytest-drill-sergeant
-# Following the Redwing Core pattern
 
 # Run tests
 test:
-    uv run pytest tests
+    uv run pytest -q
 
 # Run unit tests only
 test-unit:
@@ -15,45 +14,37 @@ test-integration:
 
 # Run linting
 lint:
-    nox -s lint
+    uv run ruff check src tests
 
 # Run type checking
 type-check:
-    nox -s type_check
-
-# Run all quality checks (matches CI quality gates)
-quality: lint type-check complexity security pyproject
-
-# Run comprehensive quality checks (includes AI-specific checks)
-quality-full:
-    nox -s dead_code imports docs_coverage duplication maintainability test_quality dependencies security_advanced
-
-# Run quality checks with unsafe fixes enabled
-quality-unsafe:
-    @echo "🚨 Running quality checks with unsafe fixes..."
-    uv run ruff check src tests --fix --unsafe-fixes
-    uv run black src tests
     uv run mypy src tests --config-file=pyproject.toml
+
+# Run all required quality checks (matches CI quality gates)
+verify: test lint type-check
+
+# Backwards-compatible alias
+quality: verify
 
 # Generate coverage report
 coverage:
-    nox -s coverage_html
+    uv run pytest tests --cov=src --cov-report=xml --cov-report=term-missing
 
 # Run security audit
 security:
-    nox -s security
+    uv run pip-audit --progress-spinner=off
 
 # Run complexity analysis
 complexity:
-    nox -s complexity
+    uv run xenon --max-absolute B src
 
 # Validate pyproject.toml
 pyproject:
-    nox -s pyproject
+    uv run validate-pyproject pyproject.toml
 
 # Run pre-commit hooks
 pre-commit:
-    nox -s pre-commit
+    uv run pre-commit run --all-files
 
 # Install development dependencies
 install:
@@ -73,7 +64,6 @@ sync:
 
 # Clean up generated files
 clean:
-    rm -rf .nox
     rm -rf htmlcov
     rm -rf .pytest_cache
     rm -rf .mypy_cache
@@ -83,7 +73,7 @@ clean:
 j:
     clear || cls
     just test
-    just quality
+    just verify
 
 # Test the plugin with a sample project
 demo:

@@ -1,7 +1,7 @@
 # 🎖️ Pytest Drill Sergeant
 
 <!-- CI/CD Battle Status -->
-[![CI Status](https://github.com/jeffrichley/pytest-drill-sergeant/workflows/CI%20(nox)/badge.svg)](https://github.com/jeffrichley/pytest-drill-sergeant/actions)
+[![CI Status](https://github.com/jeffrichley/pytest-drill-sergeant/workflows/CI/badge.svg)](https://github.com/jeffrichley/pytest-drill-sergeant/actions)
 [![codecov](https://codecov.io/gh/jeffrichley/pytest-drill-sergeant/branch/main/graph/badge.svg)](https://codecov.io/gh/jeffrichley/pytest-drill-sergeant)
 [![Quality Gate](https://img.shields.io/badge/quality-A%2B-brightgreen?style=flat&logo=codacy)](https://github.com/jeffrichley/pytest-drill-sergeant)
 
@@ -317,6 +317,25 @@ drill_sergeant_enforce_markers = false     # Skip marker enforcement for now
 drill_sergeant_enforce_aaa = true          # Fix structure first
 drill_sergeant_auto_detect_markers = true  # Auto-add markers where possible
 ```
+
+## ✅ CI Contract (Phase 4)
+
+Required checks are intentionally minimal and deterministic:
+
+- `uv run pytest -q`
+- `uv run ruff check src tests`
+- `uv run mypy src tests --config-file=pyproject.toml`
+
+Local command that mirrors required CI gates:
+
+```bash
+just verify
+```
+
+Notes:
+
+- Coverage upload is informational and not a merge gate.
+- Security/release workflows are separate from required PR checks.
 
 ## 🎨 Environment Variables (For the DevOps Heroes)
 
