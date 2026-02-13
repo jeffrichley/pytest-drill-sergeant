@@ -21,21 +21,22 @@ class DrillSergeantConfig:
     enforce_markers: bool = True
     enforce_aaa: bool = True
     enforce_file_length: bool = True
-    enforce_return_type: bool = True
     auto_detect_markers: bool = True
     min_description_length: int = 3
     max_file_length: int = 350
+    file_length_mode: str = "error"  # "error", "warn", or "off"
+    file_length_exclude: list[str] = field(default_factory=list)
+    file_length_inline_ignore: bool = True
+    file_length_inline_ignore_token: str = "drill-sergeant: file-length ignore"
     marker_mappings: dict[str, str] = field(default_factory=dict)
 
     # AAA Synonym Recognition
+    aaa_mode: str = "basic"  # "basic" or "strict"
     aaa_synonyms_enabled: bool = False
     aaa_builtin_synonyms: bool = True
     aaa_arrange_synonyms: list[str] = field(default_factory=list)
     aaa_act_synonyms: list[str] = field(default_factory=list)
     aaa_assert_synonyms: list[str] = field(default_factory=list)
-
-    # Return Type Validation
-    return_type_mode: str = "error"  # "error", "auto_fix", or "disabled"
 
     @classmethod
     def from_pytest_config(cls, config: pytest.Config) -> "DrillSergeantConfig":
@@ -73,13 +74,6 @@ class DrillSergeantConfig:
             default=True,
         )
 
-        enforce_return_type = get_bool_option(
-            config,
-            "drill_sergeant_enforce_return_type",
-            env_var="DRILL_SERGEANT_ENFORCE_RETURN_TYPE",
-            default=True,
-        )
-
         auto_detect_markers = get_bool_option(
             config,
             "drill_sergeant_auto_detect_markers",
@@ -101,10 +95,41 @@ class DrillSergeantConfig:
             default=350,
         )
 
+        file_length_mode = get_string_option(
+            config,
+            "drill_sergeant_file_length_mode",
+            "DRILL_SERGEANT_FILE_LENGTH_MODE",
+            "error",
+        )
+        file_length_exclude = get_synonym_list(
+            config,
+            "drill_sergeant_file_length_exclude",
+            "DRILL_SERGEANT_FILE_LENGTH_EXCLUDE",
+        )
+        file_length_inline_ignore = get_bool_option(
+            config,
+            "drill_sergeant_file_length_inline_ignore",
+            env_var="DRILL_SERGEANT_FILE_LENGTH_INLINE_IGNORE",
+            default=True,
+        )
+        file_length_inline_ignore_token = get_string_option(
+            config,
+            "drill_sergeant_file_length_inline_ignore_token",
+            "DRILL_SERGEANT_FILE_LENGTH_INLINE_IGNORE_TOKEN",
+            "drill-sergeant: file-length ignore",
+        )
+
         # Get custom marker mappings from TOML configuration
         marker_mappings = get_marker_mappings(config)
 
         # AAA Synonym Recognition settings
+        aaa_mode = get_string_option(
+            config,
+            "drill_sergeant_aaa_mode",
+            "DRILL_SERGEANT_AAA_MODE",
+            "basic",
+        )
+
         aaa_synonyms_enabled = get_bool_option(
             config,
             "drill_sergeant_aaa_synonyms_enabled",
@@ -137,28 +162,23 @@ class DrillSergeantConfig:
             "DRILL_SERGEANT_AAA_ASSERT_SYNONYMS",
         )
 
-        # Return Type Validation settings
-        return_type_mode = get_string_option(
-            config,
-            "drill_sergeant_return_type_mode",
-            "DRILL_SERGEANT_RETURN_TYPE_MODE",
-            "error",
-        )
-
         return cls(
             enabled=enabled,
             enforce_markers=enforce_markers,
             enforce_aaa=enforce_aaa,
             enforce_file_length=enforce_file_length,
-            enforce_return_type=enforce_return_type,
             auto_detect_markers=auto_detect_markers,
             min_description_length=min_description_length,
             max_file_length=max_file_length,
+            file_length_mode=file_length_mode,
+            file_length_exclude=file_length_exclude,
+            file_length_inline_ignore=file_length_inline_ignore,
+            file_length_inline_ignore_token=file_length_inline_ignore_token,
             marker_mappings=marker_mappings,
+            aaa_mode=aaa_mode,
             aaa_synonyms_enabled=aaa_synonyms_enabled,
             aaa_builtin_synonyms=aaa_builtin_synonyms,
             aaa_arrange_synonyms=aaa_arrange_synonyms,
             aaa_act_synonyms=aaa_act_synonyms,
             aaa_assert_synonyms=aaa_assert_synonyms,
-            return_type_mode=return_type_mode,
         )

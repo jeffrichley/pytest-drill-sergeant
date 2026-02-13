@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import configparser
 import os
+import tomllib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -15,36 +15,165 @@ if TYPE_CHECKING:
 # Runtime import for function signatures
 import pytest  # noqa: TC002
 
+INI_TO_TOOL_KEY = {
+    "drill_sergeant_enabled": "enabled",
+    "drill_sergeant_enforce_markers": "enforce_markers",
+    "drill_sergeant_enforce_aaa": "enforce_aaa",
+    "drill_sergeant_enforce_file_length": "enforce_file_length",
+    "drill_sergeant_auto_detect_markers": "auto_detect_markers",
+    "drill_sergeant_min_description_length": "min_description_length",
+    "drill_sergeant_max_file_length": "max_file_length",
+    "drill_sergeant_file_length_mode": "file_length_mode",
+    "drill_sergeant_file_length_exclude": "file_length_exclude",
+    "drill_sergeant_file_length_inline_ignore": "file_length_inline_ignore",
+    "drill_sergeant_file_length_inline_ignore_token": "file_length_inline_ignore_token",
+    "drill_sergeant_aaa_synonyms_enabled": "aaa_synonyms_enabled",
+    "drill_sergeant_aaa_builtin_synonyms": "aaa_builtin_synonyms",
+    "drill_sergeant_aaa_arrange_synonyms": "aaa_arrange_synonyms",
+    "drill_sergeant_aaa_act_synonyms": "aaa_act_synonyms",
+    "drill_sergeant_aaa_assert_synonyms": "aaa_assert_synonyms",
+    "drill_sergeant_marker_mappings": "marker_mappings",
+}
+
+
+def _to_bool(value: object) -> bool | None:
+    """Safely coerce values to bool."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "1", "yes", "on"}:
+            return True
+        if lowered in {"false", "0", "no", "off"}:
+            return False
+    if isinstance(value, int):
+        return value != 0
+    return None
+
+
+def _to_int(value: object) -> int | None:
+    """Safely coerce values to int."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return None
+    return None
+
+
+def _parse_list(value: object) -> list[str]:
+    """Parse config values into a string list."""
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, tuple):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, str):
+        return [part.strip() for part in value.split(",") if part.strip()]
+    return []
+
+
+def _parse_mapping_string(mappings_str: str) -> dict[str, str]:
+    """Parse mapping text with format 'dir=marker,dir2=marker2'."""
+    mappings: dict[str, str] = {}
+    for mapping in mappings_str.split(","):
+        if "=" not in mapping:
+            continue
+        dir_name, marker_name = mapping.split("=", 1)
+        dir_name = dir_name.strip()
+        marker_name = marker_name.strip()
+        if dir_name and marker_name:
+            mappings[dir_name] = marker_name
+    return mappings
+
+
+def _get_project_root(config: pytest.Config) -> Path | None:
+    """Resolve project root from pytest config."""
+    rootpath = getattr(config, "rootpath", None)
+    if rootpath is not None:
+        try:
+            return Path(rootpath)
+        except Exception:
+            pass
+
+    inipath = getattr(config, "inipath", None)
+    if inipath is not None:
+        try:
+            return Path(inipath).parent
+        except Exception:
+            pass
+
+    return None
+
+
+def _load_tool_drill_sergeant_config(config: pytest.Config) -> dict[str, object]:
+    """Load [tool.drill_sergeant] from pyproject.toml if available."""
+    project_root = _get_project_root(config)
+    if project_root is None:
+        return {}
+
+    pyproject_path = project_root / "pyproject.toml"
+    if not pyproject_path.exists():
+        return {}
+
+    try:
+        with pyproject_path.open("rb") as f:
+            pyproject_data = tomllib.load(f)
+    except Exception:
+        return {}
+
+    tool_section = pyproject_data.get("tool")
+    if not isinstance(tool_section, dict):
+        return {}
+
+    ds_section = tool_section.get("drill_sergeant")
+    if not isinstance(ds_section, dict):
+        return {}
+
+    return ds_section
+
+
+def _get_tool_value(config: pytest.Config, ini_name: str) -> object | None:
+    """Read a setting value from [tool.drill_sergeant]."""
+    tool_config = _load_tool_drill_sergeant_config(config)
+    key = INI_TO_TOOL_KEY.get(ini_name, ini_name)
+    if key in tool_config:
+        return tool_config[key]
+    if ini_name in tool_config:
+        return tool_config[ini_name]
+    return None
+
 
 def get_bool_option(
     config: pytest.Config, ini_name: str, env_var: str, default: bool
 ) -> bool:
-    """Get boolean option from pytest config or environment variable."""
+    """Get boolean option with precedence: env > pytest > tool > default."""
     # Environment variable takes precedence
     env_val = os.getenv(env_var)
     if env_val is not None:
-        return env_val.lower() in ("true", "1", "yes", "on")
+        parsed = _to_bool(env_val)
+        if parsed is not None:
+            return parsed
 
-    # Then pytest config
+    # Then pytest config (pytest.ini / pyproject [tool.pytest.ini_options])
     if hasattr(config, "getini"):
         try:
             ini_val = config.getini(ini_name)
             if ini_val is not None:
-                return str(ini_val).lower() in ("true", "1", "yes", "on")
+                parsed = _to_bool(ini_val)
+                if parsed is not None:
+                    return parsed
         except (ValueError, AttributeError):
             pass
 
-    # Fallback: try to read from ini file directly
-    try:
-        ini_path = getattr(config, "inipath", None)
-        if ini_path and ini_path.exists():
-            parser = configparser.ConfigParser()
-            parser.read(ini_path)
-            if "pytest" in parser and ini_name in parser["pytest"]:
-                value = parser["pytest"][ini_name]
-                return str(value).lower() in ("true", "1", "yes", "on")
-    except Exception:
-        pass
+    # Then [tool.drill_sergeant] in pyproject.toml
+    tool_val = _get_tool_value(config, ini_name)
+    parsed_tool = _to_bool(tool_val) if tool_val is not None else None
+    if parsed_tool is not None:
+        return parsed_tool
 
     return default
 
@@ -52,45 +181,23 @@ def get_bool_option(
 def _get_int_from_env(env_var: str) -> int | None:
     """Get integer from environment variable."""
     env_val = os.getenv(env_var)
-    if env_val is not None:
-        try:
-            return int(env_val)
-        except ValueError:
-            pass
-    return None
+    return _to_int(env_val) if env_val is not None else None
 
 
 def _get_int_from_config(config: pytest.Config, ini_name: str) -> int | None:
     """Get integer from pytest config."""
     if hasattr(config, "getini"):
         try:
-            ini_val = config.getini(ini_name)
-            if ini_val is not None:
-                return int(ini_val)
+            return _to_int(config.getini(ini_name))
         except (ValueError, AttributeError):
             pass
-    return None
-
-
-def _get_int_from_ini_file(config: pytest.Config, ini_name: str) -> int | None:
-    """Get integer from ini file directly."""
-    try:
-        ini_path = getattr(config, "inipath", None)
-        if ini_path and ini_path.exists():
-            parser = configparser.ConfigParser()
-            parser.read(ini_path)
-            if "pytest" in parser and ini_name in parser["pytest"]:
-                value = parser["pytest"][ini_name]
-                return int(value)
-    except Exception:
-        pass
     return None
 
 
 def get_int_option(
     config: pytest.Config, ini_name: str, env_var: str, default: int
 ) -> int:
-    """Get integer option from pytest config or environment variable."""
+    """Get integer option with precedence: env > pytest > tool > default."""
     # Environment variable takes precedence
     env_val = _get_int_from_env(env_var)
     if env_val is not None:
@@ -101,10 +208,11 @@ def get_int_option(
     if config_val is not None:
         return config_val
 
-    # Fallback: try to read from ini file directly
-    ini_val = _get_int_from_ini_file(config, ini_name)
-    if ini_val is not None:
-        return ini_val
+    # Then [tool.drill_sergeant] in pyproject.toml
+    tool_val = _get_tool_value(config, ini_name)
+    parsed_tool = _to_int(tool_val) if tool_val is not None else None
+    if parsed_tool is not None:
+        return parsed_tool
 
     return default
 
@@ -112,7 +220,7 @@ def get_int_option(
 def get_string_option(
     config: pytest.Config, ini_name: str, env_var: str, default: str
 ) -> str:
-    """Get string option from pytest config or environment variable."""
+    """Get string option with precedence: env > pytest > tool > default."""
     # Environment variable takes precedence
     env_val = os.getenv(env_var)
     if env_val is not None:
@@ -127,77 +235,73 @@ def get_string_option(
         except (ValueError, AttributeError):
             pass
 
-    # Fallback: try to read from ini file directly
-    try:
-        ini_path = getattr(config, "inipath", None)
-        if ini_path and ini_path.exists():
-            parser = configparser.ConfigParser()
-            parser.read(ini_path)
-            if "pytest" in parser and ini_name in parser["pytest"]:
-                value = parser["pytest"][ini_name]
-                return str(value)
-    except Exception:
-        pass
+    # Then [tool.drill_sergeant] in pyproject.toml
+    tool_val = _get_tool_value(config, ini_name)
+    if tool_val is not None:
+        return str(tool_val)
 
     return default
 
 
 def get_synonym_list(config: pytest.Config, ini_name: str, env_var: str) -> list[str]:
-    """Get comma-separated synonym list from pytest config or environment variable."""
+    """Get synonym list with precedence: env > pytest > tool > default."""
     # Environment variable takes precedence
     env_val = os.getenv(env_var)
     if env_val:
-        return [synonym.strip() for synonym in env_val.split(",") if synonym.strip()]
+        return _parse_list(env_val)
 
     # Then pytest config
     if hasattr(config, "getini"):
         try:
             ini_val = config.getini(ini_name)
             if ini_val:
-                return [
-                    synonym.strip() for synonym in ini_val.split(",") if synonym.strip()
-                ]
+                return _parse_list(ini_val)
         except (ValueError, AttributeError):
             pass
+
+    # Then [tool.drill_sergeant] in pyproject.toml
+    tool_val = _get_tool_value(config, ini_name)
+    if tool_val is not None:
+        return _parse_list(tool_val)
 
     return []
 
 
 def get_marker_mappings(config: pytest.Config) -> dict[str, str]:
-    """Get marker mappings with proper layered priority: env vars > pytest.ini.
+    """Get marker mappings with layered priority: env > pytest > tool.
 
-    Each layer builds on the previous one, allowing selective overrides
-    rather than complete replacement.
+    Each layer builds on the previous one and can override specific keys.
     """
-    mappings = {}
+    mappings: dict[str, str] = {}
 
     try:
-        # Layer 1: Base mappings from pytest.ini
+        # Layer 1: Base mappings from [tool.drill_sergeant] in pyproject.toml
+        tool_config = _load_tool_drill_sergeant_config(config)
+        tool_mappings = tool_config.get("marker_mappings")
+        if isinstance(tool_mappings, dict):
+            mappings.update(
+                {
+                    str(dir_name).strip(): str(marker_name).strip()
+                    for dir_name, marker_name in tool_mappings.items()
+                    if str(dir_name).strip() and str(marker_name).strip()
+                }
+            )
+        elif isinstance(tool_mappings, str):
+            mappings.update(_parse_mapping_string(tool_mappings))
+
+        # Layer 2: pytest config mappings
         if hasattr(config, "getini"):
             try:
                 mappings_str = config.getini("drill_sergeant_marker_mappings")
                 if mappings_str:
-                    # Parse the mappings string
-                    # Format: "dir1=marker1,dir2=marker2"
-                    for mapping in mappings_str.split(","):
-                        if "=" in mapping:
-                            dir_name, marker_name = mapping.split("=", 1)
-                            mappings[dir_name.strip()] = marker_name.strip()
+                    mappings.update(_parse_mapping_string(str(mappings_str)))
             except (ValueError, AttributeError):
                 pass
 
-        # Layer 2: Environment variable overrides (highest priority)
-        # This ADDS to or OVERRIDES specific mappings from pytest.ini
+        # Layer 3: Environment variable overrides
         env_mappings = os.getenv("DRILL_SERGEANT_MARKER_MAPPINGS")
         if env_mappings:
-            # Format: "dir1=marker1,dir2=marker2"
-            for mapping in env_mappings.split(","):
-                if "=" in mapping:
-                    dir_name, marker_name = mapping.split("=", 1)
-                    mappings[dir_name.strip()] = marker_name.strip()
-
-        # TODO: Add proper TOML parsing for [tool.drill_sergeant.marker_mappings]
-        # This requires more sophisticated TOML handling that we can add later
+            mappings.update(_parse_mapping_string(env_mappings))
 
         return mappings
     except Exception:

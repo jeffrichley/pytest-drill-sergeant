@@ -27,7 +27,12 @@ class TestDrillSergeantConfig:
         assert config.auto_detect_markers is True
         assert config.min_description_length == 3
         assert config.max_file_length == 350
+        assert config.file_length_mode == "error"
+        assert config.file_length_exclude == []
+        assert config.file_length_inline_ignore is True
+        assert config.file_length_inline_ignore_token == "drill-sergeant: file-length ignore"
         assert config.marker_mappings == {}
+        assert config.aaa_mode == "basic"
         assert config.aaa_synonyms_enabled is False
         assert config.aaa_builtin_synonyms is True
         assert config.aaa_arrange_synonyms == []
@@ -51,7 +56,12 @@ class TestDrillSergeantConfig:
             auto_detect_markers=False,
             min_description_length=5,
             max_file_length=500,
+            file_length_mode="warn",
+            file_length_exclude=["tests/legacy/*"],
+            file_length_inline_ignore=False,
+            file_length_inline_ignore_token="drill-sergeant: ignore-file-length",
             marker_mappings=marker_mappings,
+            aaa_mode="strict",
             aaa_synonyms_enabled=True,
             aaa_builtin_synonyms=False,
             aaa_arrange_synonyms=arrange_synonyms,
@@ -67,7 +77,12 @@ class TestDrillSergeantConfig:
         assert config.auto_detect_markers is False
         assert config.min_description_length == 5
         assert config.max_file_length == 500
+        assert config.file_length_mode == "warn"
+        assert config.file_length_exclude == ["tests/legacy/*"]
+        assert config.file_length_inline_ignore is False
+        assert config.file_length_inline_ignore_token == "drill-sergeant: ignore-file-length"
         assert config.marker_mappings == marker_mappings
+        assert config.aaa_mode == "strict"
         assert config.aaa_synonyms_enabled is True
         assert config.aaa_builtin_synonyms is False
         assert config.aaa_arrange_synonyms == arrange_synonyms
@@ -91,6 +106,10 @@ class TestDrillSergeantConfig:
         assert config.auto_detect_markers is True
         assert config.min_description_length == 3
         assert config.max_file_length == 350
+        assert config.file_length_mode == "error"
+        assert config.file_length_exclude == []
+        assert config.file_length_inline_ignore is True
+        assert config.aaa_mode == "basic"
 
     def test_from_pytest_config_disabled_via_environment(self) -> None:
         """Test creating config when disabled via environment variable."""
@@ -119,8 +138,12 @@ class TestDrillSergeantConfig:
             {
                 "DRILL_SERGEANT_ENFORCE_MARKERS": "false",
                 "DRILL_SERGEANT_ENFORCE_AAA": "false",
+                "DRILL_SERGEANT_AAA_MODE": "strict",
                 "DRILL_SERGEANT_MIN_DESCRIPTION_LENGTH": "10",
                 "DRILL_SERGEANT_MAX_FILE_LENGTH": "1000",
+                "DRILL_SERGEANT_FILE_LENGTH_MODE": "warn",
+                "DRILL_SERGEANT_FILE_LENGTH_EXCLUDE": "tests/legacy/*,tests/slow/*",
+                "DRILL_SERGEANT_FILE_LENGTH_INLINE_IGNORE": "false",
             },
         ):
             config = DrillSergeantConfig.from_pytest_config(mock_config)
@@ -128,8 +151,12 @@ class TestDrillSergeantConfig:
         # Assert - Verify environment variables override pytest config
         assert config.enforce_markers is False
         assert config.enforce_aaa is False
+        assert config.aaa_mode == "strict"
         assert config.min_description_length == 10
         assert config.max_file_length == 1000
+        assert config.file_length_mode == "warn"
+        assert config.file_length_exclude == ["tests/legacy/*", "tests/slow/*"]
+        assert config.file_length_inline_ignore is False
 
     def test_from_pytest_config_boolean_environment_values(self) -> None:
         """Test various boolean environment variable values."""
@@ -209,6 +236,9 @@ class TestDrillSergeantConfig:
         assert config.auto_detect_markers is True
         assert config.min_description_length == 3
         assert config.max_file_length == 350
+        assert config.file_length_mode == "error"
+        assert config.file_length_exclude == []
+        assert config.file_length_inline_ignore is True
 
     def test_from_pytest_config_pytest_config_values(self) -> None:
         """Test values from pytest config when no environment variables."""
@@ -217,8 +247,12 @@ class TestDrillSergeantConfig:
         mock_config.getini.side_effect = lambda x: {
             "drill_sergeant_enforce_markers": "false",
             "drill_sergeant_enforce_aaa": "true",
+            "drill_sergeant_aaa_mode": "strict",
             "drill_sergeant_min_description_length": "8",
             "drill_sergeant_max_file_length": "600",
+            "drill_sergeant_file_length_mode": "warn",
+            "drill_sergeant_file_length_exclude": "tests/integration/*,tests/e2e/*",
+            "drill_sergeant_file_length_inline_ignore": "false",
         }.get(x)
 
         # Act - Create config from pytest config
@@ -227,8 +261,12 @@ class TestDrillSergeantConfig:
         # Assert - Verify pytest config values are used
         assert config.enforce_markers is False
         assert config.enforce_aaa is True
+        assert config.aaa_mode == "strict"
         assert config.min_description_length == 8
         assert config.max_file_length == 600
+        assert config.file_length_mode == "warn"
+        assert config.file_length_exclude == ["tests/integration/*", "tests/e2e/*"]
+        assert config.file_length_inline_ignore is False
 
     def test_from_pytest_config_aaa_synonym_settings(self) -> None:
         """Test AAA synonym configuration settings."""

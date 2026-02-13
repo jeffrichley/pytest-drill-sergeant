@@ -62,6 +62,11 @@ class TestPytestOptions:
             "drill_sergeant_auto_detect_markers",
             "drill_sergeant_min_description_length",
             "drill_sergeant_max_file_length",
+            "drill_sergeant_file_length_mode",
+            "drill_sergeant_file_length_exclude",
+            "drill_sergeant_file_length_inline_ignore",
+            "drill_sergeant_file_length_inline_ignore_token",
+            "drill_sergeant_aaa_mode",
         ]
 
         for expected_option in expected_options:

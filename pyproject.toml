@@ -118,6 +118,7 @@ select = [
     "SLOT", # flake8-slots
     "T20",  # flake8-print
     "PT",   # flake8-pytest-style
+    "ANN",  # flake8-annotations
     "PGH",  # pygrep-hooks
     "PTH",  # flake8-use-pathlib
     "ERA",  # eradicate

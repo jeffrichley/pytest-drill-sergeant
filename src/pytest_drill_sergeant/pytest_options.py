@@ -31,12 +31,6 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         help="Enforce maximum file length limits",
     )
     parser.addini(
-        "drill_sergeant_enforce_return_type",
-        type="bool",
-        default=True,
-        help="Enforce return type annotations on test functions",
-    )
-    parser.addini(
         "drill_sergeant_auto_detect_markers",
         type="bool",
         default=True,
@@ -49,6 +43,30 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         type="string",
         default="350",
         help="Maximum allowed lines per test file",
+    )
+    parser.addini(
+        "drill_sergeant_file_length_mode",
+        type="string",
+        default="error",
+        help="File length mode: 'error' (fail), 'warn' (warning only), or 'off' (disabled)",
+    )
+    parser.addini(
+        "drill_sergeant_file_length_exclude",
+        type="string",
+        default="",
+        help="Comma-separated glob patterns to exclude from file length checks",
+    )
+    parser.addini(
+        "drill_sergeant_file_length_inline_ignore",
+        type="bool",
+        default=True,
+        help="Allow inline file-level pragma to skip file length validation",
+    )
+    parser.addini(
+        "drill_sergeant_file_length_inline_ignore_token",
+        type="string",
+        default="drill-sergeant: file-length ignore",
+        help="Inline pragma token used to skip file length validation",
     )
     parser.addini(
         "drill_sergeant_min_description_length",
@@ -78,11 +96,9 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=True,
         help="Use built-in AAA synonyms",
     )
-
-    # Return type validation options
     parser.addini(
-        "drill_sergeant_return_type_mode",
+        "drill_sergeant_aaa_mode",
         type="string",
-        default="error",
-        help="Return type validation mode: 'error' (report issues), 'auto_fix' (automatically add -> None), or 'disabled' (skip validation)",
+        default="basic",
+        help="AAA enforcement mode: 'basic' (presence only) or 'strict' (presence + order + no duplicates)",
     )

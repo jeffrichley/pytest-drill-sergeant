@@ -19,4 +19,5 @@ class AAAStatus:
     arrange_found: bool = False
     act_found: bool = False
     assert_found: bool = False
+    section_sequence: list[str] = field(default_factory=list)
     issues: list[ValidationIssue] = field(default_factory=list)

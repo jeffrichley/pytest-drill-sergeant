@@ -1,6 +1,7 @@
 """AAA (Arrange-Act-Assert) structure validation for pytest-drill-sergeant."""
 
 import inspect
+import re
 
 import pytest
 
@@ -22,6 +23,16 @@ DEFAULT_AAA_SYNONYMS = {
     "assert": ["Verify", "Check", "Expect", "Validate", "Confirm", "Ensure", "Then"],
 }
 
+AAA_COMMENT_PATTERN = re.compile(
+    r"^\s*#\s*(?P<keyword>[A-Za-z][\w ]*?)\s*-\s*(?P<description>.+?)\s*$"
+)
+SECTION_DESCRIPTIONS = {
+    "arrange": "set up",
+    "act": "action is being performed",
+    "assert": "is being verified",
+}
+SECTION_ORDER = {"arrange": 0, "act": 1, "assert": 2}
+
 
 class AAAValidator:
     """Validator for AAA (Arrange-Act-Assert) structure enforcement."""
@@ -38,7 +49,7 @@ class AAAValidator:
             issues.extend(aaa_status.issues)
 
             # Check for missing sections and add appropriate issues
-            self._add_missing_section_issues(aaa_status, item.name, issues)
+            self._add_missing_section_issues(aaa_status, item.name, issues, config)
 
         except OSError:
             # Can't get source (e.g., dynamic tests), skip AAA validation
@@ -55,7 +66,7 @@ class AAAValidator:
     ) -> AAAStatus:
         """Check for AAA sections in source lines and validate descriptive comments."""
         status = AAAStatus()
-        keywords = _build_aaa_keyword_lists(config)
+        keyword_lookup = _build_aaa_keyword_lookup(config)
 
         for source_line in source_lines:
             line = source_line.strip()
@@ -64,73 +75,47 @@ class AAAValidator:
             if not line.startswith("#"):
                 continue
 
-            # Check each AAA section
-            self._check_section(
-                status,
-                line,
-                test_name,
-                config,
-                (keywords["arrange"], "arrange", "set up"),
-            )
-            self._check_section(
-                status,
-                line,
-                test_name,
-                config,
-                (keywords["act"], "act", "action is being performed"),
-            )
-            self._check_section(
-                status,
-                line,
-                test_name,
-                config,
-                (keywords["assert"], "assert", "is being verified"),
-            )
+            parsed = _parse_aaa_comment(line)
+            if parsed is None:
+                continue
+
+            keyword, _description = parsed
+            section_name = keyword_lookup.get(keyword.lower())
+            if section_name is None:
+                continue
+
+            setattr(status, f"{section_name}_found", True)
+            status.section_sequence.append(section_name)
+            validation_context = (line, test_name, section_name)
+            self._check_descriptive_comment(status, validation_context, config)
 
         return status
-
-    def _check_section(
-        self,
-        status: AAAStatus,
-        line: str,
-        test_name: str,
-        config: DrillSergeantConfig,
-        section_info: tuple[list[str], str, str],
-    ) -> None:
-        """Check if line contains keywords for a specific AAA section."""
-        section_keywords, section_name, description = section_info
-
-        # Look for the pattern "# <keyword> -" specifically
-        for keyword in section_keywords:
-            # Check if line starts with "# " followed by the keyword and " -"
-            pattern = f"# {keyword} -"
-            if line.startswith(pattern):
-                # Set the appropriate flag
-                setattr(status, f"{section_name}_found", True)
-                # Find matched keyword for feedback
-                validation_context = (line, test_name, keyword, description)
-                self._check_descriptive_comment(status, validation_context, config)
-                break
 
     def _check_descriptive_comment(
         self,
         status: AAAStatus,
-        validation_context: tuple[str, str, str, str],
+        validation_context: tuple[str, str, str],
         config: DrillSergeantConfig,
     ) -> None:
         """Check if a comment line has descriptive content."""
-        line, test_name, section, description = validation_context
+        line, test_name, section_name = validation_context
         if not _has_descriptive_comment(line, config.min_description_length):
+            description = SECTION_DESCRIPTIONS[section_name]
+            section_label = section_name.title()
             status.issues.append(
                 ValidationIssue(
                     issue_type="aaa",
-                    message=f"Test '{test_name}' has '{section}' but missing descriptive comment",
-                    suggestion=f"Add '# {section} - description of what {description}' with at least {config.min_description_length} characters",
+                    message=f"Test '{test_name}' has '{section_label}' but missing descriptive comment",
+                    suggestion=f"Add '# {section_label} - description of what {description}' with at least {config.min_description_length} characters",
                 )
             )
 
     def _add_missing_section_issues(
-        self, aaa_status: AAAStatus, test_name: str, issues: list[ValidationIssue]
+        self,
+        aaa_status: AAAStatus,
+        test_name: str,
+        issues: list[ValidationIssue],
+        config: DrillSergeantConfig,
     ) -> None:
         """Add issues for missing AAA sections."""
         if not aaa_status.arrange_found:
@@ -160,6 +145,31 @@ class AAAValidator:
                 )
             )
 
+        if config.aaa_mode.lower() == "strict":
+            self._add_strict_mode_issues(aaa_status, test_name, issues)
+
+    def _add_strict_mode_issues(
+        self, aaa_status: AAAStatus, test_name: str, issues: list[ValidationIssue]
+    ) -> None:
+        """Add strict-mode issues for order and duplicate AAA sections."""
+        if _has_duplicate_sections(aaa_status.section_sequence):
+            issues.append(
+                ValidationIssue(
+                    issue_type="aaa",
+                    message=f"Test '{test_name}' has duplicate AAA section comments",
+                    suggestion="In strict mode, use at most one section header for each of Arrange, Act, and Assert",
+                )
+            )
+
+        if _is_out_of_order(aaa_status.section_sequence):
+            issues.append(
+                ValidationIssue(
+                    issue_type="aaa",
+                    message=f"Test '{test_name}' has AAA sections out of order",
+                    suggestion="In strict mode, section headers must appear in Arrange -> Act -> Assert order",
+                )
+            )
+
 
 def _build_aaa_keyword_lists(config: DrillSergeantConfig) -> dict[str, list[str]]:
     """Build complete keyword lists for AAA detection including synonyms."""
@@ -181,6 +191,52 @@ def _build_aaa_keyword_lists(config: DrillSergeantConfig) -> dict[str, list[str]
     return keywords
 
 
+def _build_aaa_keyword_lookup(config: DrillSergeantConfig) -> dict[str, str]:
+    """Build a case-insensitive keyword lookup to AAA section names."""
+    keywords = _build_aaa_keyword_lists(config)
+    lookup: dict[str, str] = {}
+    for section_name, section_keywords in keywords.items():
+        for keyword in section_keywords:
+            normalized = keyword.strip().lower()
+            if normalized and normalized not in lookup:
+                lookup[normalized] = section_name
+    return lookup
+
+
+def _parse_aaa_comment(line: str) -> tuple[str, str] | None:
+    """Parse comment line into (keyword, description) using AAA grammar."""
+    match = AAA_COMMENT_PATTERN.match(line)
+    if match is None:
+        return None
+
+    keyword = match.group("keyword").strip()
+    description = match.group("description").strip()
+    if not keyword:
+        return None
+    return keyword, description
+
+
+def _has_duplicate_sections(section_sequence: list[str]) -> bool:
+    """Check if AAA section sequence contains duplicate section names."""
+    seen: set[str] = set()
+    for section in section_sequence:
+        if section in seen:
+            return True
+        seen.add(section)
+    return False
+
+
+def _is_out_of_order(section_sequence: list[str]) -> bool:
+    """Check if AAA sections violate Arrange -> Act -> Assert order."""
+    max_order_seen = -1
+    for section in section_sequence:
+        section_order = SECTION_ORDER.get(section, -1)
+        if section_order < max_order_seen:
+            return True
+        max_order_seen = max(max_order_seen, section_order)
+    return False
+
+
 def _validate_aaa_structure(
     item: pytest.Item, config: DrillSergeantConfig
 ) -> list[ValidationIssue]:
@@ -190,13 +246,10 @@ def _validate_aaa_structure(
 
 
 def _has_descriptive_comment(line: str, min_length: int = 3) -> bool:
-    """Check if a comment line has a descriptive dash and text."""
-    # Remove the comment marker and check for dash and text
-    comment_part = line.lstrip("#").strip()
-
-    # Must have a dash followed by meaningful text
-    if " - " not in comment_part:
+    """Check if a comment line has valid AAA grammar and descriptive text."""
+    parsed = _parse_aaa_comment(line)
+    if parsed is None:
         return False
 
-    description = comment_part.split(" - ")[1].strip()
+    _keyword, description = parsed
     return len(description) >= min_length

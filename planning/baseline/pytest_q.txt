@@ -1,0 +1,78 @@
+........................................................................ [ 72%]
+...........................                                              [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474
+  /Users/jeffrichley/workspace/tools/pytest-drill-sergeant/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: drill_sergeant_aaa_builtin_synonyms
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474
+  /Users/jeffrichley/workspace/tools/pytest-drill-sergeant/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: drill_sergeant_aaa_synonyms_enabled
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474
+  /Users/jeffrichley/workspace/tools/pytest-drill-sergeant/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: drill_sergeant_auto_detect_markers
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474
+  /Users/jeffrichley/workspace/tools/pytest-drill-sergeant/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: drill_sergeant_enabled
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474
+  /Users/jeffrichley/workspace/tools/pytest-drill-sergeant/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: drill_sergeant_enforce_aaa
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474
+  /Users/jeffrichley/workspace/tools/pytest-drill-sergeant/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: drill_sergeant_enforce_file_length
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474
+  /Users/jeffrichley/workspace/tools/pytest-drill-sergeant/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: drill_sergeant_enforce_markers
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474
+  /Users/jeffrichley/workspace/tools/pytest-drill-sergeant/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: drill_sergeant_marker_mappings
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474
+  /Users/jeffrichley/workspace/tools/pytest-drill-sergeant/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: drill_sergeant_max_file_length
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474
+  /Users/jeffrichley/workspace/tools/pytest-drill-sergeant/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: drill_sergeant_min_description_length
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform darwin, python 3.13.6-final-0 _______________
+
+Name                                                     Stmts   Miss  Cover   Missing
+--------------------------------------------------------------------------------------
+src/pytest_drill_sergeant/__init__.py                        9      9     0%   9-24
+src/pytest_drill_sergeant/config.py                         40     22    45%   3-41
+src/pytest_drill_sergeant/models.py                         12     12     0%   3-22
+src/pytest_drill_sergeant/plugin.py                         27     15    44%   9-35, 48-51, 56, 63, 70-71
+src/pytest_drill_sergeant/pytest_options.py                 14      2    86%   3-6
+src/pytest_drill_sergeant/utils/__init__.py                  2      2     0%   3-15
+src/pytest_drill_sergeant/utils/helpers.py                 168     41    76%   3-19, 52, 58-59, 63, 75, 90, 112, 119, 126, 137-138, 145, 150, 166, 182-185, 194-197, 203-207, 212-214, 227, 243, 268, 292-294
+src/pytest_drill_sergeant/validators/__init__.py             7      7     0%   3-10
+src/pytest_drill_sergeant/validators/aaa.py                 69     16    77%   3-29, 49, 53, 92, 115, 124-132, 164, 184, 192
+src/pytest_drill_sergeant/validators/base.py                 8      8     0%   3-33
+src/pytest_drill_sergeant/validators/error_reporter.py      58     16    72%   3-11, 40, 60, 62, 73, 93-95, 98-102, 114
+src/pytest_drill_sergeant/validators/file_length.py         21     11    48%   3-12, 25, 32, 41-51, 61
+src/pytest_drill_sergeant/validators/marker.py              26     12    54%   3-16, 32-37, 55, 60
+src/pytest_drill_sergeant/validators/return_type.py         59     16    73%   3-14, 21, 28, 35-37, 61, 104, 118, 131-135
+--------------------------------------------------------------------------------------
+TOTAL                                                      520    189    64%
+Coverage XML written to file coverage.xml
+Required test coverage of 50% reached. Total coverage: 63.65%
+99 passed, 10 warnings in 4.50s

@@ -192,3 +192,28 @@ class TestAAASynonymRecognition:
             ["# Arrange - test data"], "test_func", config
         )
         assert status.arrange_found is True
+
+    def test_synonyms_are_case_insensitive_when_enabled(self) -> None:
+        """# Arrange - Synonym-enabled config with mixed-case comments
+        # Act - Check AAA sections against mixed-case synonyms
+        # Assert - Sections are detected regardless of case
+        """
+        # Arrange - Enable built-in synonyms and use mixed-case comment keywords
+        config = DrillSergeantConfig(aaa_synonyms_enabled=True)
+        validator = AAAValidator()
+
+        # Act - Detect sections with mixed-case synonym keywords
+        arrange = validator._check_aaa_sections(
+            ["# setup - initialize data"], "test_func", config
+        )
+        act = validator._check_aaa_sections(
+            ["# wHeN - execute action"], "test_func", config
+        )
+        assert_section = validator._check_aaa_sections(
+            ["# verify - outcome"], "test_func", config
+        )
+
+        # Assert - Mixed-case synonyms map to AAA sections
+        assert arrange.arrange_found is True
+        assert act.act_found is True
+        assert assert_section.assert_found is True

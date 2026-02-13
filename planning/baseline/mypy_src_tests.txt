@@ -1,0 +1,2 @@
+pyproject.toml: [module = "tests.*"]: Per-module sections should only specify per-module flags (color_output, exclude, hide_error_codes, pretty, show_column_numbers, warn_redundant_casts, warn_unused_configs)
+Success: no issues found in 31 source files

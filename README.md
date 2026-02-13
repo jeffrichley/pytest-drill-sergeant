@@ -111,28 +111,39 @@ def test_addition_with_positive_numbers():
 
 **Drill Sergeant says:** *OUTSTANDING! This is what DISCIPLINE looks like!*
 
-### For Simple Tests (One-Liner AAA)
+### AAA Comment Grammar (Exact Contract)
 
-Sometimes your test is so simple that combining AAA sections makes sense:
+The validator accepts AAA comments in this format:
 
-```python
-@pytest.mark.unit
-def test_simple_calculation():
-    """Test basic arithmetic operation."""
-    # Arrange and Act - Set up calculator and perform addition
-    result = Calculator().add(2, 3)
-
-    # Assert - Verify the calculation is correct
-    assert result == 5
-
-@pytest.mark.unit
-def test_ultra_simple():
-    """Test with all AAA in one comment (for the truly lazy)."""
-    # Arrange, Act, and Assert - Create, call, and verify in one swift motion
-    assert Calculator().multiply(4, 2) == 8
+```text
+# <Keyword> - <description>
 ```
 
-**Drill Sergeant says:** *Fine, soldier. Sometimes efficiency trumps ceremony. But don't get TOO comfortable!*
+Rules:
+
+- Keyword must be one AAA token (`Arrange`, `Act`, `Assert`) or an enabled synonym.
+- Matching is case-insensitive (`# arrange - ...` works).
+- Spacing around `-` is flexible (`# Act-...` and `# Act - ...` both work).
+- Description must meet `drill_sergeant_min_description_length`.
+- Combined section comments are not treated as valid AAA section markers.
+
+Examples:
+
+```python
+# Arrange - create calculator fixture
+# act- run operation
+# ASSERT - verify result
+```
+
+Invalid examples:
+
+```python
+# Arrange and Act - not a recognized single keyword
+# Arrange -      # missing description text
+# Arrange setup   # missing "-" separator
+```
+
+**Drill Sergeant says:** *One section, one line. Clean, explicit, enforceable.*
 
 ## 🎖️ Automatic Marker Detection (Because You're Lazy)
 
@@ -179,6 +190,9 @@ drill_sergeant_enabled = false
 [tool:pytest]
 drill_sergeant_enforce_markers = true      # YES! ENFORCE THE MARKERS!
 drill_sergeant_enforce_aaa = false         # Fine, be sloppy with your structure
+drill_sergeant_aaa_mode = basic            # basic or strict
+drill_sergeant_file_length_mode = warn     # error, warn, or off
+drill_sergeant_file_length_exclude = tests/legacy/*,tests/fixtures/*
 drill_sergeant_auto_detect_markers = true  # Let me do your job for you
 drill_sergeant_min_description_length = 5  # At least TRY to be descriptive
 ```
@@ -205,6 +219,42 @@ export DRILL_SERGEANT_MARKER_MAPPINGS="widget=unit,gizmo=integration"
 # tests/widget/ → @pytest.mark.unit
 # tests/gizmo/ → @pytest.mark.integration
 ```
+
+### Configuration Precedence (Who Wins)
+
+Drill Sergeant resolves configuration in this order:
+
+1. Environment variables (highest priority)
+2. Pytest config (`pytest.ini` or `pyproject.toml` under `[tool.pytest.ini_options]`)
+3. Project config (`pyproject.toml` under `[tool.drill_sergeant]`)
+4. Built-in defaults
+
+### `pyproject.toml` Native Config
+
+```toml
+[tool.drill_sergeant]
+enabled = true
+enforce_markers = true
+enforce_aaa = true
+aaa_mode = "basic" # "basic" or "strict"
+enforce_file_length = true
+file_length_mode = "error" # "error", "warn", or "off"
+file_length_exclude = ["tests/legacy/*", "tests/fixtures/*"]
+file_length_inline_ignore = true
+file_length_inline_ignore_token = "drill-sergeant: file-length ignore"
+auto_detect_markers = true
+min_description_length = 3
+max_file_length = 350
+aaa_synonyms_enabled = false
+aaa_builtin_synonyms = true
+
+[tool.drill_sergeant.marker_mappings]
+contract = "api"
+smoke = "integration"
+acceptance = "e2e"
+```
+
+Return type annotations are enforced via Ruff `ANN` rules (recommended with `ruff check --fix` to auto-add safe annotations like `-> None`).
 
 ## 🎭 Error Messages That Don't Suck
 
@@ -279,11 +329,23 @@ export DRILL_SERGEANT_ENABLED=false
 # Make him extra mean about markers
 export DRILL_SERGEANT_ENFORCE_MARKERS=true
 
+# AAA mode: basic (presence only) or strict (presence + order + no duplicates)
+export DRILL_SERGEANT_AAA_MODE=strict
+
+# File length mode: error, warn, or off
+export DRILL_SERGEANT_FILE_LENGTH_MODE=warn
+
+# Path exclusions for file length checks (comma-separated globs)
+export DRILL_SERGEANT_FILE_LENGTH_EXCLUDE="tests/legacy/*,tests/fixtures/*"
+
 # Demand War and Peace level descriptions
 export DRILL_SERGEANT_MIN_DESCRIPTION_LENGTH=50
 
 # Custom directory mappings for your special setup
 export DRILL_SERGEANT_MARKER_MAPPINGS="widgets=unit,chaos=stress"
+
+# Print effective resolved Drill Sergeant config once at session start
+export DRILL_SERGEANT_DEBUG_CONFIG=true
 ```
 
 ## 🎭 AAA Synonym Recognition (Because Apparently You're All Special Snowflakes! ❄️)
@@ -489,6 +551,22 @@ def test_user_authentication_flow():
 ```ini
 drill_sergeant_enforce_aaa = false  # Give up on structure
 drill_sergeant_min_description_length = 1  # Accept "a" as description
+drill_sergeant_file_length_mode = warn  # Warn only for large files
+```
+
+### File-Length Exceptions (Legacy Escape Hatch)
+
+For one-off legacy files, add this pragma near the top of the file:
+
+```python
+# drill-sergeant: file-length ignore
+```
+
+You can customize or disable this behavior:
+
+```ini
+drill_sergeant_file_length_inline_ignore = true
+drill_sergeant_file_length_inline_ignore_token = drill-sergeant: file-length ignore
 ```
 
 ### "Auto-detection Isn't Working!"

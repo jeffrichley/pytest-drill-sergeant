@@ -6,17 +6,23 @@ A pytest plugin that enforces test quality standards by:
 - Providing comprehensive error reporting for violations
 """
 
+import logging
+import os
+
 import pytest
 
 from pytest_drill_sergeant.config import DrillSergeantConfig
+from pytest_drill_sergeant.pytest_options import pytest_addoption as _pytest_addoption
 from pytest_drill_sergeant.validators import (
     AAAValidator,
     ErrorReporter,
     FileLengthValidator,
     MarkerValidator,
-    ReturnTypeValidator,
 )
 from pytest_drill_sergeant.validators.base import Validator
+
+LOGGER = logging.getLogger(__name__)
+TRUE_VALUES = {"true", "1", "yes", "on"}
 
 
 class DrillSergeantPlugin:
@@ -28,7 +34,6 @@ class DrillSergeantPlugin:
             MarkerValidator(),
             AAAValidator(),
             FileLengthValidator(),
-            ReturnTypeValidator(),
         ]
         self.error_reporter = ErrorReporter()
 
@@ -46,6 +51,38 @@ class DrillSergeantPlugin:
 
 # Global plugin instance
 _plugin = DrillSergeantPlugin()
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Register drill-sergeant ini options for pytest."""
+    _pytest_addoption(parser)
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Optionally print effective configuration for troubleshooting."""
+    debug_val = os.getenv("DRILL_SERGEANT_DEBUG_CONFIG", "")
+    if debug_val.strip().lower() not in TRUE_VALUES:
+        return
+
+    resolved = DrillSergeantConfig.from_pytest_config(config)
+    message = f"[drill-sergeant] effective config: {resolved}"
+
+    terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
+    if terminal_reporter is not None:
+        terminal_reporter.write_line(message)
+        return
+
+    LOGGER.info(message)
+
+
+def pytest_report_header(config: pytest.Config) -> str | None:
+    """Emit effective config in pytest header when debug mode is enabled."""
+    debug_val = os.getenv("DRILL_SERGEANT_DEBUG_CONFIG", "")
+    if debug_val.strip().lower() not in TRUE_VALUES:
+        return None
+
+    resolved = DrillSergeantConfig.from_pytest_config(config)
+    return f"drill-sergeant effective config: {resolved}"
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:
@@ -66,6 +103,9 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         _plugin.validate_test(item, config)
 
     except Exception as e:
-        # If there's any error, just skip the check to avoid breaking tests
         test_name = getattr(item, "name", "unknown")
-        print(f"Warning: Test validation failed for {test_name}: {e}")
+        LOGGER.exception("Drill Sergeant validation crashed for test '%s'", test_name)
+        pytest.fail(
+            f"Drill Sergeant internal error while validating '{test_name}': {e}",
+            pytrace=False,
+        )

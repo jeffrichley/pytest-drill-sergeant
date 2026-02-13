@@ -1,5 +1,7 @@
 """Marker validation for pytest-drill-sergeant."""
 
+import logging
+
 import pytest
 
 from pytest_drill_sergeant.config import DrillSergeantConfig
@@ -8,6 +10,8 @@ from pytest_drill_sergeant.utils import (
     detect_test_type_from_path,
     get_available_markers,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 class MarkerValidator:
@@ -30,9 +34,11 @@ class MarkerValidator:
         if detected_type:
             # Auto-decorate with helpful logging
             marker = getattr(pytest.mark, detected_type)
-            item.function = marker(item.function)  # type: ignore[attr-defined]
-            print(
-                f"🔍 Auto-decorated test '{item.name}' with @pytest.mark.{detected_type}"
+            item.add_marker(marker)
+            LOGGER.debug(
+                "Auto-decorated test '%s' with @pytest.mark.%s",
+                item.name,
+                detected_type,
             )
             return issues  # No issues, auto-fixed
 
