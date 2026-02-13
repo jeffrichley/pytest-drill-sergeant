@@ -6,7 +6,7 @@ A pytest plugin that enforces test quality standards by:
 - Providing comprehensive error reporting for violations
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __author__ = "Jeff Richley"
 __email__ = "jeffrichley@gmail.com"
 
