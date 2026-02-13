@@ -110,3 +110,41 @@ Final precedence is:
   - `.github/release-please-config.json`
   - `.github/.release-please-manifest.json`
 - Updated publish trigger in `.github/workflows/release.yml` to `release: published`.
+
+## 2026-02-13: Make Release Execution Manual-Only
+
+### Decision
+
+- Keep `release-please`, but run it manually via `workflow_dispatch` only.
+- Run production PyPI publish manually via `workflow_dispatch` only.
+- Require explicit `release_tag` input for production publish.
+
+### Why
+
+- Reduces accidental release/publish risk.
+- Keeps humans in the loop for final verification before deployment.
+- Matches branch protection and review-first workflow.
+
+### Impact
+
+- `.github/workflows/release-please.yml` no longer triggers on push to `main`.
+- `.github/workflows/release.yml` no longer triggers on `release.published`.
+- Release docs updated in `README.md` and `docs/Release-Checklist.md`.
+
+## 2026-02-13: Restore Automatic release-please, Keep PyPI Manual
+
+### Decision
+
+- Re-enable `release-please` automatic trigger on push to `main`.
+- Keep production PyPI publish manual-only via `workflow_dispatch`.
+
+### Why
+
+- Automatic release PR generation reduces version/changelog drift.
+- Manual PyPI publish preserves explicit human approval before deployment.
+
+### Impact
+
+- `.github/workflows/release-please.yml` triggers on push to `main` and `workflow_dispatch`.
+- `.github/workflows/release.yml` remains `workflow_dispatch` with explicit `release_tag`.
+- Release docs updated in `README.md` and `docs/Release-Checklist.md`.

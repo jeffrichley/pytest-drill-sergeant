@@ -205,18 +205,19 @@ Coverage is informational, not a required merge gate.
 
 ## Release Workflow (Current)
 
-Release flow is `release-please` + GitHub Releases:
+Release flow is split by responsibility:
 
 1. Conventional commits land on `main`.
-2. `release-please` opens/updates a release PR with version + changelog.
-3. Merge the release PR.
-4. GitHub Release + tag are created automatically.
-5. `.github/workflows/release.yml` publishes to PyPI on `release.published`.
+2. `Release Please` auto-opens/updates release PRs.
+3. Review and merge the generated release PR.
+4. Confirm GitHub Release + tag were created.
+5. Run `Production Release (PyPI)` workflow manually with `release_tag`.
 
 Operational rule:
 
 - do not hand-edit versions or changelog outside the release PR
-- do not publish manually unless recovery is explicitly needed
+- keep `release-please` automated for version/changelog hygiene
+- do not auto-publish to PyPI from release events
 - keep release notes derived from conventional commits
 
 ## Failure Intel
@@ -241,12 +242,7 @@ just type-check
 
 ## Release Flow
 
-Releases are managed by `release-please`:
-
-1. Push conventional commits to `main` (`feat:`, `fix:`, etc.).
-2. `Release Please` workflow opens/updates a release PR.
-3. Merge the release PR to create a GitHub Release + tag.
-4. `Production Release (PyPI)` publishes to PyPI on release publish event.
+Use `docs/Release-Checklist.md` as the canonical release runbook.
 
 ## Final Word
 

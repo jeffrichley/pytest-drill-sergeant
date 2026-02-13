@@ -1,8 +1,12 @@
 name: Production Release (PyPI)
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Git tag to publish (for example: pytest-drill-sergeant-v0.3.1)"
+        required: true
+        type: string
 
 jobs:
   production-release:
@@ -11,6 +15,13 @@ jobs:
     steps:
       - name: 🎖️ Checkout Battle Zone
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag }}
+
+      - name: 🏷️ Validate Release Tag
+        run: |
+          git rev-parse --verify "refs/tags/${{ inputs.release_tag }}"
+          echo "Publishing from tag: ${{ inputs.release_tag }}"
 
       - name: 🐍 Set up Python Command Center
         uses: actions/setup-python@v5
