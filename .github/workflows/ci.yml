@@ -60,7 +60,7 @@ jobs:
 
       - name: Run lint checks
         run: |
-          uv run ruff check src tests
+          uv run --with ruff ruff check src tests
 
   typecheck:
     name: typecheck (mypy)
