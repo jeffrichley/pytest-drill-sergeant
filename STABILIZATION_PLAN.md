@@ -138,8 +138,8 @@ Purpose: get this project back to predictable, low-drama operation with clear ga
 
 ### Exit Criteria
 
-- [ ] Same commands pass locally and in required CI.
-- [ ] Required checks are understandable in <60 seconds.
+- [x] Same commands pass locally and in required CI.
+- [x] Required checks are understandable in <60 seconds.
 
 ---
 
