@@ -206,6 +206,17 @@ Project is considered recovered when all are true:
 
 ---
 
+## Current Status
+
+As of 2026-02-13, recovery criteria are met and the project is considered **stabilized**.
+
+- Phases 0 through 5 are complete.
+- Required CI gates are stable and deterministic.
+- Documentation, failure guidance, and release checklist are now in-repo.
+- Remaining work is optional modernization in Phase 6.
+
+---
+
 ## Progress Note (2026-02-13)
 
 - Return-type enforcement is no longer implemented in plugin runtime validators.
@@ -217,3 +228,8 @@ Project is considered recovered when all are true:
   - `uv run mypy src tests --config-file=pyproject.toml` -> pass
 - CI workflow has been simplified to explicit `test` / `lint` / `typecheck` gates (plus informational coverage).
 - Dependabot backlog was triaged and resolved (merged or closed if superseded).
+- Phase 5 documentation deliverables landed:
+  - `README.md` (architecture-aligned with Drill Sergeant voice)
+  - `docs/Failure-Catalog.md`
+  - `docs/Decision-Log.md`
+  - `docs/Release-Checklist.md`
