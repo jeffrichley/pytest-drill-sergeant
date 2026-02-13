@@ -1,8 +1,8 @@
 # Release Checklist
 
-Release flow is intentionally manual.
+Release flow is split:
 
-- Trigger `release-please` manually to open/update release PR from conventional commits on `main`.
+- `release-please` auto-opens/updates release PR from conventional commits on `main`.
 - Merging that PR creates a GitHub Release and version tag.
 - Trigger `release.yml` manually with `release_tag` to publish to PyPI.
 
@@ -35,7 +35,7 @@ Release flow is intentionally manual.
 
 ## Production Release
 
-- [ ] Trigger `Release Please` workflow manually.
+- [ ] Confirm `Release Please` has opened/updated the release PR.
 - [ ] Confirm release PR from `release-please` is correct (version/changelog).
 - [ ] Merge release PR to `main`.
 - [ ] Confirm GitHub Release + tag were created by `release-please`.

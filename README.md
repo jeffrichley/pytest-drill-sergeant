@@ -205,16 +205,18 @@ Coverage is informational, not a required merge gate.
 
 ## Release Workflow (Current)
 
-Release flow is intentionally manual:
+Release flow is split by responsibility:
 
-1. Run `Release Please` workflow manually.
-2. Review and merge the generated release PR.
-3. Confirm GitHub Release + tag were created.
-4. Run `Production Release (PyPI)` workflow manually with `release_tag`.
+1. Conventional commits land on `main`.
+2. `Release Please` auto-opens/updates release PRs.
+3. Review and merge the generated release PR.
+4. Confirm GitHub Release + tag were created.
+5. Run `Production Release (PyPI)` workflow manually with `release_tag`.
 
 Operational rule:
 
 - do not hand-edit versions or changelog outside the release PR
+- keep `release-please` automated for version/changelog hygiene
 - do not auto-publish to PyPI from release events
 - keep release notes derived from conventional commits
 
