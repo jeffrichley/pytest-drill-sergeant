@@ -24,6 +24,8 @@ class TestDrillSergeantConfig:
         assert config.enforce_markers is True
         assert config.enforce_aaa is True
         assert config.enforce_file_length is True
+        assert config.marker_severity == "error"
+        assert config.aaa_severity == "error"
         assert config.auto_detect_markers is True
         assert config.min_description_length == 3
         assert config.max_file_length == 350
@@ -53,6 +55,8 @@ class TestDrillSergeantConfig:
             enforce_markers=False,
             enforce_aaa=False,
             enforce_file_length=False,
+            marker_severity="warn",
+            aaa_severity="off",
             auto_detect_markers=False,
             min_description_length=5,
             max_file_length=500,
@@ -74,6 +78,8 @@ class TestDrillSergeantConfig:
         assert config.enforce_markers is False
         assert config.enforce_aaa is False
         assert config.enforce_file_length is False
+        assert config.marker_severity == "warn"
+        assert config.aaa_severity == "off"
         assert config.auto_detect_markers is False
         assert config.min_description_length == 5
         assert config.max_file_length == 500
@@ -103,6 +109,8 @@ class TestDrillSergeantConfig:
         assert config.enforce_markers is True
         assert config.enforce_aaa is True
         assert config.enforce_file_length is True
+        assert config.marker_severity == "error"
+        assert config.aaa_severity == "error"
         assert config.auto_detect_markers is True
         assert config.min_description_length == 3
         assert config.max_file_length == 350
@@ -138,6 +146,8 @@ class TestDrillSergeantConfig:
             {
                 "DRILL_SERGEANT_ENFORCE_MARKERS": "false",
                 "DRILL_SERGEANT_ENFORCE_AAA": "false",
+                "DRILL_SERGEANT_MARKER_SEVERITY": "warn",
+                "DRILL_SERGEANT_AAA_SEVERITY": "off",
                 "DRILL_SERGEANT_AAA_MODE": "strict",
                 "DRILL_SERGEANT_MIN_DESCRIPTION_LENGTH": "10",
                 "DRILL_SERGEANT_MAX_FILE_LENGTH": "1000",
@@ -151,6 +161,8 @@ class TestDrillSergeantConfig:
         # Assert - Verify environment variables override pytest config
         assert config.enforce_markers is False
         assert config.enforce_aaa is False
+        assert config.marker_severity == "warn"
+        assert config.aaa_severity == "off"
         assert config.aaa_mode == "strict"
         assert config.min_description_length == 10
         assert config.max_file_length == 1000
@@ -247,6 +259,8 @@ class TestDrillSergeantConfig:
         mock_config.getini.side_effect = lambda x: {
             "drill_sergeant_enforce_markers": "false",
             "drill_sergeant_enforce_aaa": "true",
+            "drill_sergeant_marker_severity": "warn",
+            "drill_sergeant_aaa_severity": "error",
             "drill_sergeant_aaa_mode": "strict",
             "drill_sergeant_min_description_length": "8",
             "drill_sergeant_max_file_length": "600",
@@ -261,6 +275,8 @@ class TestDrillSergeantConfig:
         # Assert - Verify pytest config values are used
         assert config.enforce_markers is False
         assert config.enforce_aaa is True
+        assert config.marker_severity == "warn"
+        assert config.aaa_severity == "error"
         assert config.aaa_mode == "strict"
         assert config.min_description_length == 8
         assert config.max_file_length == 600
@@ -313,3 +329,16 @@ class TestDrillSergeantConfig:
                 "integration": "test_integration",
             }
             mock_get_mappings.assert_called_once_with(mock_config)
+
+    def test_from_pytest_config_invalid_severity_raises_value_error(self) -> None:
+        """Test invalid severity value fails fast during config resolution."""
+        # Arrange - Mock pytest config and invalid severity override
+        mock_config = Mock()
+        mock_config.getini.side_effect = lambda _: None
+
+        # Act - Resolve config using invalid severity
+        # Assert - Config parsing fails with a clear validation error
+        with patch.dict(
+            os.environ, {"DRILL_SERGEANT_MARKER_SEVERITY": "critical"}
+        ), pytest.raises(ValueError, match="drill_sergeant_marker_severity"):
+            DrillSergeantConfig.from_pytest_config(mock_config)

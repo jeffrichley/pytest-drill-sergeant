@@ -172,14 +172,14 @@ Purpose: get this project back to predictable, low-drama operation with clear ga
 
 ### Steps
 
-- [ ] Evaluate converting validators to a registry pattern with explicit lifecycle.
-- [ ] Evaluate introducing severity levels (error/warn/info) per rule.
-- [ ] Evaluate plugin telemetry hooks for large test suites.
-- [ ] Consider extracting config parsing into dedicated module with schema validation.
+- [x] Convert validators to a registry pattern with explicit lifecycle.
+- [x] Introduce severity levels (`error`/`warn`/`off`) for marker and AAA rules.
+- [x] Add debug telemetry hooks for validator runtime timing.
+- [x] Extract config normalization and validation into dedicated schema module.
 
 ### Exit Criteria
 
-- [ ] Modernization tasks are sequenced and non-blocking.
+- [x] Modernization tasks are sequenced and non-blocking.
 
 ---
 

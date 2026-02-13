@@ -62,3 +62,30 @@ Final precedence is:
 
 - Config loading consolidated and covered by tests.
 - README and tests aligned to this precedence model.
+
+## 2026-02-13: Phase 6 Internal Modernization
+
+### Decision
+
+- Introduced a validator registry (`validators/registry.py`) used by plugin orchestration.
+- Added marker/AAA severity controls (`error`, `warn`, `off`) while preserving default fail behavior.
+- Added optional validator timing telemetry via `DRILL_SERGEANT_DEBUG_TELEMETRY=true`.
+- Split config validation/normalization into `config_schema.py`.
+
+### Why
+
+- Simplifies validator lifecycle wiring and future rule extension.
+- Supports gradual rollout with warning mode where needed.
+- Improves debuggability for large suites.
+- Makes config behavior explicit and fail-fast for invalid values.
+
+### Impact
+
+- New config fields:
+  - `marker_severity`
+  - `aaa_severity`
+- New env vars:
+  - `DRILL_SERGEANT_MARKER_SEVERITY`
+  - `DRILL_SERGEANT_AAA_SEVERITY`
+  - `DRILL_SERGEANT_DEBUG_TELEMETRY`
+- Invalid mode values now raise explicit configuration errors.

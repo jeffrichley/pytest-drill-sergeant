@@ -59,6 +59,8 @@ class TestPytestOptions:
             "drill_sergeant_enforce_markers",
             "drill_sergeant_enforce_aaa",
             "drill_sergeant_enforce_file_length",
+            "drill_sergeant_marker_severity",
+            "drill_sergeant_aaa_severity",
             "drill_sergeant_auto_detect_markers",
             "drill_sergeant_min_description_length",
             "drill_sergeant_max_file_length",

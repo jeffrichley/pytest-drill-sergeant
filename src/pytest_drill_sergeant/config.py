@@ -4,6 +4,12 @@ from dataclasses import dataclass, field
 
 import pytest
 
+from pytest_drill_sergeant.config_schema import (
+    normalize_aaa_mode,
+    normalize_non_negative_int,
+    normalize_positive_int,
+    normalize_rule_severity,
+)
 from pytest_drill_sergeant.utils import (
     get_bool_option,
     get_int_option,
@@ -21,6 +27,8 @@ class DrillSergeantConfig:
     enforce_markers: bool = True
     enforce_aaa: bool = True
     enforce_file_length: bool = True
+    marker_severity: str = "error"  # "error", "warn", or "off"
+    aaa_severity: str = "error"  # "error", "warn", or "off"
     auto_detect_markers: bool = True
     min_description_length: int = 3
     max_file_length: int = 350
@@ -72,6 +80,18 @@ class DrillSergeantConfig:
             "drill_sergeant_enforce_file_length",
             env_var="DRILL_SERGEANT_ENFORCE_FILE_LENGTH",
             default=True,
+        )
+        marker_severity = get_string_option(
+            config,
+            "drill_sergeant_marker_severity",
+            "DRILL_SERGEANT_MARKER_SEVERITY",
+            "error",
+        )
+        aaa_severity = get_string_option(
+            config,
+            "drill_sergeant_aaa_severity",
+            "DRILL_SERGEANT_AAA_SEVERITY",
+            "error",
         )
 
         auto_detect_markers = get_bool_option(
@@ -162,11 +182,30 @@ class DrillSergeantConfig:
             "DRILL_SERGEANT_AAA_ASSERT_SYNONYMS",
         )
 
+        marker_severity = normalize_rule_severity(
+            marker_severity, "drill_sergeant_marker_severity"
+        )
+        aaa_severity = normalize_rule_severity(
+            aaa_severity, "drill_sergeant_aaa_severity"
+        )
+        file_length_mode = normalize_rule_severity(
+            file_length_mode, "drill_sergeant_file_length_mode"
+        )
+        aaa_mode = normalize_aaa_mode(aaa_mode)
+        min_description_length = normalize_non_negative_int(
+            min_description_length, "drill_sergeant_min_description_length"
+        )
+        max_file_length = normalize_positive_int(
+            max_file_length, "drill_sergeant_max_file_length"
+        )
+
         return cls(
             enabled=enabled,
             enforce_markers=enforce_markers,
             enforce_aaa=enforce_aaa,
             enforce_file_length=enforce_file_length,
+            marker_severity=marker_severity,
+            aaa_severity=aaa_severity,
             auto_detect_markers=auto_detect_markers,
             min_description_length=min_description_length,
             max_file_length=max_file_length,

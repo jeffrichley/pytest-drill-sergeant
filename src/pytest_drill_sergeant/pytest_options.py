@@ -31,6 +31,18 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         help="Enforce maximum file length limits",
     )
     parser.addini(
+        "drill_sergeant_marker_severity",
+        type="string",
+        default="error",
+        help="Marker rule severity: 'error' (fail), 'warn' (warning only), or 'off' (disabled)",
+    )
+    parser.addini(
+        "drill_sergeant_aaa_severity",
+        type="string",
+        default="error",
+        help="AAA rule severity: 'error' (fail), 'warn' (warning only), or 'off' (disabled)",
+    )
+    parser.addini(
         "drill_sergeant_auto_detect_markers",
         type="bool",
         default=True,

@@ -96,6 +96,8 @@ drill_sergeant_enabled = true
 drill_sergeant_enforce_markers = true
 drill_sergeant_enforce_aaa = true
 drill_sergeant_enforce_file_length = true
+drill_sergeant_marker_severity = error
+drill_sergeant_aaa_severity = error
 drill_sergeant_aaa_mode = basic
 drill_sergeant_auto_detect_markers = true
 drill_sergeant_max_file_length = 350
@@ -137,6 +139,8 @@ enabled = true
 enforce_markers = true
 enforce_aaa = true
 aaa_mode = "basic"
+marker_severity = "error"
+aaa_severity = "error"
 enforce_file_length = true
 file_length_mode = "error"
 file_length_exclude = ["tests/legacy/*"]
@@ -158,6 +162,8 @@ smoke = "integration"
 - `DRILL_SERGEANT_ENABLED`
 - `DRILL_SERGEANT_ENFORCE_MARKERS`
 - `DRILL_SERGEANT_ENFORCE_AAA`
+- `DRILL_SERGEANT_MARKER_SEVERITY` (`error` | `warn` | `off`)
+- `DRILL_SERGEANT_AAA_SEVERITY` (`error` | `warn` | `off`)
 - `DRILL_SERGEANT_AAA_MODE`
 - `DRILL_SERGEANT_ENFORCE_FILE_LENGTH`
 - `DRILL_SERGEANT_FILE_LENGTH_MODE`
@@ -169,6 +175,7 @@ smoke = "integration"
 - `DRILL_SERGEANT_MAX_FILE_LENGTH`
 - `DRILL_SERGEANT_MARKER_MAPPINGS`
 - `DRILL_SERGEANT_DEBUG_CONFIG`
+- `DRILL_SERGEANT_DEBUG_TELEMETRY` (prints per-validator timing summary at session end)
 
 ## Return Type Policy
 

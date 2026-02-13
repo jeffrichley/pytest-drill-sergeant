@@ -1,6 +1,7 @@
 """Marker validation for pytest-drill-sergeant."""
 
 import logging
+import warnings
 
 import pytest
 
@@ -48,19 +49,21 @@ class MarkerValidator:
             f"@pytest.mark.{m}" for m in sorted(list(available_markers)[:3])
         )
 
-        issues.append(
-            ValidationIssue(
-                issue_type="marker",
-                message=f"Test '{item.name}' must have at least one marker",
-                suggestion=f"Add {marker_examples} or move test to appropriate directory structure",
-            )
+        issue = ValidationIssue(
+            issue_type="marker",
+            message=f"Test '{item.name}' must have at least one marker",
+            suggestion=f"Add {marker_examples} or move test to appropriate directory structure",
         )
+        if config.marker_severity == "warn":
+            warnings.warn(pytest.PytestWarning(issue.message), stacklevel=2)
+            return issues
+        issues.append(issue)
 
         return issues
 
     def is_enabled(self, config: DrillSergeantConfig) -> bool:
         """Check if marker validation is enabled."""
-        return config.enforce_markers
+        return config.enforce_markers and config.marker_severity != "off"
 
 
 def _validate_markers(

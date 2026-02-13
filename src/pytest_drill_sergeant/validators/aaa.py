@@ -2,6 +2,7 @@
 
 import inspect
 import re
+import warnings
 
 import pytest
 
@@ -55,11 +56,16 @@ class AAAValidator:
             # Can't get source (e.g., dynamic tests), skip AAA validation
             pass
 
+        if issues and config.aaa_severity == "warn":
+            for issue in issues:
+                warnings.warn(pytest.PytestWarning(issue.message), stacklevel=2)
+            return []
+
         return issues
 
     def is_enabled(self, config: DrillSergeantConfig) -> bool:
         """Check if AAA validation is enabled."""
-        return config.enforce_aaa
+        return config.enforce_aaa and config.aaa_severity != "off"
 
     def _check_aaa_sections(
         self, source_lines: list[str], test_name: str, config: DrillSergeantConfig

@@ -8,21 +8,24 @@ A pytest plugin that enforces test quality standards by:
 
 import logging
 import os
+import time
 
 import pytest
 
 from pytest_drill_sergeant.config import DrillSergeantConfig
 from pytest_drill_sergeant.pytest_options import pytest_addoption as _pytest_addoption
-from pytest_drill_sergeant.validators import (
-    AAAValidator,
-    ErrorReporter,
-    FileLengthValidator,
-    MarkerValidator,
-)
+from pytest_drill_sergeant.validators import ErrorReporter
 from pytest_drill_sergeant.validators.base import Validator
+from pytest_drill_sergeant.validators.registry import build_validators
 
 LOGGER = logging.getLogger(__name__)
 TRUE_VALUES = {"true", "1", "yes", "on"}
+
+
+def _is_truthy_env(env_name: str) -> bool:
+    """Check if an environment variable is set to a truthy value."""
+    raw = os.getenv(env_name, "")
+    return raw.strip().lower() in TRUE_VALUES
 
 
 class DrillSergeantPlugin:
@@ -30,23 +33,57 @@ class DrillSergeantPlugin:
 
     def __init__(self) -> None:
         """Initialize the plugin with default validators."""
-        self.validators: list[Validator] = [
-            MarkerValidator(),
-            AAAValidator(),
-            FileLengthValidator(),
-        ]
+        self.validators: list[tuple[str, Validator]] = build_validators()
         self.error_reporter = ErrorReporter()
+        self.telemetry_enabled = _is_truthy_env("DRILL_SERGEANT_DEBUG_TELEMETRY")
+        self.telemetry_time_ns: dict[str, int] = {}
+        self.telemetry_counts: dict[str, int] = {}
 
     def validate_test(self, item: pytest.Item, config: DrillSergeantConfig) -> None:
         """Validate a test item using all enabled validators."""
         issues = []
 
-        for validator in self.validators:
+        for validator_name, validator in self.validators:
             if validator.is_enabled(config):
+                start_ns = time.perf_counter_ns()
                 issues.extend(validator.validate(item, config))
+                elapsed_ns = time.perf_counter_ns() - start_ns
+                self._record_telemetry(validator_name, elapsed_ns)
 
         if issues:
             self.error_reporter.report_issues(item, issues)
+
+    def _record_telemetry(self, validator_name: str, elapsed_ns: int) -> None:
+        """Record validator runtime telemetry when telemetry is enabled."""
+        if not self.telemetry_enabled:
+            return
+        self.telemetry_time_ns[validator_name] = (
+            self.telemetry_time_ns.get(validator_name, 0) + elapsed_ns
+        )
+        self.telemetry_counts[validator_name] = (
+            self.telemetry_counts.get(validator_name, 0) + 1
+        )
+
+    def emit_telemetry(self, config: pytest.Config) -> None:
+        """Emit validator timing telemetry in debug mode."""
+        if not self.telemetry_enabled or not self.telemetry_counts:
+            return
+
+        lines = ["drill-sergeant telemetry (validator runtime):"]
+        for validator_name in sorted(self.telemetry_counts):
+            count = self.telemetry_counts[validator_name]
+            total_ns = self.telemetry_time_ns.get(validator_name, 0)
+            avg_ns = total_ns // max(count, 1)
+            lines.append(
+                f"- {validator_name}: calls={count}, total_ms={total_ns / 1_000_000:.3f}, avg_ms={avg_ns / 1_000_000:.3f}"
+            )
+
+        terminal_reporter = config.pluginmanager.get_plugin("terminalreporter")
+        if terminal_reporter is not None:
+            for line in lines:
+                terminal_reporter.write_line(line)
+            return
+        LOGGER.info("\n".join(lines))
 
 
 # Global plugin instance
@@ -60,8 +97,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 def pytest_configure(config: pytest.Config) -> None:
     """Optionally print effective configuration for troubleshooting."""
-    debug_val = os.getenv("DRILL_SERGEANT_DEBUG_CONFIG", "")
-    if debug_val.strip().lower() not in TRUE_VALUES:
+    if not _is_truthy_env("DRILL_SERGEANT_DEBUG_CONFIG"):
         return
 
     resolved = DrillSergeantConfig.from_pytest_config(config)
@@ -77,8 +113,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
 def pytest_report_header(config: pytest.Config) -> str | None:
     """Emit effective config in pytest header when debug mode is enabled."""
-    debug_val = os.getenv("DRILL_SERGEANT_DEBUG_CONFIG", "")
-    if debug_val.strip().lower() not in TRUE_VALUES:
+    if not _is_truthy_env("DRILL_SERGEANT_DEBUG_CONFIG"):
         return None
 
     resolved = DrillSergeantConfig.from_pytest_config(config)
@@ -102,6 +137,8 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         # Validate the test
         _plugin.validate_test(item, config)
 
+    except ValueError as e:
+        pytest.fail(f"Invalid drill-sergeant configuration: {e}", pytrace=False)
     except Exception as e:
         test_name = getattr(item, "name", "unknown")
         LOGGER.exception("Drill Sergeant validation crashed for test '%s'", test_name)
@@ -109,3 +146,9 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
             f"Drill Sergeant internal error while validating '{test_name}': {e}",
             pytrace=False,
         )
+
+
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    """Emit end-of-session telemetry when debug telemetry is enabled."""
+    _ = exitstatus
+    _plugin.emit_telemetry(session.config)
