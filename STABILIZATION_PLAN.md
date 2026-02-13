@@ -152,15 +152,15 @@ Purpose: get this project back to predictable, low-drama operation with clear ga
 
 ### Steps
 
-- [ ] Rewrite README sections to match current architecture (no roadmap leakage).
-- [ ] Add “quick start” with a minimal valid `pytest.ini` and expected outcomes.
-- [ ] Add `docs/Failure-Catalog.md` mapping each rule violation to fix examples.
-- [ ] Add `docs/Decision-Log.md` for rule scope decisions (especially return type).
-- [ ] Add release checklist for future tags.
+- [x] Rewrite README sections to match current architecture (no roadmap leakage).
+- [x] Add “quick start” with a minimal valid `pytest.ini` and expected outcomes.
+- [x] Add `docs/Failure-Catalog.md` mapping each rule violation to fix examples.
+- [x] Add `docs/Decision-Log.md` for rule scope decisions (especially return type).
+- [x] Add release checklist for future tags.
 
 ### Exit Criteria
 
-- [ ] New contributor can run checks and understand failures without tribal knowledge.
+- [x] New contributor can run checks and understand failures without tribal knowledge.
 
 ---
 
@@ -198,11 +198,11 @@ Purpose: get this project back to predictable, low-drama operation with clear ga
 
 Project is considered recovered when all are true:
 
-- [ ] Plugin loads cleanly with zero unknown config warnings.
-- [ ] Config precedence is deterministic and documented.
+- [x] Plugin loads cleanly with zero unknown config warnings.
+- [x] Config precedence is deterministic and documented.
 - [x] Core rules behave as documented with strong test coverage.
-- [ ] Local and CI verification commands are identical and reliable.
-- [ ] Team can explain enforcement behavior without reading source code.
+- [x] Local and CI verification commands are identical and reliable.
+- [x] Team can explain enforcement behavior without reading source code.
 
 ---
 
@@ -215,3 +215,5 @@ Project is considered recovered when all are true:
   - `uv run pytest -q` -> pass
   - `uv run ruff check src tests` -> pass
   - `uv run mypy src tests --config-file=pyproject.toml` -> pass
+- CI workflow has been simplified to explicit `test` / `lint` / `typecheck` gates (plus informational coverage).
+- Dependabot backlog was triaged and resolved (merged or closed if superseded).
