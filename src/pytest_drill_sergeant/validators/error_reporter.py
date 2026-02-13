@@ -91,7 +91,7 @@ class ErrorReporter:
         lines.append("")
         lines.append("📚 For examples and detailed requirements:")
         lines.append("   • https://github.com/jeffrichley/pytest-drill-sergeant")
-        lines.append("   • pytest.ini (for valid markers)")
+        lines.append("   • pytest.ini or pyproject.toml (for valid markers)")
 
 
 def _report_all_issues(item: pytest.Item, issues: list[ValidationIssue]) -> None:
