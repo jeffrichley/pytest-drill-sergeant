@@ -6,6 +6,13 @@ Release flow is split:
 - Merging that PR creates a GitHub Release and version tag.
 - Trigger `release.yml` manually with `release_tag` to publish to PyPI.
 
+## Solo Maintainer Mode (Current)
+
+- Branch protection keeps required CI checks enabled and strict/up-to-date.
+- Required approving reviews are set to `0` for single-maintainer operation.
+- PR flow is still recommended for traceability, even without a review gate.
+- Re-enable `required_approving_review_count = 1` when additional maintainers join.
+
 ## Pre-Release
 
 - [ ] `main` is green in CI (`test`, `lint`, `typecheck`).
