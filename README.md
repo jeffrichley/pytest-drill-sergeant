@@ -223,6 +223,15 @@ just lint
 just type-check
 ```
 
+## Release Flow
+
+Releases are managed by `release-please`:
+
+1. Push conventional commits to `main` (`feat:`, `fix:`, etc.).
+2. `Release Please` workflow opens/updates a release PR.
+3. Merge the release PR to create a GitHub Release + tag.
+4. `Production Release (PyPI)` publishes to PyPI on release publish event.
+
 ## Final Word
 
 The point is not ceremony.

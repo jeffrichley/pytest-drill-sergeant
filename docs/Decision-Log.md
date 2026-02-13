@@ -89,3 +89,24 @@ Final precedence is:
   - `DRILL_SERGEANT_AAA_SEVERITY`
   - `DRILL_SERGEANT_DEBUG_TELEMETRY`
 - Invalid mode values now raise explicit configuration errors.
+
+## 2026-02-13: Adopt release-please for Versioning and Release PRs
+
+### Decision
+
+- Added `release-please` automation for release PR and tag/release creation.
+- Production publish now triggers from GitHub release publish event.
+
+### Why
+
+- Removes manual version/tag churn.
+- Standardizes changelog generation from commit history.
+- Makes release process auditable and repeatable.
+
+### Impact
+
+- New workflow: `.github/workflows/release-please.yml`
+- New config:
+  - `.github/release-please-config.json`
+  - `.github/.release-please-manifest.json`
+- Updated publish trigger in `.github/workflows/release.yml` to `release: published`.

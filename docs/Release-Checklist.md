@@ -1,15 +1,18 @@
 # Release Checklist
 
-Use this for both TestPyPI dry-runs and production releases.
+Release flow is automated with `release-please`.
+
+- `release-please` opens/updates a release PR from conventional commits on `main`.
+- Merging that PR creates a GitHub Release and version tag.
+- `release.yml` publishes to PyPI on `release: published`.
 
 ## Pre-Release
 
 - [ ] `main` is green in CI (`test`, `lint`, `typecheck`).
 - [ ] Working tree is clean.
-- [ ] Version is correct and intentional.
 - [ ] `README.md` reflects current behavior.
 - [ ] `docs/Decision-Log.md` updated for scope-changing decisions.
-- [ ] `CHANGELOG`/release notes prepared (if used).
+- [ ] Commit messages follow conventional style (`feat:`, `fix:`, etc.) for clean release notes.
 
 ## Local Verification
 
@@ -24,16 +27,18 @@ Use this for both TestPyPI dry-runs and production releases.
 - [ ] Inspect `dist/` contents.
 - [ ] Optional sanity install from wheel in clean environment.
 
-## TestPyPI (Optional but Recommended)
+## TestPyPI (Optional)
 
-- [ ] Push test tag (`test-v*`) or trigger test-release workflow.
+- [ ] Trigger `test-release.yml` manually (or use test tag if retained).
 - [ ] Confirm publish success in GitHub Actions.
 - [ ] Install from TestPyPI and run smoke import.
 
 ## Production Release
 
-- [ ] Create and push version tag (`v*`).
-- [ ] Confirm `release.yml` completed successfully.
+- [ ] Confirm release PR from `release-please` is correct (version/changelog).
+- [ ] Merge release PR to `main`.
+- [ ] Confirm GitHub Release + tag were created by `release-please`.
+- [ ] Confirm `release.yml` completed successfully after release publish event.
 - [ ] Verify package visible on PyPI.
 
 ## Post-Release
