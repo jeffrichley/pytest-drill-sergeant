@@ -3,6 +3,7 @@ name: Production Release (PyPI)
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   production-release:
