@@ -30,6 +30,7 @@ class DrillSergeantConfig:
     marker_severity: str = "error"  # "error", "warn", or "off"
     aaa_severity: str = "error"  # "error", "warn", or "off"
     auto_detect_markers: bool = True
+    write_markers: bool = True
     min_description_length: int = 3
     max_file_length: int = 350
     file_length_mode: str = "error"  # "error", "warn", or "off"
@@ -98,6 +99,13 @@ class DrillSergeantConfig:
             config,
             "drill_sergeant_auto_detect_markers",
             env_var="DRILL_SERGEANT_AUTO_DETECT_MARKERS",
+            default=True,
+        )
+
+        write_markers = get_bool_option(
+            config,
+            "drill_sergeant_write_markers",
+            env_var="DRILL_SERGEANT_WRITE_MARKERS",
             default=True,
         )
 
@@ -207,6 +215,7 @@ class DrillSergeantConfig:
             marker_severity=marker_severity,
             aaa_severity=aaa_severity,
             auto_detect_markers=auto_detect_markers,
+            write_markers=write_markers,
             min_description_length=min_description_length,
             max_file_length=max_file_length,
             file_length_mode=file_length_mode,

@@ -9,11 +9,16 @@ A pytest plugin that enforces test quality standards by:
 import logging
 import os
 import time
+from pathlib import Path
 
 import pytest
 
 from pytest_drill_sergeant.config import DrillSergeantConfig
 from pytest_drill_sergeant.pytest_options import pytest_addoption as _pytest_addoption
+from pytest_drill_sergeant.utils import (
+    detect_test_type_from_path,
+    write_markers_to_files,
+)
 from pytest_drill_sergeant.validators import ErrorReporter
 from pytest_drill_sergeant.validators.base import Validator
 from pytest_drill_sergeant.validators.registry import build_validators
@@ -118,6 +123,43 @@ def pytest_report_header(config: pytest.Config) -> str | None:
 
     resolved = DrillSergeantConfig.from_pytest_config(config)
     return f"drill-sergeant effective config: {resolved}"
+
+
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
+    """Add auto-detected markers during collection so pytest -m unit / -m 'not e2e' works.
+
+    When write_markers is true, also writes @pytest.mark.<name> into source files.
+    """
+    try:
+        ds_config = DrillSergeantConfig.from_pytest_config(config)
+    except ValueError:
+        return
+    if not ds_config.enabled or not ds_config.auto_detect_markers:
+        return
+    to_write: list[tuple[Path | str, int, str]] = []
+    for item in items:
+        if not getattr(item, "function", None):
+            continue
+        if any(item.iter_markers()):
+            continue
+        detected = detect_test_type_from_path(item, ds_config)
+        if detected:
+            marker = getattr(pytest.mark, detected)
+            item.add_marker(marker)
+            if ds_config.write_markers:
+                path = getattr(item, "path", None) or Path(getattr(item, "fspath", ""))
+                lineno = getattr(item, "location", (None, 0, None))[1]
+                if path and lineno:
+                    to_write.append((path, lineno, detected))
+            LOGGER.debug(
+                "Auto-decorated test '%s' with @pytest.mark.%s (collection)",
+                item.name,
+                detected,
+            )
+    if to_write:
+        write_markers_to_files(to_write)
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:

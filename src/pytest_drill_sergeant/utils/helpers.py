@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import tomllib
+from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -23,6 +24,7 @@ INI_TO_TOOL_KEY = {
     "drill_sergeant_marker_severity": "marker_severity",
     "drill_sergeant_aaa_severity": "aaa_severity",
     "drill_sergeant_auto_detect_markers": "auto_detect_markers",
+    "drill_sergeant_write_markers": "write_markers",
     "drill_sergeant_min_description_length": "min_description_length",
     "drill_sergeant_max_file_length": "max_file_length",
     "drill_sergeant_file_length_mode": "file_length_mode",
@@ -414,3 +416,114 @@ def detect_test_type_from_path(
         return None
     except Exception:
         return None
+
+
+def _ensure_pytest_import(lines: list[str]) -> None:
+    """Insert 'import pytest' if the file does not already import pytest.
+
+    Mutates lines in place. Used when adding @pytest.mark.<name> decorators.
+    Only considers the very first line for a one-line module docstring to avoid
+    inserting inside a function or class docstring.
+    """
+    text = "".join(lines)
+    if "import pytest" in text or "from pytest import" in text:
+        return
+    insert_idx = 0
+    # Skip shebang
+    if lines and lines[0].strip().startswith("#!"):
+        insert_idx = 1
+    # Skip encoding/coding comment (single line)
+    if insert_idx < len(lines):
+        stripped = lines[insert_idx].strip()
+        if not stripped or stripped.startswith("#") or "coding" in stripped:
+            insert_idx += 1
+    # Only skip a one-line module docstring (same line opens and closes)
+    if insert_idx < len(lines):
+        first = lines[insert_idx].strip()
+        if (first.startswith('"""') and first.count('"""') >= 2) or (
+            first.startswith("'''") and first.count("'''") >= 2
+        ):
+            insert_idx += 1
+    # Skip blank lines only immediately after that
+    while insert_idx < len(lines) and not lines[insert_idx].strip():
+        insert_idx += 1
+    lines.insert(insert_idx, "import pytest\n")
+
+
+def write_markers_to_files(  # noqa: C901, PLR0912
+    insertions: list[tuple[Path | str, int, str]],
+) -> None:
+    """Insert @pytest.mark.<name> decorators into source files.
+
+    insertions: list of (file_path, lineno, marker_name). lineno is 1-based.
+    Inserts are applied in reverse line order per file so offsets stay valid.
+    Skips inserting if the decorator is already present above that line.
+    Ensures 'import pytest' is present when adding markers.
+    """
+    by_path: dict[Path, list[tuple[int, str]]] = defaultdict(list)
+    for path, lineno, marker_name in insertions:
+        by_path[Path(path)].append((lineno, marker_name))
+
+    for path, entries in by_path.items():
+        if not path.is_file():
+            continue
+        # Sort descending by line so insertions don't shift later line numbers
+        entries.sort(key=lambda e: e[0], reverse=True)
+        text = path.read_text(encoding="utf-8")
+        lines = text.splitlines(keepends=True)
+        if not lines:
+            continue
+        for lineno, marker_name in entries:
+            # lineno is 1-based; def is at index lineno - 1
+            idx = lineno - 1
+            if idx < 0 or idx >= len(lines):
+                continue
+            def_line = lines[idx]
+            indent = def_line[: len(def_line) - len(def_line.lstrip())]
+            decorator = f"{indent}@pytest.mark.{marker_name}\n"
+            # Skip if we already have this decorator immediately above the def
+            if idx > 0 and lines[idx - 1].strip() == f"@pytest.mark.{marker_name}":
+                continue
+            # Skip if the def line or line above already contains this marker
+            block_start = idx
+            while block_start > 0 and (
+                lines[block_start - 1].strip().startswith("@")
+                or lines[block_start - 1].strip().startswith("#")
+            ):
+                block_start -= 1
+            already = any(
+                f"@pytest.mark.{marker_name}" in lines[i]
+                for i in range(block_start, idx)
+            )
+            if already:
+                continue
+            # If there's a blank line immediately before the def, replace it with the decorator
+            # so we get decorator\ndef with no extra blank line.
+            if idx > 0 and lines[idx - 1].strip() == "":
+                lines[idx - 1] = decorator
+            else:
+                lines.insert(idx, decorator)
+
+        # Remove any blank line between a drill_sergeant marker and the following def,
+        # so we always get decorator immediately above def (no stray blank).
+        marker_names = {mn for (_, mn) in entries}
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            stripped = line.strip()
+            is_our_marker = any(
+                stripped == f"@pytest.mark.{mn}" for mn in marker_names
+            )
+            if (
+                is_our_marker
+                and i + 2 < len(lines)
+                and lines[i + 1].strip() == ""
+                and lines[i + 2].strip().startswith("def ")
+            ):
+                del lines[i + 1]
+                continue
+            i += 1
+
+        _ensure_pytest_import(lines)
+        if lines:
+            path.write_text("".join(lines), encoding="utf-8")

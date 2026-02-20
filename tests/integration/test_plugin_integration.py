@@ -93,6 +93,62 @@ markers =
         assert result.ret == 1
         result.stdout.fnmatch_lines(["*CODE QUALITY*", "*MISSING TEST CLASSIFICATION*"])
 
+    def test_write_markers_to_file(self, pytester: Pytester) -> None:
+        """# Arrange - Unit test without marker, write_markers true
+        # Act - Run pytest with drill sergeant
+        # Assert - File is updated with @pytest.mark.unit
+        """
+        # Arrange - pytest.ini with markers and write_markers
+        pytester.makefile(
+            ".ini",
+            pytest="""
+[pytest]
+markers =
+    unit: Unit tests
+    integration: Integration tests
+testpaths = tests
+drill_sergeant_enabled = true
+drill_sergeant_enforce_markers = true
+drill_sergeant_auto_detect_markers = true
+drill_sergeant_write_markers = true
+drill_sergeant_enforce_aaa = true
+drill_sergeant_enforce_file_length = false
+""",
+        )
+        pytester.mkdir("tests")
+        pytester.mkdir("tests/unit")
+        unit_file = pytester.path / "tests" / "unit" / "test_written.py"
+        unit_file.write_text(
+            textwrap.dedent("""
+                def test_gets_marker_written() -> None:
+                    '''# Arrange - Test for write_markers
+                    # Act - Run pytest
+                    # Assert - File contains marker
+                    '''
+                    # Arrange - data
+                    x = 1
+                    # Act - add
+                    y = x + 1
+                    # Assert - result
+                    assert y == 2
+            """)
+        )
+        # Act - Run pytest (collect will write markers)
+        result = pytester.runpytest("-v", "-p", "drill_sergeant", "--tb=short")
+        # Assert - test passes and file was modified
+        assert result.ret == 0
+        content = unit_file.read_text()
+        assert "@pytest.mark.unit" in content
+        assert "def test_gets_marker_written" in content
+        # Marker decorator should appear somewhere before the def (exact line depends on blank lines)
+        lines = content.splitlines()
+        def_idx = next(
+            i for i, line in enumerate(lines) if "def test_gets_marker_written" in line
+        )
+        assert any(
+            "@pytest.mark.unit" in lines[i] for i in range(def_idx)
+        ), "marker decorator should appear before the test function"
+
     def test_aaa_structure_validation_failure(self, pytester: Pytester) -> None:
         """# Arrange - Test without proper AAA structure
         # Act - Run pytest with drill sergeant plugin
