@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/jeffrichley/pytest-drill-sergeant/compare/pytest-drill-sergeant-v0.3.1...pytest-drill-sergeant-v0.4.0) (2026-02-20)
+
+
+### Features
+
+* write auto-detected markers to source files and add import pytest ([f17e811](https://github.com/jeffrichley/pytest-drill-sergeant/commit/f17e81190d3b9c2b707f66178de4e119b1c6d888))
+
+
+### Documentation
+
+* add solo-maintainer release checklist guidance ([7b059cb](https://github.com/jeffrichley/pytest-drill-sergeant/commit/7b059cb4e51a71c8d7f8b247bb556a1e9de5be32))
+* add solo-maintainer release checklist guidance ([207f665](https://github.com/jeffrichley/pytest-drill-sergeant/commit/207f665294a638e7f9e4b3c89f853bcdd2414e85))
+
 ## [0.3.1](https://github.com/jeffrichley/pytest-drill-sergeant/compare/pytest-drill-sergeant-v0.3.0...pytest-drill-sergeant-v0.3.1) (2026-02-13)
 
 
