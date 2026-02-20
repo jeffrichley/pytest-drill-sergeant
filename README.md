@@ -23,6 +23,7 @@ What it does:
 
 - validates useful test markers
 - auto-detects marker intent from path (for example `tests/unit/` -> `@pytest.mark.unit`)
+- can **write** auto-detected markers into source files (`drill_sergeant_write_markers = true`, default)
 - supports custom directory-to-marker mappings
 - reads marker declarations from both `pytest.ini` and `pyproject.toml` (`[tool.pytest.ini_options]`)
 
@@ -91,6 +92,7 @@ addopts = -p drill_sergeant
 markers =
     unit: Unit tests
     integration: Integration tests
+    e2e: End-to-end tests
 
 drill_sergeant_enabled = true
 drill_sergeant_enforce_markers = true
@@ -122,6 +124,19 @@ def test_addition() -> None:
     assert total == 5
 ```
 
+### Running by marker
+
+With markers (and optional `drill_sergeant_auto_detect_markers = true`), use pytest’s `-m` to select tests:
+
+- **Only unit tests:**  
+  `pytest -m unit`
+- **Everything except e2e:**  
+  `pytest -m "not e2e"`
+- **Unit or integration:**  
+  `pytest -m "unit or integration"`
+
+Register every marker you use in `[pytest]` `markers` (as in the minimal config above) so pytest accepts `-m` and doesn’t warn about unknown markers.
+
 ## Configuration
 
 Precedence (highest to lowest):
@@ -147,6 +162,7 @@ file_length_exclude = ["tests/legacy/*"]
 file_length_inline_ignore = true
 file_length_inline_ignore_token = "drill-sergeant: file-length ignore"
 auto_detect_markers = true
+write_markers = true
 min_description_length = 3
 max_file_length = 350
 aaa_synonyms_enabled = false
@@ -171,6 +187,7 @@ smoke = "integration"
 - `DRILL_SERGEANT_FILE_LENGTH_INLINE_IGNORE`
 - `DRILL_SERGEANT_FILE_LENGTH_INLINE_IGNORE_TOKEN`
 - `DRILL_SERGEANT_AUTO_DETECT_MARKERS`
+- `DRILL_SERGEANT_WRITE_MARKERS` (write auto-detected markers into source files)
 - `DRILL_SERGEANT_MIN_DESCRIPTION_LENGTH`
 - `DRILL_SERGEANT_MAX_FILE_LENGTH`
 - `DRILL_SERGEANT_MARKER_MAPPINGS`

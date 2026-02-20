@@ -10,6 +10,7 @@ from pytest_drill_sergeant.utils.helpers import (
     get_marker_mappings,
     get_string_option,
     get_synonym_list,
+    write_markers_to_files,
 )
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "get_marker_mappings",
     "get_string_option",
     "get_synonym_list",
+    "write_markers_to_files",
 ]

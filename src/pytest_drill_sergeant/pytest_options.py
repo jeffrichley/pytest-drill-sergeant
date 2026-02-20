@@ -48,6 +48,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=True,
         help="Auto-detect test markers from directory structure",
     )
+    parser.addini(
+        "drill_sergeant_write_markers",
+        type="bool",
+        default=True,
+        help="Write auto-detected markers into source files (when auto_detect_markers is true)",
+    )
 
     # File length options
     parser.addini(
