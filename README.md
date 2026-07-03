@@ -3,6 +3,11 @@
 [![CI Status](https://github.com/jeffrichley/pytest-drill-sergeant/workflows/CI/badge.svg)](https://github.com/jeffrichley/pytest-drill-sergeant/actions)
 [![codecov](https://codecov.io/gh/jeffrichley/pytest-drill-sergeant/branch/main/graph/badge.svg)](https://codecov.io/gh/jeffrichley/pytest-drill-sergeant)
 [![PyPI version](https://badge.fury.io/py/pytest-drill-sergeant.svg)](https://badge.fury.io/py/pytest-drill-sergeant)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org)
+[![Renovate enabled](https://img.shields.io/badge/renovate-enabled-brightgreen.svg)](https://renovatebot.com)
 
 You want elite tests?
 Then stop writing lazy chaos and start writing disciplined test code.
