@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: 🎖️ Checkout Battle Zone
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.release_tag }}
 
