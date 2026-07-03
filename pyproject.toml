@@ -74,7 +74,7 @@ target-version = ["py312"]
 directory = "htmlcov"
 
 [tool.coverage.report]
-fail_under = 50
+fail_under = 60
 show_missing = true
 
 [tool.ruff]
@@ -139,6 +139,8 @@ ignore = [
     "PTH123",  # Pathlib usage (temporarily disabled)
     "ERA001",  # Commented code (temporarily disabled)
     "TRY300",  # Try/except patterns (temporarily disabled)
+    "D105",    # Missing docstring in magic method (Google convention exempts dunders)
+    "D107",    # Missing docstring in __init__ (Google convention exempts it)
 ]
 
 fixable = ["ALL"]
@@ -178,6 +180,7 @@ convention = "google"
 [tool.mypy]
 files = ["src", "tests"]
 python_version = "3.12"
+strict = true
 # Basic safety
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
@@ -227,6 +230,7 @@ exclude = ["tests", "examples", "scripts", "tools"]
 dev = [
     "black>=25.1.0",
     "build>=1.3.0",
+    "diff-cover>=9.0",
     "mypy>=1.17.1",
     "pip-audit>=2.9.0",
     "pytest-cov>=6.2.1",
