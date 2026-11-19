@@ -52,3 +52,12 @@ def test_handler_marks_a_known_failure():
     except FileNotFoundError:
         pytest.xfail("loader not written yet")
     assert load("app.toml") == {}
+
+
+def test_handler_fails_through_the_bare_name():
+    from pytest import fail
+
+    try:
+        load("app.toml")
+    except OSError as error:
+        fail(f"load raised {error}")

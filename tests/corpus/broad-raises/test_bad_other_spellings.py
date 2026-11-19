@@ -31,3 +31,8 @@ def test_keyword_form():
 def test_match_none_is_no_match():
     with pytest.raises(Exception, match=None):  # expect: DS701
         parse(None)
+
+
+def test_empty_match_matches_everything():
+    with pytest.raises(Exception, match=""):  # expect: DS701
+        parse(None)

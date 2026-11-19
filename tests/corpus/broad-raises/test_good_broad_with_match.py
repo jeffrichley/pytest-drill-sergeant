@@ -24,3 +24,9 @@ def test_function_form_with_a_match():
 def test_broad_tuple_with_a_match():
     with pytest.raises((ValueError, Exception), match="invalid"):
         parse("x")
+
+
+def test_broad_type_matched_afterwards():
+    with pytest.raises(Exception) as excinfo:
+        parse("x")
+    excinfo.match("invalid literal")

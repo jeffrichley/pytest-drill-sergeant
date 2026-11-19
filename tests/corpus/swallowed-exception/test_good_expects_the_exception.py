@@ -49,3 +49,19 @@ def test_body_ends_in_a_raise():
         raise AssertionError("parse accepted garbage")
     except ValueError:
         pass
+
+
+def test_specific_handler_cannot_catch_the_assert_false():
+    try:
+        parse("x")
+        assert False, "parse accepted garbage"
+    except ValueError:
+        pass
+
+
+def test_exception_handler_cannot_catch_pytest_fail():
+    try:
+        parse("x")
+        pytest.fail("parse accepted garbage")
+    except Exception:
+        pass

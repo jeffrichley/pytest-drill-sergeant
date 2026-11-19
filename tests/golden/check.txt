@@ -1,65 +1,70 @@
-DRILL SERGEANT INSPECTION: 42 findings in 9 files. FALL IN!
+DRILL SERGEANT INSPECTION: 51 findings in 10 files. FALL IN!
 
 suite/broad-raises/test_bad_catch_all.py
   suite/broad-raises/test_bad_catch_all.py:12: DS701 broad-raises [fail] in test_bad_input_raises
     "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
-    Found: `test_bad_input_raises` expects `Exception` with no `match=` on line 12, so any error at all passes it.
+    Found: `test_bad_input_raises` expects `Exception` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix: On line 12 of `test_bad_input_raises`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
   suite/broad-raises/test_bad_catch_all.py:17: DS701 broad-raises [fail] in test_bad_input_raises_base_exception
     "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
-    Found: `test_bad_input_raises_base_exception` expects `BaseException` with no `match=` on line 17, so any error at all passes it.
+    Found: `test_bad_input_raises_base_exception` expects `BaseException` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix: On line 17 of `test_bad_input_raises_base_exception`, replace `BaseException` with the specific exception the code raises, and add `match=` for the part of its message that matters.
   suite/broad-raises/test_bad_catch_all.py:23: DS701 broad-raises [fail] in TestParser::test_empty_input_raises
     "Expecting `Exception`? That's not a target, recruit, that's the whole range!"
-    Found: `TestParser::test_empty_input_raises` expects `Exception` with no `match=` on line 23, so any error at all passes it.
+    Found: `TestParser::test_empty_input_raises` expects `Exception` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix: On line 23 of `TestParser::test_empty_input_raises`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
 
 suite/broad-raises/test_bad_hidden_in_flow.py
   suite/broad-raises/test_bad_hidden_in_flow.py:18: DS701 broad-raises [fail] in test_every_bad_input_raises
     "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
-    Found: `test_every_bad_input_raises` expects `Exception` with no `match=` on line 18, so any error at all passes it.
+    Found: `test_every_bad_input_raises` expects `Exception` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix: On line 18 of `test_every_bad_input_raises`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
   suite/broad-raises/test_bad_hidden_in_flow.py:23: DS701 broad-raises [fail] in test_unreachable_host_raises
     "A typo in your own test raises too, maggot! NAME THE EXCEPTION!"
-    Found: `test_unreachable_host_raises` expects `Exception` with no `match=` on line 23, so any error at all passes it.
+    Found: `test_unreachable_host_raises` expects `Exception` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix: On line 23 of `test_unreachable_host_raises`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
   suite/broad-raises/test_bad_hidden_in_flow.py:30: DS701 broad-raises [fail] in test_two_expectations_in_one_test
     "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
-    Found: `test_two_expectations_in_one_test` expects `BaseException` with no `match=` on line 30, so any error at all passes it.
+    Found: `test_two_expectations_in_one_test` expects `BaseException` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix: On line 30 of `test_two_expectations_in_one_test`, replace `BaseException` with the specific exception the code raises, and add `match=` for the part of its message that matters.
 
 suite/broad-raises/test_bad_other_spellings.py
   suite/broad-raises/test_bad_other_spellings.py:13: DS701 broad-raises [fail] in test_bare_name_raises
     "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
-    Found: `test_bare_name_raises` expects `Exception` with no `match=` on line 13, so any error at all passes it.
+    Found: `test_bare_name_raises` expects `Exception` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix: On line 13 of `test_bare_name_raises`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
   suite/broad-raises/test_bad_other_spellings.py:18: DS701 broad-raises [fail] in test_tuple_with_a_broad_member
     "A typo in your own test raises too, maggot! NAME THE EXCEPTION!"
-    Found: `test_tuple_with_a_broad_member` expects `Exception` with no `match=` on line 18, so any error at all passes it.
+    Found: `test_tuple_with_a_broad_member` expects `Exception` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix: On line 18 of `test_tuple_with_a_broad_member`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
   suite/broad-raises/test_bad_other_spellings.py:23: DS701 broad-raises [fail] in test_function_form
     "Expecting `Exception`? That's not a target, recruit, that's the whole range!"
-    Found: `test_function_form` expects `Exception` with no `match=` on line 23, so any error at all passes it.
+    Found: `test_function_form` expects `Exception` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix: On line 23 of `test_function_form`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
   suite/broad-raises/test_bad_other_spellings.py:27: DS701 broad-raises [fail] in test_keyword_form
     "Expecting `Exception`? That's not a target, recruit, that's the whole range!"
-    Found: `test_keyword_form` expects `BaseException` with no `match=` on line 27, so any error at all passes it.
+    Found: `test_keyword_form` expects `BaseException` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix: On line 27 of `test_keyword_form`, replace `BaseException` with the specific exception the code raises, and add `match=` for the part of its message that matters.
   suite/broad-raises/test_bad_other_spellings.py:32: DS701 broad-raises [fail] in test_match_none_is_no_match
     "A typo in your own test raises too, maggot! NAME THE EXCEPTION!"
-    Found: `test_match_none_is_no_match` expects `Exception` with no `match=` on line 32, so any error at all passes it.
+    Found: `test_match_none_is_no_match` expects `Exception` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix: On line 32 of `test_match_none_is_no_match`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_other_spellings.py:37: DS701 broad-raises [fail] in test_empty_match_matches_everything
+    "Expecting `Exception`? That's not a target, recruit, that's the whole range!"
+    Found: `test_empty_match_matches_everything` expects `Exception` with no `match=`, so any error at all passes it.
+    Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix: On line 37 of `test_empty_match_matches_everything`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
 
 suite/no-real-assertion/test_bad_coverage_boost.py
   suite/no-real-assertion/test_bad_coverage_boost.py:14: DS101 no-real-assertion [fail] in TestCoverageBoost::test_string_operations
@@ -101,7 +106,7 @@ suite/no-real-assertion/test_bad_final_push.py
     Fix: In `test_smoke_with_a_try`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
   suite/no-real-assertion/test_bad_final_push.py:32: DS702 swallowed-exception [fail] in test_smoke_with_a_try
     "`except: pass` isn't a test, maggot, it's a cover-up!"
-    Found: `test_smoke_with_a_try` catches `Exception` on line 32 and neither asserts on it nor raises it again.
+    Found: `test_smoke_with_a_try` catches `Exception` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_smoke_with_a_try`, remove the `try` that catches `Exception` on line 32 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
   suite/no-real-assertion/test_bad_final_push.py:36: DS101 no-real-assertion [fail] in test_mock_configured_but_never_checked
@@ -150,24 +155,66 @@ suite/no-real-assertion/test_bad_tiny_coverage.py
 suite/swallowed-exception/test_bad_assert_beside_it.py
   suite/swallowed-exception/test_bad_assert_beside_it.py:12: DS702 swallowed-exception [fail] in test_load_asserts_only_on_success
     "The code blew up and your test looked the other way! EYES FRONT!"
-    Found: `test_load_asserts_only_on_success` catches `FileNotFoundError` on line 12 and neither asserts on it nor raises it again.
+    Found: `test_load_asserts_only_on_success` catches `FileNotFoundError` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_load_asserts_only_on_success`, remove the `try` that catches `FileNotFoundError` on line 12 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
   suite/swallowed-exception/test_bad_assert_beside_it.py:23: DS702 swallowed-exception [fail] in test_load_one_handler_checks_the_other_drops
     "You caught the failure and HID it, recruit? That's desertion!"
-    Found: `test_load_one_handler_checks_the_other_drops` catches `PermissionError` on line 23 and neither asserts on it nor raises it again.
+    Found: `test_load_one_handler_checks_the_other_drops` catches `PermissionError` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_load_one_handler_checks_the_other_drops`, remove the `try` that catches `PermissionError` on line 23 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
   suite/swallowed-exception/test_bad_assert_beside_it.py:30: DS702 swallowed-exception [fail] in test_load_trivial_assert_in_the_handler
     "You caught the failure and HID it, recruit? That's desertion!"
-    Found: `test_load_trivial_assert_in_the_handler` catches `OSError` on line 30 and neither asserts on it nor raises it again.
+    Found: `test_load_trivial_assert_in_the_handler` catches `OSError` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_load_trivial_assert_in_the_handler`, remove the `try` that catches `OSError` on line 30 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
   suite/swallowed-exception/test_bad_assert_beside_it.py:38: DS702 swallowed-exception [fail] in test_load_falls_back_to_a_default
     "The code blew up and your test looked the other way! EYES FRONT!"
-    Found: `test_load_falls_back_to_a_default` catches `(FileNotFoundError, PermissionError)` on line 38 and neither asserts on it nor raises it again.
+    Found: `test_load_falls_back_to_a_default` catches `(FileNotFoundError, PermissionError)` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_load_falls_back_to_a_default`, remove the `try` that catches `(FileNotFoundError, PermissionError)` on line 38 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
+
+suite/swallowed-exception/test_bad_broken_old_idiom.py
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:16: DS702 swallowed-exception [fail] in test_handler_catches_the_assert_false
+    "You caught the failure and HID it, recruit? That's desertion!"
+    Found: `test_handler_catches_the_assert_false` catches `Exception` in a handler with no real assertion and no `raise`, so the error is lost.
+    Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
+    Fix: In `test_handler_catches_the_assert_false`, remove the `try` that catches `Exception` on line 16 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:25: DS702 swallowed-exception [fail] in test_bare_handler_catches_pytest_fail
+    "The code blew up and your test looked the other way! EYES FRONT!"
+    Found: `test_bare_handler_catches_pytest_fail` catches every exception in a handler with no real assertion and no `raise`, so the error is lost.
+    Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
+    Fix: In `test_bare_handler_catches_pytest_fail`, remove the `try` that catches every exception on line 25 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:33: DS702 swallowed-exception [fail] in test_base_exception_handler_catches_pytest_fail
+    "`except: pass` isn't a test, maggot, it's a cover-up!"
+    Found: `test_base_exception_handler_catches_pytest_fail` catches `BaseException` in a handler with no real assertion and no `raise`, so the error is lost.
+    Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
+    Fix: In `test_base_exception_handler_catches_pytest_fail`, remove the `try` that catches `BaseException` on line 33 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:37: DS101 no-real-assertion [fail] in test_handler_catches_the_raise
+    "You call that a test, recruit? It runs the code and checks NOTHING!"
+    Found: `test_handler_catches_the_raise` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `test_handler_catches_the_raise`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:41: DS702 swallowed-exception [fail] in test_handler_catches_the_raise
+    "`except: pass` isn't a test, maggot, it's a cover-up!"
+    Found: `test_handler_catches_the_raise` catches `RuntimeError` in a handler with no real assertion and no `raise`, so the error is lost.
+    Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
+    Fix: In `test_handler_catches_the_raise`, remove the `try` that catches `RuntimeError` on line 41 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:45: DS101 no-real-assertion [fail] in test_skip_is_not_a_failure
+    "No assertion, no proof! Green means nothing if it can't go red, maggot!"
+    Found: `test_skip_is_not_a_failure` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `test_skip_is_not_a_failure`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:49: DS702 swallowed-exception [fail] in test_skip_is_not_a_failure
+    "You caught the failure and HID it, recruit? That's desertion!"
+    Found: `test_skip_is_not_a_failure` catches `ValueError` in a handler with no real assertion and no `raise`, so the error is lost.
+    Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
+    Fix: In `test_skip_is_not_a_failure`, remove the `try` that catches `ValueError` on line 49 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:56: DS702 swallowed-exception [fail] in test_every_error_becomes_a_skip
+    "You caught the failure and HID it, recruit? That's desertion!"
+    Found: `test_every_error_becomes_a_skip` catches `Exception` in a handler with no real assertion and no `raise`, so the error is lost.
+    Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
+    Fix: In `test_every_error_becomes_a_skip`, remove the `try` that catches `Exception` on line 56 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
 
 suite/swallowed-exception/test_bad_make_it_not_crash.py
   suite/swallowed-exception/test_bad_make_it_not_crash.py:11: DS101 no-real-assertion [fail] in test_sync
@@ -177,22 +224,22 @@ suite/swallowed-exception/test_bad_make_it_not_crash.py
     Fix: In `test_sync`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
   suite/swallowed-exception/test_bad_make_it_not_crash.py:14: DS702 swallowed-exception [fail] in test_sync
     "You caught the failure and HID it, recruit? That's desertion!"
-    Found: `test_sync` catches `Exception` on line 14 and neither asserts on it nor raises it again.
+    Found: `test_sync` catches `Exception` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_sync`, remove the `try` that catches `Exception` on line 14 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
   suite/swallowed-exception/test_bad_make_it_not_crash.py:24: DS702 swallowed-exception [fail] in test_sync_each_source
     "The code blew up and your test looked the other way! EYES FRONT!"
-    Found: `test_sync_each_source` catches `RuntimeError` on line 24 and neither asserts on it nor raises it again.
+    Found: `test_sync_each_source` catches `RuntimeError` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_sync_each_source`, remove the `try` that catches `RuntimeError` on line 24 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
   suite/swallowed-exception/test_bad_make_it_not_crash.py:31: DS702 swallowed-exception [fail] in test_sync_returns_early
     "`except: pass` isn't a test, maggot, it's a cover-up!"
-    Found: `test_sync_returns_early` catches `RuntimeError` on line 31 and neither asserts on it nor raises it again.
+    Found: `test_sync_returns_early` catches `RuntimeError` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_sync_returns_early`, remove the `try` that catches `RuntimeError` on line 31 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
   suite/swallowed-exception/test_bad_make_it_not_crash.py:39: DS702 swallowed-exception [fail] in test_sync_logs_and_moves_on
     "You caught the failure and HID it, recruit? That's desertion!"
-    Found: `test_sync_logs_and_moves_on` catches `Exception` on line 39 and neither asserts on it nor raises it again.
+    Found: `test_sync_logs_and_moves_on` catches `Exception` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_sync_logs_and_moves_on`, remove the `try` that catches `Exception` on line 39 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
   suite/swallowed-exception/test_bad_make_it_not_crash.py:45: DS101 no-real-assertion [fail] in test_sync_bare_except
@@ -202,30 +249,30 @@ suite/swallowed-exception/test_bad_make_it_not_crash.py
     Fix: In `test_sync_bare_except`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
   suite/swallowed-exception/test_bad_make_it_not_crash.py:49: DS702 swallowed-exception [fail] in test_sync_bare_except
     "`except: pass` isn't a test, maggot, it's a cover-up!"
-    Found: `test_sync_bare_except` catches every exception on line 49 and neither asserts on it nor raises it again.
+    Found: `test_sync_bare_except` catches every exception in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_sync_bare_except`, remove the `try` that catches every exception on line 49 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
 
 suite/swallowed-exception/test_bad_nested_places.py
   suite/swallowed-exception/test_bad_nested_places.py:15: DS702 swallowed-exception [fail] in TestClient::test_get_ignores_timeouts
     "The code blew up and your test looked the other way! EYES FRONT!"
-    Found: `TestClient::test_get_ignores_timeouts` catches `TimeoutError` on line 15 and neither asserts on it nor raises it again.
+    Found: `TestClient::test_get_ignores_timeouts` catches `TimeoutError` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `TestClient::test_get_ignores_timeouts`, remove the `try` that catches `TimeoutError` on line 15 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
   suite/swallowed-exception/test_bad_nested_places.py:23: DS702 swallowed-exception [fail] in test_fetch_ignores_connection_errors
     "`except: pass` isn't a test, maggot, it's a cover-up!"
-    Found: `test_fetch_ignores_connection_errors` catches `ConnectionError` on line 23 and neither asserts on it nor raises it again.
+    Found: `test_fetch_ignores_connection_errors` catches `ConnectionError` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_fetch_ignores_connection_errors`, remove the `try` that catches `ConnectionError` on line 23 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
   suite/swallowed-exception/test_bad_nested_places.py:32: DS702 swallowed-exception [fail] in test_nested_try_inner_swallowed
     "`except: pass` isn't a test, maggot, it's a cover-up!"
-    Found: `test_nested_try_inner_swallowed` catches `ValueError` on line 32 and neither asserts on it nor raises it again.
+    Found: `test_nested_try_inner_swallowed` catches `ValueError` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_nested_try_inner_swallowed`, remove the `try` that catches `ValueError` on line 32 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
   suite/swallowed-exception/test_bad_nested_places.py:44: DS702 swallowed-exception [fail] in test_exception_group_swallowed
     "You caught the failure and HID it, recruit? That's desertion!"
-    Found: `test_exception_group_swallowed` catches `ConnectionError` on line 44 and neither asserts on it nor raises it again.
+    Found: `test_exception_group_swallowed` catches `ConnectionError` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_exception_group_swallowed`, remove the `try` that catches `ConnectionError` on line 44 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
 
-42 findings: 42 fail, 0 warn. Fix them, recruit. DISMISSED!
+51 findings: 51 fail, 0 warn. Fix them, recruit. DISMISSED!
