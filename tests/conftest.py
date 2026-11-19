@@ -58,25 +58,24 @@ def drill(pytester, monkeypatch):
 
 
 @pytest.fixture
-def lazy_test(pytester):
-    """A test file in `pytester`'s temp dir, `test_lazy.py`, holding one passing test
-    with no real assertion (DS101 on line 1)."""
-    return pytester.makepyfile(test_lazy="def test_lazy():\n    print('hi')\n")
+def lazy_file(pytester):
+    """Write a test file at a path in `pytester`'s temp dir holding one passing test
+    with no real assertion per name given (one DS101 each, the first on line 1)."""
+
+    def write(path: str, *names: str):
+        file = pytester.path / path
+        file.parent.mkdir(parents=True, exist_ok=True)
+        file.write_text("".join(f"def {name}():\n    print('hi')\n" for name in names))
+        return file
+
+    return write
 
 
 @pytest.fixture
-def lazy_tests(pytester):
-    """Write `test_many.py` in `pytester`'s temp dir holding `count` passing tests with
-    no real assertion (one DS101 each)."""
-
-    def write(count: int):
-        return pytester.makepyfile(
-            test_many="".join(
-                f"def test_{n}():\n    print('hi')\n" for n in range(count)
-            )
-        )
-
-    return write
+def lazy_test(lazy_file):
+    """A test file in `pytester`'s temp dir, `test_lazy.py`, holding one passing test
+    with no real assertion (DS101 on line 1)."""
+    return lazy_file("test_lazy.py", "test_lazy")
 
 
 @pytest.fixture

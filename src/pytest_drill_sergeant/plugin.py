@@ -2,16 +2,16 @@
 
 Installing the package turns it on; `-p no:drill_sergeant` or
 `drill_sergeant_mode = off` turns it off. After collection it analyses the files that
-contributed collected tests, once, on the xdist controller only; the tests then run as
-always. The findings section after the test results shows them, and a run
-whose tests pass exits 1 when any finding is at the `fail` level.
+contributed collected test functions, once, on the xdist controller only; the tests
+then run as always. The findings section after the test results shows them, and a
+run whose tests ran and passed exits 1 when any finding is at the `fail` level.
 """
 
 from pathlib import Path
 
 import pytest
 
-from pytest_drill_sergeant.config import OPTIONS, Config, ConfigError, resolve
+from pytest_drill_sergeant.config import OPTIONS, Config, resolve
 from pytest_drill_sergeant.engine import analyze
 from pytest_drill_sergeant.findings import Finding, Level
 from pytest_drill_sergeant.render import render
@@ -28,7 +28,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         )
 
 
-def _config(config: pytest.Config) -> Config:
+def _require_config(config: pytest.Config) -> Config:
     """The resolved drill-sergeant config.
 
     Raises:
@@ -38,18 +38,46 @@ def _config(config: pytest.Config) -> Config:
         raw = {option.name: config.getini(option.name) for option in OPTIONS}
         root = config.inipath.parent if config.inipath else config.rootpath
         return resolve(raw, root=root)
-    except (ConfigError, ValueError, TypeError) as error:
+    # pytest's own parsing of an int or bool ini value raises these; `ConfigError`
+    # is a `ValueError`.
+    except (ValueError, TypeError) as error:
         raise pytest.UsageError(f"drill-sergeant: {error}") from None
 
 
 def pytest_configure(config: pytest.Config) -> None:
     """Resolve the config and, unless the mode is `off`, start the run.
 
-    An xdist worker only runs tests, so it starts no run; the controller analyses.
+    An xdist worker only runs tests and tells the controller which files it collected
+    them from; the controller analyses.
     """
-    resolved = _config(config)
-    if resolved.mode is not Level.OFF and not hasattr(config, "workerinput"):
+    resolved = _require_config(config)
+    if resolved.mode is Level.OFF:
+        return
+    if hasattr(config, "workerinput"):
+        config.pluginmanager.register(_Worker(config), _RUN)
+    else:
         config.pluginmanager.register(_Run(config, resolved), _RUN)
+
+
+# The key under which an xdist worker sends the controller its collected files.
+_FILES = "drill_sergeant_files"
+
+
+def _collected_files(session: pytest.Session) -> set[Path]:
+    """The files that contributed collected tests: test functions, not doctests."""
+    return {item.path for item in session.items if isinstance(item, pytest.Function)}
+
+
+class _Worker:
+    """An xdist worker's part: report the files it collected tests from."""
+
+    def __init__(self, config: pytest.Config) -> None:
+        self.config = config
+
+    def pytest_collection_finish(self, session: pytest.Session) -> None:
+        """Hand the collected files to the controller."""
+        output = self.config.workeroutput  # type: ignore[attr-defined]  # set by xdist
+        output[_FILES] = sorted(str(path) for path in _collected_files(session))
 
 
 class _Run:
@@ -71,21 +99,17 @@ class _Run:
 
     def pytest_collection_finish(self, session: pytest.Session) -> None:
         """Analyse the files that contributed collected tests."""
-        self._analyze(
-            {item.path for item in session.items if item.path.suffix == ".py"}
-        )
+        self._analyze(_collected_files(session))
 
     @pytest.hookimpl(optionalhook=True)
-    def pytest_xdist_node_collection_finished(self, ids: list[str]) -> None:
-        """Analyse the files an xdist worker collected tests from (controller only)."""
-        root = self.config.rootpath
-        self._analyze(
-            {
-                (root / file).resolve()
-                for file in (node_id.split("::")[0] for node_id in ids)
-                if file.endswith(".py")
-            }
-        )
+    def pytest_testnodedown(self, node: object) -> None:
+        """Analyse the files the first xdist worker to finish collected tests from.
+
+        Every worker collects the same tests, so one worker's files are the run's.
+        """
+        files = getattr(node, "workeroutput", {}).get(_FILES)
+        if files is not None:
+            self._analyze({Path(file) for file in files})
 
     def pytest_terminal_summary(
         self, terminalreporter: pytest.TerminalReporter
@@ -103,8 +127,10 @@ class _Run:
         )
 
     def pytest_sessionfinish(self, session: pytest.Session) -> None:
-        """Fail a passing run when any finding is at the `fail` level."""
-        if session.exitstatus == pytest.ExitCode.OK and any(
-            f.level is Level.FAIL for f in self.findings or ()
+        """Fail a run whose tests ran and passed when a finding is at `fail` level."""
+        if (
+            session.exitstatus == pytest.ExitCode.OK
+            and not self.config.option.collectonly
+            and any(f.level is Level.FAIL for f in self.findings or ())
         ):
             session.exitstatus = pytest.ExitCode.TESTS_FAILED

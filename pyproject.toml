@@ -127,6 +127,8 @@ min_confidence = 80
 [tool.coverage.run]
 source = ["src/pytest_drill_sergeant"]
 branch = true
+# The pytest11 entry point imports the plugin before pytest-cov starts measuring;
+# measuring subprocesses from their start counts that code in the xdist workers.
 patch = ["subprocess"]
 
 [tool.coverage.report]
