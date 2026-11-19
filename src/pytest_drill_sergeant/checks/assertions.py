@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
-from pytest_drill_sergeant.checks.structure import _is_real_assertion
+from pytest_drill_sergeant.checks.structure import _is_always_true, _is_real_assertion
 from pytest_drill_sergeant.findings import Level
 
 # Comparisons that hold whenever both sides are the same value.
@@ -21,6 +21,9 @@ _TRUE_ON_IDENTITY = (ast.Eq, ast.Is, ast.LtE, ast.GtE)
 
 # Builtins whose result is only a truthiness or type fact about their argument.
 _WEAK_CALLS = frozenset({"bool", "isinstance", "hasattr", "callable"})
+
+# Name prefixes of functions that answer a yes-or-no question exactly.
+_PREDICATE_PREFIXES = ("is_", "has_", "can_", "should_")
 
 # Node types a literal is built from: values, containers and operators, no names.
 _LITERAL_NODES = (
@@ -90,6 +93,21 @@ def _is_constant(node: ast.AST, *values: object) -> bool:
         and type(node.value) is not bool
         and node.value in values
     )
+
+
+def _is_predicate_call(node: ast.AST) -> bool:
+    """Whether the expression calls a predicate (`is_valid(...)`), an exact check."""
+    if not isinstance(node, ast.Call):
+        return False
+    func = node.func
+    name = func.attr if isinstance(func, ast.Attribute) else ""
+    if isinstance(func, ast.Name):
+        name = func.id
+    return name.startswith(_PREDICATE_PREFIXES)
+
+
+def _is_constant_none(node: ast.AST) -> bool:
+    return isinstance(node, ast.Constant) and node.value is None
 
 
 def _calls_a_class(node: ast.AST) -> bool:
@@ -312,20 +330,17 @@ def _weak_subjects(test: ast.expr) -> list[ast.expr] | None:
     return [subject] if weak else None
 
 
-def _is_constant_none(node: ast.AST) -> bool:
-    return isinstance(node, ast.Constant) and node.value is None
+def _other_statements(test: TestFunction, known: list[ast.stmt]) -> list[ast.stmt]:
+    """The test's statements, at any depth, other than `known` ones.
 
-
-def _calls_outside(test: TestFunction, nodes: list[ast.AST]) -> list[ast.Call]:
-    """The test's calls that are not inside any of `nodes`."""
-    inside = {
-        id(n) for node in nodes for n in ast.walk(node) if isinstance(n, ast.Call)
-    }
+    Any of them might change what the code under test returns: a call, an
+    attribute set, an augmented assignment.
+    """
     return [
         node
         for statement in test.node.body
         for node in ast.walk(statement)
-        if isinstance(node, ast.Call) and id(node) not in inside
+        if isinstance(node, ast.stmt) and not any(node is k for k in known)
     ]
 
 
@@ -345,23 +360,25 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
         for node in ast.walk(statement)
         if isinstance(node, ast.Assert)
     ]
-    other_calls = _calls_outside(test, [*asserts, *bindings.values()])
+    others = _other_statements(test, [*asserts, *bindings.values()])
     for node in sorted(asserts, key=lambda n: (n.lineno, n.col_offset)):
         test_expr = node.test
         if isinstance(test_expr, ast.Constant) or (
             isinstance(test_expr, ast.Tuple) and test_expr.elts
         ):
-            verdicts.append(_Verdict(node, _Kind.IGNORED))
+            # `assert False` fails the test on purpose, as `pytest.fail` does.
+            kind = _Kind.IGNORED if _is_always_true(test_expr) else _Kind.STRONG
+            verdicts.append(_Verdict(node, kind))
             continue
-        # A value the code returned stands in for its name only if nothing else
-        # was called between the binding and this assert to change what it returns.
+        # A value read from the code stands in for its name only if nothing else
+        # ran between the binding and this assert to change what it reads.
         settled = {
             name: value
             for name, value in values.items()
-            if not _has_call(value)
+            if name in aliases
             or not any(
-                (bindings[name].end_lineno or 0) < call.lineno < node.lineno
-                for call in other_calls
+                (bindings[name].end_lineno or 0) < other.lineno < node.lineno
+                for other in others
             )
         }
         resolved = _resolve(test_expr, settled)
@@ -374,7 +391,7 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
             verdicts.append(_Verdict(node, _Kind.MIRROR, call))
             continue
         subjects = _weak_subjects(test_expr)
-        if subjects is not None:
+        if subjects is not None and not _is_predicate_call(resolved):
             names = tuple(f"`{ast.unparse(s)}`" for s in subjects)
             verdicts.append(_Verdict(node, _Kind.WEAK, subjects=names))
             continue
@@ -487,7 +504,9 @@ WEAK_ASSERTION = Check(
         "`bool(x) is True`), `is not None`, `isinstance`, `hasattr`, `callable`, "
         "`>= 0`, or a length that is merely non-zero (`len(x) > 0`). A test with one "
         "exact assertion beside them, or with `pytest.raises` or a mock verification, "
-        "is fine. Assert the exact value the code should produce."
+        "is fine. Membership (`x in y`), `> 0` on anything but a length, and the "
+        "result of a predicate (`ok = is_valid(...)`; `assert ok`) are left alone. "
+        "Assert the exact value the code should produce."
     ),
     bad_example=(
         "def test_apply_discount():\n"

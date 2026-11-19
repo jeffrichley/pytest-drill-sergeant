@@ -31,3 +31,8 @@ def test_positive_total():
 
 def test_more_than_two_lines():
     assert len(make_order(lines=[1, 2, 3]).lines) > 2
+
+
+def test_predicate_result_through_a_name():
+    ok = validate.is_valid(make_order(lines=[1]))
+    assert ok
