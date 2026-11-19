@@ -1,5 +1,8 @@
-"""Near-misses: between assertions there is only cleanup, an expected exception or
-a helper definition, never a second act. Analysed, never run."""
+"""Near-misses: between assertions there is only an expected exception, a helper
+definition, output, or one of pytest's own fixtures taken as a parameter, never a
+second act. Analysed, never run."""
+
+import logging
 
 import pytest
 
@@ -12,11 +15,14 @@ def test_withdraw(account):
     assert account.balance == 5
 
 
-def test_mock_reset_between_checks(notifier, sender):
-    notifier.notify("hi")
-    sender.send.assert_called_once_with("hi")
-    sender.reset_mock()
-    assert sender.send.call_count == 0
+def test_fixtures_and_output_between_checks(capsys, monkeypatch, greeter):
+    greeter.greet("Ada")
+    assert capsys.readouterr().out == "hi Ada\n"
+    capsys.readouterr()
+    monkeypatch.setenv("LANG", "C")
+    logging.info("greeted")
+    print("checked")
+    assert greeter.greeted == ["Ada"]
 
 
 def test_helper_defined_between(store):

@@ -50,6 +50,15 @@ def test_cleanup_swallows_every_error(tmp_path):
     assert not path.exists()
 
 
+def test_method_named_like_cleanup_swallows_an_error(tmp_path):
+    path = tmp_path / "missing"
+    try:
+        path.unlink()
+    except FileNotFoundError:  # expect: DS702
+        pass
+    assert not path.exists()
+
+
 def test_act_swallows_a_specific_error(tmp_path):
     try:
         fetch("http://example.com")

@@ -1,5 +1,5 @@
-"""Near-misses: cleanup that tolerates the one specific error it can meet, such as a
-file already gone. Analysed, never run."""
+"""Near-misses: cleanup, known from the imports, that tolerates the one specific error
+it can meet, such as a file already gone. Analysed, never run."""
 
 import os
 import shutil
@@ -12,7 +12,7 @@ def save(path, text):
 def test_cleanup_tolerates_a_missing_file(tmp_path):
     path = tmp_path / "missing"
     try:
-        path.unlink()
+        os.unlink(path)
     except FileNotFoundError:
         pass
     assert not path.exists()

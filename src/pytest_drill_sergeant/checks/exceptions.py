@@ -263,9 +263,10 @@ def _tolerates_cleanup(
 ) -> bool:
     """Whether the `try` is cleanup that tolerates one specific error.
 
-    Its body only cleans up (`path.unlink()`, `os.remove(...)`), and the handler
-    names a specific type, not `Exception` or `BaseException`, and only passes:
-    `try: path.unlink()` / `except FileNotFoundError: pass`.
+    Its body only makes calls known to clean up (`os.remove(...)`, through the
+    imports), and the handler names a specific type, not `Exception` or
+    `BaseException`, and only passes: `try: os.remove(p)` /
+    `except FileNotFoundError: pass`.
     """
     return (
         handler.type is not None
@@ -331,9 +332,11 @@ SWALLOWED_EXCEPTION = Check(
         "the test when nothing is raised expects the exception and is not flagged: "
         "its `else`, or the statement right after it, is `pytest.fail`, `raise` or "
         "`assert False`, or its body ends in one that no handler catches. Nor is "
-        "cleanup that tolerates one specific error: a `try` whose body only cleans "
-        "up (`path.unlink()`, `os.remove(...)`) with a handler that names a type "
-        "other than `Exception` or `BaseException` and only passes. Let "
+        "cleanup that tolerates one specific error: a `try` whose body only calls "
+        "`os.remove()`, `os.unlink()` or `shutil.rmtree()` (through the imports; a "
+        "method named like cleanup, such as `path.unlink()`, doesn't count) with a "
+        "handler that names a type other than `Exception` or `BaseException` and "
+        "only passes. Let "
         "exceptions propagate, and use `pytest.raises(..., match=...)` when raising "
         "is the expected behaviour."
     ),

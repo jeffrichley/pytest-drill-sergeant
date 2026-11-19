@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 186 findings in 47 files. FALL IN!
+DRILL SERGEANT INSPECTION: 194 findings in 49 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -28,6 +28,33 @@ suite/assert-before-act/test_bad_inside_a_patch.py
     Found: `test_retry` runs `fetcher.fetch('/a')` on line 16 after its last assertion (line 15), so nothing checks what it did.
     Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
     Fix: In `test_retry`, line 16: assert on what the act on line 16 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+
+suite/assert-before-act/test_bad_named_like_cleanup.py
+  suite/assert-before-act/test_bad_named_like_cleanup.py:9: DS103 assert-before-act [fail] in test_server_answers
+    "You checked the ground, then fired blind! Assert AFTER you act, recruit!"
+    Found: `test_server_answers` runs `server.stop()` on line 9 after its last assertion (line 8), so nothing checks what it did.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
+    Fix: In `test_server_answers`, line 9: assert on what the act on line 9 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+  suite/assert-before-act/test_bad_named_like_cleanup.py:15: DS103 assert-before-act [fail] in test_notifier_reset_after
+    "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
+    Found: `test_notifier_reset_after` runs `sender.reset_mock()` on line 15 after its last assertion (line 14), so nothing checks what it did.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
+    Fix: In `test_notifier_reset_after`, line 15: assert on what the act on line 15 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+  suite/assert-before-act/test_bad_named_like_cleanup.py:21: DS103 assert-before-act [fail] in test_logger_fixture_called_after
+    "You checked the ground, then fired blind! Assert AFTER you act, recruit!"
+    Found: `test_logger_fixture_called_after` runs `logger.info('written')` on line 21 after its last assertion (line 20), so nothing checks what it did.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
+    Fix: In `test_logger_fixture_called_after`, line 21: assert on what the act on line 21 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+  suite/assert-before-act/test_bad_named_like_cleanup.py:28: DS103 assert-before-act [fail] in test_recorder_named_like_a_fixture
+    "You checked the ground, then fired blind! Assert AFTER you act, recruit!"
+    Found: `test_recorder_named_like_a_fixture` runs `caplog.clear()` on line 28 after its last assertion (line 27), so nothing checks what it did.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
+    Fix: In `test_recorder_named_like_a_fixture`, line 28: assert on what the act on line 28 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+  suite/assert-before-act/test_bad_named_like_cleanup.py:35: DS103 assert-before-act [fail] in TestJob::test_job_logs
+    "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
+    Found: `TestJob::test_job_logs` runs `self.log.info('ran')` on line 35 after its last assertion (line 34), so nothing checks what it did.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
+    Fix: In `TestJob::test_job_logs`, line 35: assert on what the act on line 35 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
 
 suite/assert-before-act/test_bad_precondition_only.py
   suite/assert-before-act/test_bad_precondition_only.py:16: DS103 assert-before-act [fail] in test_add_item
@@ -216,6 +243,18 @@ suite/interleaved-act-assert/test_bad_blocks.py
     Found: `test_queue` acts and asserts 2 times: after the assertions on the act at line 16, the `for` block on line 18 acts again.
     Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
     Fix: In `test_queue`, line 18: split the test into one test per act (lines 16, 18), each named for its behaviour, with any shared setup in a fixture.
+
+suite/interleaved-act-assert/test_bad_named_like_a_reset.py
+  suite/interleaved-act-assert/test_bad_named_like_a_reset.py:8: DS104 interleaved-act-assert [fail] in test_mock_reset_between_checks
+    "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
+    Found: `test_mock_reset_between_checks` acts and asserts 2 times: after the assertions on the act at line 6, `sender.reset_mock()` on line 8 acts again.
+    Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
+    Fix: In `test_mock_reset_between_checks`, line 8: split the test into one test per act (lines 6, 8), each named for its behaviour, with any shared setup in a fixture.
+  suite/interleaved-act-assert/test_bad_named_like_a_reset.py:15: DS104 interleaved-act-assert [fail] in test_closed_between_checks
+    "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
+    Found: `test_closed_between_checks` acts and asserts 2 times: after the assertions on the act at line 13, `conn.close()` on line 15 acts again.
+    Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
+    Fix: In `test_closed_between_checks`, line 15: split the test into one test per act (lines 13, 15), each named for its behaviour, with any shared setup in a fixture.
 
 suite/interleaved-act-assert/test_bad_two_behaviours.py
   suite/interleaved-act-assert/test_bad_two_behaviours.py:10: DS104 interleaved-act-assert [fail] in test_cart
@@ -769,11 +808,16 @@ suite/swallowed-exception/test_bad_nested_places.py
     Found: `test_cleanup_swallows_every_error` catches `Exception` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_cleanup_swallows_every_error`, line 48: remove the `try` that catches `Exception` and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
-  suite/swallowed-exception/test_bad_nested_places.py:56: DS702 swallowed-exception [fail] in test_act_swallows_a_specific_error
+  suite/swallowed-exception/test_bad_nested_places.py:57: DS702 swallowed-exception [fail] in test_method_named_like_cleanup_swallows_an_error
+    "The code blew up and your test looked the other way! EYES FRONT!"
+    Found: `test_method_named_like_cleanup_swallows_an_error` catches `FileNotFoundError` in a handler with no real assertion and no `raise`, so the error is lost.
+    Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
+    Fix: In `test_method_named_like_cleanup_swallows_an_error`, line 57: remove the `try` that catches `FileNotFoundError` and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_nested_places.py:65: DS702 swallowed-exception [fail] in test_act_swallows_a_specific_error
     "`except: pass` isn't a test, maggot, it's a cover-up!"
     Found: `test_act_swallows_a_specific_error` catches `ConnectionError` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
-    Fix: In `test_act_swallows_a_specific_error`, line 56: remove the `try` that catches `ConnectionError` and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
+    Fix: In `test_act_swallows_a_specific_error`, line 65: remove the `try` that catches `ConnectionError` and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
 
 suite/tautological-assertion/test_bad_multiplied_away.py
   suite/tautological-assertion/test_bad_multiplied_away.py:8: DS202 tautological-assertion [fail] in test_price_of_846
@@ -1024,4 +1068,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `test_async_import`, line 30: replace the weak assertions on line 30 with exact checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-186 findings: 186 fail, 0 warn. Fix them, recruit. DISMISSED!
+194 findings: 194 fail, 0 warn. Fix them, recruit. DISMISSED!

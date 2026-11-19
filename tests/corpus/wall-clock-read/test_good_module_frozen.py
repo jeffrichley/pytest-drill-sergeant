@@ -19,5 +19,7 @@ def test_invoice_dated_under_a_module_freeze():
 def test_invoice_dated_under_a_started_freezer():
     freezer = freeze_time("2026-01-01")
     freezer.start()
-    assert Invoice.issue().date == date.today()
-    freezer.stop()
+    try:
+        assert Invoice.issue().date == date.today()
+    finally:
+        freezer.stop()

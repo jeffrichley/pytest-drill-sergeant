@@ -1,8 +1,14 @@
 """The syntax questions every check family asks, answered once.
 
 What a call is named, what a name stands for through the file's imports, which
-parameters bring a test its values, which nodes are a test's own code, and what a
-real assertion and what cleanup is.
+parameters bring a test its values, which nodes are a test's own code, what a real
+assertion is, and what a call is known to be: cleanup, output or a pytest
+instrument.
+
+Known means from what the file says: a name resolved through its imports, a
+top-level assignment traced to its call, or a pytest built-in fixture the test takes
+as a parameter. Never from what a variable or method is called: `logger`, `close`
+or `expected` is the author's word, not the code's.
 """
 
 import ast
@@ -21,38 +27,27 @@ PYTEST_RAISES = frozenset({"pytest.raises"})
 FIXTURE_DECORATORS = frozenset({"pytest.fixture", "pytest_asyncio.fixture"})
 
 
-# Methods called for cleanup, reset or output, never the act under test.
-_NOT_AN_ACT = frozenset(
+# pytest's built-in fixtures that are the test's own instruments: a call on one,
+# taken as a test parameter, readies or reads the instrument, never acts.
+_PYTEST_INSTRUMENTS = frozenset(
     {
-        "cleanup",
-        "close",
-        "disconnect",
-        "print",
-        "reset_mock",
-        "rmtree",
-        "shutdown",
-        "stop",
-        "teardown",
-        "unlink",
-    }
-)
-
-# pytest's capture fixtures' resets and setup, as (fixture, method): they ready the
-# fixture for the next act rather than act themselves.
-_FIXTURE_RESETS = frozenset(
-    {
-        ("caplog", "clear"),
-        ("caplog", "set_level"),
-        ("recwarn", "clear"),
-        ("capsys", "readouterr"),
-        ("capfd", "readouterr"),
+        "caplog",
+        "capsys",
+        "capfd",
+        "capsysbinary",
+        "capfdbinary",
+        "recwarn",
+        "monkeypatch",
     }
 )
 
 # Functions that clean up files, named in full.
 _CLEANUP_FUNCTIONS = frozenset({"os.remove", "os.unlink", "shutil.rmtree"})
 
-# A logger's methods: output, never the act under test.
+# What `logging.getLogger(...)` returns, as a name it is known by.
+_LOGGER = "logging.Logger"
+
+# A logger's methods, on `logging` itself or on a logger: output, never an act.
 _LOG_METHODS = frozenset(
     {"debug", "info", "warning", "error", "exception", "critical", "log"}
 )
@@ -103,6 +98,18 @@ def _bound_names(statement: ast.stmt) -> Iterator[str]:
                 yield node.id
 
 
+def _logger_bound_by(statement: ast.stmt, names: Mapping[str, str]) -> str | None:
+    """The name a `name = logging.getLogger(...)` statement binds, if it is one."""
+    if (
+        isinstance(statement, ast.Assign)
+        and len(statement.targets) == 1
+        and isinstance(statement.targets[0], ast.Name)
+        and _known_as(statement.value, names) == _LOGGER
+    ):
+        return statement.targets[0].id
+    return None
+
+
 def module_imports(module: ast.Module) -> dict[str, str]:
     """The names a module binds by import at its top level, minus any it rebinds.
 
@@ -110,7 +117,9 @@ def module_imports(module: ast.Module) -> dict[str, str]:
     as pt`, `raises` to `pytest.raises` after `from pytest import raises`. Imports
     under a top-level `if` or `try` count, and a fallback there (`np = None` after
     `except ImportError`) doesn't undo them; a later top-level `def`, `class` or
-    assignment of the same name wins, as it does at run time.
+    assignment of the same name wins, as it does at run time. A top-level
+    `log = logging.getLogger(...)` binds `log` to `logging.Logger`, what the call
+    returns.
     """
     names: dict[str, str] = {}
     for statement in module.body:
@@ -120,6 +129,8 @@ def module_imports(module: ast.Module) -> dict[str, str]:
                     _bind_imports(node, names)
         elif isinstance(statement, ast.Import | ast.ImportFrom):
             _bind_imports(statement, names)
+        elif (logger := _logger_bound_by(statement, names)) is not None:
+            names[logger] = _LOGGER
         else:
             for bound in _bound_names(statement):
                 names.pop(bound, None)
@@ -241,34 +252,67 @@ def excinfo_names(test: TestFunction) -> set[str]:
     }
 
 
-def _is_logging(call: ast.Call, names: Mapping[str, str]) -> bool:
-    """Whether a call logs.
+def _known_as(expr: ast.expr, names: Mapping[str, str]) -> str | None:
+    """What an expression is known to be, named in full, or `None`.
 
-    That is a logger method on `logging`, `logging.getLogger(...)`,
-    or a name with `log` in it (`log`, `logger`, `self.log`).
+    A name or attribute is what the imports make it (`qualified`); a call to
+    `logging.getLogger` is `logging.Logger`, what it returns.
     """
+    if isinstance(expr, ast.Call):
+        return _LOGGER if qualified(expr.func, names) == "logging.getLogger" else None
+    return qualified(expr, names)
+
+
+def _logs(call: ast.Call, names: Mapping[str, str]) -> bool:
+    """Whether a call is a logger method on `logging` or on a known logger."""
     func = call.func
-    if not (isinstance(func, ast.Attribute) and func.attr in _LOG_METHODS):
-        return False
-    receiver = func.value
-    if isinstance(receiver, ast.Call):
-        receiver = receiver.func
-    full = qualified(receiver, names) or ""
-    written = receiver.attr if isinstance(receiver, ast.Attribute) else ""
-    if isinstance(receiver, ast.Name):
-        written = receiver.id
-    return full.startswith("logging") or "log" in written.lower()
+    return (
+        isinstance(func, ast.Attribute)
+        and func.attr in _LOG_METHODS
+        and _known_as(func.value, names) in {"logging", _LOGGER}
+    )
+
+
+def _prints(call: ast.Call, names: Mapping[str, str]) -> bool:
+    """Whether a call is the builtin `print`, which no import rebinds."""
+    return (
+        isinstance(call.func, ast.Name)
+        and call.func.id == "print"
+        and "print" not in names
+    )
+
+
+def _uses_a_pytest_instrument(call: ast.Call, test: TestFunction) -> bool:
+    """Whether a call is a method of a pytest built-in fixture the test takes."""
+    receiver = call.func.value if isinstance(call.func, ast.Attribute) else None
+    return (
+        isinstance(receiver, ast.Name)
+        and receiver.id in _PYTEST_INSTRUMENTS
+        and receiver.id in value_params(test.node)
+    )
+
+
+def is_known_non_act(call: ast.Call, test: TestFunction) -> bool:
+    """Whether a call is known to be output or a pytest instrument, never an act.
+
+    Known means from what the file says, never from what a name suggests: a call
+    resolved through the imports (`logging.info`, the builtin `print`), a logger
+    traced to a top-level `logging.getLogger(...)`, or a method of a pytest built-in
+    fixture the test takes as a parameter (`caplog.clear()`, `capsys.readouterr()`).
+    A name such as `logger`, or a method such as `close`, is the author's word, not
+    the code's, so it counts for nothing.
+    """
+    return (
+        _logs(call, test.imports)
+        or _prints(call, test.imports)
+        or _uses_a_pytest_instrument(call, test)
+    )
 
 
 def is_cleanup(call: ast.Call, names: Mapping[str, str]) -> bool:
-    """Whether a call cleans up, resets or reports rather than acting."""
-    return (
-        call_name(call) in _NOT_AN_ACT
-        or (
-            isinstance(call.func, ast.Attribute)
-            and isinstance(call.func.value, ast.Name)
-            and (call.func.value.id, call.func.attr) in _FIXTURE_RESETS
-        )
-        or qualified(call.func, names) in _CLEANUP_FUNCTIONS
-        or _is_logging(call, names)
-    )
+    """Whether a call is known to clean up files.
+
+    That is `os.remove`, `os.unlink` or `shutil.rmtree`, resolved through the
+    imports, never guessed from a name.
+    """
+    return qualified(call.func, names) in _CLEANUP_FUNCTIONS

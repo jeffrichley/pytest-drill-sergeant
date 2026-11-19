@@ -8,6 +8,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
     calls_to,
     excinfo_names,
     is_cleanup,
+    is_known_non_act,
     is_real_assertion,
     value_params,
     walk_test,
@@ -210,6 +211,7 @@ class _Order:
     """What reading a test's statements in order needs to know about the test."""
 
     def __init__(self, test: TestFunction) -> None:
+        self.test = test
         self.names = test.imports
         self.excinfos = excinfo_names(test)
 
@@ -232,9 +234,9 @@ class _Order:
     def acts(self, node: ast.AST) -> bool:
         """Whether a statement is a call made for its effect: the act under test.
 
-        That is a bare call or awaited call that isn't an assertion, cleanup, a
-        reset or output. An assignment from a call is setup or reads a result, so
-        it isn't one.
+        That is a bare call or awaited call that isn't an assertion, cleanup, or
+        known output or pytest instrument (`ast_tools.is_known_non_act`). An
+        assignment from a call is setup or reads a result, so it isn't one.
         """
         if not isinstance(node, ast.Expr):
             return False
@@ -243,6 +245,7 @@ class _Order:
             isinstance(value, ast.Call)
             and not self.asserts(value)
             and not is_cleanup(value, self.names)
+            and not is_known_non_act(value, self.test)
         )
 
     def classify(self, statement: ast.stmt) -> _Step:
@@ -334,13 +337,16 @@ ASSERT_BEFORE_ACT = Check(
     ),
     explain=(
         "Flags a test whose act runs after its last assertion: a bare call or "
-        "`await` made for its effect (not cleanup such as `close()`, `stop()`, "
-        "`os.remove()` or `shutil.rmtree()`, not a capture fixture's reset such as "
-        "`caplog.clear()`, not output such as `print()` or a logger call, and not "
-        "`.match()` on what `pytest.raises` caught, which asserts), with no "
-        "assertion following it. A guard "
-        "assertion on the starting state is fine when the outcome is also asserted "
-        "after the act. Move the assertion after the act, or add one there."
+        "`await` made for its effect, with no assertion following it. Not an act: "
+        "`os.remove()`, `os.unlink()` or `shutil.rmtree()` through the imports; "
+        "output known from the code (the builtin `print()`, `logging` or a logger "
+        "from `logging.getLogger()`); a method of a pytest built-in fixture the test "
+        "takes (`caplog.clear()`, `capsys.readouterr()`, `monkeypatch.setenv()`); "
+        "and `.match()` on what `pytest.raises` caught, which asserts. A name never "
+        "counts: `logger.info()` or `server.stop()` on a value whose kind the file "
+        "doesn't show is an act. A guard assertion on the starting state is fine "
+        "when the outcome is also asserted after the act. Move the assertion after "
+        "the act, or add one there."
     ),
     bad_example=(
         "def test_add_item():\n"
@@ -413,11 +419,14 @@ INTERLEAVED_ACT_ASSERT = Check(
     ),
     explain=(
         "Flags a test that acts, asserts, then acts and asserts again. An act is a "
-        "bare call or `await` made for its effect (not cleanup such as `close()`, "
-        "`reset_mock()` or `os.remove()`, a capture fixture's reset such as "
-        "`caplog.clear()`, or output such as a logger call); an assignment that reads a result between assertions "
-        "isn't one, and a guard assertion before the only act is fine. Split the "
-        "test into one test per act, with shared setup in a fixture."
+        "bare call or `await` made for its effect, counted as DS103 counts it: "
+        "`os.remove()` through the imports, known output such as `logging.info()`, "
+        "or a method of a pytest built-in fixture the test takes such as "
+        "`caplog.clear()` is not one, and a name such as `reset_mock()` or "
+        "`close()` never makes a call anything but an act. An assignment that reads "
+        "a result between assertions isn't one, and a guard assertion before the "
+        "only act is fine. Split the test into one test per act, with shared setup "
+        "in a fixture."
     ),
     bad_example=(
         "def test_cart(cart):\n"
