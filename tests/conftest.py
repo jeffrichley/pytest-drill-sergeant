@@ -15,6 +15,9 @@ os.environ["COLUMNS"] = "100"
 
 pytest_plugins = ["pytester"]
 
+# The corpus is analysed by the engine, never run.
+collect_ignore = ["corpus"]
+
 
 @pytest.fixture
 def cli(tmp_path, monkeypatch):
