@@ -29,7 +29,7 @@ def test_attributes_exist(name):  # expect: DS101
 def test_smoke_with_a_try():  # expect: DS101
     try:
         pytest_drill_sergeant.run()
-    except Exception:
+    except Exception:  # expect: DS702
         pass
 
 
