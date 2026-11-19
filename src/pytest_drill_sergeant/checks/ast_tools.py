@@ -15,6 +15,7 @@ from pytest_drill_sergeant.checks.base import FunctionNode, TestFunction
 _PYTEST_ASSERTING = frozenset(
     {"pytest.fail", "pytest.raises", "pytest.warns", "pytest.deprecated_call"}
 )
+PYTEST_RAISES = frozenset({"pytest.raises"})
 
 # The decorators that make a function a fixture, which pytest never collects.
 FIXTURE_DECORATORS = frozenset({"pytest.fixture", "pytest_asyncio.fixture"})
@@ -189,3 +190,15 @@ def is_real_assertion(node: ast.AST, names: Mapping[str, str]) -> bool:
         exc = node.exc.func if isinstance(node.exc, ast.Call) else node.exc
         return isinstance(exc, ast.Name) and exc.id == "AssertionError"
     return False
+
+
+def excinfo_names(test: TestFunction) -> set[str]:
+    """The names a test binds to what `pytest.raises` caught (`with ... as e`)."""
+    return {
+        item.optional_vars.id
+        for node in walk_test(test)
+        if isinstance(node, ast.With | ast.AsyncWith)
+        for item in node.items
+        if isinstance(item.optional_vars, ast.Name)
+        and calls_to(item.context_expr, PYTEST_RAISES, test.imports)
+    }

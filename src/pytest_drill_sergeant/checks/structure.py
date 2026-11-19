@@ -7,7 +7,9 @@ from enum import Enum
 from pytest_drill_sergeant.checks.ast_tools import (
     call_name,
     calls_to,
+    excinfo_names,
     is_real_assertion,
+    qualified,
     value_params,
     walk_test,
 )
@@ -194,7 +196,7 @@ class _Step(Enum):
     OTHER = "other"
 
 
-# Calls made for cleanup or output after the assertions, never the act under test.
+# Methods called for cleanup, reset or output, never the act under test.
 _NOT_AN_ACT = frozenset(
     {
         "cleanup",
@@ -210,6 +212,26 @@ _NOT_AN_ACT = frozenset(
     }
 )
 
+# pytest's capture fixtures' resets and setup, as (fixture, method): they ready the
+# fixture for the next act rather than act themselves.
+_FIXTURE_RESETS = frozenset(
+    {
+        ("caplog", "clear"),
+        ("caplog", "set_level"),
+        ("recwarn", "clear"),
+        ("capsys", "readouterr"),
+        ("capfd", "readouterr"),
+    }
+)
+
+# Functions that clean up files, named in full.
+_CLEANUP_FUNCTIONS = frozenset({"os.remove", "os.unlink", "shutil.rmtree"})
+
+# A logger's methods: output, never the act under test.
+_LOG_METHODS = frozenset(
+    {"debug", "info", "warning", "error", "exception", "critical", "log"}
+)
+
 _NESTED = ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef | ast.Lambda
 
 
@@ -221,52 +243,112 @@ def _walk_own(node: ast.AST) -> Iterator[ast.AST]:
             yield from _walk_own(child)
 
 
-def _is_act_statement(node: ast.AST, names: Mapping[str, str]) -> bool:
-    """Whether a statement is a call made for its effect: the act under test.
+def _is_logging(call: ast.Call, names: Mapping[str, str]) -> bool:
+    """Whether a call logs.
 
-    That is a bare call or awaited call that isn't an assertion, cleanup or output.
-    An assignment from a call is setup or reads a result, so it isn't one.
+    That is a logger method on `logging`, `logging.getLogger(...)`,
+    or a name with `log` in it (`log`, `logger`, `self.log`).
     """
-    if not isinstance(node, ast.Expr):
+    func = call.func
+    if not (isinstance(func, ast.Attribute) and func.attr in _LOG_METHODS):
         return False
-    value = node.value.value if isinstance(node.value, ast.Await) else node.value
-    if not isinstance(value, ast.Call) or is_real_assertion(value, names):
-        return False
-    return call_name(value) not in _NOT_AN_ACT
+    receiver = func.value
+    if isinstance(receiver, ast.Call):
+        receiver = receiver.func
+    full = qualified(receiver, names) or ""
+    written = receiver.attr if isinstance(receiver, ast.Attribute) else ""
+    if isinstance(receiver, ast.Name):
+        written = receiver.id
+    return full.startswith("logging") or "log" in written.lower()
 
 
-def _classify(statement: ast.stmt, names: Mapping[str, str]) -> _Step:
-    """Whether a statement asserts, acts, or does neither.
+def _is_cleanup(call: ast.Call, names: Mapping[str, str]) -> bool:
+    """Whether a call cleans up, resets or reports rather than acting."""
+    return (
+        call_name(call) in _NOT_AN_ACT
+        or (
+            isinstance(call.func, ast.Attribute)
+            and isinstance(call.func.value, ast.Name)
+            and (call.func.value.id, call.func.attr) in _FIXTURE_RESETS
+        )
+        or qualified(call.func, names) in _CLEANUP_FUNCTIONS
+        or _is_logging(call, names)
+    )
 
-    A statement that holds an assertion asserts, even if it also acts.
-    """
-    if isinstance(statement, _NESTED):
+
+class _Order:
+    """What reading a test's statements in order needs to know about the test."""
+
+    def __init__(self, test: TestFunction) -> None:
+        self.names = test.imports
+        self.excinfos = excinfo_names(test)
+
+    def asserts(self, node: ast.AST) -> bool:
+        """Whether a node asserts.
+
+        That is a real assertion, or `.match` on a `pytest.raises`
+        result, which checks the caught exception's message.
+        """
+        if is_real_assertion(node, self.names):
+            return True
+        return (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "match"
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id in self.excinfos
+        )
+
+    def acts(self, node: ast.AST) -> bool:
+        """Whether a statement is a call made for its effect: the act under test.
+
+        That is a bare call or awaited call that isn't an assertion, cleanup, a
+        reset or output. An assignment from a call is setup or reads a result, so
+        it isn't one.
+        """
+        if not isinstance(node, ast.Expr):
+            return False
+        value = node.value.value if isinstance(node.value, ast.Await) else node.value
+        return (
+            isinstance(value, ast.Call)
+            and not self.asserts(value)
+            and not _is_cleanup(value, self.names)
+        )
+
+    def classify(self, statement: ast.stmt) -> _Step:
+        """Whether a statement asserts, acts, or does neither.
+
+        A statement that holds an assertion asserts, even if it also acts.
+        """
+        if isinstance(statement, _NESTED):
+            return _Step.OTHER
+        nodes = list(_walk_own(statement))
+        if any(self.asserts(node) for node in nodes):
+            return _Step.ASSERT
+        if any(self.acts(node) for node in nodes):
+            return _Step.ACT
         return _Step.OTHER
-    nodes = list(_walk_own(statement))
-    if any(is_real_assertion(node, names) for node in nodes):
-        return _Step.ASSERT
-    if any(_is_act_statement(node, names) for node in nodes):
-        return _Step.ACT
-    return _Step.OTHER
+
+    def steps(self, body: list[ast.stmt]) -> list[tuple[ast.stmt, _Step]]:
+        """Statements in order, each with what it does.
+
+        A `with` block that isn't itself an assertion (a `mock.patch`, an open
+        file) is opened up, so the statements inside it count in order.
+        """
+        steps: list[tuple[ast.stmt, _Step]] = []
+        for statement in body:
+            if isinstance(statement, ast.With | ast.AsyncWith) and not any(
+                self.asserts(item.context_expr) for item in statement.items
+            ):
+                steps.extend(self.steps(statement.body))
+            else:
+                steps.append((statement, self.classify(statement)))
+        return steps
 
 
-def _steps(
-    body: list[ast.stmt], names: Mapping[str, str]
-) -> list[tuple[ast.stmt, _Step]]:
-    """A test's statements in order, each with what it does.
-
-    A `with` block that isn't itself an assertion (a `mock.patch`, an open file)
-    is opened up, so the statements inside it count in order.
-    """
-    steps: list[tuple[ast.stmt, _Step]] = []
-    for statement in body:
-        if isinstance(statement, ast.With | ast.AsyncWith) and not any(
-            is_real_assertion(item.context_expr, names) for item in statement.items
-        ):
-            steps.extend(_steps(statement.body, names))
-        else:
-            steps.append((statement, _classify(statement, names)))
-    return steps
+def _steps(test: TestFunction) -> list[tuple[ast.stmt, _Step]]:
+    """A test's statements in order, each with what it does."""
+    return _Order(test).steps(test.node.body)
 
 
 def _describe(statement: ast.stmt) -> str:
@@ -278,7 +360,7 @@ def _describe(statement: ast.stmt) -> str:
 
 def _find_assert_before_act(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        steps = _steps(test.node.body, test.imports)
+        steps = _steps(test)
         last = max(
             (i for i, (_, step) in enumerate(steps) if step is _Step.ASSERT),
             default=None,
@@ -322,8 +404,11 @@ ASSERT_BEFORE_ACT = Check(
     ),
     explain=(
         "Flags a test whose act runs after its last assertion: a bare call or "
-        "`await` made for its effect (not cleanup such as `close()` or `stop()`, and "
-        "not output such as `print()`), with no assertion following it. A guard "
+        "`await` made for its effect (not cleanup such as `close()`, `stop()`, "
+        "`os.remove()` or `shutil.rmtree()`, not a capture fixture's reset such as "
+        "`caplog.clear()`, not output such as `print()` or a logger call, and not "
+        "`.match()` on what `pytest.raises` caught, which asserts), with no "
+        "assertion following it. A guard "
         "assertion on the starting state is fine when the outcome is also asserted "
         "after the act. Move the assertion after the act, or add one there."
     ),
@@ -362,7 +447,7 @@ def _checked_acts(steps: list[tuple[ast.stmt, _Step]]) -> list[ast.stmt]:
 
 def _find_interleaved_act_assert(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        acts = _checked_acts(_steps(test.node.body, test.imports))
+        acts = _checked_acts(_steps(test))
         if len(acts) < 2:  # noqa: PLR2004 -- two acts are what interleaving means
             continue
         second = acts[1]
@@ -398,8 +483,9 @@ INTERLEAVED_ACT_ASSERT = Check(
     ),
     explain=(
         "Flags a test that acts, asserts, then acts and asserts again. An act is a "
-        "bare call or `await` made for its effect (not cleanup such as `close()` "
-        "or `reset_mock()`); an assignment that reads a result between assertions "
+        "bare call or `await` made for its effect (not cleanup such as `close()`, "
+        "`reset_mock()` or `os.remove()`, a capture fixture's reset such as "
+        "`caplog.clear()`, or output such as a logger call); an assignment that reads a result between assertions "
         "isn't one, and a guard assertion before the only act is fine. Split the "
         "test into one test per act, with shared setup in a fixture."
     ),

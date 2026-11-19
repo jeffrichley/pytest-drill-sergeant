@@ -12,3 +12,9 @@ def test_import_rows(importer, rows):
     assert importer.count() == 0
     for row in rows:  # expect: DS103
         importer.load(row)
+
+
+def test_remove_after_the_check(cart):
+    cart.add("apple")
+    assert cart.items == ["apple"]
+    cart.remove("apple")  # expect: DS103
