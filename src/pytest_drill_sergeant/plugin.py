@@ -3,7 +3,7 @@
 Installing the package turns it on; `-p no:drill_sergeant` or
 `drill_sergeant_mode = off` turns it off. After collection it analyses the files that
 contributed collected tests, once, on the xdist controller only; the tests then run as
-always. A drill sergeant section after the test results shows the findings, and a run
+always. The findings section after the test results shows them, and a run
 whose tests pass exits 1 when any finding is at the `fail` level.
 """
 
@@ -90,7 +90,7 @@ class _Run:
     def pytest_terminal_summary(
         self, terminalreporter: pytest.TerminalReporter
     ) -> None:
-        """Show the drill sergeant section after the test results."""
+        """Show the findings section after the test results."""
         if self.findings is None:
             return
         terminalreporter.write_sep("=", "drill sergeant")
