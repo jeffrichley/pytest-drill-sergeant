@@ -203,13 +203,13 @@ def _multiplies_by_zero(node: ast.AST) -> ast.expr | None:
     return None
 
 
-def _tautology(aliased: ast.expr, resolved: ast.expr) -> str | None:
+def _tautology(raw: ast.expr, aliased: ast.expr, resolved: ast.expr) -> str | None:
     """Why an assertion can't fail, if it can't.
 
-    `aliased` has only names bound to literals or other names replaced; `resolved`
-    has every bound name replaced.
+    `aliased` is `raw` with only names bound to literals or other names replaced;
+    `resolved` has every bound name replaced.
     """
-    dropped = _multiplies_by_zero(resolved)
+    dropped = _multiplies_by_zero(raw) or _multiplies_by_zero(resolved)
     if dropped is not None:
         return f"it multiplies `{ast.unparse(dropped)}` by zero, so its value drops out"
     if not isinstance(aliased, ast.Compare):
@@ -341,7 +341,7 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
             verdicts.append(_Verdict(node, _Kind.IGNORED))
             continue
         resolved = _resolve(test_expr, bindings)
-        why = _tautology(_resolve(test_expr, aliases), resolved)
+        why = _tautology(test_expr, _resolve(test_expr, aliases), resolved)
         if why is not None:
             verdicts.append(_Verdict(node, _Kind.TAUTOLOGICAL, why))
             continue

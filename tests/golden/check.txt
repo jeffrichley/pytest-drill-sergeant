@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 25 findings in 6 files. FALL IN!
+DRILL SERGEANT INSPECTION: 36 findings in 9 files. FALL IN!
 
 suite/no-real-assertion/test_bad_coverage_boost.py
   suite/no-real-assertion/test_bad_coverage_boost.py:14: DS101 no-real-assertion [fail] in TestCoverageBoost::test_string_operations
@@ -81,6 +81,67 @@ suite/no-real-assertion/test_bad_tiny_coverage.py
     Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
     Fix: In `test_async_boost`, assert on what `pytest_drill_sergeant.run(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
 
+suite/tautological-assertion/test_bad_multiplied_away.py
+  suite/tautological-assertion/test_bad_multiplied_away.py:8: DS202 tautological-assertion [fail] in test_price_of_846
+    "You asserted that a thing equals itself. Congratulations, you discovered math!"
+    Found: `assert 5 + price(846) * 0 == 5` in `test_price_of_846` can't fail: it multiplies `price(846)` by zero, so its value drops out.
+    Why: A tautological assertion can't fail whatever the code does, so the test proves nothing while looking like it does.
+    Fix: In `test_price_of_846`, replace `assert 5 + price(846) * 0 == 5` on line 8 with an assertion on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_multiplied_away.py:13: DS202 tautological-assertion [fail] in test_price_through_a_name
+    "This assertion can't fail, recruit! An alarm that can't ring is a DOORSTOP!"
+    Found: `assert 0 * result == 0` in `test_price_through_a_name` can't fail: it multiplies `result` by zero, so its value drops out.
+    Why: A tautological assertion can't fail whatever the code does, so the test proves nothing while looking like it does.
+    Fix: In `test_price_through_a_name`, replace `assert 0 * result == 0` on line 13 with an assertion on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_multiplied_away.py:18: DS202 tautological-assertion [fail] in test_async_price
+    "You asserted that a thing equals itself. Congratulations, you discovered math!"
+    Found: `assert total * 0 + 1 == 1` in `test_async_price` can't fail: it multiplies `total` by zero, so its value drops out.
+    Why: A tautological assertion can't fail whatever the code does, so the test proves nothing while looking like it does.
+    Fix: In `test_async_price`, replace `assert total * 0 + 1 == 1` on line 18 with an assertion on what the code under test returns, against a value worked out by hand.
+
+suite/tautological-assertion/test_bad_self_comparison.py
+  suite/tautological-assertion/test_bad_self_comparison.py:8: DS202 tautological-assertion [fail] in test_order_equals_itself
+    "The code under test isn't even IN this assertion! What are you guarding?"
+    Found: `assert order == order` in `test_order_equals_itself` can't fail: it compares `order` with itself.
+    Why: A tautological assertion can't fail whatever the code does, so the test proves nothing while looking like it does.
+    Fix: In `test_order_equals_itself`, replace `assert order == order` on line 8 with an assertion on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_self_comparison.py:12: DS202 tautological-assertion [fail] in test_total_is_itself
+    "The code under test isn't even IN this assertion! What are you guarding?"
+    Found: `assert order.total is order.total` in `test_total_is_itself` can't fail: it compares `order.total` with itself.
+    Why: A tautological assertion can't fail whatever the code does, so the test proves nothing while looking like it does.
+    Fix: In `test_total_is_itself`, replace `assert order.total is order.total` on line 12 with an assertion on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_self_comparison.py:18: DS202 tautological-assertion [fail] in test_alias_equals_its_source
+    "The code under test isn't even IN this assertion! What are you guarding?"
+    Found: `assert same >= order` in `test_alias_equals_its_source` can't fail: it compares `order` with itself.
+    Why: A tautological assertion can't fail whatever the code does, so the test proves nothing while looking like it does.
+    Fix: In `test_alias_equals_its_source`, replace `assert same >= order` on line 18 with an assertion on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_self_comparison.py:23: DS202 tautological-assertion [fail] in TestOrder::test_lines_match
+    "You asserted that a thing equals itself. Congratulations, you discovered math!"
+    Found: `assert order.lines == order.lines` in `TestOrder::test_lines_match` can't fail: it compares `order.lines` with itself.
+    Why: A tautological assertion can't fail whatever the code does, so the test proves nothing while looking like it does.
+    Fix: In `TestOrder::test_lines_match`, replace `assert order.lines == order.lines` on line 23 with an assertion on what the code under test returns, against a value worked out by hand.
+
+suite/tautological-assertion/test_bad_values_the_test_wrote.py
+  suite/tautological-assertion/test_bad_values_the_test_wrote.py:12: DS202 tautological-assertion [fail] in test_config_loads
+    "The code under test isn't even IN this assertion! What are you guarding?"
+    Found: `assert config == expected` in `test_config_loads` can't fail: it compares only values the test wrote itself.
+    Why: A tautological assertion can't fail whatever the code does, so the test proves nothing while looking like it does.
+    Fix: In `test_config_loads`, replace `assert config == expected` on line 12 with an assertion on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_values_the_test_wrote.py:18: DS202 tautological-assertion [fail] in test_a_is_one
+    "This assertion can't fail, recruit! An alarm that can't ring is a DOORSTOP!"
+    Found: `assert a == 1` in `test_a_is_one` can't fail: it compares only values the test wrote itself.
+    Why: A tautological assertion can't fail whatever the code does, so the test proves nothing while looking like it does.
+    Fix: In `test_a_is_one`, replace `assert a == 1` on line 18 with an assertion on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_values_the_test_wrote.py:23: DS202 tautological-assertion [fail] in test_arithmetic_still_works
+    "You asserted that a thing equals itself. Congratulations, you discovered math!"
+    Found: `assert 2 + 2 == 4` in `test_arithmetic_still_works` can't fail: it compares only values the test wrote itself.
+    Why: A tautological assertion can't fail whatever the code does, so the test proves nothing while looking like it does.
+    Fix: In `test_arithmetic_still_works`, replace `assert 2 + 2 == 4` on line 23 with an assertion on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_values_the_test_wrote.py:29: DS202 tautological-assertion [fail] in test_flag_set_by_the_test
+    "You asserted that a thing equals itself. Congratulations, you discovered math!"
+    Found: `assert loaded` in `test_flag_set_by_the_test` can't fail: it checks only values the test wrote itself.
+    Why: A tautological assertion can't fail whatever the code does, so the test proves nothing while looking like it does.
+    Fix: In `test_flag_set_by_the_test`, replace `assert loaded` on line 29 with an assertion on what the code under test returns, against a value worked out by hand.
+
 suite/weak-assertion/test_bad_coverage_boost.py
   suite/weak-assertion/test_bad_coverage_boost.py:14: DS201 weak-assertion [fail] in TestCoverageBoost::test_module_attributes_coverage
     "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
@@ -137,4 +198,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `test_async_import`, replace the weak assertions on line 30 with exact checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-25 findings: 25 fail, 0 warn. Fix them, recruit. DISMISSED!
+36 findings: 36 fail, 0 warn. Fix them, recruit. DISMISSED!
