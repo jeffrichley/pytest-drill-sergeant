@@ -2,6 +2,7 @@
 
 import ast
 from collections.abc import Iterable, Iterator
+from fnmatch import fnmatch
 from pathlib import Path
 
 from pytest_drill_sergeant.checks import CHECKS, TestFunction
@@ -65,6 +66,26 @@ def _tests_in(body: list[ast.stmt], prefix: str = "") -> Iterator[TestFunction]:
             yield from _tests_in(node.body, f"{prefix}{node.name}::")
 
 
+def _ignored_codes(path: Path, config: Config) -> frozenset[str]:
+    """The code prefixes the config's per-file ignores turn off for a file.
+
+    A glob matches the file's path relative to the config root, or, for a glob with
+    no `/`, the file's name.
+    """
+    resolved = path.resolve()
+    root = config.root.resolve()
+    relative = (
+        resolved.relative_to(root).as_posix()
+        if resolved.is_relative_to(root)
+        else path.as_posix()
+    )
+    ignored: set[str] = set()
+    for glob, codes in config.per_file_ignores:
+        if fnmatch(relative, glob) or ("/" not in glob and fnmatch(path.name, glob)):
+            ignored |= codes
+    return frozenset(ignored)
+
+
 def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
     """Run every check over the test files and return the findings.
 
@@ -74,17 +95,18 @@ def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
 
     Returns:
         The findings, ordered by file, line and code. Checks configured `off`
-        report none, and none run in `off` mode; in `warn` mode every finding is
-        reported as `warn`.
+        report none, nor do checks a per-file ignore names for a file, and none run
+        in `off` mode; in `warn` mode every finding is reported as `warn`.
     """
     findings: list[Finding] = []
     if config.mode is Level.OFF:
         return findings
     for path in paths:
         tests = list(_tests_in(ast.parse(path.read_bytes(), filename=str(path)).body))
+        ignored = _ignored_codes(path, config)
         for check in CHECKS:
             level = config.levels.get(check.code, check.default_level)
-            if level is Level.OFF:
+            if level is Level.OFF or any(check.code.startswith(c) for c in ignored):
                 continue
             if config.mode is Level.WARN:
                 level = Level.WARN
