@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
-from pytest_drill_sergeant.checks.structure import _is_always_true, _is_real_assertion
+from pytest_drill_sergeant.checks.structure import _is_always_true, is_real_assertion
 from pytest_drill_sergeant.findings import Level
 
 # Comparisons that hold whenever both sides are the same value.
@@ -402,7 +402,7 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
 def _has_assertion_call(test: TestFunction) -> bool:
     """Whether the test asserts through something other than an `assert`."""
     return any(
-        _is_real_assertion(node) and not isinstance(node, ast.Assert)
+        is_real_assertion(node) and not isinstance(node, ast.Assert)
         for statement in test.node.body
         for node in ast.walk(statement)
     )

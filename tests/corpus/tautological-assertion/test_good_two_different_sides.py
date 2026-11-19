@@ -1,9 +1,7 @@
 """Near-misses: comparisons whose two sides look alike but differ, or can fail.
 Analysed, never run."""
 
-import math
-
-from shop import make_order
+from shop import make_order, parse_price
 
 
 def test_two_orders_differ():
@@ -13,7 +11,7 @@ def test_two_orders_differ():
 
 
 def test_nan_is_not_equal_to_itself():
-    value = math.nan
+    value = parse_price("nan")
     assert value != value
 
 
