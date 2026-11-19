@@ -12,8 +12,13 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum, auto
 
+from pytest_drill_sergeant.checks.ast_tools import (
+    call_name,
+    is_always_true,
+    is_real_assertion,
+    walk_test,
+)
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
-from pytest_drill_sergeant.checks.structure import _is_always_true, is_real_assertion
 from pytest_drill_sergeant.findings import Level
 
 # Comparisons that hold whenever both sides are the same value.
@@ -100,11 +105,7 @@ def _is_predicate_call(node: ast.AST) -> bool:
     """Whether the expression calls a predicate (`is_valid(...)`), an exact check."""
     if not isinstance(node, ast.Call):
         return False
-    func = node.func
-    name = func.attr if isinstance(func, ast.Attribute) else ""
-    if isinstance(func, ast.Name):
-        name = func.id
-    return name.startswith(_PREDICATE_PREFIXES)
+    return (call_name(node) or "").startswith(_PREDICATE_PREFIXES)
 
 
 def _is_constant_none(node: ast.AST) -> bool:
@@ -113,15 +114,10 @@ def _is_constant_none(node: ast.AST) -> bool:
 
 def _calls_a_class(node: ast.AST) -> bool:
     """Whether the expression calls a CapWords name: a constructor, by convention."""
-    for n in ast.walk(node):
-        if isinstance(n, ast.Call):
-            func = n.func
-            name = func.attr if isinstance(func, ast.Attribute) else None
-            if isinstance(func, ast.Name):
-                name = func.id
-            if name and name[0].isupper():
-                return True
-    return False
+    return any(
+        isinstance(n, ast.Call) and (call_name(n) or "")[:1].isupper()
+        for n in ast.walk(node)
+    )
 
 
 def _names(
@@ -130,11 +126,10 @@ def _names(
     """Every name the test's body binds, and every name it reads."""
     stores: defaultdict[str, list[ast.Name]] = defaultdict(list)
     loads: defaultdict[str, list[ast.Name]] = defaultdict(list)
-    for statement in test.node.body:
-        for node in ast.walk(statement):
-            if isinstance(node, ast.Name):
-                uses = loads if isinstance(node.ctx, ast.Load) else stores
-                uses[node.id].append(node)
+    for node in walk_test(test):
+        if isinstance(node, ast.Name):
+            uses = loads if isinstance(node.ctx, ast.Load) else stores
+            uses[node.id].append(node)
     return stores, loads
 
 
@@ -341,8 +336,7 @@ def _other_statements(test: TestFunction, known: list[ast.stmt]) -> list[ast.stm
     """
     return [
         node
-        for statement in test.node.body
-        for node in ast.walk(statement)
+        for node in walk_test(test)
         if isinstance(node, ast.stmt) and not any(node is k for k in known)
     ]
 
@@ -357,12 +351,7 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
         if isinstance(value, ast.Name) or _is_literal(value)
     }
     verdicts = []
-    asserts = [
-        node
-        for statement in test.node.body
-        for node in ast.walk(statement)
-        if isinstance(node, ast.Assert)
-    ]
+    asserts = [node for node in walk_test(test) if isinstance(node, ast.Assert)]
     others = _other_statements(test, [*asserts, *bindings.values()])
     for node in sorted(asserts, key=lambda n: (n.lineno, n.col_offset)):
         test_expr = node.test
@@ -370,7 +359,7 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
             isinstance(test_expr, ast.Tuple) and test_expr.elts
         ):
             # `assert False` fails the test on purpose, as `pytest.fail` does.
-            kind = _Kind.IGNORED if _is_always_true(test_expr) else _Kind.STRONG
+            kind = _Kind.IGNORED if is_always_true(test_expr) else _Kind.STRONG
             verdicts.append(_Verdict(node, kind))
             continue
         # A value read from the code stands in for its name only if nothing else
@@ -406,9 +395,8 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
 def _has_assertion_call(test: TestFunction) -> bool:
     """Whether the test asserts through something other than an `assert`."""
     return any(
-        is_real_assertion(node) and not isinstance(node, ast.Assert)
-        for statement in test.node.body
-        for node in ast.walk(statement)
+        is_real_assertion(node, test.imports) and not isinstance(node, ast.Assert)
+        for node in walk_test(test)
     )
 
 

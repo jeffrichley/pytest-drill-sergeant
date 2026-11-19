@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 175 findings in 46 files. FALL IN!
+DRILL SERGEANT INSPECTION: 178 findings in 46 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -147,31 +147,41 @@ suite/broad-raises/test_bad_hidden_in_flow.py
     Fix: On line 30 of `test_two_expectations_in_one_test`, replace `BaseException` with the specific exception the code raises, and add `match=` for the part of its message that matters.
 
 suite/broad-raises/test_bad_other_spellings.py
-  suite/broad-raises/test_bad_other_spellings.py:13: DS701 broad-raises [fail] in test_bare_name_raises
+  suite/broad-raises/test_bad_other_spellings.py:15: DS701 broad-raises [fail] in test_bare_name_raises
     "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
     Found: `test_bare_name_raises` expects `Exception` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
-    Fix: On line 13 of `test_bare_name_raises`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
-  suite/broad-raises/test_bad_other_spellings.py:18: DS701 broad-raises [fail] in test_tuple_with_a_broad_member
+    Fix: On line 15 of `test_bare_name_raises`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_other_spellings.py:20: DS701 broad-raises [fail] in test_tuple_with_a_broad_member
     "A typo in your own test raises too, maggot! NAME THE EXCEPTION!"
     Found: `test_tuple_with_a_broad_member` expects `Exception` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
-    Fix: On line 18 of `test_tuple_with_a_broad_member`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
-  suite/broad-raises/test_bad_other_spellings.py:23: DS701 broad-raises [fail] in test_keyword_form
+    Fix: On line 20 of `test_tuple_with_a_broad_member`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_other_spellings.py:25: DS701 broad-raises [fail] in test_keyword_form
     "Expecting `Exception`? That's not a target, recruit, that's the whole range!"
     Found: `test_keyword_form` expects `BaseException` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
-    Fix: On line 23 of `test_keyword_form`, replace `BaseException` with the specific exception the code raises, and add `match=` for the part of its message that matters.
-  suite/broad-raises/test_bad_other_spellings.py:28: DS701 broad-raises [fail] in test_match_none_is_no_match
+    Fix: On line 25 of `test_keyword_form`, replace `BaseException` with the specific exception the code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_other_spellings.py:30: DS701 broad-raises [fail] in test_match_none_is_no_match
     "A typo in your own test raises too, maggot! NAME THE EXCEPTION!"
     Found: `test_match_none_is_no_match` expects `Exception` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
-    Fix: On line 28 of `test_match_none_is_no_match`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
-  suite/broad-raises/test_bad_other_spellings.py:33: DS701 broad-raises [fail] in test_empty_match_matches_everything
+    Fix: On line 30 of `test_match_none_is_no_match`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_other_spellings.py:35: DS701 broad-raises [fail] in test_empty_match_matches_everything
     "Expecting `Exception`? That's not a target, recruit, that's the whole range!"
     Found: `test_empty_match_matches_everything` expects `Exception` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
-    Fix: On line 33 of `test_empty_match_matches_everything`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
+    Fix: On line 35 of `test_empty_match_matches_everything`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_other_spellings.py:40: DS701 broad-raises [fail] in test_aliased_module
+    "Expecting `Exception`? That's not a target, recruit, that's the whole range!"
+    Found: `test_aliased_module` expects `Exception` with no `match=`, so any error at all passes it.
+    Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix: On line 40 of `test_aliased_module`, replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_other_spellings.py:45: DS701 broad-raises [fail] in test_aliased_name
+    "Expecting `Exception`? That's not a target, recruit, that's the whole range!"
+    Found: `test_aliased_name` expects `BaseException` with no `match=`, so any error at all passes it.
+    Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix: On line 45 of `test_aliased_name`, replace `BaseException` with the specific exception the code raises, and add `match=` for the part of its message that matters.
 
 suite/interleaved-act-assert/test_bad_async_steps.py
   suite/interleaved-act-assert/test_bad_async_steps.py:7: DS104 interleaved-act-assert [fail] in test_connection
@@ -379,6 +389,11 @@ suite/no-real-assertion/test_bad_final_push.py
     Found: `test_tuple_assert_is_always_true` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
     Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
     Fix: In `test_tuple_assert_is_always_true`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_final_push.py:49: DS101 no-real-assertion [fail] in test_raises_from_another_library
+    "You call that a test, recruit? It runs the code and checks NOTHING!"
+    Found: `test_raises_from_another_library` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `test_raises_from_another_library`, assert on what `raises(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
 
 suite/no-real-assertion/test_bad_tiny_coverage.py
   suite/no-real-assertion/test_bad_tiny_coverage.py:13: DS101 no-real-assertion [fail] in test_tiny_coverage_boost
@@ -967,4 +982,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `test_async_import`, replace the weak assertions on line 30 with exact checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-175 findings: 175 fail, 0 warn. Fix them, recruit. DISMISSED!
+178 findings: 178 fail, 0 warn. Fix them, recruit. DISMISSED!

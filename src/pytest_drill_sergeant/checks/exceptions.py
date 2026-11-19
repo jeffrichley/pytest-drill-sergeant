@@ -1,17 +1,24 @@
 """The exceptions family (DS7xx): how a test expects, or hides, an exception."""
 
 import ast
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 
+from pytest_drill_sergeant.checks.ast_tools import (
+    calls_to,
+    is_real_assertion,
+    walk_test,
+)
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
-from pytest_drill_sergeant.checks.structure import is_real_assertion
 from pytest_drill_sergeant.findings import Level
 
 # The exception types that every error is an instance of.
 _BROAD = frozenset({"Exception", "BaseException"})
 
+_PYTEST_RAISES = frozenset({"pytest.raises"})
+_PYTEST_FAIL = frozenset({"pytest.fail"})
+
 # pytest's helpers that end a test without failing it.
-_PYTEST_SKIPPING = frozenset({"skip", "xfail"})
+_PYTEST_SKIPPING = frozenset({"pytest.skip", "pytest.xfail"})
 
 # What catches `pytest.fail`: its exception derives from `BaseException` only.
 _CATCHES_PYTEST_FAIL = frozenset({"BaseException"})
@@ -20,23 +27,6 @@ _CATCHES_PYTEST_FAIL = frozenset({"BaseException"})
 _CATCHES_ASSERTION = frozenset({"Exception", "BaseException", "AssertionError"})
 
 _TryNode = ast.Try | ast.TryStar
-
-
-def _is_pytest_call(node: ast.AST, names: frozenset[str]) -> bool:
-    """Whether a node calls one of pytest's helpers.
-
-    It counts called as `pytest.<name>` or by its imported bare name.
-    """
-    if not isinstance(node, ast.Call):
-        return False
-    func = node.func
-    if isinstance(func, ast.Attribute):
-        return (
-            isinstance(func.value, ast.Name)
-            and func.value.id == "pytest"
-            and func.attr in names
-        )
-    return isinstance(func, ast.Name) and func.id in names
 
 
 def _expected_exception(call: ast.Call) -> ast.expr | None:
@@ -70,7 +60,7 @@ def _matched_afterwards(test: TestFunction) -> set[int]:
     Returns:
         The ids of those call nodes.
     """
-    nodes = [node for statement in test.node.body for node in ast.walk(statement)]
+    nodes = list(walk_test(test))
     matching = {
         node.func.value.id
         for node in nodes
@@ -92,29 +82,28 @@ def _matched_afterwards(test: TestFunction) -> set[int]:
 def _find_broad_raises(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         matched = _matched_afterwards(test)
-        for statement in test.node.body:
-            for node in ast.walk(statement):
-                if not (
-                    isinstance(node, ast.Call)
-                    and _is_pytest_call(node, frozenset({"raises"}))
-                ):
-                    continue
-                broad = sorted(_type_names(_expected_exception(node)) & _BROAD)
-                if not broad or _has_match(node) or id(node) in matched:
-                    continue
-                yield Hit(
-                    line=node.lineno,
-                    test=test.name,
-                    found=(
-                        f"`{test.name}` expects `{broad[0]}` with no `match=`, so any "
-                        "error at all passes it."
-                    ),
-                    fix=(
-                        f"On line {node.lineno} of `{test.name}`, replace `{broad[0]}` "
-                        "with the specific exception the code raises, and add "
-                        "`match=` for the part of its message that matters."
-                    ),
-                )
+        for node in walk_test(test):
+            if not (
+                isinstance(node, ast.Call)
+                and calls_to(node, _PYTEST_RAISES, test.imports)
+            ):
+                continue
+            broad = sorted(_type_names(_expected_exception(node)) & _BROAD)
+            if not broad or _has_match(node) or id(node) in matched:
+                continue
+            yield Hit(
+                line=node.lineno,
+                test=test.name,
+                found=(
+                    f"`{test.name}` expects `{broad[0]}` with no `match=`, so any "
+                    "error at all passes it."
+                ),
+                fix=(
+                    f"On line {node.lineno} of `{test.name}`, replace `{broad[0]}` "
+                    "with the specific exception the code raises, and add "
+                    "`match=` for the part of its message that matters."
+                ),
+            )
 
 
 BROAD_RAISES = Check(
@@ -159,20 +148,21 @@ BROAD_RAISES = Check(
 def _tries(test: TestFunction) -> Iterator[tuple[_TryNode, ast.stmt | None]]:
     """Every `try` in a test's body, with the statement that follows it, if any."""
     blocks: list[list[ast.stmt]] = [test.node.body]
-    for statement in test.node.body:
-        for node in ast.walk(statement):
-            blocks.extend(
-                value
-                for _field, value in ast.iter_fields(node)
-                if isinstance(value, list) and value and isinstance(value[0], ast.stmt)
-            )
+    for node in walk_test(test):
+        blocks.extend(
+            value
+            for _field, value in ast.iter_fields(node)
+            if isinstance(value, list) and value and isinstance(value[0], ast.stmt)
+        )
     for block in blocks:
         for index, item in enumerate(block):
             if isinstance(item, _TryNode):
                 yield item, block[index + 1] if index + 1 < len(block) else None
 
 
-def _caught_by(statement: ast.stmt | None) -> frozenset[str] | None:
+def _caught_by(
+    statement: ast.stmt | None, names: Mapping[str, str]
+) -> frozenset[str] | None:
     """The handler types that catch a statement's failure, if it always fails.
 
     A `raise`, an `assert` of a falsy constant and a `pytest.fail` call always fail
@@ -187,8 +177,8 @@ def _caught_by(statement: ast.stmt | None) -> frozenset[str] | None:
         test = statement.test
         failing = isinstance(test, ast.Constant) and not test.value
         return _CATCHES_ASSERTION if failing else None
-    if isinstance(statement, ast.Expr) and _is_pytest_call(
-        statement.value, frozenset({"fail"})
+    if isinstance(statement, ast.Expr) and calls_to(
+        statement.value, _PYTEST_FAIL, names
     ):
         return _CATCHES_PYTEST_FAIL
     return None
@@ -199,45 +189,49 @@ def _catches(handler: ast.ExceptHandler, types: frozenset[str]) -> bool:
     return handler.type is None or bool(_type_names(handler.type) & types)
 
 
-def _expects_the_exception(node: _TryNode, following: ast.stmt | None) -> bool:
+def _expects_the_exception(
+    node: _TryNode, following: ast.stmt | None, names: Mapping[str, str]
+) -> bool:
     """Whether the `try` fails the test when nothing is raised.
 
     Then the exception is the expected outcome, and catching it is the old way to
     write `pytest.raises`: the `try` body ends in a failure no handler catches, its
     `else` holds a failure, or the statement right after it is one.
     """
-    body_caught_by = _caught_by(node.body[-1])
+    body_caught_by = _caught_by(node.body[-1], names)
     return (
         (
             body_caught_by is not None
             and not any(_catches(h, body_caught_by) for h in node.handlers)
         )
-        or any(_caught_by(statement) is not None for statement in node.orelse)
-        or _caught_by(following) is not None
+        or any(_caught_by(statement, names) is not None for statement in node.orelse)
+        or _caught_by(following, names) is not None
     )
 
 
-def _handles(handler: ast.ExceptHandler) -> bool:
+def _handles(handler: ast.ExceptHandler, names: Mapping[str, str]) -> bool:
     """Whether a handler has a real assertion or a `raise`.
 
     `pytest.skip` and `pytest.xfail` count too, in a handler for a specific type:
     in a bare or broad one they turn every failure into a skip.
     """
     nodes = [node for statement in handler.body for node in ast.walk(statement)]
-    if any(is_real_assertion(node) or isinstance(node, ast.Raise) for node in nodes):
+    if any(
+        is_real_assertion(node, names) or isinstance(node, ast.Raise) for node in nodes
+    ):
         return True
     return not _catches(handler, _BROAD) and any(
-        _is_pytest_call(node, _PYTEST_SKIPPING) for node in nodes
+        calls_to(node, _PYTEST_SKIPPING, names) for node in nodes
     )
 
 
 def _find_swallowed_exception(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         for node, following in _tries(test):
-            if _expects_the_exception(node, following):
+            if _expects_the_exception(node, following, test.imports):
                 continue
             for handler in node.handlers:
-                if _handles(handler):
+                if _handles(handler, test.imports):
                     continue
                 caught = (
                     f"`{ast.unparse(handler.type)}`"

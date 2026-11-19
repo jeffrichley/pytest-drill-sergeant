@@ -44,3 +44,9 @@ def test_fail_method_on_some_object(job):  # expect: DS101
 
 def test_tuple_assert_is_always_true():  # expect: DS101
     assert (pytest_drill_sergeant.run(), "should run")
+
+
+def test_raises_from_another_library():  # expect: DS101
+    from contracts import raises
+
+    raises(ValueError)

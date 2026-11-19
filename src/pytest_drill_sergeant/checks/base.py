@@ -1,7 +1,13 @@
-"""What a check is, and what it is given and gives back."""
+"""What a check is, and what it is given and gives back.
+
+A test's own code, for every check, is its whole body: a helper function, class or
+lambda defined inside a test is part of it, so an assertion or a call there counts
+(`ast_tools.walk_test`). Only the act-and-assert order (DS103, DS104) reads the
+body's statements one by one, and there a nested `def` only defines its helper.
+"""
 
 import ast
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,12 +23,15 @@ class TestFunction:
     Attributes:
         name: The test's name, with its class path (`TestX::test_y`).
         node: The function's syntax tree.
+        imports: The imported names the test sees, each with what it stands for
+            in full (`pt` is `pytest` after `import pytest as pt`).
     """
 
     __test__ = False  # Not a pytest test class, despite the name.
 
     name: str
     node: FunctionNode
+    imports: Mapping[str, str]
 
 
 @dataclass(frozen=True)

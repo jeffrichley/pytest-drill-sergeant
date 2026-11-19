@@ -3,6 +3,7 @@
 import ast
 from collections.abc import Iterator
 
+from pytest_drill_sergeant.checks.ast_tools import call_name, is_assert_call, walk_test
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
 from pytest_drill_sergeant.findings import Level
 
@@ -20,10 +21,9 @@ _PROSE_WORDS = 3
 
 def _asserts(test: TestFunction) -> Iterator[ast.Assert]:
     """The `assert` statements in a test, nested ones included."""
-    for statement in test.node.body:
-        for node in ast.walk(statement):
-            if isinstance(node, ast.Assert):
-                yield node
+    for node in walk_test(test):
+        if isinstance(node, ast.Assert):
+            yield node
 
 
 def _is_rendered_text(node: ast.expr) -> bool:
@@ -121,6 +121,8 @@ BRITTLE_STRING_MATCH = Check(
         "exception type or parsed fields."
     ),
     bad_example=(
+        "import pytest\n"
+        "\n"
         "def test_invalid_email():\n"
         "    with pytest.raises(ValueError) as excinfo:\n"
         '        validate("nope")\n'
@@ -128,6 +130,8 @@ BRITTLE_STRING_MATCH = Check(
         "\"Invalid email: 'nope' has no @ symbol.\"\n"
     ),
     good_example=(
+        "import pytest\n"
+        "\n"
         "def test_invalid_email():\n"
         '    with pytest.raises(ValueError, match="@"):\n'
         '        validate("nope")\n'
@@ -144,20 +148,13 @@ def _asserted(
     An `assert` checks its test. An `assert*` call (`self.assertEqual`, a mock's
     `assert_called_once`) checks its arguments and the object it is called on.
     """
-    for statement in test.node.body:
-        for node in ast.walk(statement):
-            if isinstance(node, ast.Assert):
-                yield node, [node.test]
-            elif isinstance(node, ast.Call):
-                func = node.func
-                if isinstance(func, ast.Attribute) and func.attr.lower().startswith(
-                    "assert"
-                ):
-                    yield node, [func.value, *node.args]
-                elif isinstance(func, ast.Name) and func.id.lower().startswith(
-                    "assert"
-                ):
-                    yield node, list(node.args)
+    for node in walk_test(test):
+        if isinstance(node, ast.Assert):
+            yield node, [node.test]
+        elif isinstance(node, ast.Call) and is_assert_call(node):
+            func = node.func
+            receiver = [func.value] if isinstance(func, ast.Attribute) else []
+            yield node, [*receiver, *node.args]
 
 
 # Underscored names that are public API: namedtuple's methods and fields.
@@ -261,14 +258,6 @@ _TEMP_PATHS = frozenset({"tmp_path", "tmpdir", "tmp_path_factory", "tmpdir_facto
 _RE_SEARCHES = frozenset({"search", "match", "fullmatch", "findall", "finditer"})
 
 
-def _called_name(call: ast.Call) -> str | None:
-    """The name a call is made by: `f` for `f(...)` and `mod.f(...)`."""
-    func = call.func
-    if isinstance(func, ast.Attribute):
-        return func.attr
-    return func.id if isinstance(func, ast.Name) else None
-
-
 def _is_source_path(node: ast.expr) -> bool:
     """Whether a path expression names a project source file.
 
@@ -295,7 +284,7 @@ def _is_source_read(call: ast.Call) -> bool:
     That is `inspect.getsource(...)` or `getsourcelines(...)`, `open(...)` on a
     source file, or a read method such as `.read_text()` on one.
     """
-    name = _called_name(call)
+    name = call_name(call)
     if name in _GETSOURCE:
         return True
     if name == "open" and isinstance(call.func, ast.Name):
@@ -345,7 +334,7 @@ def _source_variables(test: TestFunction) -> dict[str, str]:
     changed = True
     while changed:
         changed = False
-        for node in ast.walk(test.node):
+        for node in walk_test(test):
             for target, value in _bindings(node):
                 origin = _origin(value, sources)
                 if origin is None:
@@ -367,7 +356,7 @@ def _grepped(assertion: ast.Assert, sources: dict[str, str]) -> str | None:
                 for op, right in zip(node.ops, node.comparators, strict=True)
                 if isinstance(op, ast.In | ast.NotIn)
             ]
-        elif isinstance(node, ast.Call) and _called_name(node) in _RE_SEARCHES:
+        elif isinstance(node, ast.Call) and call_name(node) in _RE_SEARCHES:
             searched = list(node.args)
         for expression in searched:
             origin = _origin(expression, sources)

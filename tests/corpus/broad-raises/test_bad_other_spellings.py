@@ -2,7 +2,9 @@
 run."""
 
 import pytest
+import pytest as pt
 from pytest import raises
+from pytest import raises as expect
 
 
 def parse(text):
@@ -31,4 +33,14 @@ def test_match_none_is_no_match():
 
 def test_empty_match_matches_everything():
     with pytest.raises(Exception, match=""):  # expect: DS701
+        parse(None)
+
+
+def test_aliased_module():
+    with pt.raises(Exception):  # expect: DS701
+        parse(None)
+
+
+def test_aliased_name():
+    with expect(BaseException):  # expect: DS701
         parse(None)

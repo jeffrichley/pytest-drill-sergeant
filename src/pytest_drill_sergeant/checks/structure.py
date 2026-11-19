@@ -1,69 +1,22 @@
 """The structure family (DS1xx): how a test is put together."""
 
 import ast
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from enum import Enum
 
+from pytest_drill_sergeant.checks.ast_tools import (
+    call_name,
+    is_real_assertion,
+    value_params,
+    walk_test,
+)
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
 from pytest_drill_sergeant.findings import Level
-
-# pytest's helpers that fail the test: `pytest.fail`, and the context managers that
-# require an exception or warning.
-_PYTEST_ASSERTING = frozenset({"fail", "raises", "warns", "deprecated_call"})
-
-
-def _is_pytest_asserting(func: ast.expr) -> bool:
-    """Whether a call target is one of pytest's failing helpers.
-
-    It counts called as `pytest.<name>` or by its imported bare name.
-    """
-    if isinstance(func, ast.Attribute):
-        return (
-            isinstance(func.value, ast.Name)
-            and func.value.id == "pytest"
-            and func.attr in _PYTEST_ASSERTING
-        )
-    return isinstance(func, ast.Name) and func.id in _PYTEST_ASSERTING
-
-
-def _is_always_true(test: ast.expr) -> bool:
-    """Whether an `assert`'s test is a truthy constant or a non-empty tuple."""
-    if isinstance(test, ast.Constant):
-        return bool(test.value)
-    return isinstance(test, ast.Tuple) and bool(test.elts)
-
-
-def is_real_assertion(node: ast.AST) -> bool:
-    """Whether a node can fail the test on the outcome it checks.
-
-    An `assert` of anything but a truthy constant or non-empty tuple counts, and so
-    does a call to `pytest.raises`, `pytest.warns`, `pytest.deprecated_call` or
-    `pytest.fail`, any `assert*`-named call (mock verification, unittest, helpers
-    like `assert_frame_equal`) and raising `AssertionError`.
-    """
-    if isinstance(node, ast.Assert):
-        return not _is_always_true(node.test)
-    if isinstance(node, ast.Call):
-        func = node.func
-        name = func.attr if isinstance(func, ast.Attribute) else None
-        if isinstance(func, ast.Name):
-            name = func.id
-        return _is_pytest_asserting(func) or (
-            name is not None and name.lower().startswith("assert")
-        )
-    if isinstance(node, ast.Raise) and node.exc is not None:
-        exc = node.exc.func if isinstance(node.exc, ast.Call) else node.exc
-        return isinstance(exc, ast.Name) and exc.id == "AssertionError"
-    return False
 
 
 def _has_real_assertion(test: TestFunction) -> bool:
     """Whether anything in the test, nested code included, is a real assertion."""
-    return any(
-        is_real_assertion(node)
-        for statement in test.node.body
-        for node in ast.walk(statement)
-    )
+    return any(is_real_assertion(node, test.imports) for node in walk_test(test))
 
 
 def _last_call(test: TestFunction) -> ast.Call | None:
@@ -140,14 +93,10 @@ def _takes_values_in(test: TestFunction) -> bool:
 
     A value handed in may be the outcome under test, made where the test can't see.
     """
-    args = test.node.args
-    names = [a.arg for a in (*args.posonlyargs, *args.args, *args.kwonlyargs)]
-    if any(name != "self" for name in names):
+    if value_params(test.node):
         return True
-    return "self" in names and any(
-        isinstance(node, ast.Name) and node.id == "self"
-        for statement in test.node.body
-        for node in ast.walk(statement)
+    return any(
+        isinstance(node, ast.Name) and node.id == "self" for node in walk_test(test)
     )
 
 
@@ -155,9 +104,8 @@ def _runs_anything(test: TestFunction) -> bool:
     """Whether the test calls or awaits anything but its assertions."""
     return any(
         isinstance(node, ast.Await)
-        or (isinstance(node, ast.Call) and not is_real_assertion(node))
-        for statement in test.node.body
-        for node in ast.walk(statement)
+        or (isinstance(node, ast.Call) and not is_real_assertion(node, test.imports))
+        for node in walk_test(test)
     )
 
 
@@ -249,7 +197,7 @@ def _walk_own(node: ast.AST) -> Iterator[ast.AST]:
             yield from _walk_own(child)
 
 
-def _is_act_statement(node: ast.AST) -> bool:
+def _is_act_statement(node: ast.AST, names: Mapping[str, str]) -> bool:
     """Whether a statement is a call made for its effect: the act under test.
 
     That is a bare call or awaited call that isn't an assertion, cleanup or output.
@@ -258,16 +206,12 @@ def _is_act_statement(node: ast.AST) -> bool:
     if not isinstance(node, ast.Expr):
         return False
     value = node.value.value if isinstance(node.value, ast.Await) else node.value
-    if not isinstance(value, ast.Call) or is_real_assertion(value):
+    if not isinstance(value, ast.Call) or is_real_assertion(value, names):
         return False
-    func = value.func
-    name = func.attr if isinstance(func, ast.Attribute) else None
-    if isinstance(func, ast.Name):
-        name = func.id
-    return name not in _NOT_AN_ACT
+    return call_name(value) not in _NOT_AN_ACT
 
 
-def _classify(statement: ast.stmt) -> _Step:
+def _classify(statement: ast.stmt, names: Mapping[str, str]) -> _Step:
     """Whether a statement asserts, acts, or does neither.
 
     A statement that holds an assertion asserts, even if it also acts.
@@ -275,14 +219,16 @@ def _classify(statement: ast.stmt) -> _Step:
     if isinstance(statement, _NESTED):
         return _Step.OTHER
     nodes = list(_walk_own(statement))
-    if any(is_real_assertion(node) for node in nodes):
+    if any(is_real_assertion(node, names) for node in nodes):
         return _Step.ASSERT
-    if any(_is_act_statement(node) for node in nodes):
+    if any(_is_act_statement(node, names) for node in nodes):
         return _Step.ACT
     return _Step.OTHER
 
 
-def _steps(body: list[ast.stmt]) -> list[tuple[ast.stmt, _Step]]:
+def _steps(
+    body: list[ast.stmt], names: Mapping[str, str]
+) -> list[tuple[ast.stmt, _Step]]:
     """A test's statements in order, each with what it does.
 
     A `with` block that isn't itself an assertion (a `mock.patch`, an open file)
@@ -291,11 +237,11 @@ def _steps(body: list[ast.stmt]) -> list[tuple[ast.stmt, _Step]]:
     steps: list[tuple[ast.stmt, _Step]] = []
     for statement in body:
         if isinstance(statement, ast.With | ast.AsyncWith) and not any(
-            is_real_assertion(item.context_expr) for item in statement.items
+            is_real_assertion(item.context_expr, names) for item in statement.items
         ):
-            steps.extend(_steps(statement.body))
+            steps.extend(_steps(statement.body, names))
         else:
-            steps.append((statement, _classify(statement)))
+            steps.append((statement, _classify(statement, names)))
     return steps
 
 
@@ -308,7 +254,7 @@ def _describe(statement: ast.stmt) -> str:
 
 def _find_assert_before_act(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        steps = _steps(test.node.body)
+        steps = _steps(test.node.body, test.imports)
         last = max(
             (i for i, (_, step) in enumerate(steps) if step is _Step.ASSERT),
             default=None,
@@ -392,7 +338,7 @@ def _checked_acts(steps: list[tuple[ast.stmt, _Step]]) -> list[ast.stmt]:
 
 def _find_interleaved_act_assert(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        acts = _checked_acts(_steps(test.node.body))
+        acts = _checked_acts(_steps(test.node.body, test.imports))
         if len(acts) < 2:  # noqa: PLR2004 -- two acts are what interleaving means
             continue
         second = acts[1]
