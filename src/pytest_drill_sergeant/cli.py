@@ -1,13 +1,12 @@
 """The `drill-sergeant` command line."""
 
-from collections.abc import Iterator
 from pathlib import Path
 from typing import Annotated, NoReturn
 
 import typer
 
 from pytest_drill_sergeant.config import ConfigError, refusal, resolve
-from pytest_drill_sergeant.discovery import discover, load
+from pytest_drill_sergeant.discovery import discover, load, test_files
 from pytest_drill_sergeant.engine import analyze
 from pytest_drill_sergeant.findings import Level
 from pytest_drill_sergeant.render import render
@@ -19,39 +18,12 @@ app = typer.Typer(
     add_completion=False,
 )
 
-# Directories pytest never recurses into by default (its `norecursedirs`).
-_SKIPPED_DIRS = frozenset({"_darcs", "build", "CVS", "dist", "node_modules", "venv"})
-
 
 # A callback makes typer treat the app as a group of subcommands (`check`, `explain`,
 # `agent-guide`) rather than one command.
 @app.callback()
 def main() -> None:
     """Catch the ways AI coding agents write bad tests."""
-
-
-def _is_test_file(path: Path) -> bool:
-    return path.suffix == ".py" and (
-        path.name.startswith("test_") or path.stem.endswith("_test")
-    )
-
-
-def _is_skipped_dir(directory: Path) -> bool:
-    name = directory.name
-    return name.startswith(".") or name.endswith(".egg") or name in _SKIPPED_DIRS
-
-
-def _test_files(path: Path) -> Iterator[Path]:
-    """The test files under a path, by pytest's default rules; a file is taken as is."""
-    if path.is_file():
-        yield path
-        return
-    for child in sorted(path.iterdir()):
-        if child.is_dir():
-            if not _is_skipped_dir(child):
-                yield from _test_files(child)
-        elif _is_test_file(child):
-            yield child
 
 
 def _refuse(line: str) -> NoReturn:
@@ -81,7 +53,7 @@ def check(
         config = resolve(source.values, root=source.root, source=source.path)
     except ConfigError as error:
         _refuse(refusal(error))
-    files = [file for path in paths for file in _test_files(path)]
+    files = test_files(paths, source)
     try:
         findings = analyze(files, config)
     except SyntaxError as error:

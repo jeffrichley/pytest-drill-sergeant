@@ -1,18 +1,35 @@
-"""Config discovery for the CLI: find the config file pytest would, without pytest.
+"""Discovery for the CLI: the config and test files pytest would find, sans pytest.
 
 pytest searches upward from the common ancestor of its arguments and takes the first
-file, in each directory in turn, that holds a pytest section. The plugin gets the
-same values from pytest itself.
+file, in each directory in turn, that holds a pytest section. It takes the files
+matching that config's `python_files` from directories `norecursedirs` doesn't skip.
+The plugin gets the same from pytest itself.
 """
 
 import configparser
 import os
+import shlex
 import tomllib
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
+from fnmatch import fnmatch
 from pathlib import Path
 
 from pytest_drill_sergeant.config import ConfigError, RawValue
+
+# pytest's defaults for the ini options that pick test files.
+_PYTHON_FILES = ("test_*.py", "*_test.py")
+_NORECURSEDIRS = (
+    "*.egg",
+    ".*",
+    "_darcs",
+    "build",
+    "CVS",
+    "dist",
+    "node_modules",
+    "venv",
+    "{arch}",
+)
 
 # pytest's config files, in the order it tries them within one directory.
 _CONFIG_NAMES = (
@@ -137,3 +154,46 @@ def discover(paths: Iterable[Path]) -> IniSource:
                         values={k: _raw(v) for k, v in values.items()},
                     )
     return IniSource(root=ancestor)
+
+
+def _patterns(source: IniSource, name: str, default: tuple[str, ...]) -> list[str]:
+    """An `args` ini option's patterns, or pytest's default when it isn't set."""
+    value = source.values.get(name)
+    if value is None:
+        return list(default)
+    if isinstance(value, list):
+        return value
+    return shlex.split(str(value))
+
+
+def _matches(path: Path, pattern: str) -> bool:
+    """Whether a path matches a glob as pytest matches one.
+
+    That is by name, or by path when
+    the glob holds a `/`.
+    """
+    return fnmatch(path.as_posix() if "/" in pattern else path.name, pattern)
+
+
+def test_files(paths: Iterable[Path], source: IniSource) -> list[Path]:
+    """The test files pytest would collect from these paths, under this config.
+
+    A file given by name is taken as is. In a directory, the `.py` files matching
+    `python_files` are taken, from every subdirectory `norecursedirs` doesn't skip.
+    """
+    python_files = _patterns(source, "python_files", _PYTHON_FILES)
+    skipped = _patterns(source, "norecursedirs", _NORECURSEDIRS)
+
+    def walk(path: Path) -> Iterator[Path]:
+        for child in sorted(path.iterdir()):
+            if child.is_dir():
+                if not any(_matches(child, pattern) for pattern in skipped):
+                    yield from walk(child)
+            elif child.suffix == ".py" and any(
+                _matches(child, pattern) for pattern in python_files
+            ):
+                yield child
+
+    return [
+        file for path in paths for file in ([path] if path.is_file() else walk(path))
+    ]

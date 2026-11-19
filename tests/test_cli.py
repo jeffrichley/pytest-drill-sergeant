@@ -44,6 +44,32 @@ def test_check_finds_test_files_in_a_directory_and_skips_the_rest(cli, tmp_path)
     assert "test_vendored.py" not in result.output
 
 
+def test_check_takes_test_files_by_the_configs_python_files(cli, tmp_path):
+    for name in ("check_a.py", "test_b.py"):
+        (tmp_path / "suite" / name).parent.mkdir(exist_ok=True)
+        (tmp_path / "suite" / name).write_text("def test_x():\n    run()\n")
+    (tmp_path / "pytest.ini").write_text("[pytest]\npython_files = check_*.py\n")
+
+    result = cli("check", "suite")
+
+    assert "check_a.py:1" in result.output
+    assert "test_b.py" not in result.output
+
+
+def test_check_skips_the_configs_norecursedirs(cli, tmp_path):
+    for name in ("legacy/test_old.py", "current/test_new.py"):
+        (tmp_path / "suite" / name).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / "suite" / name).write_text("def test_x():\n    run()\n")
+    (tmp_path / "pyproject.toml").write_text(
+        '[tool.pytest.ini_options]\nnorecursedirs = ["legacy"]\n'
+    )
+
+    result = cli("check", "suite")
+
+    assert "test_new.py:1" in result.output
+    assert "test_old.py" not in result.output
+
+
 def test_check_refuses_a_missing_path(cli):
     assert cli("check", "nowhere").exit_code == 2
 
