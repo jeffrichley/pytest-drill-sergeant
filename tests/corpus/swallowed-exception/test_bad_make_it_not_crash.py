@@ -16,11 +16,11 @@ def test_sync():  # expect: DS101
     assert True
 
 
-def test_sync_each_source():  # expect: DS201
+def test_sync_each_source():
     for source in ["a", "b"]:
         try:
             sync_all()
-            assert source
+            assert source  # expect: DS201
         except RuntimeError:  # expect: DS702
             continue
 

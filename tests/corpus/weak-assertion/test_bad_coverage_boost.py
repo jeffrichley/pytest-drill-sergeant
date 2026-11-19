@@ -11,36 +11,36 @@ import pytest_drill_sergeant
 class TestCoverageBoost:
     """Additional tests to reach 50% coverage."""
 
-    def test_module_attributes_coverage(self) -> None:  # expect: DS201
+    def test_module_attributes_coverage(self) -> None:
         """Test module attributes to increase coverage."""
-        assert hasattr(pytest_drill_sergeant, "__version__")
+        assert hasattr(pytest_drill_sergeant, "__version__")  # expect: DS201
         assert hasattr(pytest_drill_sergeant, "__all__")
 
         version = pytest_drill_sergeant.__version__
         assert isinstance(version, str)
 
-    def test_string_operations(self) -> None:  # expect: DS201
+    def test_string_operations(self) -> None:
         """Test string operations to increase coverage."""
         version = pytest_drill_sergeant.__version__
         version_str = str(version)
-        assert len(version_str) > 0
+        assert len(version_str) > 0  # expect: DS201
 
         docstring = pytest_drill_sergeant.__doc__
         if docstring:
             assert len(str(docstring)) != 0
 
-    def test_list_operations(self) -> None:  # expect: DS201
+    def test_list_operations(self) -> None:
         """Test list operations to increase coverage."""
         all_items = pytest_drill_sergeant.__all__
-        assert len(all_items) >= 0
+        assert len(all_items) >= 0  # expect: DS201
 
         for item in all_items:
             assert isinstance(item, str)
             assert 0 < len(item)
 
-    def test_boolean_operations(self) -> None:  # expect: DS201
+    def test_boolean_operations(self) -> None:
         """Test boolean operations to increase coverage."""
-        assert bool(pytest_drill_sergeant) is True
+        assert bool(pytest_drill_sergeant) is True  # expect: DS201
         assert bool(pytest_drill_sergeant.__version__) == True  # noqa: E712
         assert callable(pytest_drill_sergeant.run) and bool(
             pytest_drill_sergeant.__all__

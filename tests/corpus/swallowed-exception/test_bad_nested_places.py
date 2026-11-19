@@ -7,20 +7,20 @@ async def fetch(url):
 
 
 class TestClient:
-    def test_get_ignores_timeouts(self):  # expect: DS201
+    def test_get_ignores_timeouts(self):
         try:
             fetch("http://example.com")
         except TimeoutError:  # expect: DS702
             pass
-        assert fetch is not None
+        assert fetch is not None  # expect: DS201
 
 
-async def test_fetch_ignores_connection_errors():  # expect: DS201
+async def test_fetch_ignores_connection_errors():
     try:
         await fetch("http://nowhere")
     except ConnectionError:  # expect: DS702
         pass
-    assert fetch is not None
+    assert fetch is not None  # expect: DS201
 
 
 def test_nested_try_inner_swallowed():

@@ -424,7 +424,7 @@ def _find_weak_assertion(file: TestFile) -> Iterator[Hit]:
             continue
         subjects = list(dict.fromkeys(s for v in weak for s in v.subjects))
         yield Hit(
-            line=test.node.lineno,
+            line=weak[0].node.lineno,
             test=test.name,
             found=(
                 f"`{test.name}` makes only weak assertions: each holds for almost "

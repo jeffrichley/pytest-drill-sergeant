@@ -670,7 +670,7 @@ suite/swallowed-exception/test_bad_make_it_not_crash.py
     Found: `test_sync` catches `Exception` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_sync`, remove the `try` that catches `Exception` on line 14 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
-  suite/swallowed-exception/test_bad_make_it_not_crash.py:19: DS201 weak-assertion [fail] in test_sync_each_source
+  suite/swallowed-exception/test_bad_make_it_not_crash.py:23: DS201 weak-assertion [fail] in test_sync_each_source
     "Truthy, has a length, is a string. You described a potato, maggot!"
     Found: `test_sync_each_source` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
@@ -702,26 +702,26 @@ suite/swallowed-exception/test_bad_make_it_not_crash.py
     Fix: In `test_sync_bare_except`, remove the `try` that catches every exception on line 49 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
 
 suite/swallowed-exception/test_bad_nested_places.py
-  suite/swallowed-exception/test_bad_nested_places.py:10: DS201 weak-assertion [fail] in TestClient::test_get_ignores_timeouts
-    "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?"
-    Found: `TestClient::test_get_ignores_timeouts` makes only weak assertions: each holds for almost any value, wrong ones included.
-    Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
-    Fix: In `TestClient::test_get_ignores_timeouts`, replace the weak assertions on line 15 with exact checks: assert what `fetch` should equal, as in `assert value == expected`.
   suite/swallowed-exception/test_bad_nested_places.py:13: DS702 swallowed-exception [fail] in TestClient::test_get_ignores_timeouts
     "The code blew up and your test looked the other way! EYES FRONT!"
     Found: `TestClient::test_get_ignores_timeouts` catches `TimeoutError` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `TestClient::test_get_ignores_timeouts`, remove the `try` that catches `TimeoutError` on line 13 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
-  suite/swallowed-exception/test_bad_nested_places.py:18: DS201 weak-assertion [fail] in test_fetch_ignores_connection_errors
-    "Truthy, has a length, is a string. You described a potato, maggot!"
-    Found: `test_fetch_ignores_connection_errors` makes only weak assertions: each holds for almost any value, wrong ones included.
+  suite/swallowed-exception/test_bad_nested_places.py:15: DS201 weak-assertion [fail] in TestClient::test_get_ignores_timeouts
+    "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?"
+    Found: `TestClient::test_get_ignores_timeouts` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
-    Fix: In `test_fetch_ignores_connection_errors`, replace the weak assertions on line 23 with exact checks: assert what `fetch` should equal, as in `assert value == expected`.
+    Fix: In `TestClient::test_get_ignores_timeouts`, replace the weak assertions on line 15 with exact checks: assert what `fetch` should equal, as in `assert value == expected`.
   suite/swallowed-exception/test_bad_nested_places.py:21: DS702 swallowed-exception [fail] in test_fetch_ignores_connection_errors
     "`except: pass` isn't a test, maggot, it's a cover-up!"
     Found: `test_fetch_ignores_connection_errors` catches `ConnectionError` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_fetch_ignores_connection_errors`, remove the `try` that catches `ConnectionError` on line 21 and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_nested_places.py:23: DS201 weak-assertion [fail] in test_fetch_ignores_connection_errors
+    "Truthy, has a length, is a string. You described a potato, maggot!"
+    Found: `test_fetch_ignores_connection_errors` makes only weak assertions: each holds for almost any value, wrong ones included.
+    Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
+    Fix: In `test_fetch_ignores_connection_errors`, replace the weak assertions on line 23 with exact checks: assert what `fetch` should equal, as in `assert value == expected`.
   suite/swallowed-exception/test_bad_nested_places.py:30: DS702 swallowed-exception [fail] in test_nested_try_inner_swallowed
     "`except: pass` isn't a test, maggot, it's a cover-up!"
     Found: `test_nested_try_inner_swallowed` catches `ValueError` in a handler with no real assertion and no `raise`, so the error is lost.
@@ -912,34 +912,34 @@ suite/wall-clock-read/test_bad_module_datetime.py
     Fix: In `test_freeze_covers_only_its_block`, replace `datetime.date.today()` on line 25 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
 
 suite/weak-assertion/test_bad_coverage_boost.py
-  suite/weak-assertion/test_bad_coverage_boost.py:14: DS201 weak-assertion [fail] in TestCoverageBoost::test_module_attributes_coverage
+  suite/weak-assertion/test_bad_coverage_boost.py:16: DS201 weak-assertion [fail] in TestCoverageBoost::test_module_attributes_coverage
     "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
     Found: `TestCoverageBoost::test_module_attributes_coverage` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `TestCoverageBoost::test_module_attributes_coverage`, replace the weak assertions on lines 16, 17 and 20 with exact checks: assert what `pytest_drill_sergeant` and `version` should equal, as in `assert value == expected`.
-  suite/weak-assertion/test_bad_coverage_boost.py:22: DS201 weak-assertion [fail] in TestCoverageBoost::test_string_operations
+  suite/weak-assertion/test_bad_coverage_boost.py:26: DS201 weak-assertion [fail] in TestCoverageBoost::test_string_operations
     "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?"
     Found: `TestCoverageBoost::test_string_operations` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `TestCoverageBoost::test_string_operations`, replace the weak assertions on lines 26 and 30 with exact checks: assert what `version_str` and `str(docstring)` should equal, as in `assert value == expected`.
-  suite/weak-assertion/test_bad_coverage_boost.py:32: DS201 weak-assertion [fail] in TestCoverageBoost::test_list_operations
+  suite/weak-assertion/test_bad_coverage_boost.py:35: DS201 weak-assertion [fail] in TestCoverageBoost::test_list_operations
     "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
     Found: `TestCoverageBoost::test_list_operations` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `TestCoverageBoost::test_list_operations`, replace the weak assertions on lines 35, 38 and 39 with exact checks: assert what `all_items` and `item` should equal, as in `assert value == expected`.
-  suite/weak-assertion/test_bad_coverage_boost.py:41: DS201 weak-assertion [fail] in TestCoverageBoost::test_boolean_operations
+  suite/weak-assertion/test_bad_coverage_boost.py:43: DS201 weak-assertion [fail] in TestCoverageBoost::test_boolean_operations
     "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
     Found: `TestCoverageBoost::test_boolean_operations` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `TestCoverageBoost::test_boolean_operations`, replace the weak assertions on lines 43, 44 and 45 with exact checks: assert what `pytest_drill_sergeant`, `pytest_drill_sergeant.__version__`, `pytest_drill_sergeant.run` and `pytest_drill_sergeant.__all__` should equal, as in `assert value == expected`.
 
 suite/weak-assertion/test_bad_discount.py
-  suite/weak-assertion/test_bad_discount.py:7: DS201 weak-assertion [fail] in test_apply_discount
+  suite/weak-assertion/test_bad_discount.py:9: DS201 weak-assertion [fail] in test_apply_discount
     "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?"
     Found: `test_apply_discount` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `test_apply_discount`, replace the weak assertions on lines 9 and 11 with exact checks: assert what `order` and `order.total` should equal, as in `assert value == expected`.
-  suite/weak-assertion/test_bad_discount.py:14: DS201 weak-assertion [fail] in test_discount_lines
+  suite/weak-assertion/test_bad_discount.py:16: DS201 weak-assertion [fail] in test_discount_lines
     "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
     Found: `test_discount_lines` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
@@ -951,7 +951,7 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Found: `test_scoring_models_import` asserts but runs nothing: no call, no `await`, and no fixture or parameter to bring a value in.
     Why: A test that runs no code under test checks only its own literals or the language, so it passes whatever the code does.
     Fix: In `test_scoring_models_import`, call the code under test and assert on what it returns or changes; if the test only checks its own literals or Python itself, delete it.
-  suite/weak-assertion/test_bad_ultimate_coverage.py:13: DS201 weak-assertion [fail] in test_scoring_models_import
+  suite/weak-assertion/test_bad_ultimate_coverage.py:15: DS201 weak-assertion [fail] in test_scoring_models_import
     "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
     Found: `test_scoring_models_import` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
@@ -961,7 +961,7 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Found: `test_core_init_import` asserts but runs nothing: no call, no `await`, and no fixture or parameter to bring a value in.
     Why: A test that runs no code under test checks only its own literals or the language, so it passes whatever the code does.
     Fix: In `test_core_init_import`, call the code under test and assert on what it returns or changes; if the test only checks its own literals or Python itself, delete it.
-  suite/weak-assertion/test_bad_ultimate_coverage.py:18: DS201 weak-assertion [fail] in test_core_init_import
+  suite/weak-assertion/test_bad_ultimate_coverage.py:20: DS201 weak-assertion [fail] in test_core_init_import
     "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
     Found: `test_core_init_import` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
@@ -971,12 +971,12 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Found: `test_plugin_init_import` asserts but runs nothing: no call, no `await`, and no fixture or parameter to bring a value in.
     Why: A test that runs no code under test checks only its own literals or the language, so it passes whatever the code does.
     Fix: In `test_plugin_init_import`, call the code under test and assert on what it returns or changes; if the test only checks its own literals or Python itself, delete it.
-  suite/weak-assertion/test_bad_ultimate_coverage.py:23: DS201 weak-assertion [fail] in test_plugin_init_import
+  suite/weak-assertion/test_bad_ultimate_coverage.py:25: DS201 weak-assertion [fail] in test_plugin_init_import
     "Truthy, has a length, is a string. You described a potato, maggot!"
     Found: `test_plugin_init_import` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `test_plugin_init_import`, replace the weak assertions on line 25 with exact checks: assert what `pytest_drill_sergeant.plugin` should equal, as in `assert value == expected`.
-  suite/weak-assertion/test_bad_ultimate_coverage.py:28: DS201 weak-assertion [fail] in test_async_import
+  suite/weak-assertion/test_bad_ultimate_coverage.py:30: DS201 weak-assertion [fail] in test_async_import
     "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?"
     Found: `test_async_import` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
