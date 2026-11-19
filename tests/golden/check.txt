@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 28 findings in 6 files. FALL IN!
+DRILL SERGEANT INSPECTION: 40 findings in 9 files. FALL IN!
 
 suite/brittle-string-match/test_bad_captured_output.py
   suite/brittle-string-match/test_bad_captured_output.py:10: DS601 brittle-string-match [fail] in test_greeting_printed
@@ -152,4 +152,70 @@ suite/no-real-assertion/test_bad_tiny_coverage.py
     Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
     Fix: In `test_async_boost`, assert on what `pytest_drill_sergeant.run(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
 
-28 findings: 28 fail, 0 warn. Fix them, recruit. DISMISSED!
+suite/private-state-assertion/test_bad_cache_internals.py
+  suite/private-state-assertion/test_bad_cache_internals.py:10: DS602 private-state-assertion [fail] in test_cache_stores_the_key
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `test_cache_stores_the_key` asserts on private state: `cache._store`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_cache_stores_the_key`, replace `cache._store` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_cache_internals.py:11: DS602 private-state-assertion [fail] in test_cache_stores_the_key
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `test_cache_stores_the_key` asserts on private state: `cache._hits`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_cache_stores_the_key`, replace `cache._hits` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_cache_internals.py:18: DS602 private-state-assertion [fail] in test_queue_holds_two_items
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `test_queue_holds_two_items` asserts on private state: `queue._items`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_queue_holds_two_items`, replace `queue._items` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_cache_internals.py:23: DS602 private-state-assertion [fail] in test_two_private_names_in_one_assert
+    "That underscore means KEEP OUT! Test what it does, not what it hides!"
+    Found: `test_two_private_names_in_one_assert` asserts on private state: `cache._hits`, `cache._misses`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_two_private_names_in_one_assert`, replace `cache._hits`, `cache._misses` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_cache_internals.py:27: DS602 private-state-assertion [fail] in test_private_state_inside_a_generator
+    "Who gave you clearance to rifle through PRIVATE quarters, recruit?!"
+    Found: `test_private_state_inside_a_generator` asserts on private state: `c._store`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_private_state_inside_a_generator`, replace `c._store` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+
+suite/private-state-assertion/test_bad_mangled_and_calls.py
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:11: DS602 private-state-assertion [fail] in test_mangled_balance
+    "That underscore means KEEP OUT! Test what it does, not what it hides!"
+    Found: `test_mangled_balance` asserts on private state: `account._Account__balance`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_mangled_balance`, replace `account._Account__balance` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:17: DS602 private-state-assertion [fail] in test_private_method_was_called
+    "Who gave you clearance to rifle through PRIVATE quarters, recruit?!"
+    Found: `test_private_method_was_called` asserts on private state: `service._client`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_private_method_was_called`, replace `service._client` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:21: DS602 private-state-assertion [fail] in test_private_method_result
+    "That underscore means KEEP OUT! Test what it does, not what it hides!"
+    Found: `test_private_method_result` asserts on private state: `Service()._build_url`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_private_method_result`, replace `Service()._build_url` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:27: DS602 private-state-assertion [fail] in TestAccount::test_balance
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `TestAccount::test_balance` asserts on private state: `account._balance`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `TestAccount::test_balance`, replace `account._balance` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+
+suite/private-state-assertion/test_bad_module_private.py
+  suite/private-state-assertion/test_bad_module_private.py:7: DS602 private-state-assertion [fail] in test_registry_starts_empty
+    "Who gave you clearance to rifle through PRIVATE quarters, recruit?!"
+    Found: `test_registry_starts_empty` asserts on private state: `registry._registry`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_registry_starts_empty`, replace `registry._registry` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_module_private.py:12: DS602 private-state-assertion [fail] in test_config_loaded
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `test_config_loaded` asserts on private state: `config._loaded`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_config_loaded`, replace `config._loaded` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_module_private.py:18: DS602 private-state-assertion [fail] in test_private_state_in_a_nested_block
+    "That underscore means KEEP OUT! Test what it does, not what it hides!"
+    Found: `test_private_state_in_a_nested_block` asserts on private state: `item._dirty`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_private_state_in_a_nested_block`, replace `item._dirty` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+
+40 findings: 40 fail, 0 warn. Fix them, recruit. DISMISSED!
