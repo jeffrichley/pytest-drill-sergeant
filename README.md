@@ -6,7 +6,8 @@ behaviour, skips added to go green, sleeps, and test files too long to follow. I
 reports them as findings that fail the run, in the drill-sergeant voice.
 
 **Status:** v1 is being rebuilt from scratch. So far `drill-sergeant check <paths>`
-reports tests with no real assertion (DS101) and exits 1 when it finds any; the pytest
+reports tests with no real assertion (DS101), a broad `pytest.raises` with no `match=`
+(DS701) and swallowed exceptions (DS702), and exits 1 when it finds any; the pytest
 plugin does nothing yet. The plan is the
 [v1 spec](https://github.com/jeffrichley/pytest-drill-sergeant/issues/118). Version
 0.4 is archived under the tag `archive/2026-11-19/v0.4/main`.

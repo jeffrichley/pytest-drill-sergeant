@@ -32,7 +32,7 @@ def _is_always_true(test: ast.expr) -> bool:
     return isinstance(test, ast.Tuple) and bool(test.elts)
 
 
-def _is_real_assertion(node: ast.AST) -> bool:
+def is_real_assertion(node: ast.AST) -> bool:
     """Whether a node can fail the test on the outcome it checks.
 
     An `assert` of anything but a truthy constant or non-empty tuple counts, and so
@@ -68,7 +68,7 @@ def _last_call(test: TestFunction) -> ast.Call | None:
 def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         if any(
-            _is_real_assertion(node)
+            is_real_assertion(node)
             for statement in test.node.body
             for node in ast.walk(statement)
         ):

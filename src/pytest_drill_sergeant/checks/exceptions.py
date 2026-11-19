@@ -3,11 +3,18 @@
 import ast
 from collections.abc import Iterator
 
-from pytest_drill_sergeant.checks.base import Check, Hit, TestFile
+from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
+from pytest_drill_sergeant.checks.structure import is_real_assertion
 from pytest_drill_sergeant.findings import Level
 
 # The exception types that every error is an instance of.
 _BROAD = frozenset({"Exception", "BaseException"})
+
+# pytest's helpers that end the test by raising, so a handler calling one hides
+# nothing.
+_PYTEST_ENDING = frozenset({"fail", "skip", "xfail"})
+
+TryNode = ast.Try | ast.TryStar
 
 
 def _is_pytest_raises(func: ast.expr) -> bool:
@@ -104,4 +111,130 @@ BROAD_RAISES = Check(
         "        parse(None)\n"
     ),
     find=_find_broad_raises,
+)
+
+
+def _tries(test: TestFunction) -> Iterator[tuple[TryNode, ast.stmt | None]]:
+    """Every `try` in a test, with the statement that follows it, if any."""
+    for node in ast.walk(test.node):
+        for _field, value in ast.iter_fields(node):
+            if not isinstance(value, list):
+                continue
+            for index, item in enumerate(value):
+                if isinstance(item, TryNode):
+                    following = value[index + 1] if index + 1 < len(value) else None
+                    yield item, following
+
+
+def _is_pytest_ending(node: ast.AST) -> bool:
+    """Whether a node calls `pytest.fail`, `pytest.skip` or `pytest.xfail`."""
+    return (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "pytest"
+        and node.func.attr in _PYTEST_ENDING
+    )
+
+
+def _always_fails(statement: ast.stmt | None) -> bool:
+    """Whether a statement fails the test whenever it runs.
+
+    A `raise`, an `assert` of a falsy constant and a `pytest.fail` call do.
+    """
+    if isinstance(statement, ast.Raise):
+        return True
+    if isinstance(statement, ast.Assert):
+        test = statement.test
+        return isinstance(test, ast.Constant) and not test.value
+    return isinstance(statement, ast.Expr) and _is_pytest_ending(statement.value)
+
+
+def _expects_the_exception(node: TryNode, following: ast.stmt | None) -> bool:
+    """Whether the `try` fails the test when nothing is raised.
+
+    Then the exception is the expected outcome, and catching it is the old way to
+    write `pytest.raises`: the `try` body ends in a failure, its `else` holds one,
+    or the statement right after it is one.
+    """
+    return (
+        _always_fails(node.body[-1])
+        or any(_always_fails(statement) for statement in node.orelse)
+        or _always_fails(following)
+    )
+
+
+def _handles(handler: ast.ExceptHandler) -> bool:
+    """Whether an `except` handler asserts on the exception or raises again."""
+    return any(
+        is_real_assertion(node)
+        or isinstance(node, ast.Raise)
+        or _is_pytest_ending(node)
+        for statement in handler.body
+        for node in ast.walk(statement)
+    )
+
+
+def _find_swallowed_exception(file: TestFile) -> Iterator[Hit]:
+    for test in file.tests:
+        for node, following in _tries(test):
+            if _expects_the_exception(node, following):
+                continue
+            for handler in node.handlers:
+                if _handles(handler):
+                    continue
+                caught = (
+                    f"`{ast.unparse(handler.type)}`"
+                    if handler.type is not None
+                    else "every exception"
+                )
+                yield Hit(
+                    line=handler.lineno,
+                    test=test.name,
+                    found=(
+                        f"`{test.name}` catches {caught} on line {handler.lineno} "
+                        "and neither asserts on it nor raises it again."
+                    ),
+                    fix=(
+                        f"In `{test.name}`, remove the `try` that catches {caught} on "
+                        f"line {handler.lineno} and let the exception fail the test; "
+                        "if raising is the expected behaviour, use "
+                        "`pytest.raises(..., match=...)` instead."
+                    ),
+                )
+
+
+SWALLOWED_EXCEPTION = Check(
+    code="DS702",
+    name="swallowed-exception",
+    default_level=Level.FAIL,
+    voice=(
+        "You caught the failure and HID it, recruit? That's desertion!",
+        "`except: pass` isn't a test, maggot, it's a cover-up!",
+        "The code blew up and your test looked the other way! EYES FRONT!",
+    ),
+    why=(
+        "A test that catches an exception and carries on passes when the code under "
+        "test breaks, so it hides exactly the failure it should report."
+    ),
+    explain=(
+        "Flags an `except` handler in a test that neither has a real assertion nor "
+        "raises (re-raising, `pytest.fail`, `pytest.skip` and `pytest.xfail` count): "
+        "a handler that is `pass`, `continue`, a bare `return`, or that logs and "
+        "carries on. A `try` that fails the test when nothing is raised (its body "
+        "ends in, its `else` holds, or it is followed by `pytest.fail`, `raise` or "
+        "`assert False`) expects the exception, and is not flagged. Let exceptions "
+        "propagate, and use `pytest.raises(..., match=...)` when raising is the "
+        "expected behaviour."
+    ),
+    bad_example=(
+        "def test_sync():\n"
+        "    try:\n"
+        "        sync_all()\n"
+        "    except Exception:\n"
+        "        pass\n"
+        "    assert store.synced\n"
+    ),
+    good_example=("def test_sync():\n    sync_all()\n    assert store.synced\n"),
+    find=_find_swallowed_exception,
 )
