@@ -5,7 +5,7 @@ from collections.abc import Iterable, Iterator
 from fnmatch import fnmatch
 from pathlib import Path
 
-from pytest_drill_sergeant.checks import CHECKS, TestFunction
+from pytest_drill_sergeant.checks import CHECKS, TestFile, TestFunction
 from pytest_drill_sergeant.checks.base import FunctionNode
 from pytest_drill_sergeant.config import Config
 from pytest_drill_sergeant.findings import Finding, Level
@@ -102,7 +102,8 @@ def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
     if config.mode is Level.OFF:
         return findings
     for path in paths:
-        tests = list(_tests_in(ast.parse(path.read_bytes(), filename=str(path)).body))
+        module = ast.parse(path.read_bytes(), filename=str(path))
+        file = TestFile(path=path, module=module, tests=tuple(_tests_in(module.body)))
         ignored = _ignored_codes(path, config)
         for check in CHECKS:
             level = config.levels.get(check.code, check.default_level)
@@ -122,6 +123,6 @@ def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
                     why=check.why,
                     fix=hit.fix,
                 )
-                for hit in check.find(tests)
+                for hit in check.find(file)
             )
     return sorted(findings, key=lambda f: (f.file.as_posix(), f.line, f.code))
