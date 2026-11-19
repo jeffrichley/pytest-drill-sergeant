@@ -127,3 +127,91 @@ NO_REAL_ASSERTION = Check(
     ),
     find=_find_no_real_assertion,
 )
+
+
+def _has_real_assertion(test: TestFunction) -> bool:
+    """Whether anything in the test, nested code included, is a real assertion."""
+    return any(
+        _is_real_assertion(node)
+        for statement in test.node.body
+        for node in ast.walk(statement)
+    )
+
+
+def _takes_values_in(test: TestFunction) -> bool:
+    """Whether the test is handed values: a fixture or parameter, or `self` it uses.
+
+    A value handed in may be the outcome under test, made where the test can't see.
+    """
+    args = test.node.args
+    names = [a.arg for a in (*args.posonlyargs, *args.args, *args.kwonlyargs)]
+    if any(name != "self" for name in names):
+        return True
+    return "self" in names and any(
+        isinstance(node, ast.Name) and node.id == "self"
+        for statement in test.node.body
+        for node in ast.walk(statement)
+    )
+
+
+def _runs_anything(test: TestFunction) -> bool:
+    """Whether the test calls or awaits anything but its assertions."""
+    return any(
+        isinstance(node, ast.Await)
+        or (isinstance(node, ast.Call) and not _is_real_assertion(node))
+        for statement in test.node.body
+        for node in ast.walk(statement)
+    )
+
+
+def _find_no_action_under_test(file: TestFile) -> Iterator[Hit]:
+    for test in file.tests:
+        if (
+            not _has_real_assertion(test)
+            or _takes_values_in(test)
+            or _runs_anything(test)
+        ):
+            continue
+        yield Hit(
+            line=test.node.lineno,
+            test=test.name,
+            found=(
+                f"`{test.name}` asserts but runs nothing: no call, no `await`, and "
+                "no fixture or parameter to bring a value in."
+            ),
+            fix=(
+                f"In `{test.name}`, call the code under test and assert on what it "
+                "returns or changes; if the test only checks its own literals or "
+                "Python itself, delete it."
+            ),
+        )
+
+
+NO_ACTION_UNDER_TEST = Check(
+    code="DS102",
+    name="no-action-under-test",
+    default_level=Level.FAIL,
+    voice=(
+        "You're asserting on numbers you wrote yourself, recruit! WHERE IS THE CODE?",
+        "This test checks that Python works! Python doesn't need your help, maggot!",
+        "No action, no test! Run the thing you claim to be testing!",
+    ),
+    why=(
+        "A test that runs no code under test checks only its own literals or the "
+        "language, so it passes whatever the code does."
+    ),
+    explain=(
+        "Flags a test that has a real assertion but runs nothing: no call outside its "
+        "assertions, no `await`, and no fixture or parameter (or `self` it uses) that "
+        "could bring in the value under test. Such a test checks only values it wrote "
+        "itself, or Python. Call the code under test and assert on its outcome."
+    ),
+    bad_example=(
+        "def test_discount():\n    discount = 0.1\n    assert discount == 0.1\n"
+    ),
+    good_example=(
+        "def test_discount_takes_ten_percent_off():\n"
+        "    assert apply_discount(price=100, rate=0.1) == 90\n"
+    ),
+    find=_find_no_action_under_test,
+)
