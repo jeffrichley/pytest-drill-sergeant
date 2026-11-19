@@ -111,6 +111,8 @@ convention = "google"
 # Tests are held to the short set: what is wrong (F, E, B), what is stale (UP, I), and
 # no more. A test's name is its docstring.
 "**/tests/**" = ["N", "Q", "SIM", "C90", "ARG", "TID", "PL", "PERF", "D", "ANN", "RUF"]
+# The corpus is bad tests on purpose: analysed by the engine, never run.
+"**/tests/corpus/**" = ["N", "Q", "SIM", "C90", "ARG", "TID", "PL", "PERF", "D", "ANN", "RUF", "B", "F631"]
 
 [tool.mypy]
 python_version = "3.11"

@@ -15,6 +15,9 @@ os.environ["COLUMNS"] = "100"
 
 pytest_plugins = ["pytester"]
 
+# The corpus is analysed by the engine, never run.
+collect_ignore = ["corpus"]
+
 
 @pytest.fixture
 def cli(tmp_path, monkeypatch):
@@ -27,3 +30,12 @@ def cli(tmp_path, monkeypatch):
         return runner.invoke(app, list(args), prog_name="drill-sergeant")
 
     return run
+
+
+@pytest.fixture
+def assertion_free_test(tmp_path):
+    """A test file in `tmp_path` holding one test with no real assertion (DS101 on
+    line 1)."""
+    path = tmp_path / "test_it.py"
+    path.write_text("def test_it():\n    run()\n")
+    return path
