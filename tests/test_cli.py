@@ -14,7 +14,9 @@ def test_help_names_the_command(cli):
 
 
 def test_check_exits_zero_on_a_clean_file(cli, tmp_path):
-    (tmp_path / "test_ok.py").write_text("def test_ok():\n    assert 1 + 1 == 2\n")
+    (tmp_path / "test_ok.py").write_text(
+        "def test_ok():\n    assert sum([1, 1]) == 2\n"
+    )
 
     result = cli("check", "test_ok.py")
 
