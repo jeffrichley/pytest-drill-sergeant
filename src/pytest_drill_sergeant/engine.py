@@ -1,24 +1,15 @@
 """The engine: test files and a config in, findings out, with no pytest in sight."""
 
 import ast
-from collections.abc import Iterable, Iterator, Mapping
-from dataclasses import dataclass, field
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 
 from pytest_drill_sergeant.checks import CHECKS, TestFunction
 from pytest_drill_sergeant.checks.base import FunctionNode
+from pytest_drill_sergeant.config import Config
 from pytest_drill_sergeant.findings import Finding, Level
 
-
-@dataclass(frozen=True)
-class Config:
-    """The resolved configuration the engine runs with.
-
-    Attributes:
-        levels: A level per check code, overriding the check's default.
-    """
-
-    levels: Mapping[str, Level] = field(default_factory=dict)
+__all__ = ["Config", "analyze"]
 
 
 def _is_fixture(node: FunctionNode) -> bool:
@@ -83,15 +74,20 @@ def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
 
     Returns:
         The findings, ordered by file, line and code. Checks configured `off`
-        report none.
+        report none, and none run in `off` mode; in `warn` mode every finding is
+        reported as `warn`.
     """
     findings: list[Finding] = []
+    if config.mode is Level.OFF:
+        return findings
     for path in paths:
         tests = list(_tests_in(ast.parse(path.read_bytes(), filename=str(path)).body))
         for check in CHECKS:
             level = config.levels.get(check.code, check.default_level)
             if level is Level.OFF:
                 continue
+            if config.mode is Level.WARN:
+                level = Level.WARN
             findings.extend(
                 Finding(
                     code=check.code,
