@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 184 findings in 46 files. FALL IN!
+DRILL SERGEANT INSPECTION: 186 findings in 47 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -274,6 +274,18 @@ suite/mirror-assertion/test_bad_same_call_both_sides.py
     Found: `TestSlug::test_strips` checks `slugify(' x ').strip()` against itself: both sides of `==` make the same call.
     Why: A mirror assertion takes its expected value from the code under test, so a bug changes both sides at once and the test stays green.
     Fix: In `TestSlug::test_strips`, line 17: keep `slugify(' x ').strip()` on one side and put the value it should return, worked out by hand, on the other.
+
+suite/mirror-assertion/test_bad_two_bindings_of_one_call.py
+  suite/mirror-assertion/test_bad_two_bindings_of_one_call.py:10: DS203 mirror-assertion [fail] in test_slugify_gives_the_same_slug_every_time
+    "Asking the suspect for his own alibi? That's not a test, that's a MIRROR!"
+    Found: `test_slugify_gives_the_same_slug_every_time` checks `slugify('Hello World')` against itself: both sides of `==` make the same call.
+    Why: A mirror assertion takes its expected value from the code under test, so a bug changes both sides at once and the test stays green.
+    Fix: In `test_slugify_gives_the_same_slug_every_time`, line 10: keep `slugify('Hello World')` on one side and put the value it should return, worked out by hand, on the other.
+  suite/mirror-assertion/test_bad_two_bindings_of_one_call.py:16: DS203 mirror-assertion [fail] in test_dump_is_stable
+    "Asking the suspect for his own alibi? That's not a test, that's a MIRROR!"
+    Found: `test_dump_is_stable` checks `serializer.dump(order)` against itself: both sides of `==` make the same call.
+    Why: A mirror assertion takes its expected value from the code under test, so a bug changes both sides at once and the test stays green.
+    Fix: In `test_dump_is_stable`, line 16: keep `serializer.dump(order)` on one side and put the value it should return, worked out by hand, on the other.
 
 suite/no-action-under-test/test_bad_constants_only.py
   suite/no-action-under-test/test_bad_constants_only.py:5: DS102 no-action-under-test [fail] in test_discount_rate
@@ -1012,4 +1024,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `test_async_import`, line 30: replace the weak assertions on line 30 with exact checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-184 findings: 184 fail, 0 warn. Fix them, recruit. DISMISSED!
+186 findings: 186 fail, 0 warn. Fix them, recruit. DISMISSED!

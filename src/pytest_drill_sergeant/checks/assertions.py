@@ -44,9 +44,6 @@ _LITERAL_NODES = (
     ast.unaryop,
 )
 
-# Name prefixes that mark a name as the expected value, not a result.
-_EXPECTATION_NAMES = ("expect", "want", "exp_")
-
 _FLIPPED: dict[type[ast.cmpop], type[ast.cmpop]] = {
     ast.Lt: ast.Gt,
     ast.Gt: ast.Lt,
@@ -245,33 +242,13 @@ def _tautology(raw: ast.expr, aliased: ast.expr, resolved: ast.expr) -> str | No
     return None
 
 
-def _is_determinism_check(raw: ast.expr) -> bool:
-    """Whether an `==` compares two names, neither named as the expectation.
-
-    `first = f(x); second = f(x); assert first == second` tests that `f` gives the
-    same answer every time; `assert result == expected` takes its expectation from
-    the code.
-    """
-    if not isinstance(raw, ast.Compare) or len(raw.comparators) != 1:
-        return False
-    sides = [raw.left, raw.comparators[0]]
-    names = [side.id for side in sides if isinstance(side, ast.Name)]
-    return (
-        len(names) == 2  # noqa: PLR2004 -- both sides of the `==`
-        and names[0] != names[1]
-        and not any(name.lower().startswith(_EXPECTATION_NAMES) for name in names)
-    )
-
-
-def _mirrored_call(raw: ast.expr, resolved: ast.expr) -> str | None:
+def _mirrored_call(resolved: ast.expr) -> str | None:
     """The call an `==` puts on both sides, if it does.
 
     A constructor on both sides (`Point(1, 2) == Point(1, 2)`) is a test of `__eq__`,
-    and two results bound to their own names (`first == second`) a test of
-    determinism, not a mirror.
+    not a mirror. Names never matter: `first == second`, each bound to the same call,
+    is a mirror just as `result == expected` is.
     """
-    if _is_determinism_check(raw):
-        return None
     if not (
         isinstance(resolved, ast.Compare)
         and len(resolved.ops) == 1
@@ -402,7 +379,7 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
         if why is not None:
             verdicts.append(_Verdict(node, _Kind.TAUTOLOGICAL, why))
             continue
-        call = _mirrored_call(test_expr, resolved)
+        call = _mirrored_call(resolved)
         if call is not None:
             verdicts.append(_Verdict(node, _Kind.MIRROR, call))
             continue
@@ -601,11 +578,11 @@ MIRROR_ASSERTION = Check(
         "the test bound to it (`expected = gross_price(100, 20)`) with nothing else "
         "called in between. A constructor on "
         "both sides (`Point(1, 2) == Point(1, 2)`) tests `__eq__` and is fine, and so "
-        "is the same function called with different arguments, or two results bound "
-        "to their own names, neither named as the expectation (`first == second`), "
-        "which tests that the call is deterministic. A formula copied from "
-        "the code by hand is not caught. Put the value the call should return, worked "
-        "out by hand, on one side."
+        "is the same function called with different arguments. Names don't matter: "
+        "two bindings of the same call compared (`first == second`) are flagged just "
+        "as `result == expected` is; a genuine determinism test takes a waiver. A "
+        "formula copied from the code by hand is not caught. Put the value the call "
+        "should return, worked out by hand, on one side."
     ),
     bad_example=(
         "def test_slugify():\n"
