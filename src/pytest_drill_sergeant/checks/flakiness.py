@@ -2,12 +2,31 @@
 
 import ast
 from collections.abc import Iterator, Mapping
+from dataclasses import dataclass
 
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
 from pytest_drill_sergeant.findings import Level
 
 # The event-loop sleeps, which yield without waiting when given a zero delay.
 _ASYNC_SLEEPS = frozenset({"asyncio.sleep", "trio.sleep", "anyio.sleep"})
+
+# The calls that read the wall clock.
+_CLOCK_READS = frozenset(
+    {
+        "time.time",
+        "time.time_ns",
+        "datetime.datetime.now",
+        "datetime.datetime.utcnow",
+        "datetime.datetime.today",
+        "datetime.date.today",
+    }
+)
+
+# What freezes the clock: as a decorator or `with`, and as a fixture a test takes.
+_FREEZERS = frozenset(
+    {"freezegun.freeze_time", "time_machine.travel", "pytest.mark.freeze_time"}
+)
+_FREEZER_FIXTURES = frozenset({"freezer", "time_machine"})
 
 
 def _bind_imports(
@@ -106,16 +125,72 @@ def _qualified(expr: ast.expr, names: Mapping[str, str]) -> str | None:
     return None
 
 
-def _calls(file: TestFile) -> Iterator[tuple[TestFunction, ast.Call, str]]:
-    """Every call in every test whose target an import reaches, with its full name."""
+@dataclass(frozen=True)
+class _Call:
+    """A call in a test whose target an import reaches.
+
+    Attributes:
+        test: The test it is in.
+        node: The call.
+        target: What it calls, in full (`time.sleep`).
+        frozen: Whether it runs under a frozen clock.
+    """
+
+    test: TestFunction
+    node: ast.Call
+    target: str
+    frozen: bool
+
+
+def _calls(file: TestFile) -> Iterator[_Call]:
+    """Every call in every test whose target an import reaches, in source order."""
     module_names = _module_names(file.module)
     for test in file.tests:
         names = _test_names(test, module_names)
         calls = [node for node in ast.walk(test.node) if isinstance(node, ast.Call)]
+        frozen = _frozen_calls(file, test, names)
         for call in sorted(calls, key=lambda c: (c.lineno, c.col_offset)):
             target = _qualified(call.func, names)
             if target:
-                yield test, call, target
+                yield _Call(test, call, target, frozen=call in frozen)
+
+
+def _freezes(expr: ast.expr, names: Mapping[str, str]) -> bool:
+    """Whether a decorator or `with` item freezes the clock."""
+    target = expr.func if isinstance(expr, ast.Call) else expr
+    return _qualified(target, names) in _FREEZERS
+
+
+def _frozen_calls(
+    file: TestFile, test: TestFunction, names: Mapping[str, str]
+) -> set[ast.Call]:
+    """The calls in a test that run under a frozen clock.
+
+    All of them when the test or a class around it is decorated with a freezer or
+    the test takes a freezer fixture; otherwise those inside a freezer's `with`.
+    """
+    classes = [
+        node
+        for node in ast.walk(file.module)
+        if isinstance(node, ast.ClassDef) and test.node in node.body
+    ]
+    decorators = [d for owner in [test.node, *classes] for d in owner.decorator_list]
+    params = {arg.arg for arg in ast.walk(test.node.args) if isinstance(arg, ast.arg)}
+    scopes: list[ast.AST] = []
+    if any(_freezes(d, names) for d in decorators) or params & _FREEZER_FIXTURES:
+        scopes.append(test.node)
+    scopes.extend(
+        node
+        for node in ast.walk(test.node)
+        if isinstance(node, ast.With | ast.AsyncWith)
+        and any(_freezes(item.context_expr, names) for item in node.items)
+    )
+    return {
+        node
+        for scope in scopes
+        for node in ast.walk(scope)
+        if isinstance(node, ast.Call)
+    }
 
 
 def _is_zero(call: ast.Call) -> bool:
@@ -128,18 +203,38 @@ def _is_zero(call: ast.Call) -> bool:
 
 
 def _find_sleep_in_test(file: TestFile) -> Iterator[Hit]:
-    for test, call, target in _calls(file):
-        if target != "time.sleep" and (target not in _ASYNC_SLEEPS or _is_zero(call)):
+    # A frozen clock doesn't stop a sleep: freezegun and time-machine leave it real.
+    for call in _calls(file):
+        if call.target != "time.sleep" and (
+            call.target not in _ASYNC_SLEEPS or _is_zero(call.node)
+        ):
             continue
-        written = ast.unparse(call)
+        test, line, written = call.test.name, call.node.lineno, ast.unparse(call.node)
         yield Hit(
-            line=call.lineno,
-            test=test.name,
-            found=f"`{test.name}` sleeps for real time: `{written}`.",
+            line=line,
+            test=test,
+            found=f"`{test}` sleeps for real time: `{written}`.",
             fix=(
-                f"In `{test.name}`, replace `{written}` on line {call.lineno} with "
-                "a fake or frozen clock, or wait on the condition itself (an event, "
-                "a join, a poll with a timeout)."
+                f"In `{test}`, replace `{written}` on line {line} with a fake or "
+                "frozen clock, or wait on the condition itself (an event, a join, a "
+                "poll with a timeout)."
+            ),
+        )
+
+
+def _find_wall_clock_read(file: TestFile) -> Iterator[Hit]:
+    for call in _calls(file):
+        if call.target not in _CLOCK_READS or call.frozen:
+            continue
+        test, line, written = call.test.name, call.node.lineno, ast.unparse(call.node)
+        yield Hit(
+            line=line,
+            test=test,
+            found=f"`{test}` reads the wall clock: `{written}`.",
+            fix=(
+                f"In `{test}`, replace `{written}` on line {line} with a fixed time "
+                "or an injected clock, or freeze the clock with "
+                "`freezegun.freeze_time` or `time_machine.travel`."
             ),
         )
 
@@ -181,4 +276,46 @@ SLEEP_IN_TEST = Check(
         "    assert is_expired(token, clock=clock)\n"
     ),
     find=_find_sleep_in_test,
+)
+
+
+WALL_CLOCK_READ = Check(
+    code="DS802",
+    name="wall-clock-read",
+    default_level=Level.FAIL,
+    voice=(
+        "What time is it, recruit? Time for you to stop asking the WALL CLOCK!",
+        "This test passes at noon and fails at midnight! That's not a test, that's "
+        "a SUNDIAL!",
+        "The clock keeps moving, maggot! Freeze it or inject it!",
+    ),
+    why=(
+        "A test that reads the real clock gives a different answer on each run, and "
+        "fails at midnight, at month end, across a daylight-saving change or on a slow "
+        "machine."
+    ),
+    explain=(
+        "Flags a test that reads the wall clock: `time.time`, `time.time_ns`, "
+        "`datetime.now`, `datetime.utcnow`, `datetime.today` or `date.today`, "
+        "through any import alias. A read under a frozen clock is not flagged: in a "
+        "test or class decorated with `freezegun.freeze_time`, `time_machine.travel` "
+        "or `pytest.mark.freeze_time`, in a test that takes the `freezer` or "
+        "`time_machine` fixture, or inside a `with freeze_time(...)` block. Use a "
+        "fixed time or an injected clock, or freeze the clock."
+    ),
+    bad_example=(
+        "from datetime import date, timedelta\n"
+        "\n"
+        "def test_invoice_is_due_in_thirty_days():\n"
+        "    invoice = Invoice.issue()\n"
+        "    assert invoice.due == date.today() + timedelta(days=30)\n"
+    ),
+    good_example=(
+        "from datetime import date\n"
+        "\n"
+        "def test_invoice_is_due_in_thirty_days():\n"
+        "    invoice = Invoice.issue(on=date(2026, 1, 1))\n"
+        "    assert invoice.due == date(2026, 1, 31)\n"
+    ),
+    find=_find_wall_clock_read,
 )

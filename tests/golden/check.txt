@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 23 findings in 6 files. FALL IN!
+DRILL SERGEANT INSPECTION: 32 findings in 9 files. FALL IN!
 
 suite/no-real-assertion/test_bad_coverage_boost.py
   suite/no-real-assertion/test_bad_coverage_boost.py:14: DS101 no-real-assertion [fail] in TestCoverageBoost::test_string_operations
@@ -127,4 +127,55 @@ suite/sleep-in-test/test_bad_token_expiry.py
     Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
     Fix: In `TestCache::test_entry_is_evicted`, replace `time.sleep(0.6)` on line 20 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
 
-23 findings: 23 fail, 0 warn. Fix them, recruit. DISMISSED!
+suite/wall-clock-read/test_bad_epoch_seconds.py
+  suite/wall-clock-read/test_bad_epoch_seconds.py:14: DS802 wall-clock-read [fail] in test_token_carries_the_issue_time
+    "This test passes at noon and fails at midnight! That's not a test, that's a SUNDIAL!"
+    Found: `test_token_carries_the_issue_time` reads the wall clock: `time.time()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_token_carries_the_issue_time`, replace `time.time()` on line 14 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_epoch_seconds.py:18: DS802 wall-clock-read [fail] in test_issue_is_fast
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_issue_is_fast` reads the wall clock: `time_ns()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_issue_is_fast`, replace `time_ns()` on line 18 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_epoch_seconds.py:20: DS802 wall-clock-read [fail] in test_issue_is_fast
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_issue_is_fast` reads the wall clock: `time_ns()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_issue_is_fast`, replace `time_ns()` on line 20 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+
+suite/wall-clock-read/test_bad_expiry_windows.py
+  suite/wall-clock-read/test_bad_expiry_windows.py:12: DS802 wall-clock-read [fail] in test_invoice_is_due_in_thirty_days
+    "This test passes at noon and fails at midnight! That's not a test, that's a SUNDIAL!"
+    Found: `test_invoice_is_due_in_thirty_days` reads the wall clock: `date.today()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_invoice_is_due_in_thirty_days`, replace `date.today()` on line 12 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_expiry_windows.py:17: DS802 wall-clock-read [fail] in test_subscription_is_active
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_subscription_is_active` reads the wall clock: `datetime.now()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_subscription_is_active`, replace `datetime.now()` on line 17 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_expiry_windows.py:23: DS802 wall-clock-read [fail] in TestAudit::test_stamp_is_recent
+    "This test passes at noon and fails at midnight! That's not a test, that's a SUNDIAL!"
+    Found: `TestAudit::test_stamp_is_recent` reads the wall clock: `datetime.utcnow()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `TestAudit::test_stamp_is_recent`, replace `datetime.utcnow()` on line 23 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+
+suite/wall-clock-read/test_bad_module_datetime.py
+  suite/wall-clock-read/test_bad_module_datetime.py:14: DS802 wall-clock-read [fail] in test_report_is_dated_today
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_report_is_dated_today` reads the wall clock: `dt.date.today()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_report_is_dated_today`, replace `dt.date.today()` on line 14 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_module_datetime.py:18: DS802 wall-clock-read [fail] in test_report_header_has_utc_time
+    "This test passes at noon and fails at midnight! That's not a test, that's a SUNDIAL!"
+    Found: `test_report_header_has_utc_time` reads the wall clock: `datetime.datetime.now(tz=datetime.UTC)`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_report_header_has_utc_time`, replace `datetime.datetime.now(tz=datetime.UTC)` on line 18 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_module_datetime.py:25: DS802 wall-clock-read [fail] in test_freeze_covers_only_its_block
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_freeze_covers_only_its_block` reads the wall clock: `datetime.date.today()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_freeze_covers_only_its_block`, replace `datetime.date.today()` on line 25 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+
+32 findings: 32 fail, 0 warn. Fix them, recruit. DISMISSED!
