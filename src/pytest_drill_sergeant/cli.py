@@ -6,7 +6,9 @@ from typing import Annotated, NoReturn
 
 import typer
 
-from pytest_drill_sergeant.engine import Config, analyze
+from pytest_drill_sergeant.config import ConfigError, resolve
+from pytest_drill_sergeant.discovery import discover, load
+from pytest_drill_sergeant.engine import analyze
 from pytest_drill_sergeant.findings import Level
 from pytest_drill_sergeant.render import render
 
@@ -61,16 +63,32 @@ def _refuse(reason: str) -> NoReturn:
 @app.command()
 def check(
     paths: Annotated[list[Path], typer.Argument(help="Test files or directories.")],
+    config_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--config",
+            help="The pytest config file to read, instead of searching upward from "
+            "the paths as pytest does.",
+        ),
+    ] = None,
 ) -> None:
-    """Check test files without running them; exit 1 when there are findings."""
+    """Check test files without running them; exit 1 when there are fail findings."""
     for path in paths:
         if not path.exists():
             _refuse(f"no such file or directory: {path}")
+    try:
+        source = load(config_file) if config_file else discover(paths)
+    except ConfigError as error:
+        _refuse(str(error))
+    try:
+        config = resolve(source.values, root=source.root)
+    except ConfigError as error:
+        _refuse(f"{source.path}: {error}")
     files = [file for path in paths for file in _test_files(path)]
     try:
-        findings = analyze(files, Config())
+        findings = analyze(files, config)
     except SyntaxError as error:
         _refuse(f"cannot parse {error.filename}, line {error.lineno}: {error.msg}")
-    typer.echo(render(findings), nl=False)
+    typer.echo(render(findings, voice=config.voice), nl=False)
     if any(f.level is Level.FAIL for f in findings):
         raise typer.Exit(1)
