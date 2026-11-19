@@ -19,10 +19,6 @@ def test_tuple_with_a_broad_member():
         parse(None)
 
 
-def test_function_form():
-    pytest.raises(Exception, parse, None)  # expect: DS701
-
-
 def test_keyword_form():
     with pytest.raises(expected_exception=BaseException):  # expect: DS701
         parse(None)

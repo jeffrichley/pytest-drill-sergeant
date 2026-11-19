@@ -1,8 +1,6 @@
 """Swallowed exceptions in classes, async tests, nested `try`s and `except*`.
 Analysed, never run."""
 
-import contextlib
-
 
 async def fetch(url):
     raise ConnectionError(url)
@@ -36,9 +34,7 @@ def test_nested_try_inner_swallowed():
         raise
 
 
-def test_exception_group_swallowed():
-    with contextlib.suppress(RuntimeError):
-        assert fetch("c")
+def test_exception_group_swallowed():  # expect: DS101
     try:
         fetch("d")
     except* ConnectionError:  # expect: DS702

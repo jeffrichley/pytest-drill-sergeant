@@ -9,6 +9,14 @@ def parse(text):
     return int(text)
 
 
+class ParseException(Exception):
+    pass
+
+
+def strict_parse(text):
+    raise ParseException(text)
+
+
 def test_specific_type_without_match():
     with pytest.raises(ValueError):
         parse("x")
@@ -25,8 +33,5 @@ def test_bare_name_with_a_specific_type():
 
 
 def test_exception_subclass_named_like_it():
-    class ParseException(Exception):
-        pass
-
     with pytest.raises(ParseException):
-        raise ParseException
+        strict_parse("x")
