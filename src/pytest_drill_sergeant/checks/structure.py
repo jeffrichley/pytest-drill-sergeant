@@ -57,6 +57,15 @@ def _is_real_assertion(node: ast.AST) -> bool:
     return False
 
 
+def _has_real_assertion(test: TestFunction) -> bool:
+    """Whether anything in the test, nested code included, is a real assertion."""
+    return any(
+        _is_real_assertion(node)
+        for statement in test.node.body
+        for node in ast.walk(statement)
+    )
+
+
 def _last_call(test: TestFunction) -> ast.Call | None:
     """The call the test's last statement makes, if it makes one."""
     last = test.node.body[-1]
@@ -68,11 +77,7 @@ def _last_call(test: TestFunction) -> ast.Call | None:
 
 def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        if any(
-            _is_real_assertion(node)
-            for statement in test.node.body
-            for node in ast.walk(statement)
-        ):
+        if _has_real_assertion(test):
             continue
         call = _last_call(test)
         target = (
@@ -128,15 +133,6 @@ NO_REAL_ASSERTION = Check(
     ),
     find=_find_no_real_assertion,
 )
-
-
-def _has_real_assertion(test: TestFunction) -> bool:
-    """Whether anything in the test, nested code included, is a real assertion."""
-    return any(
-        _is_real_assertion(node)
-        for statement in test.node.body
-        for node in ast.walk(statement)
-    )
 
 
 def _takes_values_in(test: TestFunction) -> bool:
