@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
 from pytest_drill_sergeant.findings import Level
 
-# The event-loop sleeps, which yield without waiting when given a zero delay.
-_ASYNC_SLEEPS = frozenset({"asyncio.sleep", "trio.sleep", "anyio.sleep"})
+# The sleeps; each only yields, without waiting, when given a zero delay.
+_SLEEPS = frozenset({"time.sleep", "asyncio.sleep", "trio.sleep", "anyio.sleep"})
 
 # The calls that read the wall clock.
 _CLOCK_READS = frozenset(
@@ -22,13 +22,17 @@ _CLOCK_READS = frozenset(
     }
 )
 
+# The `time` conversions that read the wall clock when given no timestamp.
+_CLOCK_READS_WITHOUT_ARGS = frozenset({"time.localtime", "time.gmtime", "time.ctime"})
+
 # What freezes the clock: as a decorator or `with`, and as a fixture a test takes.
 _FREEZERS = frozenset(
     {"freezegun.freeze_time", "time_machine.travel", "pytest.mark.freeze_time"}
 )
 _FREEZER_FIXTURES = frozenset({"freezer", "time_machine"})
 
-# The draws from a global generator, by the module whose seed governs them.
+# The draws from a global generator, by the generator module whose seed governs
+# them.
 _DRAWS = {
     "random": frozenset(
         {
@@ -121,11 +125,20 @@ def _module_names(module: ast.Module) -> dict[str, str]:
 
 
 def _bound_names(statement: ast.stmt) -> Iterator[str]:
-    """The names a function, class or assignment statement binds where it stands."""
+    """The names a statement binds where it stands, imports aside.
+
+    That is a `def` or `class`, an assignment, a `for` target or a `with ... as`.
+    """
     if isinstance(statement, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
         yield statement.name
         return
-    targets = statement.targets if isinstance(statement, ast.Assign) else []
+    targets: list[ast.expr] = []
+    if isinstance(statement, ast.Assign):
+        targets = statement.targets
+    elif isinstance(statement, ast.AnnAssign | ast.For | ast.AsyncFor):
+        targets = [statement.target]
+    elif isinstance(statement, ast.With | ast.AsyncWith):
+        targets = [i.optional_vars for i in statement.items if i.optional_vars]
     for target in targets:
         for node in ast.walk(target):
             if isinstance(node, ast.Name):
@@ -139,7 +152,7 @@ def _test_names(test: TestFunction, module_names: Mapping[str, str]) -> dict[str
     `def sleep`, hides the module's import of the same name.
     """
     names = dict(module_names)
-    shadows = {arg.arg for arg in ast.walk(test.node.args) if isinstance(arg, ast.arg)}
+    shadows = _params(test)
     for node in ast.walk(test.node):
         if node is test.node:
             continue
@@ -150,6 +163,11 @@ def _test_names(test: TestFunction, module_names: Mapping[str, str]) -> dict[str
     for shadow in shadows:
         names.pop(shadow, None)
     return names
+
+
+def _params(test: TestFunction) -> set[str]:
+    """A test's parameter names: the fixtures it takes."""
+    return {arg.arg for arg in ast.walk(test.node.args) if isinstance(arg, ast.arg)}
 
 
 def _qualified(expr: ast.expr, names: Mapping[str, str]) -> str | None:
@@ -174,13 +192,27 @@ class _Call:
         test: The test it is in.
         node: The call.
         target: What it calls, in full (`time.sleep`).
-        frozen: Whether it runs under a frozen clock.
+        names: The imported names the test sees, for resolving what's around it.
     """
 
     test: TestFunction
     node: ast.Call
     target: str
-    frozen: bool
+    names: Mapping[str, str]
+
+    def hit(self, found: str, fix: str) -> Hit:
+        """A hit on this call.
+
+        `found` follows "`<test>` " and `fix` follows "In `<test>`, replace
+        `<call>` on line <n> with ".
+        """
+        test, line, written = self.test.name, self.node.lineno, ast.unparse(self.node)
+        return Hit(
+            line=line,
+            test=test,
+            found=f"`{test}` {found}: `{written}`.",
+            fix=f"In `{test}`, replace `{written}` on line {line} with {fix}",
+        )
 
 
 def _calls(file: TestFile) -> Iterator[_Call]:
@@ -189,17 +221,41 @@ def _calls(file: TestFile) -> Iterator[_Call]:
     for test in file.tests:
         names = _test_names(test, module_names)
         calls = [node for node in ast.walk(test.node) if isinstance(node, ast.Call)]
-        frozen = _frozen_calls(file, test, names)
         for call in sorted(calls, key=lambda c: (c.lineno, c.col_offset)):
             target = _qualified(call.func, names)
             if target:
-                yield _Call(test, call, target, frozen=call in frozen)
+                yield _Call(test, call, target, names)
 
 
 def _freezes(expr: ast.expr, names: Mapping[str, str]) -> bool:
-    """Whether a decorator or `with` item freezes the clock."""
+    """Whether a decorator, `with` item or `pytestmark` entry freezes the clock."""
     target = expr.func if isinstance(expr, ast.Call) else expr
     return _qualified(target, names) in _FREEZERS
+
+
+def _module_frozen(module: ast.Module, names: Mapping[str, str]) -> bool:
+    """Whether the module's `pytestmark` freezes the clock for every test."""
+    for statement in module.body:
+        if isinstance(statement, ast.Assign) and any(
+            isinstance(t, ast.Name) and t.id == "pytestmark" for t in statement.targets
+        ):
+            value = statement.value
+            marks = value.elts if isinstance(value, ast.List | ast.Tuple) else [value]
+            if any(_freezes(mark, names) for mark in marks):
+                return True
+    return False
+
+
+def _starts_freezer(test: TestFunction, names: Mapping[str, str]) -> bool:
+    """Whether the test starts a freezer by hand (`freeze_time(...).start()`).
+
+    The freezer may be held in a variable first, so any `.start()` call in a test
+    that builds a freezer counts.
+    """
+    calls = [n for n in ast.walk(test.node) if isinstance(n, ast.Call)]
+    return any(_freezes(c, names) for c in calls) and any(
+        isinstance(c.func, ast.Attribute) and c.func.attr == "start" for c in calls
+    )
 
 
 def _frozen_calls(
@@ -207,8 +263,9 @@ def _frozen_calls(
 ) -> set[ast.Call]:
     """The calls in a test that run under a frozen clock.
 
-    All of them when the test or a class around it is decorated with a freezer or
-    the test takes a freezer fixture; otherwise those inside a freezer's `with`.
+    All of them when the module's `pytestmark`, the test or a class around it
+    freezes the clock, or the test takes a freezer fixture or starts a freezer by
+    hand; otherwise those inside a freezer's `with`.
     """
     classes = [
         node
@@ -216,9 +273,13 @@ def _frozen_calls(
         if isinstance(node, ast.ClassDef) and test.node in node.body
     ]
     decorators = [d for owner in [test.node, *classes] for d in owner.decorator_list]
-    params = {arg.arg for arg in ast.walk(test.node.args) if isinstance(arg, ast.arg)}
     scopes: list[ast.AST] = []
-    if any(_freezes(d, names) for d in decorators) or params & _FREEZER_FIXTURES:
+    if (
+        any(_freezes(d, names) for d in decorators)
+        or _params(test) & _FREEZER_FIXTURES
+        or _module_frozen(file.module, names)
+        or _starts_freezer(test, names)
+    ):
         scopes.append(test.node)
     scopes.extend(
         node
@@ -243,109 +304,142 @@ def _is_zero(call: ast.Call) -> bool:
     )
 
 
+def _polled(test: TestFunction) -> set[ast.Call]:
+    """The calls inside a `while` loop in a test: a poll waiting on its condition."""
+    return {
+        node
+        for loop in ast.walk(test.node)
+        if isinstance(loop, ast.While)
+        for node in ast.walk(loop)
+        if isinstance(node, ast.Call)
+    }
+
+
 def _find_sleep_in_test(file: TestFile) -> Iterator[Hit]:
     # A frozen clock doesn't stop a sleep: freezegun and time-machine leave it real.
+    polled: dict[str, set[ast.Call]] = {}
     for call in _calls(file):
-        if call.target != "time.sleep" and (
-            call.target not in _ASYNC_SLEEPS or _is_zero(call.node)
-        ):
+        if call.target not in _SLEEPS or _is_zero(call.node):
             continue
-        test, line, written = call.test.name, call.node.lineno, ast.unparse(call.node)
-        yield Hit(
-            line=line,
-            test=test,
-            found=f"`{test}` sleeps for real time: `{written}`.",
-            fix=(
-                f"In `{test}`, replace `{written}` on line {line} with a fake or "
-                "frozen clock, or wait on the condition itself (an event, a join, a "
-                "poll with a timeout)."
-            ),
+        if call.test.name not in polled:
+            polled[call.test.name] = _polled(call.test)
+        if call.node in polled[call.test.name]:
+            continue
+        yield call.hit(
+            "sleeps for real time",
+            "a fake clock it can advance, or wait on the condition itself (an event, "
+            "a join, or a `while` loop that polls it under a deadline).",
         )
+
+
+def _reads_clock(call: _Call) -> bool:
+    """Whether a call reads the wall clock."""
+    if call.target in _CLOCK_READS_WITHOUT_ARGS:
+        return not (call.node.args or call.node.keywords)
+    return call.target in _CLOCK_READS
 
 
 def _find_wall_clock_read(file: TestFile) -> Iterator[Hit]:
+    frozen: dict[str, set[ast.Call]] = {}
     for call in _calls(file):
-        if call.target not in _CLOCK_READS or call.frozen:
+        if not _reads_clock(call):
             continue
-        test, line, written = call.test.name, call.node.lineno, ast.unparse(call.node)
-        yield Hit(
-            line=line,
-            test=test,
-            found=f"`{test}` reads the wall clock: `{written}`.",
-            fix=(
-                f"In `{test}`, replace `{written}` on line {line} with a fixed time "
-                "or an injected clock, or freeze the clock with "
-                "`freezegun.freeze_time` or `time_machine.travel`."
-            ),
+        if call.test.name not in frozen:
+            frozen[call.test.name] = _frozen_calls(file, call.test, call.names)
+        if call.node in frozen[call.test.name]:
+            continue
+        yield call.hit(
+            "reads the wall clock",
+            "a fixed time or an injected clock, or freeze the clock with "
+            "`freezegun.freeze_time` or `time_machine.travel`.",
         )
 
 
-def _seeded(nodes: list[ast.AST], names: Mapping[str, str]) -> set[str]:
-    """The global generators (`random`, `numpy.random`) the nodes seed with a value.
+def _generator_module(target: str) -> tuple[str, str]:
+    """A call target split into generator module and function.
 
-    `random.seed()` with nothing to seed from reseeds from entropy, so it doesn't
-    count.
+    Both are empty when the target isn't in `random` or `numpy.random`.
+    """
+    module, _, function = target.rpartition(".")
+    return (module, function) if module in _DRAWS else ("", "")
+
+
+def _seeds(
+    nodes: list[ast.AST], names: Mapping[str, str], before: int | None = None
+) -> set[str]:
+    """The generator modules (`random`, `numpy.random`) the nodes seed with a value.
+
+    `random.seed()` and `random.seed(None)` reseed from entropy, so they don't
+    count. With `before`, only seeds on earlier lines count.
     """
     seeded: set[str] = set()
     for root in nodes:
         for node in ast.walk(root):
-            if not isinstance(node, ast.Call) or not (node.args or node.keywords):
+            if not isinstance(node, ast.Call) or (before and node.lineno >= before):
                 continue
-            target = _qualified(node.func, names) or ""
-            family, _, attr = target.rpartition(".")
-            if attr == "seed" and family in _DRAWS:
-                seeded.add(family)
+            values = [*node.args, *(k.value for k in node.keywords)]
+            if all(isinstance(v, ast.Constant) and v.value is None for v in values):
+                continue
+            module, function = _generator_module(_qualified(node.func, names) or "")
+            if function == "seed":
+                seeded.add(module)
     return seeded
 
 
-def _is_autouse_fixture(node: ast.stmt, names: Mapping[str, str]) -> bool:
-    """Whether a statement defines a fixture pytest runs before every test."""
-    return isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and any(
-        isinstance(d, ast.Call)
-        and _qualified(d.func, names) == "pytest.fixture"
-        and any(
-            k.arg == "autouse"
-            and isinstance(k.value, ast.Constant)
-            and k.value.value is True
-            for k in d.keywords
-        )
-        for d in node.decorator_list
+def _is_autouse(decorator: ast.expr) -> bool:
+    """Whether a fixture decorator says `autouse=True`."""
+    return isinstance(decorator, ast.Call) and any(
+        k.arg == "autouse" and isinstance(k.value, ast.Constant) and k.value.value
+        for k in decorator.keywords
     )
+
+
+def _fixtures(module: ast.Module, names: Mapping[str, str]) -> dict[str, bool]:
+    """The file's module-level fixtures by name, each with whether it is autouse."""
+    fixtures: dict[str, bool] = {}
+    for node in module.body:
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+            for decorator in node.decorator_list:
+                target = (
+                    decorator.func if isinstance(decorator, ast.Call) else decorator
+                )
+                if _qualified(target, names) == "pytest.fixture":
+                    fixtures[node.name] = _is_autouse(decorator)
+    return fixtures
 
 
 def _find_unseeded_random(file: TestFile) -> Iterator[Hit]:
     names = _module_names(file.module)
-    file_wide: list[ast.AST] = [
+    fixtures = _fixtures(file.module, names)
+    defs: dict[str, ast.AST] = {
+        node.name: node
+        for node in file.module.body
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
+    }
+    top_level: list[ast.AST] = [
         node
         for node in file.module.body
         if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef)
-        or _is_autouse_fixture(node, names)
     ]
-    seeded_by_file = _seeded(file_wide, names)
-    seeded_by_test: dict[str, set[str]] = {}
+    autouse = [defs[name] for name, is_autouse in fixtures.items() if is_autouse]
+    seeded_by_file = _seeds(top_level + autouse, names)
     for call in _calls(file):
-        test = call.test.name
-        if test not in seeded_by_test:
-            seeded_by_test[test] = seeded_by_file | _seeded([call.test.node], names)
-        family, _, attr = call.target.rpartition(".")
-        unseeded_draw = (
-            attr in _DRAWS.get(family, ()) and family not in seeded_by_test[test]
-        )
-        unseeded_generator = call.target in _GENERATORS and not (
-            call.node.args or call.node.keywords
-        )
-        if not (unseeded_draw or unseeded_generator):
+        module, function = _generator_module(call.target)
+        if function in _DRAWS.get(module, ()):
+            requested = [defs[name] for name in _params(call.test) if name in fixtures]
+            seeded = (
+                seeded_by_file
+                | _seeds(requested, names)
+                | _seeds([call.test.node], call.names, before=call.node.lineno)
+            )
+            if module in seeded:
+                continue
+        elif call.target not in _GENERATORS or call.node.args or call.node.keywords:
             continue
-        line, written = call.node.lineno, ast.unparse(call.node)
-        yield Hit(
-            line=line,
-            test=test,
-            found=f"`{test}` draws unseeded random values: `{written}`.",
-            fix=(
-                f"In `{test}`, replace `{written}` on line {line} with fixed values "
-                "or a seeded generator (`random.Random(1234)`, "
-                "`numpy.random.default_rng(1234)`)."
-            ),
+        yield call.hit(
+            "draws unseeded random values",
+            "fixed values or a seeded generator (`random.Random(1234)`, "
+            "`numpy.random.default_rng(1234)`).",
         )
 
 
@@ -364,11 +458,12 @@ SLEEP_IN_TEST = Check(
         "the test fails at random, too long and every run pays for it."
     ),
     explain=(
-        "Flags a test that calls `time.sleep`, or awaits `asyncio.sleep`, "
-        "`trio.sleep` or `anyio.sleep` with a delay other than a literal zero "
-        "(`asyncio.sleep(0)` only yields to the event loop). Import aliases are "
-        "followed; a local function, fixture or object method named `sleep` is not "
-        "flagged. Fake or freeze the clock, or wait on the condition itself."
+        "Flags a test that calls `time.sleep`, `asyncio.sleep`, `trio.sleep` or "
+        "`anyio.sleep` with a delay other than a literal zero (a zero sleep only "
+        "yields). A sleep inside a `while` loop is a poll waiting on its condition "
+        "and is not flagged. Import aliases are followed; a local function, fixture "
+        "or object method named `sleep` is not flagged. Use a fake clock the test "
+        "advances, or wait on the condition itself."
     ),
     bad_example=(
         "import time\n"
@@ -406,11 +501,13 @@ WALL_CLOCK_READ = Check(
     ),
     explain=(
         "Flags a test that reads the wall clock: `time.time`, `time.time_ns`, "
-        "`datetime.now`, `datetime.utcnow`, `datetime.today` or `date.today`, "
-        "through any import alias. A read under a frozen clock is not flagged: in a "
-        "test or class decorated with `freezegun.freeze_time`, `time_machine.travel` "
-        "or `pytest.mark.freeze_time`, in a test that takes the `freezer` or "
-        "`time_machine` fixture, or inside a `with freeze_time(...)` block. Use a "
+        "`datetime.now`, `datetime.utcnow`, `datetime.today`, `date.today`, or "
+        "`time.localtime`, `time.gmtime` or `time.ctime` with no timestamp, through "
+        "any import alias. A read under a frozen clock is not flagged: in a module "
+        "whose `pytestmark` freezes it, in a test or class decorated with "
+        "`freezegun.freeze_time`, `time_machine.travel` or `pytest.mark.freeze_time`, "
+        "in a test that takes the `freezer` or `time_machine` fixture or starts a "
+        "freezer with `.start()`, or inside a `with freeze_time(...)` block. Use a "
         "fixed time or an injected clock, or freeze the clock."
     ),
     bad_example=(
@@ -450,9 +547,11 @@ UNSEEDED_RANDOM = Check(
         "generator (`random.randint`, `random.shuffle`, `np.random.rand` and the "
         "like) with no seed, or builds `random.Random()`, "
         "`numpy.random.default_rng()` or `numpy.random.RandomState()` without one. "
-        "A draw is seeded when the test itself, the module's top level or an autouse "
-        "fixture in the file calls `random.seed(...)` (or `numpy.random.seed(...)`) "
-        "with a value. Use fixed values, or a generator built with a seed."
+        "A draw is seeded when `random.seed(...)` (or `numpy.random.seed(...)`) is "
+        "called with a value other than `None` at the module's top level, in an "
+        "autouse fixture or a fixture the test takes in the same file, or earlier in "
+        "the test itself. Seeds in `conftest.py` are not seen. Use fixed values, or "
+        "a generator built with a seed."
     ),
     bad_example=(
         "import random\n"

@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 40 findings in 12 files. FALL IN!
+DRILL SERGEANT INSPECTION: 43 findings in 12 files. FALL IN!
 
 suite/no-real-assertion/test_bad_coverage_boost.py
   suite/no-real-assertion/test_bad_coverage_boost.py:14: DS101 no-real-assertion [fail] in TestCoverageBoost::test_string_operations
@@ -86,46 +86,46 @@ suite/sleep-in-test/test_bad_aliased_sleeps.py
     "Napping on duty, recruit? Tests don't SLEEP on my watch!"
     Found: `test_worker_finishes` sleeps for real time: `sleep(2)`.
     Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
-    Fix: In `test_worker_finishes`, replace `sleep(2)` on line 13 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+    Fix: In `test_worker_finishes`, replace `sleep(2)` on line 13 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
   suite/sleep-in-test/test_bad_aliased_sleeps.py:20: DS801 sleep-in-test [fail] in test_worker_retries
     "You picked that number out of thin air! On a slow CI box it's too short, everywhere else it's wasted!"
     Found: `test_worker_retries` sleeps for real time: `pause(0.5)`.
     Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
-    Fix: In `test_worker_retries`, replace `pause(0.5)` on line 20 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+    Fix: In `test_worker_retries`, replace `pause(0.5)` on line 20 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
   suite/sleep-in-test/test_bad_aliased_sleeps.py:21: DS801 sleep-in-test [fail] in test_worker_retries
     "You picked that number out of thin air! On a slow CI box it's too short, everywhere else it's wasted!"
     Found: `test_worker_retries` sleeps for real time: `t.sleep(0.5)`.
     Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
-    Fix: In `test_worker_retries`, replace `t.sleep(0.5)` on line 21 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+    Fix: In `test_worker_retries`, replace `t.sleep(0.5)` on line 21 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
   suite/sleep-in-test/test_bad_aliased_sleeps.py:30: DS801 sleep-in-test [fail] in test_sleep_imported_inside_the_test
     "Waiting and hoping is not a strategy, maggot! Wait for the EVENT!"
     Found: `test_sleep_imported_inside_the_test` sleeps for real time: `time.sleep(1)`.
     Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
-    Fix: In `test_sleep_imported_inside_the_test`, replace `time.sleep(1)` on line 30 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+    Fix: In `test_sleep_imported_inside_the_test`, replace `time.sleep(1)` on line 30 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
 
 suite/sleep-in-test/test_bad_async_waits.py
   suite/sleep-in-test/test_bad_async_waits.py:15: DS801 sleep-in-test [fail] in test_poller_picks_up_the_job
     "Napping on duty, recruit? Tests don't SLEEP on my watch!"
     Found: `test_poller_picks_up_the_job` sleeps for real time: `asyncio.sleep(1)`.
     Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
-    Fix: In `test_poller_picks_up_the_job`, replace `asyncio.sleep(1)` on line 15 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+    Fix: In `test_poller_picks_up_the_job`, replace `asyncio.sleep(1)` on line 15 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
   suite/sleep-in-test/test_bad_async_waits.py:23: DS801 sleep-in-test [fail] in test_poller_waits_a_named_delay
     "Napping on duty, recruit? Tests don't SLEEP on my watch!"
     Found: `test_poller_waits_a_named_delay` sleeps for real time: `asyncio.sleep(DELAY)`.
     Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
-    Fix: In `test_poller_waits_a_named_delay`, replace `asyncio.sleep(DELAY)` on line 23 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+    Fix: In `test_poller_waits_a_named_delay`, replace `asyncio.sleep(DELAY)` on line 23 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
 
 suite/sleep-in-test/test_bad_token_expiry.py
   suite/sleep-in-test/test_bad_token_expiry.py:13: DS801 sleep-in-test [fail] in test_token_expires_after_its_ttl
     "Waiting and hoping is not a strategy, maggot! Wait for the EVENT!"
     Found: `test_token_expires_after_its_ttl` sleeps for real time: `time.sleep(1.1)`.
     Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
-    Fix: In `test_token_expires_after_its_ttl`, replace `time.sleep(1.1)` on line 13 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+    Fix: In `test_token_expires_after_its_ttl`, replace `time.sleep(1.1)` on line 13 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
   suite/sleep-in-test/test_bad_token_expiry.py:20: DS801 sleep-in-test [fail] in TestCache::test_entry_is_evicted
     "Waiting and hoping is not a strategy, maggot! Wait for the EVENT!"
     Found: `TestCache::test_entry_is_evicted` sleeps for real time: `time.sleep(0.6)`.
     Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
-    Fix: In `TestCache::test_entry_is_evicted`, replace `time.sleep(0.6)` on line 20 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+    Fix: In `TestCache::test_entry_is_evicted`, replace `time.sleep(0.6)` on line 20 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
 
 suite/unseeded-random/test_bad_numpy_random.py
   suite/unseeded-random/test_bad_numpy_random.py:17: DS803 unseeded-random [fail] in test_mean_of_random_samples
@@ -172,6 +172,16 @@ suite/unseeded-random/test_bad_seeds_that_miss.py
     Found: `test_sample_of_items` draws unseeded random values: `random.sample(['apple', 'pear', 'plum'], 2)`.
     Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
     Fix: In `test_sample_of_items`, replace `random.sample(['apple', 'pear', 'plum'], 2)` on line 20 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_seeds_that_miss.py:25: DS803 unseeded-random [fail] in test_seeds_only_after_drawing
+    "Rolling dice in my barracks, recruit? Seed it or lose it!"
+    Found: `test_seeds_only_after_drawing` draws unseeded random values: `random.choice(['apple', 'pear'])`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_seeds_only_after_drawing`, replace `random.choice(['apple', 'pear'])` on line 25 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_seeds_that_miss.py:32: DS803 unseeded-random [fail] in test_seeds_with_none
+    "Rolling dice in my barracks, recruit? Seed it or lose it!"
+    Found: `test_seeds_with_none` draws unseeded random values: `random.choice(['apple'])`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_seeds_with_none`, replace `random.choice(['apple'])` on line 32 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
 
 suite/wall-clock-read/test_bad_epoch_seconds.py
   suite/wall-clock-read/test_bad_epoch_seconds.py:14: DS802 wall-clock-read [fail] in test_token_carries_the_issue_time
@@ -189,6 +199,11 @@ suite/wall-clock-read/test_bad_epoch_seconds.py
     Found: `test_issue_is_fast` reads the wall clock: `time_ns()`.
     Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
     Fix: In `test_issue_is_fast`, replace `time_ns()` on line 20 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_epoch_seconds.py:25: DS802 wall-clock-read [fail] in test_token_carries_the_local_hour
+    "The clock keeps moving, maggot! Freeze it or inject it!"
+    Found: `test_token_carries_the_local_hour` reads the wall clock: `time.localtime()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_token_carries_the_local_hour`, replace `time.localtime()` on line 25 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
 
 suite/wall-clock-read/test_bad_expiry_windows.py
   suite/wall-clock-read/test_bad_expiry_windows.py:12: DS802 wall-clock-read [fail] in test_invoice_is_due_in_thirty_days
@@ -224,4 +239,4 @@ suite/wall-clock-read/test_bad_module_datetime.py
     Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
     Fix: In `test_freeze_covers_only_its_block`, replace `datetime.date.today()` on line 25 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
 
-40 findings: 40 fail, 0 warn. Fix them, recruit. DISMISSED!
+43 findings: 43 fail, 0 warn. Fix them, recruit. DISMISSED!

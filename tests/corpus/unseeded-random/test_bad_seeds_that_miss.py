@@ -19,3 +19,14 @@ def test_seeded_itself():
 def test_sample_of_items():
     items = random.sample(["apple", "pear", "plum"], 2)  # expect: DS803
     assert len(Cart(items)) == 2
+
+
+def test_seeds_only_after_drawing():
+    item = random.choice(["apple", "pear"])  # expect: DS803
+    random.seed(1)
+    assert Cart([item]).total == 5
+
+
+def test_seeds_with_none():
+    random.seed(None)
+    assert Cart([random.choice(["apple"])]).total == 5  # expect: DS803

@@ -18,3 +18,8 @@ def test_issue_is_fast():
     start = time_ns()  # expect: DS802
     issue_token()
     assert time_ns() - start < 1_000_000  # expect: DS802
+
+
+def test_token_carries_the_local_hour():
+    token = issue_token()
+    assert token.hour == time.localtime().tm_hour  # expect: DS802

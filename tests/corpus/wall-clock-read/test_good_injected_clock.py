@@ -34,3 +34,9 @@ def test_local_function_named_now():
 def test_clock_passed_but_not_read():
     invoice = Invoice.issue(clock=datetime.now)
     assert invoice.clock is datetime.now
+
+
+def test_converts_a_fixed_timestamp():
+    import time
+
+    assert Invoice.from_timestamp(0).year == time.gmtime(0).tm_year
