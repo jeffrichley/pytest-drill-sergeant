@@ -28,6 +28,60 @@ _FREEZERS = frozenset(
 )
 _FREEZER_FIXTURES = frozenset({"freezer", "time_machine"})
 
+# The draws from a global generator, by the module whose seed governs them.
+_DRAWS = {
+    "random": frozenset(
+        {
+            "betavariate",
+            "binomialvariate",
+            "choice",
+            "choices",
+            "expovariate",
+            "gammavariate",
+            "gauss",
+            "getrandbits",
+            "lognormvariate",
+            "normalvariate",
+            "paretovariate",
+            "randbytes",
+            "randint",
+            "random",
+            "randrange",
+            "sample",
+            "shuffle",
+            "triangular",
+            "uniform",
+            "vonmisesvariate",
+            "weibullvariate",
+        }
+    ),
+    "numpy.random": frozenset(
+        {
+            "beta",
+            "binomial",
+            "choice",
+            "exponential",
+            "gamma",
+            "normal",
+            "permutation",
+            "poisson",
+            "rand",
+            "randint",
+            "randn",
+            "random",
+            "random_sample",
+            "shuffle",
+            "standard_normal",
+            "uniform",
+        }
+    ),
+}
+
+# The constructors that seed a generator from entropy when given no seed.
+_GENERATORS = frozenset(
+    {"random.Random", "numpy.random.default_rng", "numpy.random.RandomState"}
+)
+
 
 def _bind_imports(
     statement: ast.Import | ast.ImportFrom, names: dict[str, str]
@@ -48,27 +102,18 @@ def _bind_imports(
 def _module_names(module: ast.Module) -> dict[str, str]:
     """The names a module binds by import at its top level, minus any it rebinds.
 
-    Imports under a top-level `if`, `try` or `with` count; a later `def`, `class` or
-    assignment of the same name wins, as it does at run time.
+    Imports under a top-level `if` or `try` count, and a fallback there (`np = None`
+    after `except ImportError`) doesn't undo them; a later top-level `def`, `class`
+    or assignment of the same name wins, as it does at run time.
     """
     names: dict[str, str] = {}
-    pending: list[ast.stmt] = list(module.body)
-    while pending:
-        statement = pending.pop(0)
-        if isinstance(statement, ast.Import | ast.ImportFrom):
+    for statement in module.body:
+        if isinstance(statement, ast.If | ast.Try):
+            for node in ast.walk(statement):
+                if isinstance(node, ast.Import | ast.ImportFrom):
+                    _bind_imports(node, names)
+        elif isinstance(statement, ast.Import | ast.ImportFrom):
             _bind_imports(statement, names)
-        elif isinstance(statement, ast.If | ast.Try | ast.With):
-            nested = [
-                child
-                for child in ast.iter_child_nodes(statement)
-                if isinstance(child, ast.stmt)
-            ]
-            nested.extend(
-                s
-                for handler in getattr(statement, "handlers", [])
-                for s in handler.body
-            )
-            pending[:0] = nested
         else:
             for bound in _bound_names(statement):
                 names.pop(bound, None)
@@ -76,15 +121,11 @@ def _module_names(module: ast.Module) -> dict[str, str]:
 
 
 def _bound_names(statement: ast.stmt) -> Iterator[str]:
-    """The names a non-import statement binds where it stands."""
+    """The names a function, class or assignment statement binds where it stands."""
     if isinstance(statement, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
         yield statement.name
         return
-    targets: list[ast.expr] = []
-    if isinstance(statement, ast.Assign):
-        targets = statement.targets
-    elif isinstance(statement, ast.AnnAssign | ast.AugAssign):
-        targets = [statement.target]
+    targets = statement.targets if isinstance(statement, ast.Assign) else []
     for target in targets:
         for node in ast.walk(target):
             if isinstance(node, ast.Name):
@@ -239,6 +280,75 @@ def _find_wall_clock_read(file: TestFile) -> Iterator[Hit]:
         )
 
 
+def _seeded(nodes: list[ast.AST], names: Mapping[str, str]) -> set[str]:
+    """The global generators (`random`, `numpy.random`) the nodes seed with a value.
+
+    `random.seed()` with nothing to seed from reseeds from entropy, so it doesn't
+    count.
+    """
+    seeded: set[str] = set()
+    for root in nodes:
+        for node in ast.walk(root):
+            if not isinstance(node, ast.Call) or not (node.args or node.keywords):
+                continue
+            target = _qualified(node.func, names) or ""
+            family, _, attr = target.rpartition(".")
+            if attr == "seed" and family in _DRAWS:
+                seeded.add(family)
+    return seeded
+
+
+def _is_autouse_fixture(node: ast.stmt, names: Mapping[str, str]) -> bool:
+    """Whether a statement defines a fixture pytest runs before every test."""
+    return isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and any(
+        isinstance(d, ast.Call)
+        and _qualified(d.func, names) == "pytest.fixture"
+        and any(
+            k.arg == "autouse"
+            and isinstance(k.value, ast.Constant)
+            and k.value.value is True
+            for k in d.keywords
+        )
+        for d in node.decorator_list
+    )
+
+
+def _find_unseeded_random(file: TestFile) -> Iterator[Hit]:
+    names = _module_names(file.module)
+    file_wide: list[ast.AST] = [
+        node
+        for node in file.module.body
+        if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef)
+        or _is_autouse_fixture(node, names)
+    ]
+    seeded_by_file = _seeded(file_wide, names)
+    seeded_by_test: dict[str, set[str]] = {}
+    for call in _calls(file):
+        test = call.test.name
+        if test not in seeded_by_test:
+            seeded_by_test[test] = seeded_by_file | _seeded([call.test.node], names)
+        family, _, attr = call.target.rpartition(".")
+        unseeded_draw = (
+            attr in _DRAWS.get(family, ()) and family not in seeded_by_test[test]
+        )
+        unseeded_generator = call.target in _GENERATORS and not (
+            call.node.args or call.node.keywords
+        )
+        if not (unseeded_draw or unseeded_generator):
+            continue
+        line, written = call.node.lineno, ast.unparse(call.node)
+        yield Hit(
+            line=line,
+            test=test,
+            found=f"`{test}` draws unseeded random values: `{written}`.",
+            fix=(
+                f"In `{test}`, replace `{written}` on line {line} with fixed values "
+                "or a seeded generator (`random.Random(1234)`, "
+                "`numpy.random.default_rng(1234)`)."
+            ),
+        )
+
+
 SLEEP_IN_TEST = Check(
     code="DS801",
     name="sleep-in-test",
@@ -318,4 +428,45 @@ WALL_CLOCK_READ = Check(
         "    assert invoice.due == date(2026, 1, 31)\n"
     ),
     find=_find_wall_clock_read,
+)
+
+
+UNSEEDED_RANDOM = Check(
+    code="DS803",
+    name="unseeded-random",
+    default_level=Level.FAIL,
+    voice=(
+        "Rolling dice in my barracks, recruit? Seed it or lose it!",
+        "This test checks a different case every run! When it fails, NOBODY can "
+        "make it fail again!",
+        "Random without a seed is a coin toss with a stopwatch, maggot!",
+    ),
+    why=(
+        "A test that draws unseeded random values checks a different case on every "
+        "run, so it can fail at random and nobody can replay the failing case."
+    ),
+    explain=(
+        "Flags a test that draws from the global `random` or `numpy.random` "
+        "generator (`random.randint`, `random.shuffle`, `np.random.rand` and the "
+        "like) with no seed, or builds `random.Random()`, "
+        "`numpy.random.default_rng()` or `numpy.random.RandomState()` without one. "
+        "A draw is seeded when the test itself, the module's top level or an autouse "
+        "fixture in the file calls `random.seed(...)` (or `numpy.random.seed(...)`) "
+        "with a value. Use fixed values, or a generator built with a seed."
+    ),
+    bad_example=(
+        "import random\n"
+        "\n"
+        "def test_cart_total():\n"
+        "    quantity = random.randint(1, 10)\n"
+        "    assert Cart(quantity=quantity).total == quantity * 5\n"
+    ),
+    good_example=(
+        "import random\n"
+        "\n"
+        "def test_cart_total():\n"
+        "    quantity = random.Random(1234).randint(1, 10)\n"
+        "    assert Cart(quantity=quantity).total == quantity * 5\n"
+    ),
+    find=_find_unseeded_random,
 )

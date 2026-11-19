@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 32 findings in 9 files. FALL IN!
+DRILL SERGEANT INSPECTION: 40 findings in 12 files. FALL IN!
 
 suite/no-real-assertion/test_bad_coverage_boost.py
   suite/no-real-assertion/test_bad_coverage_boost.py:14: DS101 no-real-assertion [fail] in TestCoverageBoost::test_string_operations
@@ -127,6 +127,52 @@ suite/sleep-in-test/test_bad_token_expiry.py
     Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
     Fix: In `TestCache::test_entry_is_evicted`, replace `time.sleep(0.6)` on line 20 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
 
+suite/unseeded-random/test_bad_numpy_random.py
+  suite/unseeded-random/test_bad_numpy_random.py:17: DS803 unseeded-random [fail] in test_mean_of_random_samples
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_mean_of_random_samples` draws unseeded random values: `np.random.rand(100)`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_mean_of_random_samples`, replace `np.random.rand(100)` on line 17 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_numpy_random.py:22: DS803 unseeded-random [fail] in test_mean_of_normal_samples
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_mean_of_normal_samples` draws unseeded random values: `npr.normal(size=100)`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_mean_of_normal_samples`, replace `npr.normal(size=100)` on line 22 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_numpy_random.py:27: DS803 unseeded-random [fail] in test_mean_with_an_unseeded_generator
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_mean_with_an_unseeded_generator` draws unseeded random values: `np.random.default_rng()`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_mean_with_an_unseeded_generator`, replace `np.random.default_rng()` on line 27 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+
+suite/unseeded-random/test_bad_random_inputs.py
+  suite/unseeded-random/test_bad_random_inputs.py:13: DS803 unseeded-random [fail] in test_cart_total_for_a_random_quantity
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_cart_total_for_a_random_quantity` draws unseeded random values: `random.randint(1, 10)`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_cart_total_for_a_random_quantity`, replace `random.randint(1, 10)` on line 13 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_random_inputs.py:19: DS803 unseeded-random [fail] in test_cart_order_does_not_matter
+    "Random without a seed is a coin toss with a stopwatch, maggot!"
+    Found: `test_cart_order_does_not_matter` draws unseeded random values: `shuffle(items)`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_cart_order_does_not_matter`, replace `shuffle(items)` on line 19 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_random_inputs.py:24: DS803 unseeded-random [fail] in test_cart_with_an_unseeded_generator
+    "Rolling dice in my barracks, recruit? Seed it or lose it!"
+    Found: `test_cart_with_an_unseeded_generator` draws unseeded random values: `random.Random()`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_cart_with_an_unseeded_generator`, replace `random.Random()` on line 24 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_random_inputs.py:31: DS803 unseeded-random [fail] in TestDiscounts::test_random_discount_applies
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `TestDiscounts::test_random_discount_applies` draws unseeded random values: `random.uniform(0, 0.5)`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `TestDiscounts::test_random_discount_applies`, replace `random.uniform(0, 0.5)` on line 31 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+
+suite/unseeded-random/test_bad_seeds_that_miss.py
+  suite/unseeded-random/test_bad_seeds_that_miss.py:20: DS803 unseeded-random [fail] in test_sample_of_items
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_sample_of_items` draws unseeded random values: `random.sample(['apple', 'pear', 'plum'], 2)`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_sample_of_items`, replace `random.sample(['apple', 'pear', 'plum'], 2)` on line 20 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+
 suite/wall-clock-read/test_bad_epoch_seconds.py
   suite/wall-clock-read/test_bad_epoch_seconds.py:14: DS802 wall-clock-read [fail] in test_token_carries_the_issue_time
     "This test passes at noon and fails at midnight! That's not a test, that's a SUNDIAL!"
@@ -178,4 +224,4 @@ suite/wall-clock-read/test_bad_module_datetime.py
     Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
     Fix: In `test_freeze_covers_only_its_block`, replace `datetime.date.today()` on line 25 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
 
-32 findings: 32 fail, 0 warn. Fix them, recruit. DISMISSED!
+40 findings: 40 fail, 0 warn. Fix them, recruit. DISMISSED!
