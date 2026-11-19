@@ -29,7 +29,7 @@ An `assert` that can't fail whatever the code under test does: it compares an ex
 _Avoid_: Trivial assertion, always-true assertion
 
 **Mirror assertion**:
-An `==` whose expected side is taken from the code under test: the same call on both sides, directly or through names the test bound to it.
+An `==` whose expected side is taken from the code under test: the same call on both sides, directly or through names the test bound to it. Two results each bound to its own name, neither named as the expectation (`first == second`, not `result == expected`), test determinism instead.
 _Avoid_: Self-check, circular assertion
 
 **Category marker**:
