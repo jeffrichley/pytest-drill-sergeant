@@ -7,6 +7,11 @@ from pytest_drill_sergeant.checks.brittleness import (
     SOURCE_TEXT_GREP,
 )
 from pytest_drill_sergeant.checks.exceptions import BROAD_RAISES, SWALLOWED_EXCEPTION
+from pytest_drill_sergeant.checks.flakiness import (
+    SLEEP_IN_TEST,
+    UNSEEDED_RANDOM,
+    WALL_CLOCK_READ,
+)
 from pytest_drill_sergeant.checks.structure import (
     ASSERT_BEFORE_ACT,
     INTERLEAVED_ACT_ASSERT,
@@ -24,6 +29,9 @@ CHECKS: tuple[Check, ...] = (
     SOURCE_TEXT_GREP,
     BROAD_RAISES,
     SWALLOWED_EXCEPTION,
+    SLEEP_IN_TEST,
+    WALL_CLOCK_READ,
+    UNSEEDED_RANDOM,
 )
 
 __all__ = ["CHECKS", "Check", "Hit", "TestFile", "TestFunction"]
