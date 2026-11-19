@@ -6,12 +6,18 @@ from enum import Enum
 
 from pytest_drill_sergeant.checks.ast_tools import (
     call_name,
+    calls_to,
     is_real_assertion,
     value_params,
     walk_test,
 )
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
 from pytest_drill_sergeant.findings import Level
+
+# pytest's helpers with a call form, by where the function to call sits: after the
+# expected type, or first.
+_CALL_FORM_AFTER_TYPE = frozenset({"pytest.raises", "pytest.warns"})
+_DEPRECATED_CALL = frozenset({"pytest.deprecated_call"})
 
 
 def _has_real_assertion(test: TestFunction) -> bool:
@@ -100,11 +106,28 @@ def _takes_values_in(test: TestFunction) -> bool:
     )
 
 
+def _calls_through_pytest(node: ast.AST, names: Mapping[str, str]) -> bool:
+    """Whether a node is pytest's call form, which calls the function it is given.
+
+    That is `pytest.raises(E, func, *args)`, `pytest.warns(W, func, *args)` or
+    `pytest.deprecated_call(func, *args)`.
+    """
+    if not isinstance(node, ast.Call):
+        return False
+    if calls_to(node, _CALL_FORM_AFTER_TYPE, names):
+        return len(node.args) > 1
+    return calls_to(node, _DEPRECATED_CALL, names) and bool(node.args)
+
+
 def _runs_anything(test: TestFunction) -> bool:
-    """Whether the test calls or awaits anything but its assertions."""
+    """Whether the test calls or awaits anything but its assertions.
+
+    pytest's call form (`pytest.raises(E, func, arg)`) runs `func`, so it counts.
+    """
     return any(
         isinstance(node, ast.Await)
         or (isinstance(node, ast.Call) and not is_real_assertion(node, test.imports))
+        or _calls_through_pytest(node, test.imports)
         for node in walk_test(test)
     )
 
@@ -147,7 +170,8 @@ NO_ACTION_UNDER_TEST = Check(
     ),
     explain=(
         "Flags a test that has a real assertion but runs nothing: no call outside its "
-        "assertions, no `await`, and no fixture or parameter (or `self` it uses) that "
+        "assertions (pytest's call form, `pytest.raises(E, func, arg)`, counts as one), "
+        "no `await`, and no fixture or parameter (or `self` it uses) that "
         "could bring in the value under test. Such a test checks only values it wrote "
         "itself, or Python. Call the code under test and assert on its outcome."
     ),

@@ -23,3 +23,7 @@ async def test_awaited_value(client):
 
 def test_builtin_call_counts_as_an_action():
     assert len(slugify("a b")) == 3
+
+
+def test_raises_in_call_form_calls_the_code():
+    pytest.raises(AttributeError, slugify, None)
