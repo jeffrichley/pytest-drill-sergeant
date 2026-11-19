@@ -7,6 +7,7 @@ then run as always. The findings section after the test results shows them, and 
 run whose tests ran and passed exits 1 when any finding is at the `fail` level.
 """
 
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -138,12 +139,16 @@ class _Run:
         if files is not None:
             self._analyze({Path(file) for file in files})
 
+    # A wrapper called first is the outermost, so its code after `yield` runs after
+    # the terminal reporter's own, which ends with the short test summary.
+    @pytest.hookimpl(wrapper=True, tryfirst=True)
     def pytest_terminal_summary(
         self, terminalreporter: pytest.TerminalReporter
-    ) -> None:
-        """Show the findings section after the test results."""
+    ) -> Generator[None]:
+        """Show the findings section after the test results and their summary."""
+        result = yield
         if self.findings is None:
-            return
+            return result
         terminalreporter.write_sep("=", "drill sergeant")
         terminalreporter.write(
             render(
@@ -152,6 +157,7 @@ class _Run:
                 max_findings=self.resolved.max_findings,
             )
         )
+        return result
 
     def pytest_sessionfinish(self, session: pytest.Session) -> None:
         """Fail a run whose tests ran and passed when a finding is at `fail` level."""

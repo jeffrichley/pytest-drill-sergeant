@@ -33,7 +33,12 @@ def test_failing_tests_keep_pytests_exit_code(drill, lazy_test, failing_test):
 def test_findings_section_comes_after_the_test_results(drill, lazy_test, failing_test):
     out = drill().stdout.str()
 
-    assert out.index("= FAILURES =") < out.index(SECTION) < out.index("DS101")
+    assert (
+        out.index("= FAILURES =")
+        < out.index("short test summary info")
+        < out.index(SECTION)
+        < out.index("DS101")
+    )
 
 
 def test_no_test_item_is_added_for_the_findings(drill, lazy_test):
