@@ -25,40 +25,52 @@ def _voice_line(finding: Finding) -> str:
     return lines[int.from_bytes(hashlib.sha256(key).digest()[:8], "big") % len(lines)]
 
 
-def render(findings: list[Finding]) -> str:
+def render(findings: list[Finding], *, voice: bool = True) -> str:
     """Render findings as the report.
 
     The report is a banner, the findings grouped by file and findings by line, each
-    with one voice line and plain Found/Why/Fix, and a closing tally by level.
+    with one voice line and plain Found/Why/Fix, and a closing tally by level with
+    a flourish. With the voice off there is no banner, voice line or flourish; the
+    Found/Why/Fix lines are unchanged.
 
     Args:
         findings: The findings to report, in the engine's order (by file, line and
             code), which keeps each file's findings together.
+        voice: Whether to deliver the report in the voice.
 
     Returns:
         The report, ending in a newline.
     """
     if not findings:
-        return "DRILL SERGEANT INSPECTION: no findings. As you were!\n"
+        return (
+            "DRILL SERGEANT INSPECTION: no findings. As you were!\n"
+            if voice
+            else "No findings.\n"
+        )
     files = len({f.file for f in findings})
-    out = [
-        f"DRILL SERGEANT INSPECTION: {_plural(len(findings), 'finding')} in "
-        f"{_plural(files, 'file')}. FALL IN!",
-    ]
+    out = []
+    if voice:
+        out += [
+            f"DRILL SERGEANT INSPECTION: {_plural(len(findings), 'finding')} in "
+            f"{_plural(files, 'file')}. FALL IN!",
+            "",
+        ]
     for file, group in groupby(findings, key=lambda f: f.file.as_posix()):
-        out += ["", file]
+        out += [file]
         for f in group:
+            out.append(f"  {file}:{f.line}: {f.code} {f.name} [{f.level}] in {f.test}")
+            if voice:
+                out.append(f'    "{_voice_line(f)}"')
             out += [
-                f"  {file}:{f.line}: {f.code} {f.name} [{f.level}] in {f.test}",
-                f'    "{_voice_line(f)}"',
                 f"    Found: {f.found}",
                 f"    Why: {f.why}",
                 f"    Fix: {f.fix}",
             ]
+        out.append("")
     levels = Counter(f.level for f in findings)
-    out += [
-        "",
+    tally = (
         f"{_plural(len(findings), 'finding')}: {levels[Level.FAIL]} fail, "
-        f"{levels[Level.WARN]} warn. Fix them, recruit. DISMISSED!",
-    ]
+        f"{levels[Level.WARN]} warn."
+    )
+    out.append(f"{tally} Fix them, recruit. DISMISSED!" if voice else tally)
     return "\n".join(out) + "\n"
