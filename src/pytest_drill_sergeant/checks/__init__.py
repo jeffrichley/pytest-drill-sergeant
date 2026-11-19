@@ -6,6 +6,7 @@ from pytest_drill_sergeant.checks.brittleness import (
     PRIVATE_STATE_ASSERTION,
     SOURCE_TEXT_GREP,
 )
+from pytest_drill_sergeant.checks.exceptions import BROAD_RAISES, SWALLOWED_EXCEPTION
 from pytest_drill_sergeant.checks.structure import (
     ASSERT_BEFORE_ACT,
     INTERLEAVED_ACT_ASSERT,
@@ -21,6 +22,8 @@ CHECKS: tuple[Check, ...] = (
     BRITTLE_STRING_MATCH,
     PRIVATE_STATE_ASSERTION,
     SOURCE_TEXT_GREP,
+    BROAD_RAISES,
+    SWALLOWED_EXCEPTION,
 )
 
 __all__ = ["CHECKS", "Check", "Hit", "TestFile", "TestFunction"]

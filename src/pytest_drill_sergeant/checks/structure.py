@@ -33,7 +33,7 @@ def _is_always_true(test: ast.expr) -> bool:
     return isinstance(test, ast.Tuple) and bool(test.elts)
 
 
-def _is_real_assertion(node: ast.AST) -> bool:
+def is_real_assertion(node: ast.AST) -> bool:
     """Whether a node can fail the test on the outcome it checks.
 
     An `assert` of anything but a truthy constant or non-empty tuple counts, and so
@@ -60,7 +60,7 @@ def _is_real_assertion(node: ast.AST) -> bool:
 def _has_real_assertion(test: TestFunction) -> bool:
     """Whether anything in the test, nested code included, is a real assertion."""
     return any(
-        _is_real_assertion(node)
+        is_real_assertion(node)
         for statement in test.node.body
         for node in ast.walk(statement)
     )
@@ -155,7 +155,7 @@ def _runs_anything(test: TestFunction) -> bool:
     """Whether the test calls or awaits anything but its assertions."""
     return any(
         isinstance(node, ast.Await)
-        or (isinstance(node, ast.Call) and not _is_real_assertion(node))
+        or (isinstance(node, ast.Call) and not is_real_assertion(node))
         for statement in test.node.body
         for node in ast.walk(statement)
     )
@@ -258,7 +258,7 @@ def _is_act_statement(node: ast.AST) -> bool:
     if not isinstance(node, ast.Expr):
         return False
     value = node.value.value if isinstance(node.value, ast.Await) else node.value
-    if not isinstance(value, ast.Call) or _is_real_assertion(value):
+    if not isinstance(value, ast.Call) or is_real_assertion(value):
         return False
     func = value.func
     name = func.attr if isinstance(func, ast.Attribute) else None
@@ -275,7 +275,7 @@ def _classify(statement: ast.stmt) -> _Step:
     if isinstance(statement, _NESTED):
         return _Step.OTHER
     nodes = list(_walk_own(statement))
-    if any(_is_real_assertion(node) for node in nodes):
+    if any(is_real_assertion(node) for node in nodes):
         return _Step.ASSERT
     if any(_is_act_statement(node) for node in nodes):
         return _Step.ACT
@@ -291,7 +291,7 @@ def _steps(body: list[ast.stmt]) -> list[tuple[ast.stmt, _Step]]:
     steps: list[tuple[ast.stmt, _Step]] = []
     for statement in body:
         if isinstance(statement, ast.With | ast.AsyncWith) and not any(
-            _is_real_assertion(item.context_expr) for item in statement.items
+            is_real_assertion(item.context_expr) for item in statement.items
         ):
             steps.extend(_steps(statement.body))
         else:
