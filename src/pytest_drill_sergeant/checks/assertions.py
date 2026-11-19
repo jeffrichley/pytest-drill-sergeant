@@ -126,8 +126,8 @@ def _is_simple_assignment(name: ast.Name, parent: ast.AST) -> bool:
     return isinstance(parent, ast.AnnAssign) and parent.value is not None
 
 
-def _bindings(test: TestFunction) -> dict[str, ast.expr]:
-    """The names a test binds once and only reads in assertions, with their values.
+def _bindings(test: TestFunction) -> dict[str, ast.Assign | ast.AnnAssign]:
+    """The names a test binds once and only reads in assertions, with their bindings.
 
     Such a name is a stand-in for its value: nothing in the test passes it to code
     that could change it. A name read anywhere else (a call argument, a method
@@ -162,11 +162,9 @@ def _bindings(test: TestFunction) -> dict[str, ast.expr]:
     while dropped := {n for n in alive if not readers[n] <= {"assert"} | alive - {n}}:
         alive -= dropped
     return {
-        name: value
+        name: statement
         for statement, name in assigns.items()
-        if name in alive
-        and isinstance(statement, ast.Assign | ast.AnnAssign)
-        and (value := statement.value) is not None
+        if name in alive and isinstance(statement, ast.Assign | ast.AnnAssign)
     }
 
 
@@ -318,12 +316,26 @@ def _is_constant_none(node: ast.AST) -> bool:
     return isinstance(node, ast.Constant) and node.value is None
 
 
+def _calls_outside(test: TestFunction, nodes: list[ast.AST]) -> list[ast.Call]:
+    """The test's calls that are not inside any of `nodes`."""
+    inside = {
+        id(n) for node in nodes for n in ast.walk(node) if isinstance(n, ast.Call)
+    }
+    return [
+        node
+        for statement in test.node.body
+        for node in ast.walk(statement)
+        if isinstance(node, ast.Call) and id(node) not in inside
+    ]
+
+
 def _verdicts(test: TestFunction) -> list[_Verdict]:
     """Every `assert` in the test, in source order, with its kind."""
     bindings = _bindings(test)
+    values = {name: s.value for name, s in bindings.items() if s.value is not None}
     aliases = {
         name: value
-        for name, value in bindings.items()
+        for name, value in values.items()
         if isinstance(value, ast.Name) or _is_literal(value)
     }
     verdicts = []
@@ -333,6 +345,7 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
         for node in ast.walk(statement)
         if isinstance(node, ast.Assert)
     ]
+    other_calls = _calls_outside(test, [*asserts, *bindings.values()])
     for node in sorted(asserts, key=lambda n: (n.lineno, n.col_offset)):
         test_expr = node.test
         if isinstance(test_expr, ast.Constant) or (
@@ -340,7 +353,18 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
         ):
             verdicts.append(_Verdict(node, _Kind.IGNORED))
             continue
-        resolved = _resolve(test_expr, bindings)
+        # A value the code returned stands in for its name only if nothing else
+        # was called between the binding and this assert to change what it returns.
+        settled = {
+            name: value
+            for name, value in values.items()
+            if not _has_call(value)
+            or not any(
+                (bindings[name].end_lineno or 0) < call.lineno < node.lineno
+                for call in other_calls
+            )
+        }
+        resolved = _resolve(test_expr, settled)
         why = _tautology(test_expr, _resolve(test_expr, aliases), resolved)
         if why is not None:
             verdicts.append(_Verdict(node, _Kind.TAUTOLOGICAL, why))
@@ -532,7 +556,8 @@ MIRROR_ASSERTION = Check(
     explain=(
         "Flags an `==` that makes the same call on both sides, directly "
         '(`assert slugify("Hello World") == slugify("Hello World")`) or through names '
-        "the test bound to it (`expected = gross_price(100, 20)`). A constructor on "
+        "the test bound to it (`expected = gross_price(100, 20)`) with nothing else "
+        "called in between. A constructor on "
         "both sides (`Point(1, 2) == Point(1, 2)`) tests `__eq__` and is fine, and so "
         "is the same function called with different arguments. A formula copied from "
         "the code by hand is not caught. Put the value the call should return, worked "

@@ -1,4 +1,45 @@
-DRILL SERGEANT INSPECTION: 36 findings in 9 files. FALL IN!
+DRILL SERGEANT INSPECTION: 43 findings in 12 files. FALL IN!
+
+suite/mirror-assertion/test_bad_beside_strong.py
+  suite/mirror-assertion/test_bad_beside_strong.py:9: DS203 mirror-assertion [fail] in test_prices
+    "You checked the code against ITSELF! Of course it agrees, recruit!"
+    Found: The assertion in `test_prices` checks `net_price(120, 20)` against itself: both sides of `==` make the same call.
+    Why: A mirror assertion takes its expected value from the code under test, so a bug changes both sides at once and the test stays green.
+    Fix: In `test_prices`, on line 9, keep `net_price(120, 20)` on one side and put the value it should return, worked out by hand, on the other.
+
+suite/mirror-assertion/test_bad_expected_from_the_code.py
+  suite/mirror-assertion/test_bad_expected_from_the_code.py:9: DS203 mirror-assertion [fail] in test_gross_price
+    "Same call on both sides! When it breaks, BOTH sides break, maggot!"
+    Found: The assertion in `test_gross_price` checks `gross_price(100, 20)` against itself: both sides of `==` make the same call.
+    Why: A mirror assertion takes its expected value from the code under test, so a bug changes both sides at once and the test stays green.
+    Fix: In `test_gross_price`, on line 9, keep `gross_price(100, 20)` on one side and put the value it should return, worked out by hand, on the other.
+  suite/mirror-assertion/test_bad_expected_from_the_code.py:15: DS203 mirror-assertion [fail] in test_slug_result_matches
+    "Asking the suspect for his own alibi? That's not a test, that's a MIRROR!"
+    Found: The assertion in `test_slug_result_matches` checks `slugify('Hello World')` against itself: both sides of `==` make the same call.
+    Why: A mirror assertion takes its expected value from the code under test, so a bug changes both sides at once and the test stays green.
+    Fix: In `test_slug_result_matches`, on line 15, keep `slugify('Hello World')` on one side and put the value it should return, worked out by hand, on the other.
+  suite/mirror-assertion/test_bad_expected_from_the_code.py:20: DS203 mirror-assertion [fail] in test_async_gross_price
+    "Asking the suspect for his own alibi? That's not a test, that's a MIRROR!"
+    Found: The assertion in `test_async_gross_price` checks `await client.gross_price(100, 20)` against itself: both sides of `==` make the same call.
+    Why: A mirror assertion takes its expected value from the code under test, so a bug changes both sides at once and the test stays green.
+    Fix: In `test_async_gross_price`, on line 20, keep `await client.gross_price(100, 20)` on one side and put the value it should return, worked out by hand, on the other.
+
+suite/mirror-assertion/test_bad_same_call_both_sides.py
+  suite/mirror-assertion/test_bad_same_call_both_sides.py:8: DS203 mirror-assertion [fail] in test_slugify
+    "Same call on both sides! When it breaks, BOTH sides break, maggot!"
+    Found: The assertion in `test_slugify` checks `slugify('Hello World')` against itself: both sides of `==` make the same call.
+    Why: A mirror assertion takes its expected value from the code under test, so a bug changes both sides at once and the test stays green.
+    Fix: In `test_slugify`, on line 8, keep `slugify('Hello World')` on one side and put the value it should return, worked out by hand, on the other.
+  suite/mirror-assertion/test_bad_same_call_both_sides.py:12: DS203 mirror-assertion [fail] in test_serializer_round_trip
+    "Asking the suspect for his own alibi? That's not a test, that's a MIRROR!"
+    Found: The assertion in `test_serializer_round_trip` checks `serializer.dump(order)` against itself: both sides of `==` make the same call.
+    Why: A mirror assertion takes its expected value from the code under test, so a bug changes both sides at once and the test stays green.
+    Fix: In `test_serializer_round_trip`, on line 12, keep `serializer.dump(order)` on one side and put the value it should return, worked out by hand, on the other.
+  suite/mirror-assertion/test_bad_same_call_both_sides.py:17: DS203 mirror-assertion [fail] in TestSlug::test_strips
+    "Asking the suspect for his own alibi? That's not a test, that's a MIRROR!"
+    Found: The assertion in `TestSlug::test_strips` checks `slugify(' x ').strip()` against itself: both sides of `==` make the same call.
+    Why: A mirror assertion takes its expected value from the code under test, so a bug changes both sides at once and the test stays green.
+    Fix: In `TestSlug::test_strips`, on line 17, keep `slugify(' x ').strip()` on one side and put the value it should return, worked out by hand, on the other.
 
 suite/no-real-assertion/test_bad_coverage_boost.py
   suite/no-real-assertion/test_bad_coverage_boost.py:14: DS101 no-real-assertion [fail] in TestCoverageBoost::test_string_operations
@@ -198,4 +239,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `test_async_import`, replace the weak assertions on line 30 with exact checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-36 findings: 36 fail, 0 warn. Fix them, recruit. DISMISSED!
+43 findings: 43 fail, 0 warn. Fix them, recruit. DISMISSED!
