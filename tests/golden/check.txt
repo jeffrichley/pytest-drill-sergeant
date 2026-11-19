@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 15 findings in 3 files. FALL IN!
+DRILL SERGEANT INSPECTION: 23 findings in 6 files. FALL IN!
 
 suite/no-real-assertion/test_bad_coverage_boost.py
   suite/no-real-assertion/test_bad_coverage_boost.py:14: DS101 no-real-assertion [fail] in TestCoverageBoost::test_string_operations
@@ -81,4 +81,50 @@ suite/no-real-assertion/test_bad_tiny_coverage.py
     Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
     Fix: In `test_async_boost`, assert on what `pytest_drill_sergeant.run(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
 
-15 findings: 15 fail, 0 warn. Fix them, recruit. DISMISSED!
+suite/sleep-in-test/test_bad_aliased_sleeps.py
+  suite/sleep-in-test/test_bad_aliased_sleeps.py:13: DS801 sleep-in-test [fail] in test_worker_finishes
+    "Napping on duty, recruit? Tests don't SLEEP on my watch!"
+    Found: `test_worker_finishes` sleeps for real time: `sleep(2)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_worker_finishes`, replace `sleep(2)` on line 13 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+  suite/sleep-in-test/test_bad_aliased_sleeps.py:20: DS801 sleep-in-test [fail] in test_worker_retries
+    "You picked that number out of thin air! On a slow CI box it's too short, everywhere else it's wasted!"
+    Found: `test_worker_retries` sleeps for real time: `pause(0.5)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_worker_retries`, replace `pause(0.5)` on line 20 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+  suite/sleep-in-test/test_bad_aliased_sleeps.py:21: DS801 sleep-in-test [fail] in test_worker_retries
+    "You picked that number out of thin air! On a slow CI box it's too short, everywhere else it's wasted!"
+    Found: `test_worker_retries` sleeps for real time: `t.sleep(0.5)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_worker_retries`, replace `t.sleep(0.5)` on line 21 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+  suite/sleep-in-test/test_bad_aliased_sleeps.py:30: DS801 sleep-in-test [fail] in test_sleep_imported_inside_the_test
+    "Waiting and hoping is not a strategy, maggot! Wait for the EVENT!"
+    Found: `test_sleep_imported_inside_the_test` sleeps for real time: `time.sleep(1)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_sleep_imported_inside_the_test`, replace `time.sleep(1)` on line 30 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+
+suite/sleep-in-test/test_bad_async_waits.py
+  suite/sleep-in-test/test_bad_async_waits.py:15: DS801 sleep-in-test [fail] in test_poller_picks_up_the_job
+    "Napping on duty, recruit? Tests don't SLEEP on my watch!"
+    Found: `test_poller_picks_up_the_job` sleeps for real time: `asyncio.sleep(1)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_poller_picks_up_the_job`, replace `asyncio.sleep(1)` on line 15 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+  suite/sleep-in-test/test_bad_async_waits.py:23: DS801 sleep-in-test [fail] in test_poller_waits_a_named_delay
+    "Napping on duty, recruit? Tests don't SLEEP on my watch!"
+    Found: `test_poller_waits_a_named_delay` sleeps for real time: `asyncio.sleep(DELAY)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_poller_waits_a_named_delay`, replace `asyncio.sleep(DELAY)` on line 23 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+
+suite/sleep-in-test/test_bad_token_expiry.py
+  suite/sleep-in-test/test_bad_token_expiry.py:13: DS801 sleep-in-test [fail] in test_token_expires_after_its_ttl
+    "Waiting and hoping is not a strategy, maggot! Wait for the EVENT!"
+    Found: `test_token_expires_after_its_ttl` sleeps for real time: `time.sleep(1.1)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_token_expires_after_its_ttl`, replace `time.sleep(1.1)` on line 13 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+  suite/sleep-in-test/test_bad_token_expiry.py:20: DS801 sleep-in-test [fail] in TestCache::test_entry_is_evicted
+    "Waiting and hoping is not a strategy, maggot! Wait for the EVENT!"
+    Found: `TestCache::test_entry_is_evicted` sleeps for real time: `time.sleep(0.6)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `TestCache::test_entry_is_evicted`, replace `time.sleep(0.6)` on line 20 with a fake or frozen clock, or wait on the condition itself (an event, a join, a poll with a timeout).
+
+23 findings: 23 fail, 0 warn. Fix them, recruit. DISMISSED!
