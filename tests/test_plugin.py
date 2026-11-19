@@ -6,7 +6,7 @@ SECTION = "= drill sergeant ="
 def test_plugin_is_active_once_installed_and_leaves_a_clean_run_passing(
     drill, pytester
 ):
-    pytester.makepyfile("def test_ok():\n    assert 1 + 1 == 2\n")
+    pytester.makepyfile("def test_ok():\n    assert sorted([2, 1]) == [1, 2]\n")
 
     result = drill()
 

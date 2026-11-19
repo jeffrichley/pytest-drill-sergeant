@@ -83,5 +83,5 @@ def failing_test(pytester):
     """A test file in `pytester`'s temp dir, `test_broken.py`, holding one failing
     test."""
     return pytester.makepyfile(
-        test_broken="def test_broken():\n    assert 1 + 1 == 3\n"
+        test_broken="def test_broken():\n    assert sorted([2, 1]) == [2, 1]\n"
     )
