@@ -290,8 +290,8 @@ SWALLOWED_EXCEPTION = Check(
         "        sync_all()\n"
         "    except Exception:\n"
         "        pass\n"
-        "    assert store.synced\n"
+        "    assert store.pending == []\n"
     ),
-    good_example=("def test_sync():\n    sync_all()\n    assert store.synced\n"),
+    good_example=("def test_sync():\n    sync_all()\n    assert store.pending == []\n"),
     find=_find_swallowed_exception,
 )

@@ -11,7 +11,7 @@ def connect():
 def test_try_finally_catches_nothing():
     connection = connect()
     try:
-        assert connection is not None
+        assert connection.open is True
     finally:
         del connection
 
@@ -33,7 +33,7 @@ def best_effort_cleanup(path):
 
 def test_uses_a_swallowing_helper(tmp_path, server):
     best_effort_cleanup(tmp_path / "gone")
-    assert server is not None
+    assert server.port == 8000
 
 
 class Helper:

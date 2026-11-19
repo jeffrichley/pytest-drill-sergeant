@@ -7,7 +7,7 @@ async def fetch(url):
 
 
 class TestClient:
-    def test_get_ignores_timeouts(self):
+    def test_get_ignores_timeouts(self):  # expect: DS201
         try:
             fetch("http://example.com")
         except TimeoutError:  # expect: DS702
@@ -15,7 +15,7 @@ class TestClient:
         assert fetch is not None
 
 
-async def test_fetch_ignores_connection_errors():
+async def test_fetch_ignores_connection_errors():  # expect: DS201
     try:
         await fetch("http://nowhere")
     except ConnectionError:  # expect: DS702

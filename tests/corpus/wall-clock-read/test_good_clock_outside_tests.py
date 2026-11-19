@@ -18,7 +18,7 @@ def issued_invoice():
 
 
 def test_invoice_issued(issued_invoice):
-    assert issued_invoice.issued is not None
+    assert issued_invoice.issued.year == 2026
 
 
 def test_fixture_shadows_the_import(datetime):

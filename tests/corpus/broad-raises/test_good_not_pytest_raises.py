@@ -22,8 +22,8 @@ def test_a_method_named_raises():
     assert Contract().raises(Exception) is Exception
 
 
-def test_exception_in_isinstance():
-    assert isinstance(ValueError(), Exception)
+def test_exception_in_issubclass():
+    assert issubclass(ValueError, Exception)
 
 
 class Helper:

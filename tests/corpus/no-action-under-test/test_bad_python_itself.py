@@ -17,4 +17,4 @@ def test_missing_key_raises():  # expect: DS102
 
 async def test_list_membership():  # expect: DS102
     names = ["ada", "grace"]
-    assert "ada" in names
+    assert "ada" in names  # expect: DS202

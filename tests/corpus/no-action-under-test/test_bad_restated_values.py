@@ -15,4 +15,4 @@ class TestUser:
 def test_mirror():  # expect: DS102
     actual = [1, 2, 3]
     expected = [1, 2, 3]
-    assert actual == expected
+    assert actual == expected  # expect: DS202

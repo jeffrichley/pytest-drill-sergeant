@@ -1,5 +1,10 @@
 """The check registry: every check, with what it needs to report and teach."""
 
+from pytest_drill_sergeant.checks.assertions import (
+    MIRROR_ASSERTION,
+    TAUTOLOGICAL_ASSERTION,
+    WEAK_ASSERTION,
+)
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
 from pytest_drill_sergeant.checks.brittleness import (
     BRITTLE_STRING_MATCH,
@@ -24,6 +29,9 @@ CHECKS: tuple[Check, ...] = (
     NO_ACTION_UNDER_TEST,
     ASSERT_BEFORE_ACT,
     INTERLEAVED_ACT_ASSERT,
+    WEAK_ASSERTION,
+    TAUTOLOGICAL_ASSERTION,
+    MIRROR_ASSERTION,
     BRITTLE_STRING_MATCH,
     PRIVATE_STATE_ASSERTION,
     SOURCE_TEXT_GREP,
@@ -33,5 +41,6 @@ CHECKS: tuple[Check, ...] = (
     WALL_CLOCK_READ,
     UNSEEDED_RANDOM,
 )
+
 
 __all__ = ["CHECKS", "Check", "Hit", "TestFile", "TestFunction"]
