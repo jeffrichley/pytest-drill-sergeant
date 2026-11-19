@@ -375,3 +375,84 @@ ASSERT_BEFORE_ACT = Check(
     ),
     find=_find_assert_before_act,
 )
+
+
+def _checked_acts(steps: list[tuple[ast.stmt, _Step]]) -> list[ast.stmt]:
+    """The first act of each run of acts that an assertion then checks.
+
+    A run starts at an act with no act since the last assertion, and counts once
+    an assertion follows it.
+    """
+    starts: list[ast.stmt] = []
+    pending: ast.stmt | None = None
+    for statement, step in steps:
+        if step is _Step.ACT and pending is None:
+            pending = statement
+        elif step is _Step.ASSERT and pending is not None:
+            starts.append(pending)
+            pending = None
+    return starts
+
+
+def _find_interleaved_act_assert(file: TestFile) -> Iterator[Hit]:
+    for test in file.tests:
+        acts = _checked_acts(_steps(test.node.body))
+        if len(acts) < 2:  # noqa: PLR2004 -- two acts are what interleaving means
+            continue
+        second = acts[1]
+        lines = ", ".join(str(act.lineno) for act in acts)
+        yield Hit(
+            line=second.lineno,
+            test=test.name,
+            found=(
+                f"`{test.name}` acts and asserts {len(acts)} times: after the "
+                f"assertions on the act at line {acts[0].lineno}, {_describe(second)} "
+                f"on line {second.lineno} acts again."
+            ),
+            fix=(
+                f"Split `{test.name}` into one test per act (lines {lines}), each "
+                "named for its behaviour, with any shared setup in a fixture."
+            ),
+        )
+
+
+INTERLEAVED_ACT_ASSERT = Check(
+    code="DS104",
+    name="interleaved-act-assert",
+    default_level=Level.FAIL,
+    voice=(
+        "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!",
+        "One test, one mission! You're running three operations in one, maggot!",
+        "When this goes red, which act failed? NOBODY KNOWS! Split it up!",
+    ),
+    why=(
+        "A test that acts and asserts more than once checks several behaviours: "
+        "when it fails, its name doesn't say which one broke, and a failing early "
+        "step hides every later one."
+    ),
+    explain=(
+        "Flags a test that acts, asserts, then acts and asserts again. An act is a "
+        "bare call or `await` made for its effect (not cleanup such as `close()` "
+        "or `reset_mock()`); an assignment that reads a result between assertions "
+        "isn't one, and a guard assertion before the only act is fine. Split the "
+        "test into one test per act, with shared setup in a fixture."
+    ),
+    bad_example=(
+        "def test_cart(cart):\n"
+        "    cart.add('apple')\n"
+        "    assert cart.items == ['apple']\n"
+        "    cart.remove('apple')\n"
+        "    assert cart.items == []\n"
+    ),
+    good_example=(
+        "def test_add_puts_the_item_in_the_cart(cart):\n"
+        "    cart.add('apple')\n"
+        "    assert cart.items == ['apple']\n"
+        "\n"
+        "\n"
+        "def test_remove_takes_the_item_out(cart_with_apple):\n"
+        "    cart_with_apple.remove('apple')\n"
+        "    assert cart_with_apple.items == []\n"
+    ),
+    find=_find_interleaved_act_assert,
+)

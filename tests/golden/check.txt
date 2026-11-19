@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 31 findings in 9 files. FALL IN!
+DRILL SERGEANT INSPECTION: 37 findings in 12 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -40,6 +40,42 @@ suite/assert-before-act/test_bad_precondition_only.py
     Found: In `test_send_message`, `await client.send('hello')` on line 29 runs after the last assertion (line 28), so nothing checks what it did.
     Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
     Fix: In `test_send_message`, assert on what the act on line 29 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+
+suite/interleaved-act-assert/test_bad_async_steps.py
+  suite/interleaved-act-assert/test_bad_async_steps.py:7: DS104 interleaved-act-assert [fail] in test_connection
+    "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
+    Found: `test_connection` acts and asserts 2 times: after the assertions on the act at line 5, `await conn.send('ping')` on line 7 acts again.
+    Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
+    Fix: Split `test_connection` into one test per act (lines 5, 7), each named for its behaviour, with any shared setup in a fixture.
+  suite/interleaved-act-assert/test_bad_async_steps.py:15: DS104 interleaved-act-assert [fail] in TestDoor::test_door
+    "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
+    Found: `TestDoor::test_door` acts and asserts 2 times: after the assertions on the act at line 13, `await door.lock()` on line 15 acts again.
+    Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
+    Fix: Split `TestDoor::test_door` into one test per act (lines 13, 15), each named for its behaviour, with any shared setup in a fixture.
+
+suite/interleaved-act-assert/test_bad_blocks.py
+  suite/interleaved-act-assert/test_bad_blocks.py:11: DS104 interleaved-act-assert [fail] in test_counter_under_patch
+    "When this goes red, which act failed? NOBODY KNOWS! Split it up!"
+    Found: `test_counter_under_patch` acts and asserts 2 times: after the assertions on the act at line 9, `counter.reset()` on line 11 acts again.
+    Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
+    Fix: Split `test_counter_under_patch` into one test per act (lines 9, 11), each named for its behaviour, with any shared setup in a fixture.
+  suite/interleaved-act-assert/test_bad_blocks.py:18: DS104 interleaved-act-assert [fail] in test_queue
+    "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
+    Found: `test_queue` acts and asserts 2 times: after the assertions on the act at line 16, the `for` block on line 18 acts again.
+    Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
+    Fix: Split `test_queue` into one test per act (lines 16, 18), each named for its behaviour, with any shared setup in a fixture.
+
+suite/interleaved-act-assert/test_bad_two_behaviours.py
+  suite/interleaved-act-assert/test_bad_two_behaviours.py:8: DS104 interleaved-act-assert [fail] in test_cart
+    "When this goes red, which act failed? NOBODY KNOWS! Split it up!"
+    Found: `test_cart` acts and asserts 2 times: after the assertions on the act at line 6, `cart.remove('apple')` on line 8 acts again.
+    Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
+    Fix: Split `test_cart` into one test per act (lines 6, 8), each named for its behaviour, with any shared setup in a fixture.
+  suite/interleaved-act-assert/test_bad_two_behaviours.py:15: DS104 interleaved-act-assert [fail] in test_user_lifecycle
+    "When this goes red, which act failed? NOBODY KNOWS! Split it up!"
+    Found: `test_user_lifecycle` acts and asserts 3 times: after the assertions on the act at line 13, `users.rename('ada', 'grace')` on line 15 acts again.
+    Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
+    Fix: Split `test_user_lifecycle` into one test per act (lines 13, 15, 17), each named for its behaviour, with any shared setup in a fixture.
 
 suite/no-action-under-test/test_bad_constants_only.py
   suite/no-action-under-test/test_bad_constants_only.py:5: DS102 no-action-under-test [fail] in test_discount_rate
@@ -173,4 +209,4 @@ suite/no-real-assertion/test_bad_tiny_coverage.py
     Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
     Fix: In `test_async_boost`, assert on what `pytest_drill_sergeant.run(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
 
-31 findings: 31 fail, 0 warn. Fix them, recruit. DISMISSED!
+37 findings: 37 fail, 0 warn. Fix them, recruit. DISMISSED!
