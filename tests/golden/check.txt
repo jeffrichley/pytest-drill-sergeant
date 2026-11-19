@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 180 findings in 46 files. FALL IN!
+DRILL SERGEANT INSPECTION: 181 findings in 46 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -150,6 +150,11 @@ suite/broad-raises/test_bad_hidden_in_flow.py
     Found: `test_two_expectations_in_one_test` expects `BaseException` with no `match=`, so any error at all passes it.
     Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix: In `test_two_expectations_in_one_test`, line 30: replace `BaseException` with the specific exception the code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_hidden_in_flow.py:35: DS701 broad-raises [fail] in test_caught_exception_only_printed
+    "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
+    Found: `test_caught_exception_only_printed` expects `Exception` with no `match=`, so any error at all passes it.
+    Why: `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError` from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix: In `test_caught_exception_only_printed`, line 35: replace `Exception` with the specific exception the code raises, and add `match=` for the part of its message that matters.
 
 suite/broad-raises/test_bad_other_spellings.py
   suite/broad-raises/test_bad_other_spellings.py:15: DS701 broad-raises [fail] in test_bare_name_raises
@@ -992,4 +997,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `test_async_import`, line 30: replace the weak assertions on line 30 with exact checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-180 findings: 180 fail, 0 warn. Fix them, recruit. DISMISSED!
+181 findings: 181 fail, 0 warn. Fix them, recruit. DISMISSED!

@@ -26,3 +26,21 @@ def test_broad_type_matched_afterwards():
     with pytest.raises(Exception) as excinfo:
         parse("x")
     assert excinfo.match("invalid literal")
+
+
+def test_broad_type_matched_by_a_bare_call():
+    with pytest.raises(Exception) as excinfo:
+        parse("x")
+    excinfo.match("invalid literal")
+
+
+def test_broad_type_then_the_type_asserted():
+    with pytest.raises(Exception) as excinfo:
+        parse(None)
+    assert excinfo.type is TypeError
+
+
+def test_broad_type_then_the_message_asserted():
+    with pytest.raises(Exception) as excinfo:
+        parse("x")
+    assert "invalid literal" in str(excinfo.value)

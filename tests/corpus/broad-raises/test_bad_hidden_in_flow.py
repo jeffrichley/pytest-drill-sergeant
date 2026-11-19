@@ -29,3 +29,9 @@ def test_two_expectations_in_one_test():
         parse("x")
     with pytest.raises(BaseException):  # expect: DS701
         parse(None)
+
+
+def test_caught_exception_only_printed():
+    with pytest.raises(Exception) as excinfo:  # expect: DS701
+        parse("x")
+    print(excinfo.value)

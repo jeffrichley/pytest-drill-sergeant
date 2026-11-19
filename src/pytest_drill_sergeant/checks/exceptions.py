@@ -4,6 +4,7 @@ import ast
 from collections.abc import Iterator, Mapping
 
 from pytest_drill_sergeant.checks.ast_tools import (
+    PYTEST_RAISES,
     calls_to,
     is_real_assertion,
     walk_test,
@@ -14,7 +15,6 @@ from pytest_drill_sergeant.findings import Level
 # The exception types that every error is an instance of.
 _BROAD = frozenset({"Exception", "BaseException"})
 
-_PYTEST_RAISES = frozenset({"pytest.raises"})
 _PYTEST_FAIL = frozenset({"pytest.fail"})
 
 # pytest's helpers that end a test without failing it.
@@ -25,6 +25,9 @@ _CATCHES_PYTEST_FAIL = frozenset({"BaseException"})
 
 # What catches `assert False` and `raise AssertionError`.
 _CATCHES_ASSERTION = frozenset({"Exception", "BaseException", "AssertionError"})
+
+# What an `assert` reads from a `pytest.raises` result to pin down what was caught.
+_CAUGHT_READS = frozenset({"type", "value", "typename", "errisinstance", "match"})
 
 _TryNode = ast.Try | ast.TryStar
 
@@ -54,20 +57,47 @@ def _has_match(call: ast.Call) -> bool:
     )
 
 
-def _matched_afterwards(test: TestFunction) -> set[int]:
-    """The `pytest.raises` calls in a test whose `as` name later calls `.match`.
+def _pins(test: ast.expr) -> bool:
+    """Whether an `assert`'s test can pin a value down.
+
+    A comparison with no `None` in it or a call can; a bare truthiness check or an
+    `is not None` holds for whatever was caught.
+    """
+    if isinstance(test, ast.Call):
+        return True
+    return isinstance(test, ast.Compare) and not any(
+        isinstance(operand, ast.Constant) and operand.value is None
+        for operand in (test.left, *test.comparators)
+    )
+
+
+def _narrowed_afterwards(test: TestFunction) -> set[int]:
+    """The `pytest.raises` calls in a test whose `as` name is narrowed later.
+
+    It is when the name calls `.match(...)`, or an `assert` that can pin a value
+    down reads what was caught: its `.type`, `.value`, `.typename`, or
+    `.errisinstance(...)` (as in `assert excinfo.type is TypeError` or
+    `assert "x" in str(excinfo.value)`, not `assert excinfo.type is not None`).
 
     Returns:
         The ids of those call nodes.
     """
     nodes = list(walk_test(test))
-    matching = {
+    narrowed = {
         node.func.value.id
         for node in nodes
         if isinstance(node, ast.Call)
         and isinstance(node.func, ast.Attribute)
         and node.func.attr == "match"
         and isinstance(node.func.value, ast.Name)
+    } | {
+        read.value.id
+        for node in nodes
+        if isinstance(node, ast.Assert) and _pins(node.test)
+        for read in ast.walk(node.test)
+        if isinstance(read, ast.Attribute)
+        and read.attr in _CAUGHT_READS
+        and isinstance(read.value, ast.Name)
     }
     return {
         id(item.context_expr)
@@ -75,17 +105,17 @@ def _matched_afterwards(test: TestFunction) -> set[int]:
         if isinstance(node, ast.With | ast.AsyncWith)
         for item in node.items
         if isinstance(item.optional_vars, ast.Name)
-        and item.optional_vars.id in matching
+        and item.optional_vars.id in narrowed
     }
 
 
 def _find_broad_raises(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        matched = _matched_afterwards(test)
+        matched = _narrowed_afterwards(test)
         for node in walk_test(test):
             if not (
                 isinstance(node, ast.Call)
-                and calls_to(node, _PYTEST_RAISES, test.imports)
+                and calls_to(node, PYTEST_RAISES, test.imports)
             ):
                 continue
             broad = sorted(_type_names(_expected_exception(node)) & _BROAD)
@@ -123,7 +153,9 @@ BROAD_RAISES = Check(
     explain=(
         "Flags `pytest.raises` expecting `Exception` or `BaseException`, alone or in "
         'a tuple, with no `match=` (or one of `None` or `""`, which match '
-        "anything) and no later `.match(...)` on its `as` name. Name the specific "
+        "anything), no later `.match(...)` on its `as` name, and no later `assert` "
+        "pinning down what it caught (`assert excinfo.type is TypeError`, `assert "
+        '"x" in str(excinfo.value)`). Name the specific '
         "exception the code raises, and add `match=` for the part of its message "
         "that matters."
     ),
