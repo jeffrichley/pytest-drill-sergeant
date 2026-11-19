@@ -36,3 +36,11 @@ def test_smoke_with_a_try():  # expect: DS101
 def test_mock_configured_but_never_checked(mocker):  # expect: DS101
     mocker.patch("pytest_drill_sergeant.cli.main", return_value=0)
     pytest_drill_sergeant.cli.main()
+
+
+def test_fail_method_on_some_object(job):  # expect: DS101
+    job.fail()
+
+
+def test_tuple_assert_is_always_true():  # expect: DS101
+    assert (pytest_drill_sergeant.run(), "should run")

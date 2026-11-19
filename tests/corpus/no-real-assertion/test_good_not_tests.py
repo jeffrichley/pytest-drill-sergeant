@@ -29,3 +29,18 @@ class TestUser:
 
     def test_name(self, test_data):
         assert test_data["name"] == "Ada"
+
+
+class TestWithInit:
+    def __init__(self):
+        self.user = make_user()
+
+    def test_not_collected(self):
+        make_user()
+
+
+class TestOptedOut:
+    __test__ = False
+
+    def test_not_collected(self):
+        make_user()

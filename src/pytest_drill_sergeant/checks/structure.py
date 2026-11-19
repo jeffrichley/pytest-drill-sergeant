@@ -6,33 +6,49 @@ from collections.abc import Iterable, Iterator
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFunction
 from pytest_drill_sergeant.findings import Level
 
-# Context managers that assert an exception or warning is raised.
-_EXPECTING = frozenset({"raises", "warns", "deprecated_call"})
+# pytest's helpers that fail the test: `pytest.fail`, and the context managers that
+# require an exception or warning.
+_PYTEST_ASSERTING = frozenset({"fail", "raises", "warns", "deprecated_call"})
 
 
-def _called_name(call: ast.Call) -> str | None:
-    """The name a call is made through: `f` for `f()`, `g` for `a.b.g()`."""
-    if isinstance(call.func, ast.Name):
-        return call.func.id
-    if isinstance(call.func, ast.Attribute):
-        return call.func.attr
-    return None
+def _is_pytest_asserting(func: ast.expr) -> bool:
+    """Whether a call target is one of pytest's failing helpers.
+
+    It counts called as `pytest.<name>` or by its imported bare name.
+    """
+    if isinstance(func, ast.Attribute):
+        return (
+            isinstance(func.value, ast.Name)
+            and func.value.id == "pytest"
+            and func.attr in _PYTEST_ASSERTING
+        )
+    return isinstance(func, ast.Name) and func.id in _PYTEST_ASSERTING
+
+
+def _is_always_true(test: ast.expr) -> bool:
+    """Whether an `assert`'s test is a truthy constant or a non-empty tuple."""
+    if isinstance(test, ast.Constant):
+        return bool(test.value)
+    return isinstance(test, ast.Tuple) and bool(test.elts)
 
 
 def _is_real_assertion(node: ast.AST) -> bool:
     """Whether a node can fail the test on the outcome it checks.
 
-    An `assert` of anything but a truthy constant counts, and so does a call to
-    `pytest.raises`, `pytest.warns`, `pytest.deprecated_call` or `pytest.fail`, any
-    `assert*`-named call (mock verification, unittest, helpers like
-    `assert_frame_equal`) and raising `AssertionError`.
+    An `assert` of anything but a truthy constant or non-empty tuple counts, and so
+    does a call to `pytest.raises`, `pytest.warns`, `pytest.deprecated_call` or
+    `pytest.fail`, any `assert*`-named call (mock verification, unittest, helpers
+    like `assert_frame_equal`) and raising `AssertionError`.
     """
     if isinstance(node, ast.Assert):
-        return not (isinstance(node.test, ast.Constant) and bool(node.test.value))
+        return not _is_always_true(node.test)
     if isinstance(node, ast.Call):
-        name = _called_name(node)
-        return name is not None and (
-            name.lower().startswith("assert") or name in _EXPECTING or name == "fail"
+        func = node.func
+        name = func.attr if isinstance(func, ast.Attribute) else None
+        if isinstance(func, ast.Name):
+            name = func.id
+        return _is_pytest_asserting(func) or (
+            name is not None and name.lower().startswith("assert")
         )
     if isinstance(node, ast.Raise) and node.exc is not None:
         exc = node.exc.func if isinstance(node.exc, ast.Call) else node.exc
@@ -92,8 +108,9 @@ NO_REAL_ASSERTION = Check(
     ),
     explain=(
         "Flags a test with no real assertion: no `assert` that can fail (a truthy "
-        "constant such as `assert True` can't), no `pytest.raises`, `pytest.warns` "
-        "or `pytest.fail`, no `assert*` call such as a mock's `assert_called_once_with` "
+        "constant such as `assert True`, or a non-empty tuple, can't), no "
+        "`pytest.raises`, `pytest.warns`, `pytest.deprecated_call` or `pytest.fail`, "
+        "no `assert*` call such as a mock's `assert_called_once_with` "
         "or `self.assertEqual`, and no `raise AssertionError`. Such a test only proves "
         "the code didn't crash. Assert on what the code returns or changes."
     ),

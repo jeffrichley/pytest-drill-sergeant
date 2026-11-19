@@ -33,11 +33,35 @@ def _is_fixture(node: FunctionNode) -> bool:
     return False
 
 
+def _is_collected_class(node: ast.ClassDef) -> bool:
+    """Whether pytest collects a class.
+
+    It does when the class is named `Test*`, has no `__init__` and isn't opted out
+    with `__test__ = False`.
+    """
+    if not node.name.startswith("Test"):
+        return False
+    for statement in node.body:
+        if isinstance(statement, ast.FunctionDef) and statement.name == "__init__":
+            return False
+        if (
+            isinstance(statement, ast.Assign)
+            and any(
+                isinstance(t, ast.Name) and t.id == "__test__"
+                for t in statement.targets
+            )
+            and isinstance(statement.value, ast.Constant)
+            and not statement.value.value
+        ):
+            return False
+    return True
+
+
 def _tests_in(body: list[ast.stmt], prefix: str = "") -> Iterator[TestFunction]:
     """The tests pytest's default rules collect.
 
-    Those are `test*` functions that aren't fixtures, at module level or in `Test*`
-    classes, nested ones included.
+    Those are `test*` functions that aren't fixtures, at module level or in the
+    classes pytest collects, nested ones included.
     """
     for node in body:
         if (
@@ -46,7 +70,7 @@ def _tests_in(body: list[ast.stmt], prefix: str = "") -> Iterator[TestFunction]:
             and not _is_fixture(node)
         ):
             yield TestFunction(name=f"{prefix}{node.name}", node=node)
-        elif isinstance(node, ast.ClassDef) and node.name.startswith("Test"):
+        elif isinstance(node, ast.ClassDef) and _is_collected_class(node):
             yield from _tests_in(node.body, f"{prefix}{node.name}::")
 
 
@@ -82,4 +106,4 @@ def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
                 )
                 for hit in check.find(tests)
             )
-    return sorted(findings, key=lambda f: (str(f.file), f.line, f.code))
+    return sorted(findings, key=lambda f: (f.file.as_posix(), f.line, f.code))

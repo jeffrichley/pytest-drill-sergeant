@@ -42,3 +42,8 @@ def test_assert_false_on_the_unreachable_branch():
     except ValueError:
         return
     assert False, "parse accepted garbage"
+
+
+def test_deprecated_call_is_an_assertion():
+    with pytest.deprecated_call(match="old"):
+        warnings.warn("old", DeprecationWarning, stacklevel=1)

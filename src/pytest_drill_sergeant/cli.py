@@ -2,7 +2,7 @@
 
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, NoReturn
 
 import typer
 
@@ -34,7 +34,7 @@ def _is_test_file(path: Path) -> bool:
     )
 
 
-def _skipped(directory: Path) -> bool:
+def _is_skipped_dir(directory: Path) -> bool:
     name = directory.name
     return name.startswith(".") or name.endswith(".egg") or name in _SKIPPED_DIRS
 
@@ -46,29 +46,31 @@ def _test_files(path: Path) -> Iterator[Path]:
         return
     for child in sorted(path.iterdir()):
         if child.is_dir():
-            if not _skipped(child):
+            if not _is_skipped_dir(child):
                 yield from _test_files(child)
         elif _is_test_file(child):
             yield child
 
 
+def _refuse(reason: str) -> NoReturn:
+    """Print one line naming what is wrong, and exit 2 as a usage error."""
+    typer.echo(f"drill-sergeant: {reason}", err=True)
+    raise typer.Exit(2)
+
+
 @app.command()
 def check(
-    paths: Annotated[
-        list[Path], typer.Argument(help="Test files or directories.", exists=True)
-    ],
+    paths: Annotated[list[Path], typer.Argument(help="Test files or directories.")],
 ) -> None:
     """Check test files without running them; exit 1 when there are findings."""
+    for path in paths:
+        if not path.exists():
+            _refuse(f"no such file or directory: {path}")
     files = [file for path in paths for file in _test_files(path)]
     try:
         findings = analyze(files, Config())
     except SyntaxError as error:
-        typer.echo(
-            f"drill-sergeant: cannot parse {error.filename}, line {error.lineno}: "
-            f"{error.msg}",
-            err=True,
-        )
-        raise typer.Exit(2) from error
+        _refuse(f"cannot parse {error.filename}, line {error.lineno}: {error.msg}")
     typer.echo(render(findings), nl=False)
     if any(f.level is Level.FAIL for f in findings):
         raise typer.Exit(1)

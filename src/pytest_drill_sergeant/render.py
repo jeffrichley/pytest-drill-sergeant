@@ -28,24 +28,24 @@ def _voice_line(finding: Finding) -> str:
 def render(findings: list[Finding]) -> str:
     """Render findings as the report.
 
-    The report is a banner, the findings grouped by file and ordered by line, each
+    The report is a banner, the findings grouped by file and findings by line, each
     with one voice line and plain Found/Why/Fix, and a closing tally by level.
 
     Args:
-        findings: The findings to report, in any order.
+        findings: The findings to report, in the engine's order (by file, line and
+            code), which keeps each file's findings together.
 
     Returns:
         The report, ending in a newline.
     """
     if not findings:
         return "DRILL SERGEANT INSPECTION: no findings. As you were!\n"
-    ordered = sorted(findings, key=lambda f: (f.file.as_posix(), f.line, f.code))
-    files = len({f.file for f in ordered})
+    files = len({f.file for f in findings})
     out = [
-        f"DRILL SERGEANT INSPECTION: {_plural(len(ordered), 'finding')} in "
+        f"DRILL SERGEANT INSPECTION: {_plural(len(findings), 'finding')} in "
         f"{_plural(files, 'file')}. FALL IN!",
     ]
-    for file, group in groupby(ordered, key=lambda f: f.file.as_posix()):
+    for file, group in groupby(findings, key=lambda f: f.file.as_posix()):
         out += ["", file]
         for f in group:
             out += [
@@ -55,10 +55,10 @@ def render(findings: list[Finding]) -> str:
                 f"    Why: {f.why}",
                 f"    Fix: {f.fix}",
             ]
-    levels = Counter(f.level for f in ordered)
+    levels = Counter(f.level for f in findings)
     out += [
         "",
-        f"{_plural(len(ordered), 'finding')}: {levels[Level.FAIL]} fail, "
+        f"{_plural(len(findings), 'finding')}: {levels[Level.FAIL]} fail, "
         f"{levels[Level.WARN]} warn. Fix them, recruit. DISMISSED!",
     ]
     return "\n".join(out) + "\n"
