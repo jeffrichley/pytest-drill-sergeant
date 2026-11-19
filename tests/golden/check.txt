@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 40 findings in 9 files. FALL IN!
+DRILL SERGEANT INSPECTION: 50 findings in 12 files. FALL IN!
 
 suite/brittle-string-match/test_bad_captured_output.py
   suite/brittle-string-match/test_bad_captured_output.py:10: DS601 brittle-string-match [fail] in test_greeting_printed
@@ -218,4 +218,60 @@ suite/private-state-assertion/test_bad_module_private.py
     Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
     Fix: In `test_private_state_in_a_nested_block`, replace `item._dirty` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
 
-40 findings: 40 fail, 0 warn. Fix them, recruit. DISMISSED!
+suite/source-text-grep/test_bad_getsource.py
+  suite/source-text-grep/test_bad_getsource.py:11: DS603 source-text-grep [fail] in test_no_sleep_in_fetch
+    "Move one line and this test fails; break the logic and it passes! DISGRACEFUL!"
+    Found: `test_no_sleep_in_fetch` searches source text read by `inspect.getsource(Client.fetch)` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_no_sleep_in_fetch`, drop `inspect.getsource(Client.fetch)` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_getsource.py:16: DS603 source-text-grep [fail] in test_v2_handlers_defined
+    "You READ the code instead of RUNNING it? That's a book report, recruit!"
+    Found: `test_v2_handlers_defined` searches source text read by `getsource(jobs)` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_v2_handlers_defined`, drop `getsource(jobs)` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_getsource.py:21: DS603 source-text-grep [fail] in test_lines_mention_cache
+    "Grepping the source proves the words are there, not that they WORK!"
+    Found: `test_lines_mention_cache` searches source text read by `inspect.getsourcelines(Client)` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_lines_mention_cache`, drop `inspect.getsourcelines(Client)` and call the code it reads: assert on what it returns or does.
+
+suite/source-text-grep/test_bad_module_file.py
+  suite/source-text-grep/test_bad_module_file.py:12: DS603 source-text-grep [fail] in test_no_todo_left
+    "Grepping the source proves the words are there, not that they WORK!"
+    Found: `test_no_todo_left` searches source text read by `Path(client.__file__).read_text()` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_no_todo_left`, drop `Path(client.__file__).read_text()` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_module_file.py:17: DS603 source-text-grep [fail] in test_exactly_one_handler
+    "Grepping the source proves the words are there, not that they WORK!"
+    Found: `test_exactly_one_handler` searches source text read by `Path(client.__file__).read_text()` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_exactly_one_handler`, drop `Path(client.__file__).read_text()` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_module_file.py:21: DS603 source-text-grep [fail] in test_setting_present
+    "Grepping the source proves the words are there, not that they WORK!"
+    Found: `test_setting_present` searches source text read by `open(settings.__file__).read()` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_setting_present`, drop `open(settings.__file__).read()` and call the code it reads: assert on what it returns or does.
+
+suite/source-text-grep/test_bad_read_source.py
+  suite/source-text-grep/test_bad_read_source.py:8: DS603 source-text-grep [fail] in test_retry_enabled
+    "You READ the code instead of RUNNING it? That's a book report, recruit!"
+    Found: `test_retry_enabled` searches source text read by `Path('src/client.py').read_text()` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_retry_enabled`, drop `Path('src/client.py').read_text()` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_read_source.py:13: DS603 source-text-grep [fail] in test_debug_off
+    "Move one line and this test fails; break the logic and it passes! DISGRACEFUL!"
+    Found: `test_debug_off` searches source text read by `open('src/app/config.py').read()` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_debug_off`, drop `open('src/app/config.py').read()` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_read_source.py:19: DS603 source-text-grep [fail] in test_os_import_removed
+    "Move one line and this test fails; break the logic and it passes! DISGRACEFUL!"
+    Found: `test_os_import_removed` searches source text read by `open('src/app/paths.py')` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_os_import_removed`, drop `open('src/app/paths.py')` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_read_source.py:24: DS603 source-text-grep [fail] in test_source_lines_through_a_path
+    "You READ the code instead of RUNNING it? That's a book report, recruit!"
+    Found: `test_source_lines_through_a_path` searches source text read by `(root / 'src' / 'app' / 'jobs.py').read_text()` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_source_lines_through_a_path`, drop `(root / 'src' / 'app' / 'jobs.py').read_text()` and call the code it reads: assert on what it returns or does.
+
+50 findings: 50 fail, 0 warn. Fix them, recruit. DISMISSED!

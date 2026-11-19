@@ -246,3 +246,190 @@ PRIVATE_STATE_ASSERTION = Check(
     ),
     find=_find_private_state_assertion,
 )
+
+
+# `inspect`'s functions that return source text.
+_GETSOURCE = frozenset({"getsource", "getsourcelines"})
+
+# Methods that read a file's text.
+_READ_METHODS = frozenset({"read_text", "read_bytes", "read", "readlines", "open"})
+
+# Fixtures whose paths are files the test made, not the project's source.
+_TEMP_PATHS = frozenset({"tmp_path", "tmpdir", "tmp_path_factory", "tmpdir_factory"})
+
+# `re` functions that search text.
+_RE_SEARCHES = frozenset({"search", "match", "fullmatch", "findall", "finditer"})
+
+
+def _called_name(call: ast.Call) -> str | None:
+    """The name a call is made by: `f` for `f(...)` and `mod.f(...)`."""
+    func = call.func
+    if isinstance(func, ast.Attribute):
+        return func.attr
+    return func.id if isinstance(func, ast.Name) else None
+
+
+def _is_source_path(node: ast.expr) -> bool:
+    """Whether a path expression names a project source file.
+
+    That is a `.py` or `.pyi` literal somewhere in it, or a module's `__file__`,
+    unless the path is under a temporary directory fixture.
+    """
+    nodes = list(ast.walk(node))
+    if any(isinstance(n, ast.Name) and n.id in _TEMP_PATHS for n in nodes):
+        return False
+    return any(
+        (
+            isinstance(n, ast.Constant)
+            and isinstance(n.value, str)
+            and n.value.endswith((".py", ".pyi"))
+        )
+        or (isinstance(n, ast.Attribute) and n.attr == "__file__")
+        for n in nodes
+    )
+
+
+def _is_source_read(call: ast.Call) -> bool:
+    """Whether a call reads source text.
+
+    That is `inspect.getsource(...)` or `getsourcelines(...)`, `open(...)` on a
+    source file, or a read method such as `.read_text()` on one.
+    """
+    name = _called_name(call)
+    if name in _GETSOURCE:
+        return True
+    if name == "open" and isinstance(call.func, ast.Name):
+        return bool(call.args) and _is_source_path(call.args[0])
+    return (
+        name in _READ_METHODS
+        and isinstance(call.func, ast.Attribute)
+        and _is_source_path(call.func.value)
+    )
+
+
+def _origin(node: ast.expr, sources: dict[str, str]) -> str | None:
+    """Where an expression's source text was read, if it is source text.
+
+    It is when it reads source, names a variable holding source, or calls a method
+    on or indexes into source text (`.splitlines()`, `.read()` on an open handle).
+    """
+    if isinstance(node, ast.Name):
+        return sources.get(node.id)
+    if isinstance(node, ast.Subscript):
+        return _origin(node.value, sources)
+    if isinstance(node, ast.Call):
+        if _is_source_read(node):
+            return ast.unparse(node)
+        if isinstance(node.func, ast.Attribute):
+            return _origin(node.func.value, sources)
+    return None
+
+
+def _bindings(node: ast.AST) -> Iterator[tuple[ast.expr, ast.expr]]:
+    """Each (target, value) a node binds.
+
+    Assignments, `with ... as`, `for` loops and comprehensions bind.
+    """
+    if isinstance(node, ast.Assign):
+        for target in node.targets:
+            yield target, node.value
+    elif isinstance(node, ast.withitem) and node.optional_vars is not None:
+        yield node.optional_vars, node.context_expr
+    elif isinstance(node, ast.For | ast.comprehension):
+        yield node.target, node.iter
+
+
+def _source_variables(test: TestFunction) -> dict[str, str]:
+    """The test's variables that hold source text, each with where it was read."""
+    sources: dict[str, str] = {}
+    changed = True
+    while changed:
+        changed = False
+        for node in ast.walk(test.node):
+            for target, value in _bindings(node):
+                origin = _origin(value, sources)
+                if origin is None:
+                    continue
+                for name in ast.walk(target):
+                    if isinstance(name, ast.Name) and name.id not in sources:
+                        sources[name.id] = origin
+                        changed = True
+    return sources
+
+
+def _grepped(assertion: ast.Assert, sources: dict[str, str]) -> str | None:
+    """Where the source text an `assert` searches with `in` or `re` was read."""
+    for node in ast.walk(assertion.test):
+        searched: list[ast.expr] = []
+        if isinstance(node, ast.Compare):
+            searched = [
+                right
+                for op, right in zip(node.ops, node.comparators, strict=True)
+                if isinstance(op, ast.In | ast.NotIn)
+            ]
+        elif isinstance(node, ast.Call) and _called_name(node) in _RE_SEARCHES:
+            searched = list(node.args)
+        for expression in searched:
+            origin = _origin(expression, sources)
+            if origin is not None:
+                return origin
+    return None
+
+
+def _find_source_text_grep(file: TestFile) -> Iterator[Hit]:
+    for test in file.tests:
+        sources = _source_variables(test)
+        for assertion in _asserts(test):
+            origin = _grepped(assertion, sources)
+            if origin is None:
+                continue
+            yield Hit(
+                line=assertion.lineno,
+                test=test.name,
+                found=(
+                    f"`{test.name}` searches source text read by `{origin}` instead "
+                    "of running the code."
+                ),
+                fix=(
+                    f"In `{test.name}`, drop `{origin}` and call the code it reads: "
+                    "assert on what it returns or does."
+                ),
+            )
+
+
+SOURCE_TEXT_GREP = Check(
+    code="DS603",
+    name="source-text-grep",
+    default_level=Level.FAIL,
+    voice=(
+        "You READ the code instead of RUNNING it? That's a book report, recruit!",
+        "Grepping the source proves the words are there, not that they WORK!",
+        "Move one line and this test fails; break the logic and it passes! "
+        "DISGRACEFUL!",
+    ),
+    why=(
+        "A test that searches source text proves the text is there, not that the "
+        "code behaves: it breaks on harmless rewrites and passes when the code is "
+        "wrong."
+    ),
+    explain=(
+        "Flags an `assert` that searches source text with `in`, `not in` or a `re` "
+        "search (`re.search`, `re.match`, `re.fullmatch`, `re.findall`, "
+        "`re.finditer`). Source text is what `inspect.getsource` or "
+        "`inspect.getsourcelines` returns, or what is read from a `.py` or `.pyi` "
+        "file or a module's `__file__` with `open`, `.read_text()` and the like, "
+        "along with the variables holding it. Files under `tmp_path` or `tmpdir` "
+        "are exempt, and so is source passed to the code under test. Run the code "
+        "and assert on what it does."
+    ),
+    bad_example=(
+        "def test_retry_enabled():\n"
+        '    assert "retry=True" in Path("src/client.py").read_text()\n'
+    ),
+    good_example=(
+        "def test_client_retries_once(flaky_server):\n"
+        "    Client(flaky_server.url).get()\n"
+        "    assert flaky_server.requests == 2\n"
+    ),
+    find=_find_source_text_grep,
+)
