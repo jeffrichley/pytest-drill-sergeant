@@ -143,7 +143,7 @@ def _is_simple_assignment(name: ast.Name, parent: ast.AST) -> bool:
     return isinstance(parent, ast.AnnAssign) and parent.value is not None
 
 
-def _bindings(test: TestFunction) -> dict[str, ast.Assign | ast.AnnAssign]:
+def _stand_ins(test: TestFunction) -> dict[str, ast.Assign | ast.AnnAssign]:
     """The names a test binds once and only reads in assertions, with their bindings.
 
     Such a name is a stand-in for its value: nothing in the test passes it to code
@@ -367,7 +367,7 @@ def _other_statements(test: TestFunction, known: list[ast.stmt]) -> list[ast.stm
 
 def _verdicts(test: TestFunction) -> list[_Verdict]:
     """Every `assert` in the test, in source order, with its kind."""
-    bindings = _bindings(test)
+    bindings = _stand_ins(test)
     values = {name: s.value for name, s in bindings.items() if s.value is not None}
     aliases = {
         name: value
@@ -431,7 +431,8 @@ def _and(items: list[str]) -> str:
     return f"{', '.join(items[:-1])} and {items[-1]}"
 
 
-def _lines(verdicts: list[_Verdict]) -> str:
+def _line_numbers(verdicts: list[_Verdict]) -> str:
+    """The verdicts' line numbers as words: `line 3`, `lines 3 and 5`."""
     numbers = [str(v.node.lineno) for v in verdicts]
     return f"line{'s' if len(numbers) > 1 else ''} {_and(numbers)}"
 
@@ -455,7 +456,7 @@ def _find_weak_assertion(file: TestFile) -> Iterator[Hit]:
                 "wrong ones included."
             ),
             fix=(
-                f"replace the weak assertions on {_lines(weak)} with exact checks: "
+                f"replace the weak assertions on {_line_numbers(weak)} with exact checks: "
                 f"assert what {_and(subjects)} should equal, as in "
                 "`assert value == expected`."
             ),

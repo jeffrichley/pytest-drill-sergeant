@@ -196,7 +196,8 @@ def _string(name: str, value: RawValue) -> str:
     return value.strip()
 
 
-def _lines(name: str, value: RawValue) -> list[str]:
+def _line_list(name: str, value: RawValue) -> list[str]:
+    """A `linelist` value: one stripped entry per non-blank line."""
     if isinstance(value, list):
         lines = [str(item) for item in value]
     else:
@@ -265,7 +266,7 @@ def _levels(name: str, value: RawValue) -> dict[str, Level]:
     The longest matching prefix wins, whatever the order of the lines.
     """
     by_prefix: dict[str, Level] = {}
-    for line in _lines(name, value):
+    for line in _line_list(name, value):
         code, sep, level = line.partition("=")
         if not sep:
             raise ConfigError(f"{name}: expected CODE=level, got {line!r}")
@@ -286,7 +287,7 @@ def _per_file_ignores(
     Codes are separated by commas or spaces.
     """
     ignores = []
-    for line in _lines(name, value):
+    for line in _line_list(name, value):
         glob, sep, codes = line.rpartition(":")
         words = codes.replace(",", " ").split()
         if not sep or not glob.strip() or not words:
@@ -331,7 +332,7 @@ def resolve(raw: Mapping[str, RawValue], root: Path = Path()) -> Config:
         duplicate_setup_min_statements=get(_int, "duplicate_setup_min_statements"),
         duplicate_setup_min_tests=get(_int, "duplicate_setup_min_tests"),
         category_markers=tuple(get(_args, "category_markers")),
-        source_dirs=tuple(get(_lines, "source_dirs")),
+        source_dirs=tuple(get(_line_list, "source_dirs")),
         voice=get(_bool, "voice"),
         max_findings=get(_int, "max_findings"),
         inline_waivers=get(_bool, "inline_waivers"),

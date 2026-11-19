@@ -317,7 +317,7 @@ def _origin(node: ast.expr, sources: dict[str, str]) -> str | None:
     return None
 
 
-def _bindings(node: ast.AST) -> Iterator[tuple[ast.expr, ast.expr]]:
+def _bound_pairs(node: ast.AST) -> Iterator[tuple[ast.expr, ast.expr]]:
     """Each (target, value) a node binds.
 
     Assignments, `with ... as`, `for` loops and comprehensions bind.
@@ -338,7 +338,7 @@ def _source_variables(test: TestFunction) -> dict[str, str]:
     while changed:
         changed = False
         for node in walk_test(test):
-            for target, value in _bindings(node):
+            for target, value in _bound_pairs(node):
                 origin = _origin(value, sources)
                 if origin is None:
                     continue

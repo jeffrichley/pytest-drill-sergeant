@@ -122,7 +122,7 @@ class _Run:
             render(
                 self.findings,
                 voice=self.resolved.voice,
-                limit=self.resolved.max_findings,
+                max_findings=self.resolved.max_findings,
             )
         )
 

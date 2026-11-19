@@ -25,12 +25,14 @@ def _voice_line(finding: Finding) -> str:
     return lines[int.from_bytes(hashlib.sha256(key).digest()[:8], "big") % len(lines)]
 
 
-def render(findings: list[Finding], *, voice: bool = True, limit: int = 0) -> str:
+def render(
+    findings: list[Finding], *, voice: bool = True, max_findings: int = 0
+) -> str:
     """Render findings as the report.
 
     The report is a banner, the findings grouped by file and findings by line, each
     with one voice line and plain Found/Why/Fix, and a closing tally by level with
-    a flourish. With a limit, only the first `limit` findings are shown, then a
+    a flourish. With `max_findings`, only the first that many findings are shown, then a
     line counting the rest; the banner and tally still count every finding. With
     the voice off there is no banner, voice line or flourish; the
     Found/Why/Fix lines are unchanged.
@@ -39,7 +41,7 @@ def render(findings: list[Finding], *, voice: bool = True, limit: int = 0) -> st
         findings: The findings to report, in the engine's order (by file, line and
             code), which keeps each file's findings together.
         voice: Whether to deliver the report in the voice.
-        limit: The most findings to show; 0 shows them all.
+        max_findings: The most findings to show; 0 shows them all.
 
     Returns:
         The report, ending in a newline.
@@ -58,7 +60,7 @@ def render(findings: list[Finding], *, voice: bool = True, limit: int = 0) -> st
             f"{_plural(files, 'file')}. FALL IN!",
             "",
         ]
-    shown = findings[:limit] if limit else findings
+    shown = findings[:max_findings] if max_findings else findings
     for file, group in groupby(shown, key=lambda f: f.file.as_posix()):
         out += [file]
         for f in group:
