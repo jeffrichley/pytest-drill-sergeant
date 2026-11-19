@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 37 findings in 12 files. FALL IN!
+DRILL SERGEANT INSPECTION: 73 findings in 21 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -40,6 +40,77 @@ suite/assert-before-act/test_bad_precondition_only.py
     Found: In `test_send_message`, `await client.send('hello')` on line 29 runs after the last assertion (line 28), so nothing checks what it did.
     Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
     Fix: In `test_send_message`, assert on what the act on line 29 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+
+suite/brittle-string-match/test_bad_captured_output.py
+  suite/brittle-string-match/test_bad_captured_output.py:10: DS601 brittle-string-match [fail] in test_greeting_printed
+    "You memorized the whole sentence, recruit? Check what MATTERS!"
+    Found: `test_greeting_printed` compares `capsys.readouterr().out` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_greeting_printed`, assert that `capsys.readouterr().out` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_captured_output.py:16: DS601 brittle-string-match [fail] in test_error_printed
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_error_printed` compares `captured.err` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_error_printed`, assert that `captured.err` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_captured_output.py:22: DS601 brittle-string-match [fail] in test_log_line
+    "You memorized the whole sentence, recruit? Check what MATTERS!"
+    Found: `test_log_line` compares `caplog.text` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_log_line`, assert that `caplog.text` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_captured_output.py:27: DS601 brittle-string-match [fail] in test_cli_output
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_cli_output` compares `result.output` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_cli_output`, assert that `result.output` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_captured_output.py:32: DS601 brittle-string-match [fail] in test_subprocess_stdout
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_subprocess_stdout` compares `completed.stdout` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_subprocess_stdout`, assert that `completed.stdout` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+
+suite/brittle-string-match/test_bad_error_messages.py
+  suite/brittle-string-match/test_bad_error_messages.py:10: DS601 brittle-string-match [fail] in test_invalid_email_message
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_invalid_email_message` compares `str(excinfo.value)` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_invalid_email_message`, assert that `str(excinfo.value)` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_error_messages.py:19: DS601 brittle-string-match [fail] in test_message_attribute
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_message_attribute` compares `excinfo.value.message` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_message_attribute`, assert that `excinfo.value.message` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_error_messages.py:28: DS601 brittle-string-match [fail] in test_stripped_message_on_the_left
+    "Fix one typo in a message and this test goes down! That's not a test, it's a spell checker!"
+    Found: `test_stripped_message_on_the_left` compares `str(err).strip()` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_stripped_message_on_the_left`, assert that `str(err).strip()` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_error_messages.py:34: DS601 brittle-string-match [fail] in test_f_string_message
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_f_string_message` compares `str(excinfo.value)` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_f_string_message`, assert that `str(excinfo.value)` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+
+suite/brittle-string-match/test_bad_repr_and_format.py
+  suite/brittle-string-match/test_bad_repr_and_format.py:9: DS601 brittle-string-match [fail] in test_user_repr
+    "You memorized the whole sentence, recruit? Check what MATTERS!"
+    Found: `test_user_repr` compares `repr(user)` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_user_repr`, assert that `repr(user)` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_repr_and_format.py:16: DS601 brittle-string-match [fail] in test_report_str
+    "You memorized the whole sentence, recruit? Check what MATTERS!"
+    Found: `test_report_str` compares `str(report)` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_report_str`, assert that `str(report)` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_repr_and_format.py:20: DS601 brittle-string-match [fail] in test_money_format
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_money_format` compares `format(Money(1234), 'long')` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_money_format`, assert that `format(Money(1234), 'long')` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_repr_and_format.py:27: DS601 brittle-string-match [fail] in test_lowered_str_compared_with_not_equal
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_lowered_str_compared_with_not_equal` compares `str(report).lower()` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_lowered_str_compared_with_not_equal`, assert that `str(report).lower()` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
 
 suite/interleaved-act-assert/test_bad_async_steps.py
   suite/interleaved-act-assert/test_bad_async_steps.py:7: DS104 interleaved-act-assert [fail] in test_connection
@@ -209,4 +280,131 @@ suite/no-real-assertion/test_bad_tiny_coverage.py
     Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
     Fix: In `test_async_boost`, assert on what `pytest_drill_sergeant.run(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
 
-37 findings: 37 fail, 0 warn. Fix them, recruit. DISMISSED!
+suite/private-state-assertion/test_bad_cache_internals.py
+  suite/private-state-assertion/test_bad_cache_internals.py:10: DS602 private-state-assertion [fail] in test_cache_stores_the_key
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `test_cache_stores_the_key` asserts on private state: `cache._store`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_cache_stores_the_key`, replace `cache._store` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_cache_internals.py:11: DS602 private-state-assertion [fail] in test_cache_stores_the_key
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `test_cache_stores_the_key` asserts on private state: `cache._hits`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_cache_stores_the_key`, replace `cache._hits` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_cache_internals.py:18: DS602 private-state-assertion [fail] in test_queue_holds_two_items
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `test_queue_holds_two_items` asserts on private state: `queue._items`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_queue_holds_two_items`, replace `queue._items` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_cache_internals.py:23: DS602 private-state-assertion [fail] in test_two_private_names_in_one_assert
+    "That underscore means KEEP OUT! Test what it does, not what it hides!"
+    Found: `test_two_private_names_in_one_assert` asserts on private state: `cache._hits`, `cache._misses`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_two_private_names_in_one_assert`, replace `cache._hits`, `cache._misses` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_cache_internals.py:27: DS602 private-state-assertion [fail] in test_private_state_inside_a_generator
+    "Who gave you clearance to rifle through PRIVATE quarters, recruit?!"
+    Found: `test_private_state_inside_a_generator` asserts on private state: `c._store`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_private_state_inside_a_generator`, replace `c._store` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+
+suite/private-state-assertion/test_bad_mangled_and_calls.py
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:11: DS602 private-state-assertion [fail] in test_mangled_balance
+    "That underscore means KEEP OUT! Test what it does, not what it hides!"
+    Found: `test_mangled_balance` asserts on private state: `account._Account__balance`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_mangled_balance`, replace `account._Account__balance` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:17: DS602 private-state-assertion [fail] in test_private_method_was_called
+    "Who gave you clearance to rifle through PRIVATE quarters, recruit?!"
+    Found: `test_private_method_was_called` asserts on private state: `service._client`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_private_method_was_called`, replace `service._client` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:21: DS602 private-state-assertion [fail] in test_private_method_result
+    "That underscore means KEEP OUT! Test what it does, not what it hides!"
+    Found: `test_private_method_result` asserts on private state: `Service()._build_url`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_private_method_result`, replace `Service()._build_url` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:27: DS602 private-state-assertion [fail] in TestAccount::test_balance
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `TestAccount::test_balance` asserts on private state: `account._balance`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `TestAccount::test_balance`, replace `account._balance` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+
+suite/private-state-assertion/test_bad_module_private.py
+  suite/private-state-assertion/test_bad_module_private.py:6: DS102 no-action-under-test [fail] in test_registry_starts_empty
+    "This test checks that Python works! Python doesn't need your help, maggot!"
+    Found: `test_registry_starts_empty` asserts but runs nothing: no call, no `await`, and no fixture or parameter to bring a value in.
+    Why: A test that runs no code under test checks only its own literals or the language, so it passes whatever the code does.
+    Fix: In `test_registry_starts_empty`, call the code under test and assert on what it returns or changes; if the test only checks its own literals or Python itself, delete it.
+  suite/private-state-assertion/test_bad_module_private.py:7: DS602 private-state-assertion [fail] in test_registry_starts_empty
+    "Who gave you clearance to rifle through PRIVATE quarters, recruit?!"
+    Found: `test_registry_starts_empty` asserts on private state: `registry._registry`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_registry_starts_empty`, replace `registry._registry` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_module_private.py:12: DS602 private-state-assertion [fail] in test_config_loaded
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `test_config_loaded` asserts on private state: `config._loaded`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_config_loaded`, replace `config._loaded` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_module_private.py:18: DS602 private-state-assertion [fail] in test_private_state_in_a_nested_block
+    "That underscore means KEEP OUT! Test what it does, not what it hides!"
+    Found: `test_private_state_in_a_nested_block` asserts on private state: `item._dirty`.
+    Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
+    Fix: In `test_private_state_in_a_nested_block`, replace `item._dirty` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
+
+suite/source-text-grep/test_bad_getsource.py
+  suite/source-text-grep/test_bad_getsource.py:11: DS603 source-text-grep [fail] in test_no_sleep_in_fetch
+    "Move one line and this test fails; break the logic and it passes! DISGRACEFUL!"
+    Found: `test_no_sleep_in_fetch` searches source text read by `inspect.getsource(Client.fetch)` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_no_sleep_in_fetch`, drop `inspect.getsource(Client.fetch)` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_getsource.py:16: DS603 source-text-grep [fail] in test_v2_handlers_defined
+    "You READ the code instead of RUNNING it? That's a book report, recruit!"
+    Found: `test_v2_handlers_defined` searches source text read by `getsource(jobs)` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_v2_handlers_defined`, drop `getsource(jobs)` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_getsource.py:21: DS603 source-text-grep [fail] in test_lines_mention_cache
+    "Grepping the source proves the words are there, not that they WORK!"
+    Found: `test_lines_mention_cache` searches source text read by `inspect.getsourcelines(Client)` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_lines_mention_cache`, drop `inspect.getsourcelines(Client)` and call the code it reads: assert on what it returns or does.
+
+suite/source-text-grep/test_bad_module_file.py
+  suite/source-text-grep/test_bad_module_file.py:12: DS603 source-text-grep [fail] in test_no_todo_left
+    "Grepping the source proves the words are there, not that they WORK!"
+    Found: `test_no_todo_left` searches source text read by `Path(client.__file__).read_text()` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_no_todo_left`, drop `Path(client.__file__).read_text()` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_module_file.py:17: DS603 source-text-grep [fail] in test_exactly_one_handler
+    "Grepping the source proves the words are there, not that they WORK!"
+    Found: `test_exactly_one_handler` searches source text read by `Path(client.__file__).read_text()` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_exactly_one_handler`, drop `Path(client.__file__).read_text()` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_module_file.py:21: DS603 source-text-grep [fail] in test_setting_present
+    "Grepping the source proves the words are there, not that they WORK!"
+    Found: `test_setting_present` searches source text read by `open(settings.__file__).read()` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_setting_present`, drop `open(settings.__file__).read()` and call the code it reads: assert on what it returns or does.
+
+suite/source-text-grep/test_bad_read_source.py
+  suite/source-text-grep/test_bad_read_source.py:8: DS603 source-text-grep [fail] in test_retry_enabled
+    "You READ the code instead of RUNNING it? That's a book report, recruit!"
+    Found: `test_retry_enabled` searches source text read by `Path('src/client.py').read_text()` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_retry_enabled`, drop `Path('src/client.py').read_text()` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_read_source.py:13: DS603 source-text-grep [fail] in test_debug_off
+    "Move one line and this test fails; break the logic and it passes! DISGRACEFUL!"
+    Found: `test_debug_off` searches source text read by `open('src/app/config.py').read()` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_debug_off`, drop `open('src/app/config.py').read()` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_read_source.py:19: DS603 source-text-grep [fail] in test_os_import_removed
+    "Move one line and this test fails; break the logic and it passes! DISGRACEFUL!"
+    Found: `test_os_import_removed` searches source text read by `open('src/app/paths.py')` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_os_import_removed`, drop `open('src/app/paths.py')` and call the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_read_source.py:24: DS603 source-text-grep [fail] in test_source_lines_through_a_path
+    "You READ the code instead of RUNNING it? That's a book report, recruit!"
+    Found: `test_source_lines_through_a_path` searches source text read by `(root / 'src' / 'app' / 'jobs.py').read_text()` instead of running the code.
+    Why: A test that searches source text proves the text is there, not that the code behaves: it breaks on harmless rewrites and passes when the code is wrong.
+    Fix: In `test_source_lines_through_a_path`, drop `(root / 'src' / 'app' / 'jobs.py').read_text()` and call the code it reads: assert on what it returns or does.
+
+73 findings: 73 fail, 0 warn. Fix them, recruit. DISMISSED!
