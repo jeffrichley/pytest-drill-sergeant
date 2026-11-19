@@ -68,6 +68,20 @@ class Hit:
     found: str
     fix: str
 
+    @classmethod
+    def on(cls, test: TestFunction, line: int, *, found: str, fix: str) -> "Hit":
+        """A hit on a line of a test, in the phrasing every check shares.
+
+        `found` follows "`<test>` " and `fix` follows "In `<test>`, line <n>: ",
+        so every finding names its test first and every fix says where to look.
+        """
+        return cls(
+            line=line,
+            test=test.name,
+            found=f"`{test.name}` {found}",
+            fix=f"In `{test.name}`, line {line}: {fix}",
+        )
+
 
 @dataclass(frozen=True)
 class Check:

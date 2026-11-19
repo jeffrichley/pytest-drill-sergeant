@@ -113,15 +113,14 @@ class _Call:
     def hit(self, found: str, fix: str) -> Hit:
         """A hit on this call.
 
-        `found` follows "`<test>` " and `fix` follows "In `<test>`, replace
-        `<call>` on line <n> with ".
+        `found` is followed by the call, and `fix` follows "replace `<call>` with ".
         """
-        test, line, written = self.test.name, self.node.lineno, ast.unparse(self.node)
-        return Hit(
-            line=line,
-            test=test,
-            found=f"`{test}` {found}: `{written}`.",
-            fix=f"In `{test}`, replace `{written}` on line {line} with {fix}",
+        written = ast.unparse(self.node)
+        return Hit.on(
+            self.test,
+            self.node.lineno,
+            found=f"{found}: `{written}`.",
+            fix=f"replace `{written}` with {fix}",
         )
 
 

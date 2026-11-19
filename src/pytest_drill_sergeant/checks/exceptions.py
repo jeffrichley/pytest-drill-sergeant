@@ -91,17 +91,17 @@ def _find_broad_raises(file: TestFile) -> Iterator[Hit]:
             broad = sorted(_type_names(_expected_exception(node)) & _BROAD)
             if not broad or _has_match(node) or id(node) in matched:
                 continue
-            yield Hit(
-                line=node.lineno,
-                test=test.name,
+            yield Hit.on(
+                test,
+                node.lineno,
                 found=(
-                    f"`{test.name}` expects `{broad[0]}` with no `match=`, so any "
-                    "error at all passes it."
+                    f"expects `{broad[0]}` with no `match=`, so any error at all "
+                    "passes it."
                 ),
                 fix=(
-                    f"On line {node.lineno} of `{test.name}`, replace `{broad[0]}` "
-                    "with the specific exception the code raises, and add "
-                    "`match=` for the part of its message that matters."
+                    f"replace `{broad[0]}` with the specific exception the code "
+                    "raises, and add `match=` for the part of its message that "
+                    "matters."
                 ),
             )
 
@@ -238,18 +238,17 @@ def _find_swallowed_exception(file: TestFile) -> Iterator[Hit]:
                     if handler.type is not None
                     else "every exception"
                 )
-                yield Hit(
-                    line=handler.lineno,
-                    test=test.name,
+                yield Hit.on(
+                    test,
+                    handler.lineno,
                     found=(
-                        f"`{test.name}` catches {caught} in a handler with no real "
-                        "assertion and no `raise`, so the error is lost."
+                        f"catches {caught} in a handler with no real assertion and "
+                        "no `raise`, so the error is lost."
                     ),
                     fix=(
-                        f"In `{test.name}`, remove the `try` that catches {caught} on "
-                        f"line {handler.lineno} and let the exception fail the test; "
-                        "if raising is the expected behaviour, use "
-                        "`pytest.raises(..., match=...)` instead."
+                        f"remove the `try` that catches {caught} and let the "
+                        "exception fail the test; if raising is the expected "
+                        "behaviour, use `pytest.raises(..., match=...)` instead."
                     ),
                 )
 

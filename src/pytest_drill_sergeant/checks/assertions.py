@@ -423,17 +423,17 @@ def _find_weak_assertion(file: TestFile) -> Iterator[Hit]:
         ):
             continue
         subjects = list(dict.fromkeys(s for v in weak for s in v.subjects))
-        yield Hit(
-            line=weak[0].node.lineno,
-            test=test.name,
+        yield Hit.on(
+            test,
+            weak[0].node.lineno,
             found=(
-                f"`{test.name}` makes only weak assertions: each holds for almost "
-                "any value, wrong ones included."
+                "makes only weak assertions: each holds for almost any value, "
+                "wrong ones included."
             ),
             fix=(
-                f"In `{test.name}`, replace the weak assertions on {_lines(weak)} "
-                f"with exact checks: assert what {_and(subjects)} should equal, "
-                "as in `assert value == expected`."
+                f"replace the weak assertions on {_lines(weak)} with exact checks: "
+                f"assert what {_and(subjects)} should equal, as in "
+                "`assert value == expected`."
             ),
         )
 
@@ -444,15 +444,12 @@ def _find_tautological_assertion(file: TestFile) -> Iterator[Hit]:
             if verdict.kind is not _Kind.TAUTOLOGICAL:
                 continue
             source = ast.unparse(verdict.node.test)
-            yield Hit(
-                line=verdict.node.lineno,
-                test=test.name,
-                found=(
-                    f"`assert {source}` in `{test.name}` can't fail: {verdict.detail}."
-                ),
+            yield Hit.on(
+                test,
+                verdict.node.lineno,
+                found=f"has `assert {source}`, which can't fail: {verdict.detail}.",
                 fix=(
-                    f"In `{test.name}`, replace `assert {source}` on line "
-                    f"{verdict.node.lineno} with an assertion on what the code "
+                    f"replace `assert {source}` with an assertion on what the code "
                     "under test returns, against a value worked out by hand."
                 ),
             )
@@ -463,17 +460,16 @@ def _find_mirror_assertion(file: TestFile) -> Iterator[Hit]:
         for verdict in _verdicts(test):
             if verdict.kind is not _Kind.MIRROR:
                 continue
-            yield Hit(
-                line=verdict.node.lineno,
-                test=test.name,
+            yield Hit.on(
+                test,
+                verdict.node.lineno,
                 found=(
-                    f"The assertion in `{test.name}` checks `{verdict.detail}` "
-                    "against itself: both sides of `==` make the same call."
+                    f"checks `{verdict.detail}` against itself: both sides of `==` "
+                    "make the same call."
                 ),
                 fix=(
-                    f"In `{test.name}`, on line {verdict.node.lineno}, keep "
-                    f"`{verdict.detail}` on one side and put the value it should "
-                    "return, worked out by hand, on the other."
+                    f"keep `{verdict.detail}` on one side and put the value it "
+                    "should return, worked out by hand, on the other."
                 ),
             )
 

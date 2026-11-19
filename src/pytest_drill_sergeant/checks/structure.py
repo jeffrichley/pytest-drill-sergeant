@@ -38,15 +38,15 @@ def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
             if call is not None
             else "what the code under test returns or changes"
         )
-        yield Hit(
-            line=test.node.lineno,
-            test=test.name,
+        yield Hit.on(
+            test,
+            test.node.lineno,
             found=(
-                f"`{test.name}` has no real assertion: no `assert` that can fail, "
-                "no `pytest.raises`, no mock verification."
+                "has no real assertion: no `assert` that can fail, no "
+                "`pytest.raises`, no mock verification."
             ),
             fix=(
-                f"In `{test.name}`, assert on {target}, or wrap the call in "
+                f"assert on {target}, or wrap the call in "
                 "`pytest.raises(..., match=...)` if it should raise."
             ),
         )
@@ -117,17 +117,17 @@ def _find_no_action_under_test(file: TestFile) -> Iterator[Hit]:
             or _runs_anything(test)
         ):
             continue
-        yield Hit(
-            line=test.node.lineno,
-            test=test.name,
+        yield Hit.on(
+            test,
+            test.node.lineno,
             found=(
-                f"`{test.name}` asserts but runs nothing: no call, no `await`, and "
-                "no fixture or parameter to bring a value in."
+                "asserts but runs nothing: no call, no `await`, and no fixture or "
+                "parameter to bring a value in."
             ),
             fix=(
-                f"In `{test.name}`, call the code under test and assert on what it "
-                "returns or changes; if the test only checks its own literals or "
-                "Python itself, delete it."
+                "call the code under test and assert on what it returns or "
+                "changes; if the test only checks its own literals or Python "
+                "itself, delete it."
             ),
         )
 
@@ -267,18 +267,18 @@ def _find_assert_before_act(file: TestFile) -> Iterator[Hit]:
         act, last_assert = unchecked[0], steps[last][0]
         where = ", ".join(str(s.lineno) for s in unchecked)
         where = f"line {where}" if len(unchecked) == 1 else f"lines {where}"
-        yield Hit(
-            line=act.lineno,
-            test=test.name,
+        yield Hit.on(
+            test,
+            act.lineno,
             found=(
-                f"In `{test.name}`, {_describe(act)} on line {act.lineno} runs after "
-                f"the last assertion (line {last_assert.lineno}), so nothing checks "
-                "what it did."
+                f"runs {_describe(act)} on line {act.lineno} after its last "
+                f"assertion (line {last_assert.lineno}), so nothing checks what it "
+                "did."
             ),
             fix=(
-                f"In `{test.name}`, assert on what the act on {where} returns or "
-                "changes, after it runs; keep an assertion before it only as a "
-                "guard on the starting state."
+                f"assert on what the act on {where} returns or changes, after it "
+                "runs; keep an assertion before it only as a guard on the starting "
+                "state."
             ),
         )
 
@@ -343,17 +343,17 @@ def _find_interleaved_act_assert(file: TestFile) -> Iterator[Hit]:
             continue
         second = acts[1]
         lines = ", ".join(str(act.lineno) for act in acts)
-        yield Hit(
-            line=second.lineno,
-            test=test.name,
+        yield Hit.on(
+            test,
+            second.lineno,
             found=(
-                f"`{test.name}` acts and asserts {len(acts)} times: after the "
-                f"assertions on the act at line {acts[0].lineno}, {_describe(second)} "
-                f"on line {second.lineno} acts again."
+                f"acts and asserts {len(acts)} times: after the assertions on the "
+                f"act at line {acts[0].lineno}, {_describe(second)} on line "
+                f"{second.lineno} acts again."
             ),
             fix=(
-                f"Split `{test.name}` into one test per act (lines {lines}), each "
-                "named for its behaviour, with any shared setup in a fixture."
+                f"split the test into one test per act (lines {lines}), each named "
+                "for its behaviour, with any shared setup in a fixture."
             ),
         )
 

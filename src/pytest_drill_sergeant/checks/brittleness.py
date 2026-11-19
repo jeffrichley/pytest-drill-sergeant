@@ -82,16 +82,13 @@ def _find_brittle_string_match(file: TestFile) -> Iterator[Hit]:
             if text is None:
                 continue
             shown = ast.unparse(text)
-            yield Hit(
-                line=assertion.lineno,
-                test=test.name,
-                found=(
-                    f"`{test.name}` compares `{shown}` with a whole sentence of "
-                    "expected text."
-                ),
+            yield Hit.on(
+                test,
+                assertion.lineno,
+                found=f"compares `{shown}` with a whole sentence of expected text.",
                 fix=(
-                    f"In `{test.name}`, assert that `{shown}` contains the words that "
-                    'matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or '
+                    f"assert that `{shown}` contains the words that matter "
+                    '(`"..." in ...`), use `pytest.raises(..., match=...)`, or '
                     "assert on structured data instead of the wording."
                 ),
             )
@@ -193,14 +190,14 @@ def _find_private_state_assertion(file: TestFile) -> Iterator[Hit]:
             if not names:
                 continue
             shown = ", ".join(f"`{name}`" for name in names)
-            yield Hit(
-                line=assertion.lineno,
-                test=test.name,
-                found=f"`{test.name}` asserts on private state: {shown}.",
+            yield Hit.on(
+                test,
+                assertion.lineno,
+                found=f"asserts on private state: {shown}.",
                 fix=(
-                    f"In `{test.name}`, replace {shown} with the public behaviour it "
-                    "stands for: a return value, a public attribute or method, or "
-                    "what a fake collaborator received."
+                    f"replace {shown} with the public behaviour it stands for: a "
+                    "return value, a public attribute or method, or what a fake "
+                    "collaborator received."
                 ),
             )
 
@@ -372,16 +369,16 @@ def _find_source_text_grep(file: TestFile) -> Iterator[Hit]:
             origin = _grepped(assertion, sources)
             if origin is None:
                 continue
-            yield Hit(
-                line=assertion.lineno,
-                test=test.name,
+            yield Hit.on(
+                test,
+                assertion.lineno,
                 found=(
-                    f"`{test.name}` searches source text read by `{origin}` instead "
-                    "of running the code."
+                    f"searches source text read by `{origin}` instead of running "
+                    "the code."
                 ),
                 fix=(
-                    f"In `{test.name}`, drop `{origin}` and call the code it reads: "
-                    "assert on what it returns or does."
+                    f"drop `{origin}` and call the code it reads: assert on what it "
+                    "returns or does."
                 ),
             )
 
