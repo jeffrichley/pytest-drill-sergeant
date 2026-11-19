@@ -20,6 +20,18 @@ _Avoid_: Violation, error, issue, warning
 Anything in a test that can fail it on the outcome it checks: an `assert` of anything but a truthy constant or non-empty tuple, `pytest.raises`, `pytest.warns`, `pytest.deprecated_call` or `pytest.fail`, an `assert*` call (a mock's `assert_called_once_with`, `self.assertEqual`, `assert_frame_equal`), or `raise AssertionError`.
 _Avoid_: Meaningful assertion, check (a check is drill-sergeant's)
 
+**Weak assertion**:
+An `assert` that holds for almost any value, wrong ones included: truthiness, `is not None`, `isinstance`, `hasattr`, `callable`, `>= 0`, or a length that is merely non-zero.
+_Avoid_: Loose assertion, shallow assertion
+
+**Tautological assertion**:
+An `assert` that can't fail whatever the code under test does: it compares an expression with itself, compares only values the test wrote itself, or multiplies the result by zero.
+_Avoid_: Trivial assertion, always-true assertion
+
+**Mirror assertion**:
+An `==` whose expected side is taken from the code under test: the same call on both sides, directly or through names the test bound to it.
+_Avoid_: Self-check, circular assertion
+
 **Category marker**:
 A pytest marker that classifies a test by kind (e.g. unit, integration, e2e) so whole categories can be selected or skipped.
 _Avoid_: Test type, tag
