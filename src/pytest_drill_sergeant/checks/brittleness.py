@@ -3,6 +3,7 @@
 import ast
 from collections.abc import Iterator
 
+from pytest_drill_sergeant.checks.assertions import tautological_asserts
 from pytest_drill_sergeant.checks.ast_tools import call_name, is_assert_call, walk_test
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
 from pytest_drill_sergeant.findings import Level
@@ -178,7 +179,11 @@ def _is_private_attribute(node: ast.AST) -> bool:
 
 def _find_private_state_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
+        # An `assert` that can't fail is tautological-assertion's to report.
+        tautologies = tautological_asserts(test)
         for assertion, checked in _asserted(test):
+            if any(assertion is t for t in tautologies):
+                continue
             names = list(
                 dict.fromkeys(
                     f"{ast.unparse(node.value)}.{node.attr}"
@@ -223,7 +228,8 @@ PRIVATE_STATE_ASSERTION = Check(
         "name-mangled `obj._Class__x`. Dunders such as `__dict__` or `__name__`, "
         "namedtuple's `_asdict`, `_replace`, `_fields`, `_field_defaults` and "
         "`_make`, and the test's own `self._x` are exempt, as is private access "
-        "outside an assertion (injecting a fake in setup). Assert on the public "
+        "outside an assertion (injecting a fake in setup) and an `assert` that "
+        "can't fail, which tautological-assertion reports. Assert on the public "
         "behaviour instead."
     ),
     bad_example=(

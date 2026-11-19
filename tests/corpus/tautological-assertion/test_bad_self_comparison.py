@@ -21,3 +21,8 @@ def test_alias_equals_its_source():
 class TestOrder:
     def test_lines_match(self, order):
         assert order.lines == order.lines, "lines drifted"  # expect: DS202
+
+
+def test_private_total_equals_itself(cart):
+    cart.add("apple", 2)
+    assert cart._total == cart._total  # expect: DS202

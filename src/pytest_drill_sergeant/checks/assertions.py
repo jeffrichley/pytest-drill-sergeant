@@ -438,6 +438,14 @@ def _find_weak_assertion(file: TestFile) -> Iterator[Hit]:
         )
 
 
+def tautological_asserts(test: TestFunction) -> list[ast.Assert]:
+    """The test's tautological assertions: the ones tautological-assertion reports.
+
+    Another check that would report the same `assert` leaves it to that one.
+    """
+    return [v.node for v in _verdicts(test) if v.kind is _Kind.TAUTOLOGICAL]
+
+
 def _find_tautological_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         for verdict in _verdicts(test):
