@@ -11,7 +11,15 @@ from pathlib import Path
 
 import pytest
 
-from pytest_drill_sergeant.config import OPTIONS, Config, resolve
+from pytest_drill_sergeant.config import (
+    OPTIONS,
+    PREFIX,
+    Config,
+    ConfigError,
+    RawValue,
+    refusal,
+    resolve,
+)
 from pytest_drill_sergeant.engine import analyze
 from pytest_drill_sergeant.findings import Finding, Level
 from pytest_drill_sergeant.render import render
@@ -28,20 +36,39 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         )
 
 
+def _raw_value(config: pytest.Config, name: str) -> RawValue:
+    """An option's value as pytest has it, or as written when pytest can't type it.
+
+    pytest refuses an int or bool it can't parse in its own words; handing
+    `resolve` the value as written lets it refuse in the same words as the CLI.
+    """
+    try:
+        value: RawValue = config.getini(name)
+    except (ValueError, TypeError):
+        # `inicfg` is pytest's compatibility view of the ini values as written.
+        value = config.inicfg[name]
+    return value
+
+
 def _require_config(config: pytest.Config) -> Config:
     """The resolved drill-sergeant config.
 
     Raises:
-        pytest.UsageError: When the config is wrong, naming what in one line.
+        pytest.UsageError: When the config is wrong, naming what in one line, as
+            the CLI does.
     """
+    # pytest offers no other public way to list the keys a config file sets, and
+    # `getini` can only ask after a key by name, so an unknown `drill_sergeant_*`
+    # key is found through `inicfg`, pytest's compatibility view of them.
+    raw: dict[str, RawValue] = {
+        key: "" for key in config.inicfg if key.startswith(PREFIX)
+    }
+    raw.update({option.name: _raw_value(config, option.name) for option in OPTIONS})
+    root = config.inipath.parent if config.inipath else config.rootpath
     try:
-        raw = {option.name: config.getini(option.name) for option in OPTIONS}
-        root = config.inipath.parent if config.inipath else config.rootpath
-        return resolve(raw, root=root)
-    # pytest's own parsing of an int or bool ini value raises these; `ConfigError`
-    # is a `ValueError`.
-    except (ValueError, TypeError) as error:
-        raise pytest.UsageError(f"drill-sergeant: {error}") from None
+        return resolve(raw, root=root, source=config.inipath)
+    except ConfigError as error:
+        raise pytest.UsageError(refusal(error)) from None
 
 
 def pytest_configure(config: pytest.Config) -> None:

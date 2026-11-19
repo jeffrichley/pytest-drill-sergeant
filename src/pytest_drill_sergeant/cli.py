@@ -6,7 +6,7 @@ from typing import Annotated, NoReturn
 
 import typer
 
-from pytest_drill_sergeant.config import ConfigError, resolve
+from pytest_drill_sergeant.config import ConfigError, refusal, resolve
 from pytest_drill_sergeant.discovery import discover, load
 from pytest_drill_sergeant.engine import analyze
 from pytest_drill_sergeant.findings import Level
@@ -54,9 +54,9 @@ def _test_files(path: Path) -> Iterator[Path]:
             yield child
 
 
-def _refuse(reason: str) -> NoReturn:
+def _refuse(line: str) -> NoReturn:
     """Print one line naming what is wrong, and exit 2 as a usage error."""
-    typer.echo(f"drill-sergeant: {reason}", err=True)
+    typer.echo(line, err=True)
     raise typer.Exit(2)
 
 
@@ -75,20 +75,20 @@ def check(
     """Check test files without running them; exit 1 when there are fail findings."""
     for path in paths:
         if not path.exists():
-            _refuse(f"no such file or directory: {path}")
+            _refuse(f"drill-sergeant: no such file or directory: {path}")
     try:
         source = load(config_file) if config_file else discover(paths)
+        config = resolve(source.values, root=source.root, source=source.path)
     except ConfigError as error:
-        _refuse(str(error))
-    try:
-        config = resolve(source.values, root=source.root)
-    except ConfigError as error:
-        _refuse(f"{source.path}: {error}")
+        _refuse(refusal(error))
     files = [file for path in paths for file in _test_files(path)]
     try:
         findings = analyze(files, config)
     except SyntaxError as error:
-        _refuse(f"cannot parse {error.filename}, line {error.lineno}: {error.msg}")
+        _refuse(
+            f"drill-sergeant: cannot parse {error.filename}, line {error.lineno}: "
+            f"{error.msg}"
+        )
     typer.echo(render(findings, voice=config.voice), nl=False)
     if any(f.level is Level.FAIL for f in findings):
         raise typer.Exit(1)

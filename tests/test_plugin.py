@@ -78,7 +78,9 @@ def test_disabling_the_plugin_turns_it_off(drill, lazy_test):
         "drill_sergeant_max_findings = lots",
         "drill_sergeant_voice = maybe",
         "drill_sergeant_levels = DS999=warn",
+        "drill_sergeant_bogus = 1",
     ],
+    ids=["bad-mode", "non-numeric-number", "bad-bool", "unknown-code", "unknown-key"],
 )
 def test_bad_config_is_a_usage_error(drill, pytester, lazy_test, ini):
     pytester.makeini(f"[pytest]\n{ini}\n")
@@ -192,3 +194,23 @@ def test_under_xdist_files_outside_the_rootdir_are_analysed(drill, pytester, laz
 
     assert result.ret == pytest.ExitCode.TESTS_FAILED
     assert "test_lazy.py:1: DS101" in result.stdout.str()
+
+
+@pytest.mark.parametrize(
+    "ini",
+    [
+        "drill_sergeant_bogus = 1",
+        "drill_sergeant_levels = DS101=loud",
+        "drill_sergeant_max_findings = lots",
+    ],
+    ids=["unknown-key", "bad-level", "non-numeric-number"],
+)
+def test_cli_and_plugin_refuse_bad_config_in_the_same_line(
+    cli, drill, pytester, lazy_test, ini
+):
+    config = pytester.makeini(f"[pytest]\n{ini}\n")
+
+    cli_line = cli("check", "--config", str(config), str(lazy_test)).stderr.strip()
+
+    assert cli_line.startswith("drill-sergeant: ")
+    assert cli_line in drill().stderr.str()

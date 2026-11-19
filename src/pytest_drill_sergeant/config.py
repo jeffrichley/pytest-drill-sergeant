@@ -31,6 +31,11 @@ class ConfigError(ValueError):
     """The config is wrong; the message names what, in one line."""
 
 
+def refusal(error: ConfigError) -> str:
+    """The one line both front ends print when they refuse a config."""
+    return f"drill-sergeant: {error}"
+
+
 @dataclass(frozen=True)
 class Config:
     """The resolved configuration the engine runs with.
@@ -296,7 +301,9 @@ def _per_file_ignores(
     return tuple(ignores)
 
 
-def resolve(raw: Mapping[str, RawValue], root: Path = Path()) -> Config:
+def resolve(
+    raw: Mapping[str, RawValue], root: Path = Path(), source: Path | None = None
+) -> Config:
     """Resolve raw ini values into a `Config`.
 
     Args:
@@ -305,14 +312,25 @@ def resolve(raw: Mapping[str, RawValue], root: Path = Path()) -> Config:
             defaults.
         root: The directory per-file ignore globs are relative to: the config
             file's.
+        source: The config file the values came from, named in any refusal.
 
     Returns:
         The typed config.
 
     Raises:
         ConfigError: On an unknown `drill_sergeant_*` key, an unknown check code, a
-            bad level or a malformed value, such as a non-numeric threshold.
+            bad level or a malformed value, such as a non-numeric threshold. Its
+            message starts with `source`, when there is one.
     """
+    try:
+        return _resolve(raw, root)
+    except ConfigError as error:
+        if source is None:
+            raise
+        raise ConfigError(f"{source}: {error}") from None
+
+
+def _resolve(raw: Mapping[str, RawValue], root: Path) -> Config:
     for key in raw:
         if key.startswith(PREFIX) and key not in _OPTIONS:
             raise ConfigError(f"unknown option {key}")
