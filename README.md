@@ -5,10 +5,10 @@ copy-pasted setup, assertions that prove nothing, mocks asserted on instead of
 behaviour, skips added to go green, sleeps, and test files too long to follow. It
 reports them as findings that fail the run, in the drill-sergeant voice.
 
-**Status:** v1 is being rebuilt from scratch. So far it has one check, tests with no
-real assertion (DS101), reported both by the pytest plugin and by
-`drill-sergeant check <paths>`. The plan is the
-[v1 spec](https://github.com/jeffrichley/pytest-drill-sergeant/issues/118). Version
+**Status:** v1 is being rebuilt from scratch. So far the structure checks (DS101-DS104),
+the brittleness checks (DS601-DS603) and the exception checks (DS701, DS702) are
+reported both by the pytest plugin and by `drill-sergeant check <paths>`. The plan is
+the [v1 spec](https://github.com/jeffrichley/pytest-drill-sergeant/issues/118). Version
 0.4 is archived under the tag `archive/2026-11-19/v0.4/main`.
 
 ## The pytest plugin
