@@ -1,4 +1,75 @@
-DRILL SERGEANT INSPECTION: 15 findings in 3 files. FALL IN!
+DRILL SERGEANT INSPECTION: 28 findings in 6 files. FALL IN!
+
+suite/brittle-string-match/test_bad_captured_output.py
+  suite/brittle-string-match/test_bad_captured_output.py:10: DS601 brittle-string-match [fail] in test_greeting_printed
+    "You memorized the whole sentence, recruit? Check what MATTERS!"
+    Found: `test_greeting_printed` compares `capsys.readouterr().out` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_greeting_printed`, assert that `capsys.readouterr().out` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_captured_output.py:16: DS601 brittle-string-match [fail] in test_error_printed
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_error_printed` compares `captured.err` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_error_printed`, assert that `captured.err` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_captured_output.py:22: DS601 brittle-string-match [fail] in test_log_line
+    "You memorized the whole sentence, recruit? Check what MATTERS!"
+    Found: `test_log_line` compares `caplog.text` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_log_line`, assert that `caplog.text` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_captured_output.py:27: DS601 brittle-string-match [fail] in test_cli_output
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_cli_output` compares `result.output` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_cli_output`, assert that `result.output` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_captured_output.py:32: DS601 brittle-string-match [fail] in test_subprocess_stdout
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_subprocess_stdout` compares `completed.stdout` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_subprocess_stdout`, assert that `completed.stdout` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+
+suite/brittle-string-match/test_bad_error_messages.py
+  suite/brittle-string-match/test_bad_error_messages.py:10: DS601 brittle-string-match [fail] in test_invalid_email_message
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_invalid_email_message` compares `str(excinfo.value)` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_invalid_email_message`, assert that `str(excinfo.value)` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_error_messages.py:19: DS601 brittle-string-match [fail] in test_message_attribute
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_message_attribute` compares `excinfo.value.message` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_message_attribute`, assert that `excinfo.value.message` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_error_messages.py:28: DS601 brittle-string-match [fail] in test_stripped_message_on_the_left
+    "Fix one typo in a message and this test goes down! That's not a test, it's a spell checker!"
+    Found: `test_stripped_message_on_the_left` compares `str(err).strip()` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_stripped_message_on_the_left`, assert that `str(err).strip()` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_error_messages.py:34: DS601 brittle-string-match [fail] in test_f_string_message
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_f_string_message` compares `str(excinfo.value)` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_f_string_message`, assert that `str(excinfo.value)` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+
+suite/brittle-string-match/test_bad_repr_and_format.py
+  suite/brittle-string-match/test_bad_repr_and_format.py:9: DS601 brittle-string-match [fail] in test_user_repr
+    "You memorized the whole sentence, recruit? Check what MATTERS!"
+    Found: `test_user_repr` compares `repr(user)` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_user_repr`, assert that `repr(user)` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_repr_and_format.py:16: DS601 brittle-string-match [fail] in test_report_str
+    "You memorized the whole sentence, recruit? Check what MATTERS!"
+    Found: `test_report_str` compares `str(report)` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_report_str`, assert that `str(report)` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_repr_and_format.py:20: DS601 brittle-string-match [fail] in test_money_format
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_money_format` compares `format(Money(1234), 'long')` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_money_format`, assert that `format(Money(1234), 'long')` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
+  suite/brittle-string-match/test_bad_repr_and_format.py:27: DS601 brittle-string-match [fail] in test_lowered_str_compared_with_not_equal
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_lowered_str_compared_with_not_equal` compares `str(report).lower()` with a whole sentence of expected text.
+    Why: Comparing rendered text with a whole sentence breaks on any rewording, so the test fails when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix: In `test_lowered_str_compared_with_not_equal`, assert that `str(report).lower()` contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data instead of the wording.
 
 suite/no-real-assertion/test_bad_coverage_boost.py
   suite/no-real-assertion/test_bad_coverage_boost.py:14: DS101 no-real-assertion [fail] in TestCoverageBoost::test_string_operations
@@ -81,4 +152,4 @@ suite/no-real-assertion/test_bad_tiny_coverage.py
     Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
     Fix: In `test_async_boost`, assert on what `pytest_drill_sergeant.run(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
 
-15 findings: 15 fail, 0 warn. Fix them, recruit. DISMISSED!
+28 findings: 28 fail, 0 warn. Fix them, recruit. DISMISSED!
