@@ -5,11 +5,10 @@ from collections.abc import Iterator, Mapping
 from enum import Enum
 
 from pytest_drill_sergeant.checks.ast_tools import (
-    call_name,
     calls_to,
     excinfo_names,
+    is_cleanup,
     is_real_assertion,
-    qualified,
     value_params,
     walk_test,
 )
@@ -196,42 +195,6 @@ class _Step(Enum):
     OTHER = "other"
 
 
-# Methods called for cleanup, reset or output, never the act under test.
-_NOT_AN_ACT = frozenset(
-    {
-        "cleanup",
-        "close",
-        "disconnect",
-        "print",
-        "reset_mock",
-        "rmtree",
-        "shutdown",
-        "stop",
-        "teardown",
-        "unlink",
-    }
-)
-
-# pytest's capture fixtures' resets and setup, as (fixture, method): they ready the
-# fixture for the next act rather than act themselves.
-_FIXTURE_RESETS = frozenset(
-    {
-        ("caplog", "clear"),
-        ("caplog", "set_level"),
-        ("recwarn", "clear"),
-        ("capsys", "readouterr"),
-        ("capfd", "readouterr"),
-    }
-)
-
-# Functions that clean up files, named in full.
-_CLEANUP_FUNCTIONS = frozenset({"os.remove", "os.unlink", "shutil.rmtree"})
-
-# A logger's methods: output, never the act under test.
-_LOG_METHODS = frozenset(
-    {"debug", "info", "warning", "error", "exception", "critical", "log"}
-)
-
 _NESTED = ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef | ast.Lambda
 
 
@@ -241,39 +204,6 @@ def _walk_own(node: ast.AST) -> Iterator[ast.AST]:
     for child in ast.iter_child_nodes(node):
         if not isinstance(child, _NESTED):
             yield from _walk_own(child)
-
-
-def _is_logging(call: ast.Call, names: Mapping[str, str]) -> bool:
-    """Whether a call logs.
-
-    That is a logger method on `logging`, `logging.getLogger(...)`,
-    or a name with `log` in it (`log`, `logger`, `self.log`).
-    """
-    func = call.func
-    if not (isinstance(func, ast.Attribute) and func.attr in _LOG_METHODS):
-        return False
-    receiver = func.value
-    if isinstance(receiver, ast.Call):
-        receiver = receiver.func
-    full = qualified(receiver, names) or ""
-    written = receiver.attr if isinstance(receiver, ast.Attribute) else ""
-    if isinstance(receiver, ast.Name):
-        written = receiver.id
-    return full.startswith("logging") or "log" in written.lower()
-
-
-def _is_cleanup(call: ast.Call, names: Mapping[str, str]) -> bool:
-    """Whether a call cleans up, resets or reports rather than acting."""
-    return (
-        call_name(call) in _NOT_AN_ACT
-        or (
-            isinstance(call.func, ast.Attribute)
-            and isinstance(call.func.value, ast.Name)
-            and (call.func.value.id, call.func.attr) in _FIXTURE_RESETS
-        )
-        or qualified(call.func, names) in _CLEANUP_FUNCTIONS
-        or _is_logging(call, names)
-    )
 
 
 class _Order:
@@ -312,7 +242,7 @@ class _Order:
         return (
             isinstance(value, ast.Call)
             and not self.asserts(value)
-            and not _is_cleanup(value, self.names)
+            and not is_cleanup(value, self.names)
         )
 
     def classify(self, statement: ast.stmt) -> _Step:

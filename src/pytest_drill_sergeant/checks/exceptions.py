@@ -6,6 +6,7 @@ from collections.abc import Iterator, Mapping
 from pytest_drill_sergeant.checks.ast_tools import (
     PYTEST_RAISES,
     calls_to,
+    is_cleanup,
     is_real_assertion,
     walk_test,
 )
@@ -257,13 +258,37 @@ def _handles(handler: ast.ExceptHandler, names: Mapping[str, str]) -> bool:
     )
 
 
+def _tolerates_cleanup(
+    node: _TryNode, handler: ast.ExceptHandler, names: Mapping[str, str]
+) -> bool:
+    """Whether the `try` is cleanup that tolerates one specific error.
+
+    Its body only cleans up (`path.unlink()`, `os.remove(...)`), and the handler
+    names a specific type, not `Exception` or `BaseException`, and only passes:
+    `try: path.unlink()` / `except FileNotFoundError: pass`.
+    """
+    return (
+        handler.type is not None
+        and not _catches(handler, _BROAD)
+        and all(isinstance(s, ast.Pass) for s in handler.body)
+        and all(
+            isinstance(s, ast.Expr)
+            and isinstance(s.value, ast.Call)
+            and is_cleanup(s.value, names)
+            for s in node.body
+        )
+    )
+
+
 def _find_swallowed_exception(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         for node, following in _tries(test):
             if _expects_the_exception(node, following, test.imports):
                 continue
             for handler in node.handlers:
-                if _handles(handler, test.imports):
+                if _handles(handler, test.imports) or _tolerates_cleanup(
+                    node, handler, test.imports
+                ):
                     continue
                 caught = (
                     f"`{ast.unparse(handler.type)}`"
@@ -305,7 +330,10 @@ SWALLOWED_EXCEPTION = Check(
         "as handling it; in a bare or broad handler it doesn't. A `try` that fails "
         "the test when nothing is raised expects the exception and is not flagged: "
         "its `else`, or the statement right after it, is `pytest.fail`, `raise` or "
-        "`assert False`, or its body ends in one that no handler catches. Let "
+        "`assert False`, or its body ends in one that no handler catches. Nor is "
+        "cleanup that tolerates one specific error: a `try` whose body only cleans "
+        "up (`path.unlink()`, `os.remove(...)`) with a handler that names a type "
+        "other than `Exception` or `BaseException` and only passes. Let "
         "exceptions propagate, and use `pytest.raises(..., match=...)` when raising "
         "is the expected behaviour."
     ),

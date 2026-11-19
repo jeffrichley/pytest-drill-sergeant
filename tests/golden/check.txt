@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 182 findings in 46 files. FALL IN!
+DRILL SERGEANT INSPECTION: 184 findings in 46 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -752,6 +752,16 @@ suite/swallowed-exception/test_bad_nested_places.py
     Found: `test_exception_group_swallowed` catches `ConnectionError` in a handler with no real assertion and no `raise`, so the error is lost.
     Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
     Fix: In `test_exception_group_swallowed`, line 40: remove the `try` that catches `ConnectionError` and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_nested_places.py:48: DS702 swallowed-exception [fail] in test_cleanup_swallows_every_error
+    "You caught the failure and HID it, recruit? That's desertion!"
+    Found: `test_cleanup_swallows_every_error` catches `Exception` in a handler with no real assertion and no `raise`, so the error is lost.
+    Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
+    Fix: In `test_cleanup_swallows_every_error`, line 48: remove the `try` that catches `Exception` and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_nested_places.py:56: DS702 swallowed-exception [fail] in test_act_swallows_a_specific_error
+    "`except: pass` isn't a test, maggot, it's a cover-up!"
+    Found: `test_act_swallows_a_specific_error` catches `ConnectionError` in a handler with no real assertion and no `raise`, so the error is lost.
+    Why: A test that catches an exception and carries on passes when the code under test breaks, so it hides exactly the failure it should report.
+    Fix: In `test_act_swallows_a_specific_error`, line 56: remove the `try` that catches `ConnectionError` and let the exception fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)` instead.
 
 suite/tautological-assertion/test_bad_multiplied_away.py
   suite/tautological-assertion/test_bad_multiplied_away.py:8: DS202 tautological-assertion [fail] in test_price_of_846
@@ -1002,4 +1012,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `test_async_import`, line 30: replace the weak assertions on line 30 with exact checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-182 findings: 182 fail, 0 warn. Fix them, recruit. DISMISSED!
+184 findings: 184 fail, 0 warn. Fix them, recruit. DISMISSED!

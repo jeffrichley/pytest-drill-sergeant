@@ -39,3 +39,20 @@ def test_exception_group_swallowed():  # expect: DS101
         fetch("d")
     except* ConnectionError:  # expect: DS702
         pass
+
+
+def test_cleanup_swallows_every_error(tmp_path):
+    path = tmp_path / "missing"
+    try:
+        path.unlink()
+    except Exception:  # expect: DS702
+        pass
+    assert not path.exists()
+
+
+def test_act_swallows_a_specific_error(tmp_path):
+    try:
+        fetch("http://example.com")
+    except ConnectionError:  # expect: DS702
+        pass
+    assert tmp_path.exists()

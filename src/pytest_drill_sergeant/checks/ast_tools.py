@@ -2,7 +2,7 @@
 
 What a call is named, what a name stands for through the file's imports, which
 parameters bring a test its values, which nodes are a test's own code, and what a
-real assertion is.
+real assertion and what cleanup is.
 """
 
 import ast
@@ -19,6 +19,43 @@ PYTEST_RAISES = frozenset({"pytest.raises"})
 
 # The decorators that make a function a fixture, which pytest never collects.
 FIXTURE_DECORATORS = frozenset({"pytest.fixture", "pytest_asyncio.fixture"})
+
+
+# Methods called for cleanup, reset or output, never the act under test.
+_NOT_AN_ACT = frozenset(
+    {
+        "cleanup",
+        "close",
+        "disconnect",
+        "print",
+        "reset_mock",
+        "rmtree",
+        "shutdown",
+        "stop",
+        "teardown",
+        "unlink",
+    }
+)
+
+# pytest's capture fixtures' resets and setup, as (fixture, method): they ready the
+# fixture for the next act rather than act themselves.
+_FIXTURE_RESETS = frozenset(
+    {
+        ("caplog", "clear"),
+        ("caplog", "set_level"),
+        ("recwarn", "clear"),
+        ("capsys", "readouterr"),
+        ("capfd", "readouterr"),
+    }
+)
+
+# Functions that clean up files, named in full.
+_CLEANUP_FUNCTIONS = frozenset({"os.remove", "os.unlink", "shutil.rmtree"})
+
+# A logger's methods: output, never the act under test.
+_LOG_METHODS = frozenset(
+    {"debug", "info", "warning", "error", "exception", "critical", "log"}
+)
 
 
 def call_name(call: ast.Call) -> str | None:
@@ -202,3 +239,36 @@ def excinfo_names(test: TestFunction) -> set[str]:
         if isinstance(item.optional_vars, ast.Name)
         and calls_to(item.context_expr, PYTEST_RAISES, test.imports)
     }
+
+
+def _is_logging(call: ast.Call, names: Mapping[str, str]) -> bool:
+    """Whether a call logs.
+
+    That is a logger method on `logging`, `logging.getLogger(...)`,
+    or a name with `log` in it (`log`, `logger`, `self.log`).
+    """
+    func = call.func
+    if not (isinstance(func, ast.Attribute) and func.attr in _LOG_METHODS):
+        return False
+    receiver = func.value
+    if isinstance(receiver, ast.Call):
+        receiver = receiver.func
+    full = qualified(receiver, names) or ""
+    written = receiver.attr if isinstance(receiver, ast.Attribute) else ""
+    if isinstance(receiver, ast.Name):
+        written = receiver.id
+    return full.startswith("logging") or "log" in written.lower()
+
+
+def is_cleanup(call: ast.Call, names: Mapping[str, str]) -> bool:
+    """Whether a call cleans up, resets or reports rather than acting."""
+    return (
+        call_name(call) in _NOT_AN_ACT
+        or (
+            isinstance(call.func, ast.Attribute)
+            and isinstance(call.func.value, ast.Name)
+            and (call.func.value.id, call.func.attr) in _FIXTURE_RESETS
+        )
+        or qualified(call.func, names) in _CLEANUP_FUNCTIONS
+        or _is_logging(call, names)
+    )
