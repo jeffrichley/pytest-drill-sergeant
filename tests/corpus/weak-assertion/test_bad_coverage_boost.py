@@ -42,4 +42,6 @@ class TestCoverageBoost:
         """Test boolean operations to increase coverage."""
         assert bool(pytest_drill_sergeant) is True
         assert bool(pytest_drill_sergeant.__version__) == True  # noqa: E712
-        assert callable(pytest_drill_sergeant.run) and pytest_drill_sergeant.__all__
+        assert callable(pytest_drill_sergeant.run) and bool(
+            pytest_drill_sergeant.__all__
+        )

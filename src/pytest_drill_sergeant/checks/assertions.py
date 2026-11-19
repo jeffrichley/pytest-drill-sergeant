@@ -54,6 +54,7 @@ class _Kind(Enum):
     TAUTOLOGICAL = auto()
     MIRROR = auto()
     WEAK = auto()
+    FLAG = auto()  # An attribute or item's truthiness: neither weak nor exact.
     STRONG = auto()
 
 
@@ -288,8 +289,10 @@ def _is_call_to(node: ast.AST, names: frozenset[str]) -> bool:
 def _weak_subjects(test: ast.expr) -> list[ast.expr] | None:
     """What a weak assertion is about, or `None` if the assertion is not weak.
 
-    Weak means true for almost any value: truthiness, `is not None`, `isinstance`,
-    `hasattr`, `callable`, `>= 0`, or a length that is merely non-zero.
+    Weak means true for almost any value: a bare name's truthiness, `is not None`,
+    `isinstance`, `hasattr`, `callable`, `>= 0`, or a length that is merely non-zero.
+    An attribute or item's truthiness (`assert worker.done`) is usually a flag the
+    code sets, so it is not weak on its own.
     """
     if isinstance(test, ast.BoolOp) and isinstance(test.op, ast.And):
         subjects: list[ast.expr] = []
@@ -299,7 +302,7 @@ def _weak_subjects(test: ast.expr) -> list[ast.expr] | None:
                 return None
             subjects += found
         return subjects
-    if isinstance(test, ast.Name | ast.Attribute | ast.Subscript):
+    if isinstance(test, ast.Name):
         return [test]
     if isinstance(test, ast.Call) and _is_call_to(test, _WEAK_CALLS) and test.args:
         return [test.args[0]]
@@ -395,7 +398,8 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
             names = tuple(f"`{ast.unparse(s)}`" for s in subjects)
             verdicts.append(_Verdict(node, _Kind.WEAK, subjects=names))
             continue
-        verdicts.append(_Verdict(node, _Kind.STRONG))
+        flag = isinstance(test_expr, ast.Attribute | ast.Subscript)
+        verdicts.append(_Verdict(node, _Kind.FLAG if flag else _Kind.STRONG))
     return verdicts
 
 
@@ -500,12 +504,14 @@ WEAK_ASSERTION = Check(
         "code returns the wrong one."
     ),
     explain=(
-        "Flags a test whose only assertions are weak: truthiness (`assert x`, "
-        "`bool(x) is True`), `is not None`, `isinstance`, `hasattr`, `callable`, "
-        "`>= 0`, or a length that is merely non-zero (`len(x) > 0`). A test with one "
-        "exact assertion beside them, or with `pytest.raises` or a mock verification, "
-        "is fine. Membership (`x in y`), `> 0` on anything but a length, and the "
-        "result of a predicate (`ok = is_valid(...)`; `assert ok`) are left alone. "
+        "Flags a test whose only assertions are weak: a bare name's truthiness "
+        "(`assert x`, `bool(x) is True`), `is not None`, `isinstance`, `hasattr`, "
+        "`callable`, `>= 0`, or a length that is merely non-zero (`len(x) > 0`). One "
+        "exact assertion beside them, `pytest.raises` or a mock verification makes the "
+        "test fine. An attribute's truthiness (`assert worker.done`) is usually a flag "
+        "the code sets: it neither makes a test weak nor excuses weak assertions "
+        "beside it. Membership (`x in y`), `> 0` on anything but a length, and a "
+        "predicate's result (`ok = is_valid(...)`, then `assert ok`) are left alone. "
         "Assert the exact value the code should produce."
     ),
     bad_example=(

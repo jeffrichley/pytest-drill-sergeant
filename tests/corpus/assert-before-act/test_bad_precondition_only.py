@@ -24,6 +24,6 @@ def test_add_two_items():
     cart.add("pear")
 
 
-async def test_send_message(client):  # expect: DS201
+async def test_send_message(client):
     assert client.connected
     await client.send("hello")  # expect: DS103

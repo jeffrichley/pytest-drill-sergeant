@@ -21,7 +21,7 @@ Anything in a test that can fail it on the outcome it checks: an `assert` of any
 _Avoid_: Meaningful assertion, check (a check is drill-sergeant's)
 
 **Weak assertion**:
-An `assert` that holds for almost any value, wrong ones included: truthiness, `is not None`, `isinstance`, `hasattr`, `callable`, `>= 0`, or a length that is merely non-zero.
+An `assert` that holds for almost any value, wrong ones included: a bare name's truthiness, `is not None`, `isinstance`, `hasattr`, `callable`, `>= 0`, or a length that is merely non-zero.
 _Avoid_: Loose assertion, shallow assertion
 
 **Tautological assertion**:
@@ -55,6 +55,10 @@ _Avoid_: Exclude, waiver
 **Threshold**:
 A configured number a check measures against, such as the most lines a test may have.
 _Avoid_: Limit, setting
+
+**Findings section**:
+The part of a pytest run's output, after the test results, where the plugin reports the run's findings: at most `drill_sergeant_max_findings` of them, then a count of the rest. The CLI shows every finding.
+_Avoid_: Report summary, findings item
 
 **Voice**:
 The drill-sergeant persona in which findings are delivered: snarky in tone, precise in content.

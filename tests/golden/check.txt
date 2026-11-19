@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 148 findings in 37 files. FALL IN!
+DRILL SERGEANT INSPECTION: 175 findings in 46 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -35,11 +35,6 @@ suite/assert-before-act/test_bad_precondition_only.py
     Found: In `test_add_two_items`, `cart.add('apple')` on line 23 runs after the last assertion (line 22), so nothing checks what it did.
     Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
     Fix: In `test_add_two_items`, assert on what the act on lines 23, 24 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
-  suite/assert-before-act/test_bad_precondition_only.py:27: DS201 weak-assertion [fail] in test_send_message
-    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
-    Found: `test_send_message` makes only weak assertions: each holds for almost any value, wrong ones included.
-    Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
-    Fix: In `test_send_message`, replace the weak assertions on line 28 with exact checks: assert what `client.connected` should equal, as in `assert value == expected`.
   suite/assert-before-act/test_bad_precondition_only.py:29: DS103 assert-before-act [fail] in test_send_message
     "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
     Found: In `test_send_message`, `await client.send('hello')` on line 29 runs after the last assertion (line 28), so nothing checks what it did.
@@ -483,6 +478,52 @@ suite/private-state-assertion/test_bad_module_private.py
     Why: An assertion on private state pins how the code works, not what it does, so a refactor that keeps the behaviour still breaks the test.
     Fix: In `test_private_state_in_a_nested_block`, replace `item._dirty` with the public behaviour it stands for: a return value, a public attribute or method, or what a fake collaborator received.
 
+suite/sleep-in-test/test_bad_aliased_sleeps.py
+  suite/sleep-in-test/test_bad_aliased_sleeps.py:13: DS801 sleep-in-test [fail] in test_worker_finishes
+    "Napping on duty, recruit? Tests don't SLEEP on my watch!"
+    Found: `test_worker_finishes` sleeps for real time: `sleep(2)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_worker_finishes`, replace `sleep(2)` on line 13 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
+  suite/sleep-in-test/test_bad_aliased_sleeps.py:20: DS801 sleep-in-test [fail] in test_worker_retries
+    "You picked that number out of thin air! On a slow CI box it's too short, everywhere else it's wasted!"
+    Found: `test_worker_retries` sleeps for real time: `pause(0.5)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_worker_retries`, replace `pause(0.5)` on line 20 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
+  suite/sleep-in-test/test_bad_aliased_sleeps.py:21: DS801 sleep-in-test [fail] in test_worker_retries
+    "You picked that number out of thin air! On a slow CI box it's too short, everywhere else it's wasted!"
+    Found: `test_worker_retries` sleeps for real time: `t.sleep(0.5)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_worker_retries`, replace `t.sleep(0.5)` on line 21 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
+  suite/sleep-in-test/test_bad_aliased_sleeps.py:30: DS801 sleep-in-test [fail] in test_sleep_imported_inside_the_test
+    "Waiting and hoping is not a strategy, maggot! Wait for the EVENT!"
+    Found: `test_sleep_imported_inside_the_test` sleeps for real time: `time.sleep(1)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_sleep_imported_inside_the_test`, replace `time.sleep(1)` on line 30 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
+
+suite/sleep-in-test/test_bad_async_waits.py
+  suite/sleep-in-test/test_bad_async_waits.py:15: DS801 sleep-in-test [fail] in test_poller_picks_up_the_job
+    "Napping on duty, recruit? Tests don't SLEEP on my watch!"
+    Found: `test_poller_picks_up_the_job` sleeps for real time: `asyncio.sleep(1)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_poller_picks_up_the_job`, replace `asyncio.sleep(1)` on line 15 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
+  suite/sleep-in-test/test_bad_async_waits.py:23: DS801 sleep-in-test [fail] in test_poller_waits_a_named_delay
+    "Napping on duty, recruit? Tests don't SLEEP on my watch!"
+    Found: `test_poller_waits_a_named_delay` sleeps for real time: `asyncio.sleep(DELAY)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_poller_waits_a_named_delay`, replace `asyncio.sleep(DELAY)` on line 23 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
+
+suite/sleep-in-test/test_bad_token_expiry.py
+  suite/sleep-in-test/test_bad_token_expiry.py:13: DS801 sleep-in-test [fail] in test_token_expires_after_its_ttl
+    "Waiting and hoping is not a strategy, maggot! Wait for the EVENT!"
+    Found: `test_token_expires_after_its_ttl` sleeps for real time: `time.sleep(1.1)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `test_token_expires_after_its_ttl`, replace `time.sleep(1.1)` on line 13 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
+  suite/sleep-in-test/test_bad_token_expiry.py:20: DS801 sleep-in-test [fail] in TestCache::test_entry_is_evicted
+    "Waiting and hoping is not a strategy, maggot! Wait for the EVENT!"
+    Found: `TestCache::test_entry_is_evicted` sleeps for real time: `time.sleep(0.6)`.
+    Why: A sleep guesses how long something takes: too short on a loaded machine and the test fails at random, too long and every run pays for it.
+    Fix: In `TestCache::test_entry_is_evicted`, replace `time.sleep(0.6)` on line 20 with a fake clock it can advance, or wait on the condition itself (an event, a join, or a `while` loop that polls it under a deadline).
+
 suite/source-text-grep/test_bad_getsource.py
   suite/source-text-grep/test_bad_getsource.py:11: DS603 source-text-grep [fail] in test_no_sleep_in_fetch
     "Move one line and this test fails; break the logic and it passes! DISGRACEFUL!"
@@ -743,6 +784,118 @@ suite/tautological-assertion/test_bad_values_the_test_wrote.py
     Why: A tautological assertion can't fail whatever the code does, so the test proves nothing while looking like it does.
     Fix: In `test_flag_set_by_the_test`, replace `assert loaded` on line 29 with an assertion on what the code under test returns, against a value worked out by hand.
 
+suite/unseeded-random/test_bad_numpy_random.py
+  suite/unseeded-random/test_bad_numpy_random.py:17: DS803 unseeded-random [fail] in test_mean_of_random_samples
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_mean_of_random_samples` draws unseeded random values: `np.random.rand(100)`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_mean_of_random_samples`, replace `np.random.rand(100)` on line 17 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_numpy_random.py:22: DS803 unseeded-random [fail] in test_mean_of_normal_samples
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_mean_of_normal_samples` draws unseeded random values: `npr.normal(size=100)`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_mean_of_normal_samples`, replace `npr.normal(size=100)` on line 22 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_numpy_random.py:27: DS803 unseeded-random [fail] in test_mean_with_an_unseeded_generator
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_mean_with_an_unseeded_generator` draws unseeded random values: `np.random.default_rng()`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_mean_with_an_unseeded_generator`, replace `np.random.default_rng()` on line 27 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+
+suite/unseeded-random/test_bad_random_inputs.py
+  suite/unseeded-random/test_bad_random_inputs.py:13: DS803 unseeded-random [fail] in test_cart_total_for_a_random_quantity
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_cart_total_for_a_random_quantity` draws unseeded random values: `random.randint(1, 10)`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_cart_total_for_a_random_quantity`, replace `random.randint(1, 10)` on line 13 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_random_inputs.py:19: DS803 unseeded-random [fail] in test_cart_order_does_not_matter
+    "Random without a seed is a coin toss with a stopwatch, maggot!"
+    Found: `test_cart_order_does_not_matter` draws unseeded random values: `shuffle(items)`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_cart_order_does_not_matter`, replace `shuffle(items)` on line 19 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_random_inputs.py:24: DS803 unseeded-random [fail] in test_cart_with_an_unseeded_generator
+    "Rolling dice in my barracks, recruit? Seed it or lose it!"
+    Found: `test_cart_with_an_unseeded_generator` draws unseeded random values: `random.Random()`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_cart_with_an_unseeded_generator`, replace `random.Random()` on line 24 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_random_inputs.py:31: DS803 unseeded-random [fail] in TestDiscounts::test_random_discount_applies
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `TestDiscounts::test_random_discount_applies` draws unseeded random values: `random.uniform(0, 0.5)`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `TestDiscounts::test_random_discount_applies`, replace `random.uniform(0, 0.5)` on line 31 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+
+suite/unseeded-random/test_bad_seeds_that_miss.py
+  suite/unseeded-random/test_bad_seeds_that_miss.py:20: DS803 unseeded-random [fail] in test_sample_of_items
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_sample_of_items` draws unseeded random values: `random.sample(['apple', 'pear', 'plum'], 2)`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_sample_of_items`, replace `random.sample(['apple', 'pear', 'plum'], 2)` on line 20 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_seeds_that_miss.py:25: DS803 unseeded-random [fail] in test_seeds_only_after_drawing
+    "Rolling dice in my barracks, recruit? Seed it or lose it!"
+    Found: `test_seeds_only_after_drawing` draws unseeded random values: `random.choice(['apple', 'pear'])`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_seeds_only_after_drawing`, replace `random.choice(['apple', 'pear'])` on line 25 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_seeds_that_miss.py:32: DS803 unseeded-random [fail] in test_seeds_with_none
+    "Rolling dice in my barracks, recruit? Seed it or lose it!"
+    Found: `test_seeds_with_none` draws unseeded random values: `random.choice(['apple'])`.
+    Why: A test that draws unseeded random values checks a different case on every run, so it can fail at random and nobody can replay the failing case.
+    Fix: In `test_seeds_with_none`, replace `random.choice(['apple'])` on line 32 with fixed values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+
+suite/wall-clock-read/test_bad_epoch_seconds.py
+  suite/wall-clock-read/test_bad_epoch_seconds.py:14: DS802 wall-clock-read [fail] in test_token_carries_the_issue_time
+    "This test passes at noon and fails at midnight! That's not a test, that's a SUNDIAL!"
+    Found: `test_token_carries_the_issue_time` reads the wall clock: `time.time()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_token_carries_the_issue_time`, replace `time.time()` on line 14 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_epoch_seconds.py:18: DS802 wall-clock-read [fail] in test_issue_is_fast
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_issue_is_fast` reads the wall clock: `time_ns()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_issue_is_fast`, replace `time_ns()` on line 18 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_epoch_seconds.py:20: DS802 wall-clock-read [fail] in test_issue_is_fast
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_issue_is_fast` reads the wall clock: `time_ns()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_issue_is_fast`, replace `time_ns()` on line 20 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_epoch_seconds.py:25: DS802 wall-clock-read [fail] in test_token_carries_the_local_hour
+    "The clock keeps moving, maggot! Freeze it or inject it!"
+    Found: `test_token_carries_the_local_hour` reads the wall clock: `time.localtime()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_token_carries_the_local_hour`, replace `time.localtime()` on line 25 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+
+suite/wall-clock-read/test_bad_expiry_windows.py
+  suite/wall-clock-read/test_bad_expiry_windows.py:12: DS802 wall-clock-read [fail] in test_invoice_is_due_in_thirty_days
+    "This test passes at noon and fails at midnight! That's not a test, that's a SUNDIAL!"
+    Found: `test_invoice_is_due_in_thirty_days` reads the wall clock: `date.today()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_invoice_is_due_in_thirty_days`, replace `date.today()` on line 12 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_expiry_windows.py:17: DS802 wall-clock-read [fail] in test_subscription_is_active
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_subscription_is_active` reads the wall clock: `datetime.now()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_subscription_is_active`, replace `datetime.now()` on line 17 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_expiry_windows.py:23: DS802 wall-clock-read [fail] in TestAudit::test_stamp_is_recent
+    "This test passes at noon and fails at midnight! That's not a test, that's a SUNDIAL!"
+    Found: `TestAudit::test_stamp_is_recent` reads the wall clock: `datetime.utcnow()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `TestAudit::test_stamp_is_recent`, replace `datetime.utcnow()` on line 23 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+
+suite/wall-clock-read/test_bad_module_datetime.py
+  suite/wall-clock-read/test_bad_module_datetime.py:14: DS802 wall-clock-read [fail] in test_report_is_dated_today
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_report_is_dated_today` reads the wall clock: `dt.date.today()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_report_is_dated_today`, replace `dt.date.today()` on line 14 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_module_datetime.py:18: DS802 wall-clock-read [fail] in test_report_header_has_utc_time
+    "This test passes at noon and fails at midnight! That's not a test, that's a SUNDIAL!"
+    Found: `test_report_header_has_utc_time` reads the wall clock: `datetime.datetime.now(tz=datetime.UTC)`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_report_header_has_utc_time`, replace `datetime.datetime.now(tz=datetime.UTC)` on line 18 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_module_datetime.py:25: DS802 wall-clock-read [fail] in test_freeze_covers_only_its_block
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_freeze_covers_only_its_block` reads the wall clock: `datetime.date.today()`.
+    Why: A test that reads the real clock gives a different answer on each run, and fails at midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix: In `test_freeze_covers_only_its_block`, replace `datetime.date.today()` on line 25 with a fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+
 suite/weak-assertion/test_bad_coverage_boost.py
   suite/weak-assertion/test_bad_coverage_boost.py:14: DS201 weak-assertion [fail] in TestCoverageBoost::test_module_attributes_coverage
     "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
@@ -770,12 +923,12 @@ suite/weak-assertion/test_bad_discount.py
     "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?"
     Found: `test_apply_discount` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
-    Fix: In `test_apply_discount`, replace the weak assertions on lines 9, 10 and 11 with exact checks: assert what `order` and `order.total` should equal, as in `assert value == expected`.
+    Fix: In `test_apply_discount`, replace the weak assertions on lines 9 and 11 with exact checks: assert what `order` and `order.total` should equal, as in `assert value == expected`.
   suite/weak-assertion/test_bad_discount.py:14: DS201 weak-assertion [fail] in test_discount_lines
     "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
     Found: `test_discount_lines` makes only weak assertions: each holds for almost any value, wrong ones included.
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
-    Fix: In `test_discount_lines`, replace the weak assertions on lines 16 and 17 with exact checks: assert what `lines` and `lines[0]` should equal, as in `assert value == expected`.
+    Fix: In `test_discount_lines`, replace the weak assertions on line 16 with exact checks: assert what `lines` should equal, as in `assert value == expected`.
 
 suite/weak-assertion/test_bad_ultimate_coverage.py
   suite/weak-assertion/test_bad_ultimate_coverage.py:13: DS102 no-action-under-test [fail] in test_scoring_models_import
@@ -814,4 +967,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `test_async_import`, replace the weak assertions on line 30 with exact checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-148 findings: 148 fail, 0 warn. Fix them, recruit. DISMISSED!
+175 findings: 175 fail, 0 warn. Fix them, recruit. DISMISSED!
