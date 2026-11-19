@@ -127,6 +127,7 @@ min_confidence = 80
 [tool.coverage.run]
 source = ["src/pytest_drill_sergeant"]
 branch = true
+patch = ["subprocess"]
 
 [tool.coverage.report]
 fail_under = 85
@@ -152,3 +153,6 @@ testpaths = ["tests"]
 timeout = 60
 # Why each test failed, and a report of every run, so a flake leaves evidence.
 addopts = ["-ra", "--junitxml=test-report.xml"]
+# Our own suite runs with the plugin on and passes its own checks. The corpus is bad
+# tests on purpose, so no check reports on it (`DS` is every family).
+drill_sergeant_per_file_ignores = ["tests/corpus/**: DS"]
