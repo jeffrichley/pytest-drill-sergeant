@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 15 findings in 3 files. FALL IN!
+DRILL SERGEANT INSPECTION: 25 findings in 6 files. FALL IN!
 
 suite/no-real-assertion/test_bad_coverage_boost.py
   suite/no-real-assertion/test_bad_coverage_boost.py:14: DS101 no-real-assertion [fail] in TestCoverageBoost::test_string_operations
@@ -81,4 +81,60 @@ suite/no-real-assertion/test_bad_tiny_coverage.py
     Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
     Fix: In `test_async_boost`, assert on what `pytest_drill_sergeant.run(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
 
-15 findings: 15 fail, 0 warn. Fix them, recruit. DISMISSED!
+suite/weak-assertion/test_bad_coverage_boost.py
+  suite/weak-assertion/test_bad_coverage_boost.py:14: DS201 weak-assertion [fail] in TestCoverageBoost::test_module_attributes_coverage
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `TestCoverageBoost::test_module_attributes_coverage` makes only weak assertions: each holds for almost any value, wrong ones included.
+    Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
+    Fix: In `TestCoverageBoost::test_module_attributes_coverage`, replace the weak assertions on lines 16, 17 and 20 with exact checks: assert what `pytest_drill_sergeant` and `version` should equal, as in `assert value == expected`.
+  suite/weak-assertion/test_bad_coverage_boost.py:22: DS201 weak-assertion [fail] in TestCoverageBoost::test_string_operations
+    "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?"
+    Found: `TestCoverageBoost::test_string_operations` makes only weak assertions: each holds for almost any value, wrong ones included.
+    Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
+    Fix: In `TestCoverageBoost::test_string_operations`, replace the weak assertions on lines 26 and 30 with exact checks: assert what `version_str` and `str(docstring)` should equal, as in `assert value == expected`.
+  suite/weak-assertion/test_bad_coverage_boost.py:32: DS201 weak-assertion [fail] in TestCoverageBoost::test_list_operations
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `TestCoverageBoost::test_list_operations` makes only weak assertions: each holds for almost any value, wrong ones included.
+    Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
+    Fix: In `TestCoverageBoost::test_list_operations`, replace the weak assertions on lines 35, 38 and 39 with exact checks: assert what `all_items` and `item` should equal, as in `assert value == expected`.
+  suite/weak-assertion/test_bad_coverage_boost.py:41: DS201 weak-assertion [fail] in TestCoverageBoost::test_boolean_operations
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `TestCoverageBoost::test_boolean_operations` makes only weak assertions: each holds for almost any value, wrong ones included.
+    Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
+    Fix: In `TestCoverageBoost::test_boolean_operations`, replace the weak assertions on lines 43, 44 and 45 with exact checks: assert what `pytest_drill_sergeant`, `pytest_drill_sergeant.__version__`, `pytest_drill_sergeant.run` and `pytest_drill_sergeant.__all__` should equal, as in `assert value == expected`.
+
+suite/weak-assertion/test_bad_discount.py
+  suite/weak-assertion/test_bad_discount.py:7: DS201 weak-assertion [fail] in test_apply_discount
+    "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?"
+    Found: `test_apply_discount` makes only weak assertions: each holds for almost any value, wrong ones included.
+    Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
+    Fix: In `test_apply_discount`, replace the weak assertions on lines 9, 10 and 11 with exact checks: assert what `order` and `order.total` should equal, as in `assert value == expected`.
+  suite/weak-assertion/test_bad_discount.py:14: DS201 weak-assertion [fail] in test_discount_lines
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `test_discount_lines` makes only weak assertions: each holds for almost any value, wrong ones included.
+    Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
+    Fix: In `test_discount_lines`, replace the weak assertions on lines 16 and 17 with exact checks: assert what `lines` and `lines[0]` should equal, as in `assert value == expected`.
+
+suite/weak-assertion/test_bad_ultimate_coverage.py
+  suite/weak-assertion/test_bad_ultimate_coverage.py:13: DS201 weak-assertion [fail] in test_scoring_models_import
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `test_scoring_models_import` makes only weak assertions: each holds for almost any value, wrong ones included.
+    Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
+    Fix: In `test_scoring_models_import`, replace the weak assertions on line 15 with exact checks: assert what `pytest_drill_sergeant.core.scoring_models` should equal, as in `assert value == expected`.
+  suite/weak-assertion/test_bad_ultimate_coverage.py:18: DS201 weak-assertion [fail] in test_core_init_import
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `test_core_init_import` makes only weak assertions: each holds for almost any value, wrong ones included.
+    Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
+    Fix: In `test_core_init_import`, replace the weak assertions on line 20 with exact checks: assert what `pytest_drill_sergeant.core` should equal, as in `assert value == expected`.
+  suite/weak-assertion/test_bad_ultimate_coverage.py:23: DS201 weak-assertion [fail] in test_plugin_init_import
+    "Truthy, has a length, is a string. You described a potato, maggot!"
+    Found: `test_plugin_init_import` makes only weak assertions: each holds for almost any value, wrong ones included.
+    Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
+    Fix: In `test_plugin_init_import`, replace the weak assertions on line 25 with exact checks: assert what `pytest_drill_sergeant.plugin` should equal, as in `assert value == expected`.
+  suite/weak-assertion/test_bad_ultimate_coverage.py:28: DS201 weak-assertion [fail] in test_async_import
+    "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?"
+    Found: `test_async_import` makes only weak assertions: each holds for almost any value, wrong ones included.
+    Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
+    Fix: In `test_async_import`, replace the weak assertions on line 30 with exact checks: assert what `plugin` should equal, as in `assert value == expected`.
+
+25 findings: 25 fail, 0 warn. Fix them, recruit. DISMISSED!
