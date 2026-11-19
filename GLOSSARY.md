@@ -44,6 +44,10 @@ _Avoid_: Exclude, waiver
 A configured number a check measures against, such as the most lines a test may have.
 _Avoid_: Limit, setting
 
+**Findings section**:
+The part of a pytest run's output, after the test results, where the plugin reports the run's findings: at most `drill_sergeant_max_findings` of them, then a count of the rest. The CLI shows every finding.
+_Avoid_: Report summary, findings item
+
 **Voice**:
 The drill-sergeant persona in which findings are delivered: snarky in tone, precise in content.
 _Avoid_: Persona, personality
