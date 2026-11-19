@@ -1,16 +1,7 @@
 """The engine seam beyond the corpus: what the config changes."""
 
-import pytest
-
 from pytest_drill_sergeant.engine import Config, analyze
 from pytest_drill_sergeant.findings import Level
-
-
-@pytest.fixture
-def assertion_free_test(tmp_path):
-    path = tmp_path / "test_it.py"
-    path.write_text("def test_it():\n    run()\n")
-    return path
 
 
 def test_finding_carries_the_checks_default_level(assertion_free_test):

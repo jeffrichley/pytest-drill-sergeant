@@ -1,0 +1,74 @@
+DRILL SERGEANT INSPECTION: 13 findings in 3 files. FALL IN!
+
+suite/no-real-assertion/test_bad_coverage_boost.py
+  suite/no-real-assertion/test_bad_coverage_boost.py:14: DS101 no-real-assertion [fail] in TestCoverageBoost::test_string_operations
+    "This test would pass if the code returned garbage! DROP AND GIVE ME AN ASSERT!"
+    Found: `TestCoverageBoost::test_string_operations` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `TestCoverageBoost::test_string_operations`, assert on what `str(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_coverage_boost.py:19: DS101 no-real-assertion [fail] in TestCoverageBoost::test_list_operations
+    "This test would pass if the code returned garbage! DROP AND GIVE ME AN ASSERT!"
+    Found: `TestCoverageBoost::test_list_operations` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `TestCoverageBoost::test_list_operations`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_coverage_boost.py:24: DS101 no-real-assertion [fail] in TestCoverageBoost::test_boolean_operations
+    "No assertion, no proof! Green means nothing if it can't go red, maggot!"
+    Found: `TestCoverageBoost::test_boolean_operations` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `TestCoverageBoost::test_boolean_operations`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_coverage_boost.py:30: DS101 no-real-assertion [fail] in TestCoverageBoost::TestNested::test_nested_boost
+    "This test would pass if the code returned garbage! DROP AND GIVE ME AN ASSERT!"
+    Found: `TestCoverageBoost::TestNested::test_nested_boost` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `TestCoverageBoost::TestNested::test_nested_boost`, assert on what `pytest_drill_sergeant.cli.main(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+
+suite/no-real-assertion/test_bad_final_push.py
+  suite/no-real-assertion/test_bad_final_push.py:13: DS101 no-real-assertion [fail] in test_final_coverage_push
+    "You call that a test, recruit? It runs the code and checks NOTHING!"
+    Found: `test_final_coverage_push` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `test_final_coverage_push`, assert on what `version.startswith(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_final_push.py:25: DS101 no-real-assertion [fail] in test_attributes_exist
+    "You call that a test, recruit? It runs the code and checks NOTHING!"
+    Found: `test_attributes_exist` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `test_attributes_exist`, assert on what `getattr(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_final_push.py:29: DS101 no-real-assertion [fail] in test_smoke_with_a_try
+    "No assertion, no proof! Green means nothing if it can't go red, maggot!"
+    Found: `test_smoke_with_a_try` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `test_smoke_with_a_try`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_final_push.py:36: DS101 no-real-assertion [fail] in test_mock_configured_but_never_checked
+    "You call that a test, recruit? It runs the code and checks NOTHING!"
+    Found: `test_mock_configured_but_never_checked` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `test_mock_configured_but_never_checked`, assert on what `pytest_drill_sergeant.cli.main(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+
+suite/no-real-assertion/test_bad_tiny_coverage.py
+  suite/no-real-assertion/test_bad_tiny_coverage.py:13: DS101 no-real-assertion [fail] in test_tiny_coverage_boost
+    "This test would pass if the code returned garbage! DROP AND GIVE ME AN ASSERT!"
+    Found: `test_tiny_coverage_boost` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `test_tiny_coverage_boost`, assert on what `list(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_tiny_coverage.py:23: DS101 no-real-assertion [fail] in test_scoring_models_import
+    "This test would pass if the code returned garbage! DROP AND GIVE ME AN ASSERT!"
+    Found: `test_scoring_models_import` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `test_scoring_models_import`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_tiny_coverage.py:28: DS101 no-real-assertion [fail] in test_import_is_proof_enough
+    "This test would pass if the code returned garbage! DROP AND GIVE ME AN ASSERT!"
+    Found: `test_import_is_proof_enough` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `test_import_is_proof_enough`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_tiny_coverage.py:35: DS101 no-real-assertion [fail] in test_coverage_placeholder
+    "No assertion, no proof! Green means nothing if it can't go red, maggot!"
+    Found: `test_coverage_placeholder` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `test_coverage_placeholder`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_tiny_coverage.py:39: DS101 no-real-assertion [fail] in test_async_boost
+    "No assertion, no proof! Green means nothing if it can't go red, maggot!"
+    Found: `test_async_boost` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
+    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
+    Fix: In `test_async_boost`, assert on what `pytest_drill_sergeant.run(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+
+13 findings: 13 fail, 0 warn. Fix them, recruit. DISMISSED!

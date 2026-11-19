@@ -5,8 +5,9 @@ copy-pasted setup, assertions that prove nothing, mocks asserted on instead of
 behaviour, skips added to go green, sleeps, and test files too long to follow. It
 reports them as findings that fail the run, in the drill-sergeant voice.
 
-**Status:** v1 is being rebuilt from scratch. This version installs a `drill-sergeant`
-command and a pytest plugin that do nothing yet. The plan is the
+**Status:** v1 is being rebuilt from scratch. So far `drill-sergeant check <paths>`
+reports tests with no real assertion (DS101) and exits 1 when it finds any; the pytest
+plugin does nothing yet. The plan is the
 [v1 spec](https://github.com/jeffrichley/pytest-drill-sergeant/issues/118). Version
 0.4 is archived under the tag `archive/2026-11-19/v0.4/main`.
 
