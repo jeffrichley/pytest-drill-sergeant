@@ -28,6 +28,22 @@ _Avoid_: Test type, tag
 How a check's findings count: `fail` (they fail the run), `warn` (reported, the run's result unchanged) or `off` (not reported). Each check has a default level.
 _Avoid_: Severity
 
+**Mode**:
+The run-wide setting over every level: `fail` (each check at its level), `warn` (every finding reported as `warn`) or `off` (no check runs). Set by `drill_sergeant_mode`.
+_Avoid_: Global level, strictness
+
+**Family**:
+The checks whose codes share a prefix (DS1xx structure, DS2xx assertions, and so on). A family prefix (`DS1` or `DS1xx`) in config covers every check in it; the most specific entry wins.
+_Avoid_: Category (that's a category marker), group
+
+**Per-file ignore**:
+A config entry (`glob: codes`) that keeps the named checks off the files matching the glob, relative to the config file's directory. Unlike a waiver it lives in config and isn't tallied.
+_Avoid_: Exclude, waiver
+
+**Threshold**:
+A configured number a check measures against, such as the most lines a test may have.
+_Avoid_: Limit, setting
+
 **Voice**:
 The drill-sergeant persona in which findings are delivered: snarky in tone, precise in content.
 _Avoid_: Persona, personality
