@@ -37,8 +37,8 @@ these rules started.
   files and a config and return data; only the plugin imports pytest.
 - **A run only reports.** Nothing in a run edits a test file, a config file or any file
   but the cache.
-- **A suppression says why it is right here.** A `# noqa` or `# type: ignore` with no
-  reason beside it is an unreviewable claim.
+- **A `# noqa` or `# type: ignore` says why it is right here.** One with no reason
+  beside it is an unreviewable claim.
 - **A dependency arrives with a stated reason.** The PR that adds one says what it buys
   and what it costs.
 
