@@ -2,6 +2,7 @@
 
 import ast
 from collections.abc import Iterator
+from enum import Enum
 
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
 from pytest_drill_sergeant.findings import Level
@@ -214,4 +215,163 @@ NO_ACTION_UNDER_TEST = Check(
         "    assert apply_discount(price=100, rate=0.1) == 90\n"
     ),
     find=_find_no_action_under_test,
+)
+
+
+class _Step(Enum):
+    """What a top-level statement of a test does, for the act and assert order."""
+
+    ASSERT = "assert"
+    ACT = "act"
+    OTHER = "other"
+
+
+# Calls made for cleanup or output after the assertions, never the act under test.
+_NOT_AN_ACT = frozenset(
+    {
+        "cleanup",
+        "close",
+        "disconnect",
+        "print",
+        "reset_mock",
+        "rmtree",
+        "shutdown",
+        "stop",
+        "teardown",
+        "unlink",
+    }
+)
+
+_NESTED = ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef | ast.Lambda
+
+
+def _walk_own(node: ast.AST) -> Iterator[ast.AST]:
+    """Every node under `node`, without descending into nested functions or classes."""
+    yield node
+    for child in ast.iter_child_nodes(node):
+        if not isinstance(child, _NESTED):
+            yield from _walk_own(child)
+
+
+def _is_act_statement(node: ast.AST) -> bool:
+    """Whether a statement is a call made for its effect: the act under test.
+
+    That is a bare call or awaited call that isn't an assertion, cleanup or output.
+    An assignment from a call is setup or reads a result, so it isn't one.
+    """
+    if not isinstance(node, ast.Expr):
+        return False
+    value = node.value.value if isinstance(node.value, ast.Await) else node.value
+    if not isinstance(value, ast.Call) or _is_real_assertion(value):
+        return False
+    func = value.func
+    name = func.attr if isinstance(func, ast.Attribute) else None
+    if isinstance(func, ast.Name):
+        name = func.id
+    return name not in _NOT_AN_ACT
+
+
+def _classify(statement: ast.stmt) -> _Step:
+    """Whether a statement asserts, acts, or does neither.
+
+    A statement that holds an assertion asserts, even if it also acts.
+    """
+    if isinstance(statement, _NESTED):
+        return _Step.OTHER
+    nodes = list(_walk_own(statement))
+    if any(_is_real_assertion(node) for node in nodes):
+        return _Step.ASSERT
+    if any(_is_act_statement(node) for node in nodes):
+        return _Step.ACT
+    return _Step.OTHER
+
+
+def _steps(body: list[ast.stmt]) -> list[tuple[ast.stmt, _Step]]:
+    """A test's statements in order, each with what it does.
+
+    A `with` block that isn't itself an assertion (a `mock.patch`, an open file)
+    is opened up, so the statements inside it count in order.
+    """
+    steps: list[tuple[ast.stmt, _Step]] = []
+    for statement in body:
+        if isinstance(statement, ast.With | ast.AsyncWith) and not any(
+            _is_real_assertion(item.context_expr) for item in statement.items
+        ):
+            steps.extend(_steps(statement.body))
+        else:
+            steps.append((statement, _classify(statement)))
+    return steps
+
+
+def _describe(statement: ast.stmt) -> str:
+    """A short name for a statement: its call, or the kind of block it opens."""
+    if isinstance(statement, ast.Expr):
+        return f"`{ast.unparse(statement.value)}`"
+    return f"the `{type(statement).__name__.lower()}` block"
+
+
+def _find_assert_before_act(file: TestFile) -> Iterator[Hit]:
+    for test in file.tests:
+        steps = _steps(test.node.body)
+        last = max(
+            (i for i, (_, step) in enumerate(steps) if step is _Step.ASSERT),
+            default=None,
+        )
+        if last is None:
+            continue
+        unchecked = [s for s, step in steps[last + 1 :] if step is _Step.ACT]
+        if not unchecked:
+            continue
+        act, last_assert = unchecked[0], steps[last][0]
+        where = ", ".join(str(s.lineno) for s in unchecked)
+        where = f"line {where}" if len(unchecked) == 1 else f"lines {where}"
+        yield Hit(
+            line=act.lineno,
+            test=test.name,
+            found=(
+                f"In `{test.name}`, {_describe(act)} on line {act.lineno} runs after "
+                f"the last assertion (line {last_assert.lineno}), so nothing checks "
+                "what it did."
+            ),
+            fix=(
+                f"In `{test.name}`, assert on what the act on {where} returns or "
+                "changes, after it runs; keep an assertion before it only as a "
+                "guard on the starting state."
+            ),
+        )
+
+
+ASSERT_BEFORE_ACT = Check(
+    code="DS103",
+    name="assert-before-act",
+    default_level=Level.FAIL,
+    voice=(
+        "You checked the ground, then fired blind! Assert AFTER you act, recruit!",
+        "Asserting before the action is inspecting your rifle after the battle!",
+        "The act runs and NOBODY looks at the result! Eyes on target, maggot!",
+    ),
+    why=(
+        "When the act runs after the last assertion, the test checks only the "
+        "starting state, so it stays green when the act does the wrong thing."
+    ),
+    explain=(
+        "Flags a test whose act runs after its last assertion: a bare call or "
+        "`await` made for its effect (not cleanup such as `close()` or `stop()`, and "
+        "not output such as `print()`), with no assertion following it. A guard "
+        "assertion on the starting state is fine when the outcome is also asserted "
+        "after the act. Move the assertion after the act, or add one there."
+    ),
+    bad_example=(
+        "def test_add_item():\n"
+        "    cart = Cart()\n"
+        "    assert cart.items == []\n"
+        "    cart.add('apple')\n"
+    ),
+    good_example=(
+        "def test_add_item_puts_it_in_the_cart():\n"
+        "    cart = Cart()\n"
+        "    cart.add('apple')\n"
+        "    assert cart.items == ['apple']\n"
+    ),
+    find=_find_assert_before_act,
 )

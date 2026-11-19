@@ -1,0 +1,14 @@
+"""Tests whose last act runs after every assertion, so its outcome goes unchecked.
+Analysed, never run."""
+
+
+def test_register_then_rename(registry):
+    registry.register("ada")
+    assert registry.names() == ["ada"]
+    registry.rename("ada", "grace")  # expect: DS103
+
+
+def test_import_rows(importer, rows):
+    assert importer.count() == 0
+    for row in rows:  # expect: DS103
+        importer.load(row)
