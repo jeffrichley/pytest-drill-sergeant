@@ -146,3 +146,10 @@ cython_debug/
 # Ruff
 .ruff_cache/
 .DS_Store
+
+# Test run reports (the gate's and `just stress`'s)
+test-report.xml
+stress-report.xml
+
+# Claude Code's agent worktrees
+.claude/worktrees/

@@ -1,87 +1,52 @@
-# Development shortcuts for pytest-drill-sergeant
+# Windows uses PowerShell, Unix-like systems use sh
+set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+set shell := ["sh", "-cu"]
 
-# Run tests
-test:
-    uv run pytest -q
+# `just check` is the gate. People, agents and CI run this one recipe, in this order,
+# and each step fails the whole. The workflow names no tool this file does not, which is
+# what makes green here mean green in CI.
+check: lint format-check typecheck vulture test
 
-# Run unit tests only
-test-unit:
-    uv run pytest tests -m unit
+# The auto-fixing half of the gate.
+fix: lint-fix format
 
-# Run integration tests only
-test-integration:
-    uv run pytest tests -m integration
-
-# Run linting
-lint:
-    uv run ruff check src tests
-
-# Run type checking
-type-check:
-    uv run mypy src tests --config-file=pyproject.toml
-
-# Run all required quality checks (matches CI quality gates)
-verify: test lint type-check
-
-# Backwards-compatible alias
-quality: verify
-
-# Generate coverage report
-coverage:
-    uv run pytest tests --cov=src --cov-report=xml --cov-report=term-missing
-
-# Run security audit
-security:
-    uv run pip-audit --progress-spinner=off
-
-# Run complexity analysis
-complexity:
-    uv run xenon --max-absolute B src
-
-# Validate pyproject.toml
-pyproject:
-    uv run validate-pyproject pyproject.toml
-
-# Run pre-commit hooks
-pre-commit:
-    uv run pre-commit run --all-files
-
-# Install development dependencies
-install:
-    uv sync --all-extras
-
-# Install test dependencies only
-install-test:
-    uv sync --extra test
-
-# Install all dependencies (dev + test)
-install-all:
-    uv sync --all-extras
-
-# Sync dependencies (reinstall all)
+# One shared .venv at the repo root.
 sync:
-    uv sync --reinstall
+    uv sync --group dev
 
-# Clean up generated files
-clean:
-    rm -rf htmlcov
-    rm -rf .pytest_cache
-    rm -rf .mypy_cache
-    rm -rf .ruff_cache
+# --- The gate's steps -------------------------------------------------------------
 
-# Quick development workflow: clear screen, test, quality
-j:
-    clear || cls
-    just test
-    just verify
+lint:
+    uv run ruff check
 
-# Test the plugin with a sample project
-demo:
-    clear || cls
-    @echo "🎖️ Testing pytest-drill-sergeant plugin"
-    @echo "🧪 Running tests with drill sergeant enforcement..."
-    uv run pytest tests -v
+lint-fix:
+    uv run ruff check --fix
 
-# Show help
-default:
-    @just --list
+format:
+    uv run ruff format
+
+format-check:
+    uv run ruff format --check
+
+typecheck:
+    uv run mypy
+
+vulture:
+    uv run vulture
+
+# The whole suite, with the coverage floor. A single file is `uv run pytest tests/x.py`,
+# which measures nothing and so can never fail on the floor. Four workers, not `auto`:
+# each builds its own session fixtures, and one per core swamps a big machine.
+test:
+    uv run pytest -q -n 4 --cov --cov-report=term
+
+# --- Not the gate -----------------------------------------------------------------
+
+# The suite five times over, shuffled, to find flakes before a run does.
+stress count="5":
+    uv run pytest -q -n 4 --count={{count}} --junitxml=stress-report.xml
+
+# The commit hooks: the fast checks before a commit, the message convention on it.
+install-hooks:
+    uv run pre-commit install
+    uv run pre-commit install --hook-type commit-msg

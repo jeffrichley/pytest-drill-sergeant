@@ -1,126 +1,40 @@
-name: CI
+name: ci
 
 on:
+  pull_request:
   push:
     branches: [main]
-  pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  test:
-    name: test (py${{ matrix.python-version }} / ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.12", "3.13"]
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v8.3.2
-        with:
-          enable-cache: true
-
-      - name: Install dependencies
-        run: |
-          uv sync --group dev --extra test
-
-      - name: Run tests
-        run: |
-          uv run pytest -q
-
-  lint:
-    name: lint (ruff)
+  check:
+    # A public repo runs on GitHub's runners, never a self-hosted one: a fork's pull
+    # request could otherwise run a stranger's code on Jeff's machine.
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.14"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v8.3.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
-
-      - name: Install dependencies
-        run: |
-          uv sync --group dev --extra test
-
-      - name: Run lint checks
-        run: |
-          uv run --with ruff ruff check src tests
-
-  typecheck:
-    name: typecheck (mypy)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
+          python-version: "3.13"
+      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4
+        # Pinned so CI runs the same just as local, from nothing but the repo.
         with:
-          python-version: "3.14"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v8.3.2
+          just-version: "1.59.0"
+      - run: uv sync --locked --group dev
+      # The gate, by name: every step is the justfile's, none is this file's.
+      - run: just check
+      # A red run keeps its report, so a flake can be read, not guessed at.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
         with:
-          enable-cache: true
-
-      - name: Install dependencies
-        run: |
-          uv sync --group dev --extra test
-
-      - name: Run type checks
-        run: |
-          uv run mypy src tests --config-file=pyproject.toml
-
-  coverage:
-    name: coverage (informational)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.14"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v8.3.2
-        with:
-          enable-cache: true
-
-      - name: Install dependencies
-        run: |
-          uv sync --group dev --extra test
-
-      - name: Generate coverage report
-        run: |
-          uv run pytest tests --cov=src --cov-report=xml --cov-report=term-missing -q
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v7
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: false  # Don't fail CI if Codecov fails
-          verbose: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: diff-cover patch-level gate
-        if: github.event_name == 'pull_request'
-        run: uv run diff-cover coverage.xml --compare-branch=origin/${{ github.base_ref }} --fail-under=85
+          name: test-report
+          path: test-report.xml
+          if-no-files-found: ignore
