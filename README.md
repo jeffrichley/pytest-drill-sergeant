@@ -15,12 +15,13 @@ real assertion (DS101), reported both by the pytest plugin and by
 
 Installing the package turns the plugin on: every `pytest` run is a drill-sergeant run.
 
-- After collection it analyses the files that contributed collected tests, once. A
-  narrow run (one file, `-k`, `--lf`) checks only those files.
+- After collection it analyses the files that contributed collected tests (doctests
+  don't count), once. A narrow run (one file, `-k`, `--lf`) checks only those files.
 - The tests always run. A findings section headed `drill sergeant` comes after the
   test results; no test items are added.
-- When the tests pass but a finding is at the `fail` level, the run exits 1. Failing
-  tests keep pytest's own exit code; warn mode leaves the exit code alone.
+- When the tests ran and passed but a finding is at the `fail` level, the run exits 1.
+  Failing tests keep pytest's own exit code, as does `--collect-only`; warn mode
+  leaves the exit code alone.
 - The section shows the first `drill_sergeant_max_findings` findings (25 by default,
   0 for all), then `…and N more, run drill-sergeant check for all`. The exit code
   counts every finding.
