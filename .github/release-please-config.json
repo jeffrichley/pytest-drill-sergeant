@@ -4,10 +4,7 @@
   "packages": {
     ".": {
       "package-name": "pytest-drill-sergeant",
-      "changelog-path": "CHANGELOG.md",
-      "extra-files": [
-        "src/pytest_drill_sergeant/__init__.py"
-      ]
+      "changelog-path": "CHANGELOG.md"
     }
   }
 }

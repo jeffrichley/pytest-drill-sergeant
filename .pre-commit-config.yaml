@@ -1,61 +1,46 @@
-# Pre-commit hooks for pytest-drill-sergeant
-# Following the Redwing Core pattern
+# Pre-commit: the fast checks only (no mypy, no pytest on a commit).
+# The gate is `just check`; these hooks are the part worth paying for on every commit.
+# Install with `just install-hooks`.
+fail_fast: true
 
 repos:
-  # Ruff for linting and formatting
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.4
-    hooks:
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-        exclude: ^test_project/
-      - id: ruff-format
-        exclude: ^test_project/
-
-  # Black for code formatting (backup to ruff-format)
-  - repo: https://github.com/psf/black
-    rev: 24.10.0
-    hooks:
-      - id: black
-        language_version: python3.12
-        exclude: ^test_project/
-
-  # MyPy for type checking (skip for now due to pytest stubs)
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v1.13.0
-  #   hooks:
-  #     - id: mypy
-  #       args: [--config-file=pyproject.toml]
-
-  # Security audit (disabled for now - low priority)
-  # - repo: https://github.com/PyCQA/bandit
-  #   rev: 1.7.10
-  #   hooks:
-  #     - id: bandit
-  #       args: [-r, src]
-  #       exclude: ^tests/
-
-  # General hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
       - id: trailing-whitespace
       - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-toml
-      - id: check-json
-      - id: check-merge-conflict
-      - id: check-added-large-files
-      - id: mixed-line-ending
       - id: check-case-conflict
+      - id: check-illegal-windows-names
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+      - id: detect-private-key
 
-  # Coverage check with 50% threshold
+  # The project's own ruff through uv, never a mirror with its own `rev:`. The version
+  # comes from uv.lock alone, so these hooks cannot drift from what CI runs.
   - repo: local
     hooks:
-      - id: coverage-check
-        name: coverage-check
-        entry: bash -c 'uv run pytest tests --cov=src/pytest_drill_sergeant --cov-report=term-missing --cov-fail-under=50'
+      - id: ruff
+        name: ruff
+        entry: uv run ruff check --force-exclude --fix
         language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-commit]
+        types_or: [python, pyi]
+        require_serial: true
+      - id: ruff-format
+        name: ruff-format
+        entry: uv run ruff format --force-exclude
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+
+  # Conventional Commits, on the commit-msg hook.
+  - repo: local
+    hooks:
+      - id: commitizen
+        name: commitizen check
+        entry: uv run cz check --allow-abort --commit-msg-file
+        language: system
+        stages: [commit-msg]

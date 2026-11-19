@@ -1,24 +1,22 @@
 [project]
 name = "pytest-drill-sergeant"
-dynamic = ["version"]
-description = "A pytest plugin that enforces test quality standards through automatic marker detection and AAA structure validation"
+version = "0.4.0"
+description = "A pytest plugin and CLI that catch the ways AI coding agents write bad tests"
 readme = "README.md"
 license = "MIT"
-authors = [
-    { name = "Jeff Richley", email = "jeffrichley@gmail.com" }
-]
-requires-python = ">=3.12"
+authors = [{ name = "Jeff Richley" }]
+requires-python = ">=3.11"
 dependencies = [
-    "pytest>=7.0.0",
+    "rich>=13.0",
+    "typer>=0.12",
 ]
-keywords = ["pytest", "testing", "quality", "standards", "AAA", "markers"]
+keywords = ["pytest", "testing", "quality", "ai", "agents", "lint"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Framework :: Pytest",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Testing",
 ]
 
@@ -27,66 +25,50 @@ Homepage = "https://github.com/jeffrichley/pytest-drill-sergeant"
 Repository = "https://github.com/jeffrichley/pytest-drill-sergeant.git"
 Issues = "https://github.com/jeffrichley/pytest-drill-sergeant/issues"
 
+[project.scripts]
+drill-sergeant = "pytest_drill_sergeant.cli:app"
+
+# Installing the package turns the plugin on.
 [project.entry-points.pytest11]
 drill_sergeant = "pytest_drill_sergeant.plugin"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "mypy>=1.0.0",
-    "ruff>=0.1.0",
-    "black>=23.0.0",
-    "pre-commit>=3.0.0",
+    "commitizen>=4.18.0",
+    "mypy>=2.3.0",
+    "pre-commit>=4.0",
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+    "pytest-randomly>=3.16",
+    "pytest-repeat>=0.9.3",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.6",
+    "ruff>=0.16.3",
+    "vulture>=2.14",
 ]
-test = [
-    "hypothesis>=6.136.6",
-    "pytest-benchmark>=4.0.0",
-    "psutil>=5.9.0",
-]
-docs = [
-    "mkdocs>=1.5.0",
-    "mkdocs-material>=9.6.17",
-    "mkdocstrings[python]>=0.30.0",
-    "mike>=2.1.3",
-    "mkdocs-git-revision-date-localized-plugin>=1.4.7",
-    "mkdocs-mermaid2-plugin>=1.2.1",
-]
-typecheck = [
-    "mypy",
-]
-security = [
-    "pip-audit",
-]
-
-[tool.setuptools.dynamic]
-version = {attr = "pytest_drill_sergeant.__version__"}
 
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.black]
-line-length = 88
-target-version = ["py312"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/pytest_drill_sergeant"]
 
-[tool.coverage.html]
-directory = "htmlcov"
-
-[tool.coverage.report]
-fail_under = 60
-show_missing = true
+# --- The gate -----------------------------------------------------------------------
+# `just check` runs everything below, and CI runs `just check`. The rule set is the
+# handbook's clean-start (clippers) standard: ruff with google docstrings, mypy strict,
+# vulture, a branch-coverage floor; full on the code and relaxed on the tests.
 
 [tool.ruff]
 line-length = 88
-target-version = "py312"
-src = ["src"]
-exclude = [
-    "stubs",
-    "examples",
-    "scripts",
-    "tools",
-]
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 [tool.ruff.lint]
 select = [
@@ -104,147 +86,67 @@ select = [
     "PL",   # pylint
     "PERF", # perflint
     "D",    # pydocstyle
-    "RUF",  # ruff-specific rules
-    "A",    # flake8-builtins
-    "G",    # flake8-logging-format
-    "BLE",  # flake8-blind-except
-    "TRY",  # tryceratops
-    "EM",   # flake8-errmsg
-    "PIE",  # flake8-pie
-    "TCH",  # flake8-type-checking
-    "RSE",  # flake8-raise
-    "RET",  # flake8-return
-    "SLF",  # flake8-self
-    "SLOT", # flake8-slots
-    "T20",  # flake8-print
-    "PT",   # flake8-pytest-style
     "ANN",  # flake8-annotations
-    "PGH",  # pygrep-hooks
-    "PTH",  # flake8-use-pathlib
-    "ERA",  # eradicate
-    "PLR",  # pylint refactor
-    "PLW",  # pylint warnings
-    "PLE",  # pylint errors
+    "RUF",  # ruff-specific rules
 ]
 ignore = [
-    "E501",    # Line too long (Black handles this)
-    "PLR2004", # Magic value used in comparison
-    "RUF001",  # Allow emoji characters (we love emojis! 🎉)
-    "TC001",   # Type-checking imports (temporarily disabled)
-    "BLE001",  # Blind exception handling (temporarily disabled)
-    "T201",    # Print statements (temporarily disabled)
-    "SLF001",  # Private member access (temporarily disabled)
-    "PT018",   # Assertion breakdown (temporarily disabled)
-    "PT013",   # Pytest import style (temporarily disabled)
-    "PTH123",  # Pathlib usage (temporarily disabled)
-    "ERA001",  # Commented code (temporarily disabled)
-    "TRY300",  # Try/except patterns (temporarily disabled)
-    "D105",    # Missing docstring in magic method (Google convention exempts dunders)
-    "D107",    # Missing docstring in __init__ (Google convention exempts it)
-]
-
-fixable = ["ALL"]
-unfixable = []
-
-[tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = [
-    "ARG001",  # Unused function argument
-    "D100",    # Missing docstring in public module
-    "D101",    # Missing docstring in public class
-    "D102",    # Missing docstring in public method
-    "D103",    # Missing docstring in public function
-    "D104",    # Missing docstring in public package
-    "D105",    # Missing docstring in magic method
-    "D106",    # Missing docstring in public nested class
-    "D107",    # Missing docstring in __init__
-    "D200",    # One-line docstring should fit on one line
-    "D205",    # 1 blank line required between summary line and description
-    "D400",    # First line should end with a period
-    "D401",    # First line should be in imperative mood
-    "D415",    # First line should end with a period, question mark, or exclamation point
+    "E501",   # line length is the formatter's
 ]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
+# The clock is injected, so reading it is banned in src/. The one place that wires it
+# in carries a `# noqa: TID251` with its reason.
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
-"typing.Any" = { msg = "Any is banned in this codebase. Use concrete types or TypeVars." }
-
-[tool.ruff.lint.flake8-annotations]
-mypy-init-return = true
-allow-star-arg-any = false
+"datetime.datetime.now".msg = "Inject the clock."
+"datetime.datetime.utcnow".msg = "Inject the clock."
+"datetime.date.today".msg = "Inject the clock."
+"time.time".msg = "Inject the clock."
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.ruff.lint.per-file-ignores]
+# Tests are held to the short set: what is wrong (F, E, B), what is stale (UP, I), and
+# no more. A test's name is its docstring.
+"**/tests/**" = ["N", "Q", "SIM", "C90", "ARG", "TID", "PL", "PERF", "D", "ANN", "RUF"]
+
 [tool.mypy]
-files = ["src", "tests"]
-python_version = "3.12"
+python_version = "3.11"
 strict = true
-# Basic safety
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-strict_equality = true
-# Any-type restrictions
-disallow_any_unimported = true
-disallow_any_expr = false
-disallow_any_decorated = false  # Allow decorators like @patch
-disallow_any_generics = true
-disallow_subclassing_any = true
-
-# Warning enforcement
-warn_return_any = true
 warn_unused_ignores = true
-warn_unused_configs = true
-warn_redundant_casts = true
-warn_no_return = true
-warn_unreachable = true
-# Coverage enforcement
-implicit_reexport = false
-# Import type-checking
-ignore_missing_imports = false
-follow_imports = "normal"
-show_error_codes = true
-# Clean output formatting
-pretty = true
-color_output = true
-show_column_numbers = true
-exclude = []
+files = ["src/pytest_drill_sergeant"]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.vulture]
+paths = ["src"]
+min_confidence = 80
 
-[tool.setuptools.package-data]
-pytest_drill_sergeant = ["py.typed"]
+[tool.coverage.run]
+source = ["src/pytest_drill_sergeant"]
+branch = true
 
-[tool.xenon]
-max-absolute = "B"
-max-modules = "A"
-max-average = "A"
-exclude = ["tests", "examples", "scripts", "tools"]
-
-[dependency-groups]
-dev = [
-    "black>=25.1.0",
-    "build>=1.3.0",
-    "diff-cover>=9.0",
-    "mypy>=1.17.1",
-    "pip-audit>=2.9.0",
-    "pytest-cov>=6.2.1",
-    "pytest-mock>=3.14.1",
-    "twine>=6.2.0",
-    "validate-pyproject>=0.24.1",
-    "xenon>=0.9.3",
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
 ]
 
-# Example drill sergeant configuration
-[tool.drill_sergeant]
-# Custom marker mappings (directory_name = marker_name)
-[tool.drill_sergeant.marker_mappings]
-contract = "api"
-smoke = "integration"
-acceptance = "e2e"
-benchmarks = "performance"
+# The commit-message convention only; nothing here releases (release-please does).
+[tool.commitizen]
+name = "cz_conventional_commits"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# A hung test fails as itself after a minute, with its stack. No `timeout_method`:
+# pytest-timeout uses a signal where the OS has one, so the test fails and the run goes
+# on. Only Windows falls back to a thread, which ends the run (or, under xdist, kills
+# the worker, and xdist reports whatever test it was running as failed).
+timeout = 60
+# Why each test failed, and a report of every run, so a flake leaves evidence.
+addopts = ["-ra", "--junitxml=test-report.xml"]
