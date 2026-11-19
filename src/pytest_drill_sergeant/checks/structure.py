@@ -1,9 +1,9 @@
 """The structure family (DS1xx): how a test is put together."""
 
 import ast
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterator
 
-from pytest_drill_sergeant.checks.base import Check, Hit, TestFunction
+from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
 from pytest_drill_sergeant.findings import Level
 
 # pytest's helpers that fail the test: `pytest.fail`, and the context managers that
@@ -65,8 +65,8 @@ def _last_call(test: TestFunction) -> ast.Call | None:
     return value if isinstance(value, ast.Call) else None
 
 
-def _find_no_real_assertion(tests: Iterable[TestFunction]) -> Iterator[Hit]:
-    for test in tests:
+def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
+    for test in file.tests:
         if any(
             _is_real_assertion(node)
             for statement in test.node.body

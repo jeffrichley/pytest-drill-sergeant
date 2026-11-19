@@ -3,6 +3,7 @@
 import ast
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from pathlib import Path
 
 from pytest_drill_sergeant.findings import Level
 
@@ -22,6 +23,24 @@ class TestFunction:
 
     name: str
     node: FunctionNode
+
+
+@dataclass(frozen=True)
+class TestFile:
+    """One parsed test file: what every check is given.
+
+    Attributes:
+        path: The file, as it was given to the engine.
+        module: The file's syntax tree, for checks that need more than the tests
+            (imports, module-level code).
+        tests: The tests pytest would collect from it, in source order.
+    """
+
+    __test__ = False  # Not a pytest test class, despite the name.
+
+    path: Path
+    module: ast.Module
+    tests: tuple[TestFunction, ...]
 
 
 @dataclass(frozen=True)
@@ -54,7 +73,7 @@ class Check:
         explain: What the check flags and how to fix it, for `explain`.
         bad_example: A test the check flags.
         good_example: The same test, fixed.
-        find: Reports the hits among one file's tests.
+        find: Reports the hits in one test file.
     """
 
     code: str
@@ -65,4 +84,4 @@ class Check:
     explain: str
     bad_example: str
     good_example: str
-    find: Callable[[Iterable[TestFunction]], Iterable[Hit]]
+    find: Callable[[TestFile], Iterable[Hit]]
