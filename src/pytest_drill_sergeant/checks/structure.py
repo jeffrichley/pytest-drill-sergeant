@@ -1,6 +1,9 @@
 """The structure family (DS1xx): how a test is put together."""
 
 import ast
+import re
+import sys
+from collections import Counter
 from collections.abc import Iterator, Mapping
 from enum import Enum
 
@@ -12,7 +15,13 @@ from pytest_drill_sergeant.checks.ast_tools import (
     value_params,
     walk_test,
 )
-from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
+from pytest_drill_sergeant.checks.base import (
+    Check,
+    FunctionNode,
+    Hit,
+    TestFile,
+    TestFunction,
+)
 from pytest_drill_sergeant.findings import Level
 
 # pytest's helpers with a call form, by where the function to call sits: after the
@@ -518,4 +527,168 @@ LONG_TEST = Check(
         "    assert shop_with_fifty_items.checkout().total == 5000\n"
     ),
     find=_find_long_test,
+)
+
+
+def _test_file_for(name: str) -> str:
+    """A test file named for a class or function.
+
+    `TestLoanLimits` and `loan_limits` both give `test_loan_limits.py`.
+    """
+    words = re.findall(r"[A-Z]+(?![a-z])|[A-Z]?[a-z0-9]+", name.removeprefix("Test"))
+    return f"test_{'_'.join(w.lower() for w in words)}.py"
+
+
+def _span(node: ast.ClassDef | FunctionNode) -> tuple[int, int]:
+    """The lines a class or function takes, its decorators included."""
+    first = min([node.lineno, *(d.lineno for d in node.decorator_list)])
+    return first, node.end_lineno or node.lineno
+
+
+def _imported_name(func: ast.expr, names: Mapping[str, str]) -> str | None:
+    """The imported name a call goes through, as the test writes it.
+
+    That is the name itself after `from m import f` (`Duration` for
+    `Duration.total()`), or the module and its member after `import m`
+    (`m.f` for `m.f.g()`). `None` when no import reaches the call.
+    """
+    chain: list[str] = []
+    while isinstance(func, ast.Attribute):
+        chain.insert(0, func.attr)
+        func = func.value
+    if not isinstance(func, ast.Name) or func.id not in names:
+        return None
+    if "." in names[func.id] or not chain:
+        return func.id
+    return f"{func.id}.{chain[0]}"
+
+
+def _code_called(test: TestFunction) -> str | None:
+    """The first imported code a test calls: what it exercises.
+
+    Known from the file's imports, never from a name the test made up. pytest and
+    the standard library are the test's tools, not the code under test.
+    """
+    for statement in test.node.body:
+        for node in ast.walk(statement):
+            if not isinstance(node, ast.Call):
+                continue
+            name = _imported_name(node.func, test.imports)
+            if name is None:
+                continue
+            package = test.imports[name.split(".")[0]].split(".")[0]
+            if package != "pytest" and package not in sys.stdlib_module_names:
+                return name
+    return None
+
+
+def _module_level_plan(tests: list[TestFunction]) -> str:
+    """How to split the module-level tests: grouped by the imported code they call."""
+    spans = [_span(t.node) for t in tests]
+    what = (
+        f"its {_plural(len(tests), 'module-level test')} "
+        f"(lines {min(a for a, _ in spans)}-{max(b for _, b in spans)})"
+    )
+    groups = Counter(_code_called(t) for t in tests)
+    named = sorted(
+        ((code, n) for code, n in groups.items() if code is not None),
+        key=lambda item: (-item[1], item[0]),
+    )
+    if not named:
+        return f"{what} into files of one behaviour each"
+    moves = [
+        f"the {n} that call `{code}` to `{_test_file_for(code.split('.')[-1])}`"
+        if n > 1
+        else f"the one that calls `{code}` to `{_test_file_for(code.split('.')[-1])}`"
+        for code, n in named
+    ]
+    if None in groups:
+        moves.append(f"the other {groups[None]} by the behaviour they check")
+    return f"{what} by the code they call: {', '.join(moves)}"
+
+
+def _split_plan(file: TestFile) -> str:
+    """How to split a file: each test class to a file of its own, then the rest."""
+    parts: list[str] = []
+    for node in file.module.body:
+        if not isinstance(node, ast.ClassDef):
+            continue
+        count = sum(t.name.startswith(f"{node.name}::") for t in file.tests)
+        if count:
+            first, last = _span(node)
+            parts.append(
+                f"`{node.name}` (lines {first}-{last}, {_plural(count, 'test')}) to "
+                f"`{_test_file_for(node.name)}`"
+            )
+    loose = [t for t in file.tests if "::" not in t.name]
+    if loose:
+        parts.append(_module_level_plan(loose))
+    return "; ".join(parts)
+
+
+def _plural(count: int, noun: str) -> str:
+    return f"{count} {noun}" if count == 1 else f"{count} {noun}s"
+
+
+def _find_long_file(file: TestFile) -> Iterator[Hit]:
+    limit = file.thresholds.max_file_lines
+    if file.lines <= limit or not file.tests:
+        return
+    yield Hit.on_file(
+        file,
+        found=(
+            f"is {file.lines} lines long, more than the {limit} a test file may "
+            f"have; it holds {_plural(len(file.tests), 'test')}."
+        ),
+        fix=(
+            f"split it into files of at most {limit} lines: move "
+            f"{_split_plan(file)}. Move fixtures the new files share into "
+            "`conftest.py`."
+        ),
+    )
+
+
+LONG_FILE = Check(
+    code="DS106",
+    name="long-file",
+    default_level=Level.FAIL,
+    voice=(
+        "This file is a WAREHOUSE, recruit! Nobody can find anything in here!",
+        "Five hundred lines and still growing? Split this barracks up, maggot!",
+        "You've lost track of what's in this file, and so has everyone else!",
+    ),
+    why=(
+        "A test file this long can't be held in mind: tests in it get duplicated or "
+        "contradict each other because nobody, agent or person, can see what is "
+        "already there."
+    ),
+    explain=(
+        "Flags a test file longer than `drill_sergeant_max_file_lines` (500 by "
+        "default), counting every line, once per file, on line 1. A file with no "
+        "tests in it isn't flagged. The fix says how to split it: each test class "
+        "to a file of its own, named for the class, and the module-level tests into "
+        "files grouped by the behaviour they cover, with shared fixtures in "
+        "`conftest.py`."
+    ),
+    bad_example=(
+        "class TestLoans:\n"
+        + "".join(
+            f"    def test_loan_{n}(self, library):\n"
+            f"        assert library.lend({n}).days == {n}\n\n"
+            for n in range(100)
+        )
+        + "\n\nclass TestFines:\n"
+        + "".join(
+            f"    def test_fine_{n}(self, library):\n"
+            f"        assert library.fine(days={n}) == {n * 25}\n\n"
+            for n in range(100)
+        )
+    ),
+    good_example=(
+        "# test_loans.py holds TestLoans, test_fines.py holds TestFines.\n"
+        "class TestLoans:\n"
+        "    def test_loan_lasts_21_days(self, library):\n"
+        "        assert library.lend('978-0-13-468599-1').days == 21\n"
+    ),
+    find=_find_long_file,
 )

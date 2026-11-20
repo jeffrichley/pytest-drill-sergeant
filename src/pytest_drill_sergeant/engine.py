@@ -119,9 +119,16 @@ def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
     if config.mode is Level.OFF:
         return findings
     for path in paths:
-        module = ast.parse(path.read_bytes(), filename=str(path))
+        source = path.read_bytes()
+        module = ast.parse(source, filename=str(path))
         tests = tuple(_tests_in(module.body, module_imports(module)))
-        file = TestFile(path=path, module=module, tests=tests, thresholds=thresholds)
+        file = TestFile(
+            path=path,
+            module=module,
+            tests=tests,
+            lines=len(source.splitlines()),
+            thresholds=thresholds,
+        )
         ignored = _ignored_codes(path, config)
         for check in CHECKS:
             level = config.levels.get(check.code, check.default_level)

@@ -15,14 +15,15 @@ class Level(StrEnum):
 
 @dataclass(frozen=True)
 class Finding:
-    """One occurrence of a failure mode in a specific test, reported by a check.
+    """One occurrence of a failure mode in a specific test, or in a whole test file.
 
     Attributes:
         code: The check's permanent `DS###` code.
         name: The check's kebab-case name.
         file: The test file, as it was given to the engine.
         line: The line the finding is reported on.
-        test: The test's name, with its class path (`TestX::test_y`).
+        test: The test's name, with its class path (`TestX::test_y`), or empty for
+            a finding about the whole file (a file too long).
         level: The level the finding is reported at.
         found: What the check found, in plain words.
         why: Why that matters.

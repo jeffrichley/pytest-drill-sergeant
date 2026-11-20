@@ -58,6 +58,7 @@ class TestFile:
         module: The file's syntax tree, for checks that need more than the tests
             (imports, module-level code).
         tests: The tests pytest would collect from it, in source order.
+        lines: How many lines the file has.
         thresholds: The configured thresholds, for checks that measure.
     """
 
@@ -66,16 +67,19 @@ class TestFile:
     path: Path
     module: ast.Module
     tests: tuple[TestFunction, ...]
+    lines: int
     thresholds: Thresholds = Thresholds()
 
 
 @dataclass(frozen=True)
 class Hit:
-    """What a check reports about one test, before the engine makes it a finding.
+    """What a check reports, before the engine makes it a finding.
+
+    A hit is about one test, or about the whole file (a file too long).
 
     Attributes:
         line: The line to report.
-        test: The test's name.
+        test: The test's name, or empty for a hit about the whole file.
         found: What the check found, in plain words.
         fix: How to fix it, naming the specifics where the check knows them.
     """
@@ -97,6 +101,20 @@ class Hit:
             test=test.name,
             found=f"`{test.name}` {found}",
             fix=f"In `{test.name}`, line {line}: {fix}",
+        )
+
+    @classmethod
+    def on_file(cls, file: "TestFile", *, found: str, fix: str) -> "Hit":
+        """A hit about a whole file, reported on its first line.
+
+        `found` follows "`<file name>` " and `fix` follows "In `<file name>`: ",
+        the file standing where a test's name would.
+        """
+        return cls(
+            line=1,
+            test="",
+            found=f"`{file.path.name}` {found}",
+            fix=f"In `{file.path.name}`: {fix}",
         )
 
 

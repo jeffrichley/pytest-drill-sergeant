@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 199 findings in 53 files. FALL IN!
+DRILL SERGEANT INSPECTION: 202 findings in 56 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -485,6 +485,51 @@ suite/interleaved-act-assert/test_bad_two_behaviours.py
            name doesn't say which one broke, and a failing early step hides every later one.
     Fix:   In `test_log_cleared_then_add_again`, line 28: split the test into one test per act
            (lines 25, 28), each named for its behaviour, with any shared setup in a fixture.
+
+suite/long-file/test_bad_flat_module.py
+  suite/long-file/test_bad_flat_module.py:1: DS106 long-file [fail]
+    "This file is a WAREHOUSE, recruit! Nobody can find anything in here!"
+    Found: `test_bad_flat_module.py` is 509 lines long, more than the 500 a test file may have; it
+           holds 45 tests.
+    Why:   A test file this long can't be held in mind: tests in it get duplicated or contradict
+           each other because nobody, agent or person, can see what is already there.
+    Fix:   In `test_bad_flat_module.py`: split it into files of at most 500 lines: move its 45
+           module-level tests (lines 10-509) by the code they call: the 22 that call `Duration` to
+           `test_duration.py`, the 16 that call `parse_duration` to `test_parse_duration.py`, the 7
+           that call `format_duration` to `test_format_duration.py`. Move fixtures the new files
+           share into `conftest.py`.
+
+suite/long-file/test_bad_grown_by_classes.py
+  suite/long-file/test_bad_grown_by_classes.py:1: DS106 long-file [fail]
+    "You've lost track of what's in this file, and so has everyone else!"
+    Found: `test_bad_grown_by_classes.py` is 506 lines long, more than the 500 a test file may have;
+           it holds 58 tests.
+    Why:   A test file this long can't be held in mind: tests in it get duplicated or contradict
+           each other because nobody, agent or person, can see what is already there.
+    Fix:   In `test_bad_grown_by_classes.py`: split it into files of at most 500 lines: move
+           `TestCatalogSearch` (lines 28-78, 8 tests) to `test_catalog_search.py`; `TestLoans`
+           (lines 81-143, 8 tests) to `test_loans.py`; `TestFines` (lines 146-212, 8 tests) to
+           `test_fines.py`; `TestReservations` (lines 215-272, 6 tests) to `test_reservations.py`;
+           `TestMemberAccounts` (lines 275-323, 7 tests) to `test_member_accounts.py`;
+           `TestOpeningHours` (lines 326-356, 5 tests) to `test_opening_hours.py`; `TestReports`
+           (lines 359-394, 4 tests) to `test_reports.py`; `TestNotifications` (lines 397-440, 5
+           tests) to `test_notifications.py`; `TestInterLibraryLoans` (lines 443-506, 7 tests) to
+           `test_inter_library_loans.py`. Move fixtures the new files share into `conftest.py`.
+
+suite/long-file/test_bad_mixed_async_client.py
+  suite/long-file/test_bad_mixed_async_client.py:1: DS106 long-file [fail]
+    "Five hundred lines and still growing? Split this barracks up, maggot!"
+    Found: `test_bad_mixed_async_client.py` is 506 lines long, more than the 500 a test file may
+           have; it holds 61 tests.
+    Why:   A test file this long can't be held in mind: tests in it get duplicated or contradict
+           each other because nobody, agent or person, can see what is already there.
+    Fix:   In `test_bad_mixed_async_client.py`: split it into files of at most 500 lines: move
+           `TestCurrentConditions` (lines 38-111, 10 tests) to `test_current_conditions.py`;
+           `TestForecast` (lines 114-213, 12 tests) to `test_forecast.py`; its 39 module-level tests
+           (lines 216-506) by the code they call: the 5 that call `Celsius` to `test_celsius.py`,
+           the 5 that call `weather.Settings` to `test_settings.py`, the 2 that call `Fahrenheit` to
+           `test_fahrenheit.py`, the 2 that call `weather.Client` to `test_client.py`, the other 25
+           by the behaviour they check. Move fixtures the new files share into `conftest.py`.
 
 suite/long-test/test_bad_decorated_and_long.py
   suite/long-test/test_bad_decorated_and_long.py:8: DS105 long-test [fail] in test_invoice_rendering
@@ -1791,4 +1836,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Fix:   In `test_async_import`, line 30: replace the weak assertions on line 30 with exact
            checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-199 findings: 190 fail, 9 warn. Fix them, recruit. DISMISSED!
+202 findings: 193 fail, 9 warn. Fix them, recruit. DISMISSED!

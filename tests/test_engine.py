@@ -198,13 +198,21 @@ def test_typed_values_from_toml_or_pytest_resolve_too():
     assert config.category_markers == ("unit", "smoke")
 
 
-@pytest.mark.parametrize(("max_test_lines", "codes"), [(3, set()), (2, {"DS105"})])
-def test_max_test_lines_sets_how_long_a_test_may_be(tmp_path, max_test_lines, codes):
+@pytest.mark.parametrize(
+    ("threshold", "codes"),
+    [
+        ({"max_test_lines": 3}, set()),
+        ({"max_test_lines": 2}, {"DS105"}),
+        ({"max_file_lines": 3}, set()),
+        ({"max_file_lines": 2}, {"DS106"}),
+    ],
+)
+def test_thresholds_set_how_long_a_test_and_a_file_may_be(tmp_path, threshold, codes):
     path = tmp_path / "test_add.py"
     path.write_text(
         "def test_add(calc):\n    total = calc.add(1, 2)\n    assert total == 3\n"
     )
 
-    findings = analyze([path], Config(max_test_lines=max_test_lines))
+    findings = analyze([path], Config(**threshold))
 
     assert {f.code for f in findings} == codes

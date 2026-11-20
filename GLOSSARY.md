@@ -13,7 +13,7 @@ One deterministic detection of a single failure mode.
 _Avoid_: Rule, validator, detector, analyzer
 
 **Finding**:
-One occurrence of a failure mode in a specific test, reported by a check.
+One occurrence of a failure mode in a specific test, reported by a check. A test file too long is the one failure mode of a whole file: its finding names the file and no test.
 _Avoid_: Violation, error, issue, warning
 
 **Real assertion**:
