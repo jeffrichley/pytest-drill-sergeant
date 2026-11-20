@@ -408,3 +408,51 @@ def test_with_inline_waivers_off_the_cli_reports_the_waived_finding(
 
     assert result.exit_code == 1, result.output
     assert "0 waived" in result.output
+
+
+def test_check_caches_under_pytests_cache_dir_at_the_config_root(
+    cli, tmp_path, assertion_free_test
+):
+    (tmp_path / "pytest.ini").write_text("[pytest]\n")
+
+    cli("check", str(assertion_free_test))
+
+    assert (tmp_path / ".pytest_cache" / "d" / "drill-sergeant").is_dir()
+
+
+def test_check_follows_the_configs_cache_dir(cli, tmp_path, assertion_free_test):
+    (tmp_path / "pytest.ini").write_text("[pytest]\ncache_dir = build/cache\n")
+
+    cli("check", str(assertion_free_test))
+
+    assert (tmp_path / "build" / "cache" / "d" / "drill-sergeant").is_dir()
+
+
+def test_cache_dir_the_check_makes_is_ignored_by_git(
+    cli, tmp_path, assertion_free_test
+):
+    cli("check", str(assertion_free_test))
+
+    assert (tmp_path / ".pytest_cache" / ".gitignore").read_text().strip().endswith("*")
+
+
+def test_check_with_cache_off_writes_no_cache(cli, tmp_path, assertion_free_test):
+    (tmp_path / "pytest.ini").write_text("[pytest]\ndrill_sergeant_cache = false\n")
+
+    result = cli("check", str(assertion_free_test))
+
+    assert result.exit_code == 1
+    assert not (tmp_path / ".pytest_cache").exists()
+
+
+def test_warm_check_with_nothing_changed_writes_nothing(
+    cli, tmp_path, assertion_free_test, watch
+):
+    cli("check", str(assertion_free_test))
+    written = watch(tmp_path / ".pytest_cache")
+
+    result = cli("check", str(assertion_free_test))
+
+    assert result.exit_code == 1
+    assert (tmp_path / ".pytest_cache" / "d" / "drill-sergeant").is_dir()
+    assert written() == []

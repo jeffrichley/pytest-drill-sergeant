@@ -16,8 +16,8 @@ os.environ["COLUMNS"] = "100"
 
 pytest_plugins = ["pytester"]
 
-# The corpus is analysed by the engine, never run.
-collect_ignore = ["corpus"]
+# The corpus and the perf test's fixture suite are analysed by the engine, never run.
+collect_ignore = ["corpus", "perf/suite"]
 
 # Ends a generated test file so its tests carry a category marker (no DS901) while
 # every line above it, and so every finding's line, stays where it was.
@@ -198,3 +198,32 @@ def unmarked_test_at(tmp_path):
         return path
 
     return write
+
+
+@pytest.fixture
+def watch():
+    """Start watching a directory: return a function that lists the files under it
+    written since (made, replaced or changed), by inode and modification time."""
+
+    def files(directory: Path) -> dict[Path, tuple[int, int]]:
+        return {
+            p: (p.stat().st_ino, p.stat().st_mtime_ns)
+            for p in directory.rglob("*")
+            if p.is_file()
+        }
+
+    def start(directory: Path):
+        before = files(directory)
+
+        def written() -> list[Path]:
+            return sorted(p for p, s in files(directory).items() if before.get(p) != s)
+
+        return written
+
+    return start
+
+
+@pytest.fixture
+def cache_dir(tmp_path):
+    """A cache directory in `tmp_path`, `cache/`, not yet made."""
+    return tmp_path / "cache"

@@ -5,6 +5,10 @@ Installing the package turns it on; `-p no:drill_sergeant` or
 contributed collected test functions, and the production code, once, on the xdist
 controller only; the tests then run as always. The findings section after the test results shows them, and a
 run whose tests ran and passed exits 1 when any finding is at the `fail` level.
+
+Per-file results are cached under pytest's cache directory, shared with the CLI,
+unless `drill_sergeant_cache = false` or `-p no:cacheprovider`; the cache is the
+only file the plugin writes.
 """
 
 from collections.abc import Generator
@@ -13,6 +17,7 @@ from pathlib import Path
 import pytest
 from rich.console import Console
 
+from pytest_drill_sergeant.cache import CACHE_NAME
 from pytest_drill_sergeant.config import (
     OPTIONS,
     PREFIX,
@@ -132,7 +137,19 @@ class _Run:
             sorted(p.relative_to(here) if p.is_relative_to(here) else p for p in paths),
             self.resolved,
             self.production.files,
+            cache_dir=self._cache_dir(),
         )
+
+    def _cache_dir(self) -> Path | None:
+        """The cache's directory under pytest's cache directory, if pytest has one.
+
+        Under `-p no:cacheprovider` pytest has none, and the run is uncached.
+        """
+        cache = getattr(self.config, "cache", None)
+        if cache is None or not self.resolved.cache:
+            return None
+        directory: Path = cache.mkdir(CACHE_NAME)
+        return directory
 
     def pytest_collection_finish(self, session: pytest.Session) -> None:
         """Analyse the files that contributed collected tests."""
