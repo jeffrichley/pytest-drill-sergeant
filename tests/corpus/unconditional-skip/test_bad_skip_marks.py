@@ -28,3 +28,11 @@ def test_create_record_rejects_duplicates():
 @pytest.mark.skip("waiting on the new schema")  # expect: DS402
 def test_create_record_stores_the_email():
     assert create_record("ada", email="a@b.c").email == "a@b.c"
+
+
+@pytest.mark.skipif()  # expect: DS402
+def test_delete_record_twice_is_a_no_op():
+    record = create_record("ada")
+    delete_record(record)
+    delete_record(record)
+    assert record.deleted

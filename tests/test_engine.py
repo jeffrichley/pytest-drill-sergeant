@@ -432,3 +432,33 @@ def test_loop_finding_says_zero_times_only_when_the_loop_can_run_zero_times(
 
     assert finding.code == "DS107"
     assert ("zero times" in finding.found) is can_run_zero_times
+
+
+@pytest.mark.parametrize(
+    ("source", "where"),
+    [
+        (
+            "import pytest\n\nclass TestHtml:\n    def test_encode(self, ok):\n"
+            "        if not ok:\n            pytest.skip()\n",
+            "TestHtml::test_encode",
+        ),
+        (
+            "import pytest\n\nclass TestHtml:\n    class TestUtf8:\n"
+            "        def test_encode(self, ok):\n"
+            "            if not ok:\n                pytest.skip()\n",
+            "TestHtml::TestUtf8::test_encode",
+        ),
+        (
+            "import pytest\n\ndef test_encode(ok):\n    def check():\n"
+            "        if not ok:\n            pytest.skip()\n    check()\n",
+            "test_encode",
+        ),
+    ],
+    ids=["method", "nested-class", "function-in-a-test"],
+)
+def test_skip_call_finding_names_the_test_it_is_in(write_test_file, source, where):
+    path = write_test_file(source)
+
+    [finding] = analyze([path], Config(levels={"DS401": Level.FAIL}))
+
+    assert (finding.code, finding.test) == ("DS401", where)

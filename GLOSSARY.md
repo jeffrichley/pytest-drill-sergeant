@@ -37,7 +37,7 @@ The code under test, as opposed to the tests: the `.py` files under `drill_serge
 _Avoid_: Source (alone), app code, implementation
 
 **Unconditional skip**:
-A skip that happens on every run: `pytest.mark.skip`, `skipif` on a truthy constant, or `pytest.skip(...)` as a statement of a test's own body under no condition.
+A skip that happens on every run: `pytest.mark.skip`, `skipif()` with no condition or on a truthy constant, or `pytest.skip(...)` as a statement of a test's own body under no condition.
 _Avoid_: Disabled test
 
 **Setup**:

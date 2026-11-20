@@ -17,6 +17,11 @@ def test_create_record_in_a_forked_worker():
     assert create_record("ada", workers=2).id == 1
 
 
+@pytest.mark.skipif(condition=sys.platform == "darwin", reason="no fork on macOS")
+def test_create_record_keeps_the_email():
+    assert create_record("ada", email="a@b.c").email == "a@b.c"
+
+
 @pytest.mark.skipif(False, reason="kept for the Windows port, see #12")
 def test_create_record_trims_the_name():
     assert create_record(" ada ").name == "ada"

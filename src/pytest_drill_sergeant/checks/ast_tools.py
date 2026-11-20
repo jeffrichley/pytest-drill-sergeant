@@ -496,10 +496,16 @@ def pytestmark_entries(statement: ast.stmt) -> list[ast.expr]:
     return list(value.elts) if isinstance(value, ast.List | ast.Tuple) else [value]
 
 
-def is_always_skipped_by(expr: ast.expr, names: Mapping[str, str]) -> bool:
-    """Whether a mark skips whatever the run: `skip`, or `skipif` on a truthy constant.
+def skipif_conditions(call: ast.Call) -> list[ast.expr]:
+    """The conditions a `skipif` call gives: by position, or as `condition=`."""
+    condition = next((k.value for k in call.keywords if k.arg == "condition"), None)
+    return list(call.args) if condition is None else [condition]
 
-    A string condition is code pytest evaluates, so it is not a constant here.
+
+def is_always_skipped_by(expr: ast.expr, names: Mapping[str, str]) -> bool:
+    """Whether a mark skips whatever the run: `skip`, or `skipif` with no condition.
+
+    A `skipif` on truthy constants alone has no real condition either. A string condition is code pytest evaluates, so it is not a constant here.
     """
     mark = skip_mark(expr, names)
     if mark == SKIP:
@@ -507,12 +513,11 @@ def is_always_skipped_by(expr: ast.expr, names: Mapping[str, str]) -> bool:
     return (
         mark == SKIPIF
         and isinstance(expr, ast.Call)
-        and bool(expr.args)
         and all(
             isinstance(arg, ast.Constant)
             and not isinstance(arg.value, str)
             and bool(arg.value)
-            for arg in expr.args
+            for arg in skipif_conditions(expr)
         )
     )
 
@@ -555,8 +560,8 @@ def marks_on(test: TestFunction, module: ast.Module) -> Iterator[ast.expr]:
 def skips_unconditionally(test: TestFunction, module: ast.Module) -> bool:
     """Whether a test skips whatever the run, by a mark or its own body.
 
-    A mark pytest applies to it (`marks_on`) is `pytest.mark.skip` (or `skipif` on
-    a truthy constant), or one of its own body's statements, or of the module's, is
+    A mark pytest applies to it (`marks_on`) is `pytest.mark.skip` (or `skipif` with
+    no condition or on a truthy constant), or one of its own body's statements, or of the module's, is
     `pytest.skip(...)`.
     """
     names = module_imports(module)
@@ -572,32 +577,40 @@ def scoped_walk(
 ) -> Iterator[tuple[str, ast.AST, Mapping[str, str]]]:
     """Every node of a module with where it is and the imported names it sees.
 
-    Where it is names the innermost function or class around it, with the ones
+    Where it is names the innermost function or class around it, with the classes
     around that (`Parser.parse`, or `TestX::test_y` with `::`), or `<module>`. A
     `def` or `class` itself, its decorators included, is where its name is bound;
     what is inside it is in it, and a function's own imports and parameters change
-    the names its code sees, as `imports_seen_by` says.
+    the names its code sees, as `imports_seen_by` says. A function or class
+    defined inside a function is part of that function's code, as it is for
+    `imports_seen_by`, so it is not a place of its own.
     """
+
+    def enter(
+        node: ast.AST, where: str, names: Mapping[str, str]
+    ) -> Iterator[tuple[str, ast.AST, Mapping[str, str]]]:
+        yield where, node, names
+        if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
+            yield from visit(node, where, names)
+            return
+        inner = inside(where, node.name, separator)
+        inner_names = (
+            names if isinstance(node, ast.ClassDef) else imports_seen_by(node, names)
+        )
+        for decorator in node.decorator_list:
+            for sub in ast.walk(decorator):
+                yield where, sub, names
+        for part in node.body:
+            if isinstance(node, ast.ClassDef):
+                yield from enter(part, inner, inner_names)
+            else:
+                for sub in ast.walk(part):
+                    yield inner, sub, inner_names
 
     def visit(
         node: ast.AST, where: str, names: Mapping[str, str]
     ) -> Iterator[tuple[str, ast.AST, Mapping[str, str]]]:
         for child in ast.iter_child_nodes(node):
-            yield where, child, names
-            if isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
-                inner = inside(where, child.name, separator)
-                inner_names = (
-                    names
-                    if isinstance(child, ast.ClassDef)
-                    else imports_seen_by(child, names)
-                )
-                for decorator in child.decorator_list:
-                    for sub in ast.walk(decorator):
-                        yield where, sub, names
-                for part in child.body:
-                    yield inner, part, inner_names
-                    yield from visit(part, inner, inner_names)
-            else:
-                yield from visit(child, where, names)
+            yield from enter(child, where, names)
 
     yield from visit(module, MODULE, module_imports(module))
