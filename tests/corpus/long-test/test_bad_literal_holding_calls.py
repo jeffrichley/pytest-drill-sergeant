@@ -1,8 +1,7 @@
 """Literals holding a call are code, not data, so they still count line by line: an
 async test in a class whose request payload builds each item with a call (53 lines
-of code), a test whose expected text is an f-string that calls (53), and a test
-whose assertions are comparisons in one tuple (55): a comparison, `and`, `or`, `x if
-y else z`, `:=` or `yield` is code too. Analysed, never run."""
+of code), and a test whose expected text is an f-string that calls (53), one of
+its placeholders with a format spec. Analysed, never run."""
 
 import pytest
 
@@ -121,60 +120,3 @@ def test_card_lays_out_a_node(node, render_card):  # expect: DS105
     """
 
     assert render_card(node) == expected
-
-
-def test_report_totals(report):  # expect: DS105
-    assert all(
-        (
-            report.total_00 == 0,
-            report.total_01 == 10,
-            report.total_02 == 20,
-            report.total_03 == 30,
-            report.total_04 == 40,
-            report.total_05 == 50,
-            report.total_06 == 60,
-            report.total_07 == 70,
-            report.total_08 == 80,
-            report.total_09 == 90,
-            report.total_10 == 100,
-            report.total_11 == 110,
-            report.total_12 == 120,
-            report.total_13 == 130,
-            report.total_14 == 140,
-            report.total_15 == 150,
-            report.total_16 == 160,
-            report.total_17 == 170,
-            report.total_18 == 180,
-            report.total_19 == 190,
-            report.total_20 == 200,
-            report.total_21 == 210,
-            report.total_22 == 220,
-            report.total_23 == 230,
-            report.total_24 == 240,
-            report.total_25 == 250,
-            report.total_26 == 260,
-            report.total_27 == 270,
-            report.total_28 == 280,
-            report.total_29 == 290,
-            report.total_30 == 300,
-            report.total_31 == 310,
-            report.total_32 == 320,
-            report.total_33 == 330,
-            report.total_34 == 340,
-            report.total_35 == 350,
-            report.total_36 == 360,
-            report.total_37 == 370,
-            report.total_38 == 380,
-            report.total_39 == 390,
-            report.total_40 == 400,
-            report.total_41 == 410,
-            report.total_42 == 420,
-            report.total_43 == 430,
-            report.total_44 == 440,
-            report.total_45 == 450,
-            report.total_46 == 460,
-            report.total_47 == 470,
-            report.total_48 == 480,
-            report.total_49 == 490,
-        )
-    )

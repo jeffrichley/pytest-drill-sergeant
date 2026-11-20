@@ -499,9 +499,7 @@ INTERLEAVED_ACT_ASSERT = Check(
 
 # Literals that are data when they hold no code: a multi-line one counts as one line.
 _DATA_LITERALS = (ast.List, ast.Tuple, ast.Dict, ast.Set, ast.JoinedStr)
-# What makes a literal code rather than data: a call, lambda, comprehension or
-# `await`, and the logic an assertion is made of (a comparison, `and`, `or`,
-# `x if y else z`, `:=`, `yield`).
+# What makes a literal code rather than data.
 _CODE_IN_LITERAL = (
     ast.Call,
     ast.Lambda,
@@ -510,12 +508,6 @@ _CODE_IN_LITERAL = (
     ast.DictComp,
     ast.GeneratorExp,
     ast.Await,
-    ast.Compare,
-    ast.BoolOp,
-    ast.IfExp,
-    ast.NamedExpr,
-    ast.Yield,
-    ast.YieldFrom,
 )
 
 
@@ -622,9 +614,8 @@ LONG_TEST = Check(
         "line to its last line. Blank lines, comment-only lines and its docstring "
         "don't count, so AAA comments and space between sections never lengthen a "
         "test. A multi-line list, tuple, dict, set, string or f-string literal "
-        "holding no call, lambda, comprehension, `await`, comparison, `and`, "
-        "`or`, `x if y else z`, `:=` or `yield` is data and counts as one line; "
-        "one holding any of them counts line by line. Its decorators "
+        "holding no call, lambda, comprehension or `await` is data and counts as "
+        "one line; one holding any of them counts line by line. Its decorators "
         "don't count, so a long `parametrize` table is fine. Move setup into "
         "fixtures and split the test into one test per behaviour. It warns rather "
         "than fails: a long test still works, it only costs later."
