@@ -83,11 +83,14 @@ SKILL_DESCRIPTION = (
 # Where the agents that read AGENTS.md, or CLAUDE.md, look for skills.
 SKILL_DIRS = {"AGENTS.md": ".agents/skills", "CLAUDE.md": ".claude/skills"}
 
+# The block's markers: its end, and its start as any version of drill-sergeant
+# wrote it, to find and replace.
 _END = "<!-- /drill-sergeant agent guide -->"
-_START = re.compile(r"<!-- drill-sergeant agent guide v\S+ -->")
+_START_OF_ANY_VERSION = re.compile(r"<!-- drill-sergeant agent guide v\S+ -->")
 
 
-def _start() -> str:
+def _start_of_this_version() -> str:
+    """The block's start marker as this version of drill-sergeant writes it."""
     return f"<!-- drill-sergeant agent guide v{version('pytest-drill-sergeant')} -->"
 
 
@@ -101,7 +104,7 @@ def skill() -> str:
 def block(skill_path: str) -> str:
     """The version-marked block for AGENTS.md or CLAUDE.md that points at the skill."""
     return (
-        f"{_start()}\n"
+        f"{_start_of_this_version()}\n"
         "## Tests: drill-sergeant\n\n"
         "This repo checks its tests with drill-sergeant: every pytest run fails on "
         "findings about how the tests are written. Before you write or change a test, "
@@ -118,7 +121,7 @@ def _with_block(text: str, new_block: str) -> str | None:
 
     `None` when the text has the block's start marker but no end marker after it.
     """
-    start = _START.search(text)
+    start = _START_OF_ANY_VERSION.search(text)
     if start is None:
         return f"{text.rstrip()}\n\n{new_block}\n" if text.strip() else f"{new_block}\n"
     end = text.find(_END, start.end())
