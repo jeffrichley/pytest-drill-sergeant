@@ -335,16 +335,33 @@ def _weak_subjects(test: ast.expr) -> list[ast.expr] | None:
     return [subject] if weak else None
 
 
-def _other_statements(test: TestFunction, known: list[ast.stmt]) -> list[ast.stmt]:
-    """The test's statements, at any depth, other than `known` ones.
+# The statements that bind or unbind, so may change what code reads.
+_ASSIGNING = ast.Assign | ast.AugAssign | ast.AnnAssign | ast.Delete
 
-    Any of them might change what the code under test returns: a call, an
-    attribute set, an augmented assignment.
+
+def _may_change_state(statement: ast.stmt) -> bool:
+    """Whether a statement may change what the code under test returns.
+
+    It may when it assigns (`cart.discount = 10`, `counter.n += 1`) or calls or
+    awaits anything, an assertion's own call included.
+    """
+    return isinstance(statement, _ASSIGNING) or any(
+        isinstance(node, ast.Call | ast.Await) for node in ast.walk(statement)
+    )
+
+
+def _state_changes(test: TestFunction, known: list[ast.stmt]) -> list[ast.stmt]:
+    """The statements that may change what the code under test returns.
+
+    Those are the test's statements, at any depth, other than `known` ones, that
+    assign, call or await (`_may_change_state`).
     """
     return [
         node
         for node in walk_test(test)
-        if isinstance(node, ast.stmt) and not any(node is k for k in known)
+        if isinstance(node, ast.stmt)
+        and not any(node is k for k in known)
+        and _may_change_state(node)
     ]
 
 
@@ -359,7 +376,7 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
     }
     verdicts = []
     asserts = [node for node in walk_test(test) if isinstance(node, ast.Assert)]
-    others = _other_statements(test, [*asserts, *bindings.values()])
+    others = _state_changes(test, list(bindings.values()))
     for node in sorted(asserts, key=lambda n: (n.lineno, n.col_offset)):
         test_expr = node.test
         if isinstance(test_expr, ast.Constant) or (
@@ -369,8 +386,8 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
             kind = _Kind.IGNORED if is_always_true(test_expr) else _Kind.STRONG
             verdicts.append(_Verdict(node, kind))
             continue
-        # A value read from the code stands in for its name only if nothing else
-        # ran between the binding and this assert to change what it reads.
+        # A value read from the code stands in for its name only if nothing that
+        # may change state ran between the binding and this assert.
         settled = {
             name: value
             for name, value in values.items()
@@ -574,8 +591,10 @@ MIRROR_ASSERTION = Check(
     explain=(
         "Flags an `==` that makes the same call on both sides, directly "
         '(`assert slugify("Hello World") == slugify("Hello World")`) or through names '
-        "the test bound to it (`expected = gross_price(100, 20)`) with nothing else "
-        "called in between. A constructor on "
+        "the test bound to it (`expected = gross_price(100, 20)`) with nothing in "
+        "between that calls or assigns anything. A value read, changed by a call or "
+        "an assignment, then read again is a test that it changed or stayed, not a "
+        "mirror. A constructor on "
         "both sides (`Point(1, 2) == Point(1, 2)`) tests `__eq__` and is fine, and so "
         "is the same function called with different arguments. Names don't matter: "
         "two bindings of the same call compared (`first == second`) are flagged just "

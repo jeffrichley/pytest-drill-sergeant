@@ -2,7 +2,7 @@
 Analysed, never run."""
 
 import pytest
-from shop import gross_price, slugify
+from shop import gross_price, slugify, snapshot
 
 pytestmark = pytest.mark.unit
 
@@ -21,3 +21,9 @@ def test_slug_result_matches():
 async def test_async_gross_price(client):
     actual = await client.gross_price(100, 20)
     assert actual == await client.gross_price(100, 20)  # expect: DS203
+
+
+def test_snapshot_read_twice_around_a_bare_read(cart):
+    before = snapshot(cart)
+    cart.items
+    assert snapshot(cart) == before  # expect: DS203

@@ -3,7 +3,7 @@ assertion, or a call compared to a value worked out by hand.
 Analysed, never run."""
 
 import pytest
-from shop import Counter, gross_price
+from shop import Counter, gross_price, snapshot
 
 pytestmark = pytest.mark.unit
 
@@ -43,3 +43,9 @@ def test_result_passed_to_code_before_the_check():
 def test_expected_worked_out_by_hand():
     expected = 120
     assert gross_price(100, 20) == expected
+
+
+def test_snapshot_unchanged_by_a_checked_call(cart):
+    before = snapshot(cart)
+    assert cart.apply("SAVE10") is False
+    assert snapshot(cart) == before
