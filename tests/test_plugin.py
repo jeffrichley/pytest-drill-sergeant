@@ -67,12 +67,15 @@ def test_warn_mode_shows_findings_and_leaves_the_exit_code(drill, pytester, lazy
 
 
 def test_off_mode_turns_the_plugin_off(drill, pytester, lazy_test):
+    """Nothing of drill-sergeant's is printed: no findings section, and no note
+    that the checks reading production code were skipped."""
     pytester.makeini("[pytest]\ndrill_sergeant_mode = off\n")
 
     result = drill()
 
     assert result.ret == pytest.ExitCode.OK
     assert SECTION not in result.stdout.str()
+    assert "drill-sergeant:" not in result.stdout.str()
 
 
 def test_disabling_the_plugin_turns_it_off(drill, lazy_test):
