@@ -5,6 +5,7 @@ No pytest in sight.
 
 import ast
 from collections.abc import Iterable, Iterator, Mapping
+from dataclasses import dataclass
 from fnmatch import fnmatch
 from pathlib import Path
 
@@ -25,8 +26,14 @@ from pytest_drill_sergeant.checks.ast_tools import (
 from pytest_drill_sergeant.checks.base import FunctionNode, Thresholds
 from pytest_drill_sergeant.config import Config
 from pytest_drill_sergeant.findings import Finding, Level
+from pytest_drill_sergeant.waivers import (
+    FileWaivers,
+    WaivedFinding,
+    apply,
+    parse,
+)
 
-__all__ = ["Config", "analyze"]
+__all__ = ["Config", "Inspection", "analyze", "inspect"]
 
 
 def _is_fixture(node: FunctionNode, names: Mapping[str, str]) -> bool:
@@ -136,21 +143,49 @@ def _levelled_checks(path: Path, config: Config) -> Iterator[tuple[Check, Level]
         yield check, Level.WARN if config.mode is Level.WARN else level
 
 
+@dataclass(frozen=True)
+class Inspection:
+    """What one run over the test files and production code found.
+
+    Attributes:
+        findings: The findings that stand, ordered by file, line and code.
+        waived: The findings an inline waiver silenced, in the same order.
+    """
+
+    findings: list[Finding]
+    waived: list[WaivedFinding]
+
+
 def analyze(
     paths: Iterable[Path], config: Config, sources: Iterable[Path] = ()
 ) -> list[Finding]:
-    """Run every check over the test files and production code; return the findings.
+    """Run every check over the test files and production code; return what stands.
+
+    The same as `inspect(paths, config, sources).findings`.
+    """
+    return inspect(paths, config, sources).findings
+
+
+def inspect(
+    paths: Iterable[Path], config: Config, sources: Iterable[Path] = ()
+) -> Inspection:
+    """Run every check over the test files and production code, then apply waivers.
+
+    The waivers are the files' inline waivers.
 
     Args:
         paths: The test files to analyse.
         config: The resolved configuration.
         sources: The production files to analyse, read in full, by the checks
-            that read production code (DS403) and no others.
+            that read production code (DS403) and no others. A waiver there
+            silences a finding on its own line.
 
     Returns:
-        The findings, ordered by file, line and code. Checks configured `off`
-        report none, nor do checks a per-file ignore names for a file, and none run
-        in `off` mode; in `warn` mode every finding is reported as `warn`.
+        The findings that stand and the waived ones, each ordered by file, line
+        and code. Checks configured `off` report none, nor do checks a per-file
+        ignore names for a file, and none run in `off` mode; in `warn` mode every
+        finding is reported as `warn`. With inline waivers off, no finding is
+        waived and malformed waivers (DS001) aren't reported.
     """
     thresholds = Thresholds(
         max_file_lines=config.max_file_lines,
@@ -158,24 +193,43 @@ def analyze(
         max_mock_setup=config.max_mock_setup,
     )
     findings: list[Finding] = []
+    files: dict[Path, FileWaivers] = {}
     if config.mode is Level.OFF:
-        return findings
+        return Inspection(findings=findings, waived=[])
     for path in paths:
-        module = ast.parse(path.read_bytes(), filename=str(path))
+        source = path.read_bytes()
+        module = ast.parse(source, filename=str(path))
         tests = tuple(_tests_in(module.body, module_imports(module)))
-        file = TestFile(path=path, module=module, tests=tests, thresholds=thresholds)
+        waivers = parse(source) if config.inline_waivers else ()
+        files[path] = FileWaivers(
+            waivers=waivers, def_lines={t.name: t.node.lineno for t in tests}
+        )
+        file = TestFile(
+            path=path,
+            module=module,
+            tests=tests,
+            waivers=waivers,
+            thresholds=thresholds,
+        )
         for check, level in _levelled_checks(path, config):
             findings.extend(
                 _finding(check, level, path, hit) for hit in check.find(file)
             )
     for path in sources:
-        source = SourceFile(
-            path=path, module=ast.parse(path.read_bytes(), filename=str(path))
+        source = path.read_bytes()
+        production = SourceFile(path=path, module=ast.parse(source, filename=str(path)))
+        files.setdefault(
+            path,
+            FileWaivers(
+                waivers=parse(source) if config.inline_waivers else (), def_lines={}
+            ),
         )
         for check, level in _levelled_checks(path, config):
             if check.find_in_source is not None:
                 findings.extend(
                     _finding(check, level, path, hit)
-                    for hit in check.find_in_source(source)
+                    for hit in check.find_in_source(production)
                 )
-    return sorted(findings, key=lambda f: (f.file.as_posix(), f.line, f.code))
+    findings.sort(key=lambda f: (f.file.as_posix(), f.line, f.code))
+    kept, waived = apply(findings, files)
+    return Inspection(findings=kept, waived=waived)

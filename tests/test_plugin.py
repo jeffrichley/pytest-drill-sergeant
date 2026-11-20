@@ -276,3 +276,29 @@ def test_findings_section_wraps_to_pytests_terminal_width(
     continuations, following = wrapped(section, "Found:")
     assert continuations
     assert following.lstrip().startswith("Why:")
+
+
+def test_waived_finding_leaves_the_run_passing_and_is_tallied(drill, pytester):
+    pytester.makepyfile(
+        test_waived="def test_waived():  # drill: waive DS101 -- smoke test\n"
+        "    print('hi')\n"
+    )
+
+    result = drill()
+
+    assert result.ret == pytest.ExitCode.OK
+    assert "1 waived" in result.stdout.str()
+
+
+def test_reasonless_waiver_fails_the_run_and_waives_nothing(drill, pytester):
+    pytester.makepyfile(
+        test_waived="def test_waived():  # drill: waive DS101\n    print('hi')\n"
+    )
+
+    result = drill()
+
+    result.assert_outcomes(passed=1)
+    assert result.ret == pytest.ExitCode.TESTS_FAILED
+    out = result.stdout.str()
+    assert "test_waived.py:1: DS001" in out
+    assert "test_waived.py:1: DS101" in out

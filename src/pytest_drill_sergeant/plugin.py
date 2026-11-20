@@ -22,8 +22,8 @@ from pytest_drill_sergeant.config import (
     refusal,
     resolve,
 )
-from pytest_drill_sergeant.engine import analyze
-from pytest_drill_sergeant.findings import Finding, Level
+from pytest_drill_sergeant.engine import Inspection, inspect
+from pytest_drill_sergeant.findings import Level
 from pytest_drill_sergeant.production import production_code
 from pytest_drill_sergeant.render import render
 
@@ -111,19 +111,19 @@ class _Worker:
 
 
 class _Run:
-    """One drill-sergeant run: the files analysed, the findings, the report."""
+    """One drill-sergeant run: the files analysed, what they hold, the report."""
 
     def __init__(self, config: pytest.Config, resolved: Config) -> None:
         self.config = config
         self.resolved = resolved
-        self.findings: list[Finding] | None = None
+        self.inspection: Inspection | None = None
         self.production = production_code(resolved, config.invocation_params.dir)
 
     def _analyze(self, paths: set[Path]) -> None:
-        if self.findings is not None:
+        if self.inspection is not None:
             return
         here = self.config.invocation_params.dir
-        self.findings = analyze(
+        self.inspection = inspect(
             sorted(p.relative_to(here) if p.is_relative_to(here) else p for p in paths),
             self.resolved,
             self.production.files,
@@ -151,7 +151,7 @@ class _Run:
     ) -> Generator[None]:
         """Show the findings section after the test results and their summary."""
         result = yield
-        if self.findings is None:
+        if self.inspection is None:
             return result
         terminalreporter.write_sep("=", "drill sergeant")
         writer = self.config.get_terminal_writer()
@@ -165,12 +165,15 @@ class _Run:
             color_system="standard" if writer.hasmarkup else None,
             highlight=False,
         )
+        if self.production.note:
+            # One line, as it stands, however narrow the terminal.
+            console.print(self.production.note, soft_wrap=True, markup=False)
         console.print(
             render(
-                self.findings,
+                self.inspection.findings,
+                waived=self.inspection.waived,
                 voice=self.resolved.voice,
                 max_findings=self.resolved.max_findings,
-                note=self.production.note,
             ),
             crop=False,
         )
@@ -181,6 +184,7 @@ class _Run:
         if (
             session.exitstatus == pytest.ExitCode.OK
             and not self.config.option.collectonly
-            and any(f.level is Level.FAIL for f in self.findings or ())
+            and self.inspection is not None
+            and any(f.level is Level.FAIL for f in self.inspection.findings)
         ):
             session.exitstatus = pytest.ExitCode.TESTS_FAILED

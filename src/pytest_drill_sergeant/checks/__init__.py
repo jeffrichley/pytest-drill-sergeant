@@ -28,14 +28,21 @@ from pytest_drill_sergeant.checks.flakiness import (
     UNSEEDED_RANDOM,
     WALL_CLOCK_READ,
 )
+from pytest_drill_sergeant.checks.mocking import (
+    MOCK_ONLY_ASSERTION,
+    MOCK_WITHOUT_SPEC,
+    OVERGROWN_MOCK_SETUP,
+)
 from pytest_drill_sergeant.checks.structure import (
     ASSERT_BEFORE_ACT,
     INTERLEAVED_ACT_ASSERT,
     NO_ACTION_UNDER_TEST,
     NO_REAL_ASSERTION,
 )
+from pytest_drill_sergeant.checks.waivers import MALFORMED_WAIVER
 
 CHECKS: tuple[Check, ...] = (
+    MALFORMED_WAIVER,
     NO_REAL_ASSERTION,
     NO_ACTION_UNDER_TEST,
     ASSERT_BEFORE_ACT,
@@ -43,6 +50,9 @@ CHECKS: tuple[Check, ...] = (
     WEAK_ASSERTION,
     TAUTOLOGICAL_ASSERTION,
     MIRROR_ASSERTION,
+    MOCK_ONLY_ASSERTION,
+    MOCK_WITHOUT_SPEC,
+    OVERGROWN_MOCK_SETUP,
     SKIP_WITHOUT_REASON,
     UNCONDITIONAL_SKIP,
     TEST_SPECIAL_CASING,
