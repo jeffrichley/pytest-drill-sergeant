@@ -2,6 +2,7 @@
 
 import ast
 from collections.abc import Iterable, Iterator, Mapping
+from dataclasses import dataclass
 from fnmatch import fnmatch
 from pathlib import Path
 
@@ -16,8 +17,14 @@ from pytest_drill_sergeant.checks.base import FileSummary, FunctionNode, Thresho
 from pytest_drill_sergeant.checks.summary import summarize
 from pytest_drill_sergeant.config import Config
 from pytest_drill_sergeant.findings import Finding, Level
+from pytest_drill_sergeant.waivers import (
+    FileWaivers,
+    WaivedFinding,
+    apply,
+    parse,
+)
 
-__all__ = ["Config", "analyze"]
+__all__ = ["Config", "Inspection", "analyze", "inspect"]
 
 
 def _is_fixture(node: FunctionNode, names: Mapping[str, str]) -> bool:
@@ -99,6 +106,19 @@ def _ignored_codes(path: Path, config: Config) -> frozenset[str]:
     return frozenset(ignored)
 
 
+@dataclass(frozen=True)
+class Inspection:
+    """What one run over the test files found.
+
+    Attributes:
+        findings: The findings that stand, ordered by file, line and code.
+        waived: The findings an inline waiver silenced, in the same order.
+    """
+
+    findings: list[Finding]
+    waived: list[WaivedFinding]
+
+
 def _thresholds(config: Config) -> Thresholds:
     return Thresholds(
         max_file_lines=config.max_file_lines,
@@ -131,12 +151,20 @@ def _finding(check: Check, path: Path, hit: Hit, level: Level) -> Finding:
     )
 
 
-def _analyze_file(path: Path, config: Config) -> tuple[list[Finding], FileSummary]:
-    """Per-file analysis: one file's own findings, and its per-file summary."""
-    module = ast.parse(path.read_bytes(), filename=str(path))
+def _analyze_file(
+    path: Path, config: Config
+) -> tuple[list[Finding], FileSummary, FileWaivers]:
+    """Per-file analysis: a file's findings, per-file summary and inline waivers."""
+    source = path.read_bytes()
+    module = ast.parse(source, filename=str(path))
     tests = tuple(_tests_in(module.body, module_imports(module)))
+    waivers = parse(source) if config.inline_waivers else ()
     file = TestFile(
-        path=path, module=module, tests=tests, thresholds=_thresholds(config)
+        path=path,
+        module=module,
+        tests=tests,
+        waivers=waivers,
+        thresholds=_thresholds(config),
     )
     ignored = _ignored_codes(path, config)
     findings = [
@@ -145,7 +173,10 @@ def _analyze_file(path: Path, config: Config) -> tuple[list[Finding], FileSummar
         if (level := _level(check, ignored, config)) is not Level.OFF
         for hit in check.find(file)
     ]
-    return findings, summarize(file)
+    file_waivers = FileWaivers(
+        waivers=waivers, def_lines={t.name: t.node.lineno for t in tests}
+    )
+    return findings, summarize(file), file_waivers
 
 
 def _compare_files(
@@ -169,7 +200,15 @@ def _compare_files(
 
 
 def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
-    """Run every check over the test files and return the findings.
+    """Run every check over the test files and return the findings that stand.
+
+    The same as `inspect(paths, config).findings`.
+    """
+    return inspect(paths, config).findings
+
+
+def inspect(paths: Iterable[Path], config: Config) -> Inspection:
+    """Run every check over the test files, then apply their inline waivers.
 
     Each file is analysed on its own, for its findings and its per-file summary;
     then the summaries, never the files, are compared across files.
@@ -179,17 +218,22 @@ def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
         config: The resolved configuration.
 
     Returns:
-        The findings, ordered by file, line and code. Checks configured `off`
-        report none, nor do checks a per-file ignore names for a file, and none run
-        in `off` mode; in `warn` mode every finding is reported as `warn`.
+        The findings that stand and the waived ones, each ordered by file, line
+        and code. Checks configured `off` report none, nor do checks a per-file
+        ignore names for a file, and none run in `off` mode; in `warn` mode every
+        finding is reported as `warn`. With inline waivers off, no finding is
+        waived and malformed waivers (DS001) aren't reported.
     """
-    if config.mode is Level.OFF:
-        return []
     findings: list[Finding] = []
+    files: dict[Path, FileWaivers] = {}
+    if config.mode is Level.OFF:
+        return Inspection(findings=findings, waived=[])
     summaries: list[tuple[Path, FileSummary]] = []
     for path in sorted(paths, key=lambda p: p.as_posix()):
-        file_findings, summary = _analyze_file(path, config)
+        file_findings, summary, files[path] = _analyze_file(path, config)
         findings.extend(file_findings)
         summaries.append((path, summary))
     findings.extend(_compare_files(summaries, config))
-    return sorted(findings, key=lambda f: (f.file.as_posix(), f.line, f.code))
+    findings.sort(key=lambda f: (f.file.as_posix(), f.line, f.code))
+    kept, waived = apply(findings, files)
+    return Inspection(findings=kept, waived=waived)

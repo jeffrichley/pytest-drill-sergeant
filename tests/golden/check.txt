@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 202 findings in 55 files. FALL IN!
+DRILL SERGEANT INSPECTION: 245 findings in 67 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -58,6 +58,15 @@ suite/assert-before-act/test_bad_cleanup_after_the_check.py
            or a `finally`.
 
 suite/assert-before-act/test_bad_inside_a_patch.py
+  suite/assert-before-act/test_bad_inside_a_patch.py:8: DS302 mock-without-spec [warn] in test_refresh_token
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_refresh_token` makes a mock with no spec: `mock.patch('time.time',
+           return_value=0)`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_refresh_token`, line 8: in `mock.patch('time.time', return_value=0)`, pass
+           `autospec=True`, so the mock it puts in place has the real target's attributes and
+           signature.
   suite/assert-before-act/test_bad_inside_a_patch.py:10: DS103 assert-before-act [fail] in test_refresh_token
     "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
     Found: `test_refresh_token` runs `session.refresh()` on line 10 after its last assertion (line
@@ -68,6 +77,13 @@ suite/assert-before-act/test_bad_inside_a_patch.py
     Fix:   In `test_refresh_token`, line 10: assert on what the act on line 10 returns or changes,
            after it runs; keep an assertion before it only as a guard on the starting state. If it
            is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
+  suite/assert-before-act/test_bad_inside_a_patch.py:14: DS302 mock-without-spec [warn] in test_retry
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_retry` makes a mock with no spec: `mock.patch('time.sleep')`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_retry`, line 14: in `mock.patch('time.sleep')`, pass `autospec=True`, so the
+           mock it puts in place has the real target's attributes and signature.
   suite/assert-before-act/test_bad_inside_a_patch.py:16: DS103 assert-before-act [fail] in test_retry
     "Asserting before the action is inspecting your rifle after the battle!"
     Found: `test_retry` runs `fetcher.fetch('/a')` on line 16 after its last assertion (line 15), so
@@ -432,15 +448,15 @@ suite/copy-paste-setup/test_bad_after_a_different_start.py
            (line 37).
 
 suite/copy-paste-setup/test_bad_overlapping_blocks.py
-  suite/copy-paste-setup/test_bad_overlapping_blocks.py:11: DS501 copy-paste-setup [fail] in test_provider_reads_the_issue_title
+  suite/copy-paste-setup/test_bad_overlapping_blocks.py:9: DS501 copy-paste-setup [fail] in test_provider_reads_the_issue_title
     "Copy, paste, copy, paste! That's not engineering, that's a PHOTOCOPIER, maggot!"
-    Found: `test_provider_reads_the_issue_title` shares 5 setup statements (lines 11-15) with 2
-           other tests, alike in every name and literal.
+    Found: `test_provider_reads_the_issue_title` shares 5 setup statements (lines 9-13) with 2 other
+           tests, alike in every name and literal.
     Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
            and it buries what makes each test different.
-    Fix:   In `test_provider_reads_the_issue_title`, line 11: move lines 11-15 into a fixture, e.g.
-           `provider`, and request it here and in `test_provider_reads_the_issue_number` (line 20),
-           `test_provider_asks_the_repo_once` (line 29).
+    Fix:   In `test_provider_reads_the_issue_title`, line 9: move lines 9-13 into a fixture, e.g.
+           `provider`, and request it here and in `test_provider_reads_the_issue_number` (line 18),
+           `test_provider_counts_the_issues` (line 27).
 
 suite/copy-paste-setup/test_bad_same_file.py
   suite/copy-paste-setup/test_bad_same_file.py:8: DS501 copy-paste-setup [fail] in test_order_total_sums_the_lines
@@ -493,6 +509,15 @@ suite/interleaved-act-assert/test_bad_async_steps.py
            each named for its behaviour, with any shared setup in a fixture.
 
 suite/interleaved-act-assert/test_bad_blocks.py
+  suite/interleaved-act-assert/test_bad_blocks.py:8: DS302 mock-without-spec [warn] in test_counter_under_patch
+    "The real interface changed and your mock never noticed! SPEC IT, maggot!"
+    Found: `test_counter_under_patch` makes a mock with no spec: `mock.patch('time.time',
+           return_value=0)`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_counter_under_patch`, line 8: in `mock.patch('time.time', return_value=0)`, pass
+           `autospec=True`, so the mock it puts in place has the real target's attributes and
+           signature.
   suite/interleaved-act-assert/test_bad_blocks.py:11: DS104 interleaved-act-assert [warn] in test_counter_under_patch
     "When this goes red, which act failed? NOBODY KNOWS! Split it up!"
     Found: `test_counter_under_patch` acts and asserts 2 times: after the assertions on the act at
@@ -553,6 +578,85 @@ suite/interleaved-act-assert/test_bad_two_behaviours.py
            name doesn't say which one broke, and a failing early step hides every later one.
     Fix:   In `test_log_cleared_then_add_again`, line 28: split the test into one test per act
            (lines 25, 28), each named for its behaviour, with any shared setup in a fixture.
+
+suite/malformed-waiver/test_bad_no_code.py
+  suite/malformed-waiver/test_bad_no_code.py:6: DS001 malformed-waiver [fail] in test_adds
+    "You want out of an inspection? Name the check and SAY WHY, maggot!"
+    Found: The waiver on line 6 gives no check code, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   In `test_adds`, line 6: write it as `# drill: waive DS### -- <reason>` once a human has
+           agreed to waive this finding, or remove it and fix the finding.
+  suite/malformed-waiver/test_bad_no_code.py:10: DS001 malformed-waiver [fail] in test_subtracts
+    "A waiver without a code AND a reason is just a shrug in a comment, recruit!"
+    Found: The waiver on line 10 gives no check code and no reason, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   In `test_subtracts`, line 10: write it as `# drill: waive DS### -- <reason>` once a human
+           has agreed to waive this finding, or remove it and fix the finding.
+  suite/malformed-waiver/test_bad_no_code.py:16: DS001 malformed-waiver [fail] in test_multiplies
+    "Nobody silences my findings with a mumble! Code and reason, or fix it!"
+    Found: The waiver on line 16 gives no check code, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   In `test_multiplies`, line 16: write it as `# drill: waive DS### -- <reason>` once a
+           human has agreed to waive this finding, or remove it and fix the finding.
+  suite/malformed-waiver/test_bad_no_code.py:16: DS201 weak-assertion [fail] in test_multiplies
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `test_multiplies` makes only weak assertions: each holds for almost any value, wrong ones
+           included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `test_multiplies`, line 16: replace the weak assertions on line 16 with exact checks:
+           assert what `result` should equal, as in `assert value == expected`.
+
+suite/malformed-waiver/test_bad_no_reason.py
+  suite/malformed-waiver/test_bad_no_reason.py:6: DS001 malformed-waiver [fail] in test_parses_numbers
+    "You want out of an inspection? Name the check and SAY WHY, maggot!"
+    Found: The waiver on line 6 gives no reason after `--`, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   In `test_parses_numbers`, line 6: write it as `# drill: waive DS201 -- <reason>` once a
+           human has agreed to waive this finding, or remove it and fix the finding.
+  suite/malformed-waiver/test_bad_no_reason.py:12: DS001 malformed-waiver [fail] in test_parses_floats
+    "A waiver without a code AND a reason is just a shrug in a comment, recruit!"
+    Found: The waiver on line 12 gives no reason after `--`, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   In `test_parses_floats`, line 12: write it as `# drill: waive DS201 -- <reason>` once a
+           human has agreed to waive this finding, or remove it and fix the finding.
+  suite/malformed-waiver/test_bad_no_reason.py:12: DS201 weak-assertion [fail] in test_parses_floats
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `test_parses_floats` makes only weak assertions: each holds for almost any value, wrong
+           ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `test_parses_floats`, line 12: replace the weak assertions on line 12 with exact
+           checks: assert what `value` should equal, as in `assert value == expected`.
+  suite/malformed-waiver/test_bad_no_reason.py:16: DS001 malformed-waiver [fail] in TestParser::test_parses_negatives
+    "A waiver without a code AND a reason is just a shrug in a comment, recruit!"
+    Found: The waiver on line 16 gives no reason after `--`, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   In `TestParser::test_parses_negatives`, line 16: write it as `# drill: waive DS101 --
+           <reason>` once a human has agreed to waive this finding, or remove it and fix the
+           finding.
+
+suite/malformed-waiver/test_bad_outside_tests.py
+  suite/malformed-waiver/test_bad_outside_tests.py:3: DS001 malformed-waiver [fail] in <module>
+    "A waiver without a code AND a reason is just a shrug in a comment, recruit!"
+    Found: The waiver on line 3 gives no check code and no reason, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   Line 3: write it as `# drill: waive DS### -- <reason>` once a human has agreed to waive
+           this finding, or remove it and fix the finding.
+  suite/malformed-waiver/test_bad_outside_tests.py:7: DS001 malformed-waiver [fail] in <module>
+    "A waiver without a code AND a reason is just a shrug in a comment, recruit!"
+    Found: The waiver on line 7 gives no reason after `--`, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   Line 7: write it as `# drill: waive DS101 -- <reason>` once a human has agreed to waive
+           this finding, or remove it and fix the finding.
 
 suite/mirror-assertion/test_bad_beside_strong.py
   suite/mirror-assertion/test_bad_beside_strong.py:9: DS203 mirror-assertion [fail] in test_prices
@@ -633,6 +737,264 @@ suite/mirror-assertion/test_bad_two_bindings_of_one_call.py
            both sides at once and the test stays green.
     Fix:   In `test_dump_is_stable`, line 16: keep `serializer.dump(order)` on one side and put the
            value it should return, worked out by hand, on the other.
+
+suite/mock-only-assertion/test_bad_echoes_the_return_value.py
+  suite/mock-only-assertion/test_bad_echoes_the_return_value.py:7: DS301 mock-only-assertion [fail] in test_get_customer
+    "This test is a MOCK-UP of a test! Check the OUTCOME, not the wiring!"
+    Found: `test_get_customer` asserts only on mocks (`repo`): how they were called, or what they
+           were told to return, never what the code under test returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_get_customer`, line 7: assert on what the code under test returns or changes,
+           preferring a fake you can inspect to `repo`. If the call to `repo` is itself the
+           behaviour under test, ask the human for a waiver (`# drill: waive DS301 -- <reason>`);
+           don't write one yourself.
+  suite/mock-only-assertion/test_bad_echoes_the_return_value.py:15: DS301 mock-only-assertion [fail] in test_label_uses_today
+    "You told the mock what to say, then asserted it said it! Brilliant, maggot!"
+    Found: `test_label_uses_today` asserts only on mocks (`mocker.patch('shop.today', ...)`): how
+           they were called, or what they were told to return, never what the code under test
+           returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_label_uses_today`, line 15: assert on what the code under test returns or
+           changes, preferring a fake you can inspect to `mocker.patch('shop.today', ...)`. If the
+           call to `mocker.patch('shop.today', ...)` is itself the behaviour under test, ask the
+           human for a waiver (`# drill: waive DS301 -- <reason>`); don't write one yourself.
+  suite/mock-only-assertion/test_bad_echoes_the_return_value.py:20: DS301 mock-only-assertion [fail] in test_find_returns_what_the_repo_gives
+    "You told the mock what to say, then asserted it said it! Brilliant, maggot!"
+    Found: `test_find_returns_what_the_repo_gives` asserts only on mocks (`repo`): how they were
+           called, or what they were told to return, never what the code under test returns or
+           changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_find_returns_what_the_repo_gives`, line 20: assert on what the code under test
+           returns or changes, preferring a fake you can inspect to `repo`. If the call to `repo` is
+           itself the behaviour under test, ask the human for a waiver (`# drill: waive DS301 --
+           <reason>`); don't write one yourself.
+  suite/mock-only-assertion/test_bad_echoes_the_return_value.py:26: DS301 mock-only-assertion [fail] in test_clock_value_passed_through
+    "You checked the mock got called! Did the MISSION succeed, recruit?!"
+    Found: `test_clock_value_passed_through` asserts only on mocks (`reading`): how they were
+           called, or what they were told to return, never what the code under test returns or
+           changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_clock_value_passed_through`, line 26: assert on what the code under test returns
+           or changes, preferring a fake you can inspect to `reading`. If the call to `reading` is
+           itself the behaviour under test, ask the human for a waiver (`# drill: waive DS301 --
+           <reason>`); don't write one yourself.
+
+suite/mock-only-assertion/test_bad_only_call_checks.py
+  suite/mock-only-assertion/test_bad_only_call_checks.py:9: DS301 mock-only-assertion [fail] in test_notify_sends
+    "This test is a MOCK-UP of a test! Check the OUTCOME, not the wiring!"
+    Found: `test_notify_sends` asserts only on mocks (`sender`): how they were called, or what they
+           were told to return, never what the code under test returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_notify_sends`, line 9: assert on what the code under test returns or changes,
+           preferring a fake you can inspect to `sender`. If the call to `sender` is itself the
+           behaviour under test, ask the human for a waiver (`# drill: waive DS301 -- <reason>`);
+           don't write one yourself.
+  suite/mock-only-assertion/test_bad_only_call_checks.py:15: DS301 mock-only-assertion [fail] in test_called_flag
+    "This test is a MOCK-UP of a test! Check the OUTCOME, not the wiring!"
+    Found: `test_called_flag` asserts only on mocks (`send`): how they were called, or what they
+           were told to return, never what the code under test returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_called_flag`, line 15: assert on what the code under test returns or changes,
+           preferring a fake you can inspect to `send`. If the call to `send` is itself the
+           behaviour under test, ask the human for a waiver (`# drill: waive DS301 -- <reason>`);
+           don't write one yourself.
+  suite/mock-only-assertion/test_bad_only_call_checks.py:21: DS301 mock-only-assertion [fail] in test_call_count_and_args
+    "This test is a MOCK-UP of a test! Check the OUTCOME, not the wiring!"
+    Found: `test_call_count_and_args` asserts only on mocks (`send`): how they were called, or what
+           they were told to return, never what the code under test returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_call_count_and_args`, line 21: assert on what the code under test returns or
+           changes, preferring a fake you can inspect to `send`. If the call to `send` is itself the
+           behaviour under test, ask the human for a waiver (`# drill: waive DS301 -- <reason>`);
+           don't write one yourself.
+  suite/mock-only-assertion/test_bad_only_call_checks.py:31: DS301 mock-only-assertion [fail] in test_mock_verification_is_an_assertion
+    "You checked the mock got called! Did the MISSION succeed, recruit?!"
+    Found: `test_mock_verification_is_an_assertion` asserts only on mocks (`sender`): how they were
+           called, or what they were told to return, never what the code under test returns or
+           changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_mock_verification_is_an_assertion`, line 31: assert on what the code under test
+           returns or changes, preferring a fake you can inspect to `sender`. If the call to
+           `sender` is itself the behaviour under test, ask the human for a waiver (`# drill: waive
+           DS301 -- <reason>`); don't write one yourself.
+  suite/mock-only-assertion/test_bad_only_call_checks.py:32: DS302 mock-without-spec [warn] in test_mock_verification_is_an_assertion
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_mock_verification_is_an_assertion` makes a mock with no spec: `mock.Mock()`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_mock_verification_is_an_assertion`, line 32: in `mock.Mock()`, build it from the
+           real class, `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so a
+           call the real object doesn't support fails.
+
+suite/mock-only-assertion/test_bad_patch_decorators.py
+  suite/mock-only-assertion/test_bad_patch_decorators.py:12: DS301 mock-only-assertion [fail] in test_both_called
+    "You checked the mock got called! Did the MISSION succeed, recruit?!"
+    Found: `test_both_called` asserts only on mocks (`send`, `audit`): how they were called, or what
+           they were told to return, never what the code under test returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_both_called`, line 12: assert on what the code under test returns or changes,
+           preferring a fake you can inspect to `send`, `audit`. If the call to `send`, `audit` is
+           itself the behaviour under test, ask the human for a waiver (`# drill: waive DS301 --
+           <reason>`); don't write one yourself.
+  suite/mock-only-assertion/test_bad_patch_decorators.py:20: DS301 mock-only-assertion [fail] in TestNotifier::test_delivers
+    "You told the mock what to say, then asserted it said it! Brilliant, maggot!"
+    Found: `TestNotifier::test_delivers` asserts only on mocks (`deliver`): how they were called, or
+           what they were told to return, never what the code under test returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `TestNotifier::test_delivers`, line 20: assert on what the code under test returns or
+           changes, preferring a fake you can inspect to `deliver`. If the call to `deliver` is
+           itself the behaviour under test, ask the human for a waiver (`# drill: waive DS301 --
+           <reason>`); don't write one yourself.
+  suite/mock-only-assertion/test_bad_patch_decorators.py:25: DS301 mock-only-assertion [fail] in TestNotifier::test_logs_through_an_alias
+    "You told the mock what to say, then asserted it said it! Brilliant, maggot!"
+    Found: `TestNotifier::test_logs_through_an_alias` asserts only on mocks (`write`): how they were
+           called, or what they were told to return, never what the code under test returns or
+           changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `TestNotifier::test_logs_through_an_alias`, line 25: assert on what the code under
+           test returns or changes, preferring a fake you can inspect to `write`. If the call to
+           `write` is itself the behaviour under test, ask the human for a waiver (`# drill: waive
+           DS301 -- <reason>`); don't write one yourself.
+
+suite/mock-without-spec/test_bad_bare_doubles.py
+  suite/mock-without-spec/test_bad_bare_doubles.py:13: DS302 mock-without-spec [warn] in test_notify_counts_deliveries
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_notify_counts_deliveries` makes a mock with no spec: `mock.Mock()`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_notify_counts_deliveries`, line 13: in `mock.Mock()`, build it from the real
+           class, `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so a call
+           the real object doesn't support fails.
+  suite/mock-without-spec/test_bad_bare_doubles.py:18: DS302 mock-without-spec [warn] in test_render_with_magic
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_render_with_magic` makes a mock with no spec: `MagicMock(return_value='<p>')`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_render_with_magic`, line 18: in `MagicMock(return_value='<p>')`, build it from
+           the real class, `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so
+           a call the real object doesn't support fails.
+  suite/mock-without-spec/test_bad_bare_doubles.py:19: DS302 mock-without-spec [warn] in test_render_with_magic
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_render_with_magic` makes a mock with no spec: `Thing()`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_render_with_magic`, line 19: in `Thing()`, build it from the real class,
+           `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so a call the real
+           object doesn't support fails.
+  suite/mock-without-spec/test_bad_bare_doubles.py:24: DS302 mock-without-spec [warn] in test_fetch_retries
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_fetch_retries` makes a mock with no spec: `AsyncMock(side_effect=[TimeoutError,
+           'ok'])`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_fetch_retries`, line 24: in `AsyncMock(side_effect=[TimeoutError, 'ok'])`, build
+           it from the real class, `mock.create_autospec(<Real>, instance=True)`, or pass
+           `spec=<Real>`, so a call the real object doesn't support fails.
+  suite/mock-without-spec/test_bad_bare_doubles.py:29: DS302 mock-without-spec [warn] in test_wrapped_without_spec
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_wrapped_without_spec` makes a mock with no spec:
+           `unittest.mock.Mock(wraps=real_sender)`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_wrapped_without_spec`, line 29: in `unittest.mock.Mock(wraps=real_sender)`,
+           build it from the real class, `mock.create_autospec(<Real>, instance=True)`, or pass
+           `spec=<Real>`, so a call the real object doesn't support fails.
+
+suite/mock-without-spec/test_bad_mocker_doubles.py
+  suite/mock-without-spec/test_bad_mocker_doubles.py:7: DS302 mock-without-spec [warn] in test_notify_with_mocker
+    "The real interface changed and your mock never noticed! SPEC IT, maggot!"
+    Found: `test_notify_with_mocker` makes a mock with no spec: `mocker.Mock()`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_notify_with_mocker`, line 7: in `mocker.Mock()`, build it from the real class,
+           `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so a call the real
+           object doesn't support fails.
+  suite/mock-without-spec/test_bad_mocker_doubles.py:12: DS302 mock-without-spec [warn] in test_label_with_mocker
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_label_with_mocker` makes a mock with no spec: `mocker.patch('shop.today',
+           return_value='2026-01-01')`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_label_with_mocker`, line 12: in `mocker.patch('shop.today',
+           return_value='2026-01-01')`, pass `autospec=True`, so the mock it puts in place has the
+           real target's attributes and signature.
+  suite/mock-without-spec/test_bad_mocker_doubles.py:17: DS302 mock-without-spec [warn] in test_ping_with_mocker
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_ping_with_mocker` makes a mock with no spec: `mocker.patch.object(Mailer,
+           'deliver', return_value=True)`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_ping_with_mocker`, line 17: in `mocker.patch.object(Mailer, 'deliver',
+           return_value=True)`, pass `autospec=True`, so the mock it puts in place has the real
+           target's attributes and signature.
+  suite/mock-without-spec/test_bad_mocker_doubles.py:18: DS302 mock-without-spec [warn] in test_ping_with_mocker
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_ping_with_mocker` makes a mock with no spec: `mocker.MagicMock()`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_ping_with_mocker`, line 18: in `mocker.MagicMock()`, build it from the real
+           class, `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so a call
+           the real object doesn't support fails.
+
+suite/mock-without-spec/test_bad_patches_without_autospec.py
+  suite/mock-without-spec/test_bad_patches_without_autospec.py:11: DS302 mock-without-spec [warn] in test_label_with_a_patched_clock
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_label_with_a_patched_clock` makes a mock with no spec: `mock.patch('shop.today',
+           return_value='2026-01-01')`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_label_with_a_patched_clock`, line 11: in `mock.patch('shop.today',
+           return_value='2026-01-01')`, pass `autospec=True`, so the mock it puts in place has the
+           real target's attributes and signature.
+  suite/mock-without-spec/test_bad_patches_without_autospec.py:15: DS302 mock-without-spec [warn] in test_notify_all_counts
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_notify_all_counts` makes a mock with no spec: `patch('shop.send')`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_notify_all_counts`, line 15: in `patch('shop.send')`, pass `autospec=True`, so
+           the mock it puts in place has the real target's attributes and signature.
+  suite/mock-without-spec/test_bad_patches_without_autospec.py:21: DS302 mock-without-spec [warn] in TestNotifier::test_ping_reports
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `TestNotifier::test_ping_reports` makes a mock with no spec: `patch.object(Mailer,
+           'deliver')`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `TestNotifier::test_ping_reports`, line 21: in `patch.object(Mailer, 'deliver')`, pass
+           `autospec=True`, so the mock it puts in place has the real target's attributes and
+           signature.
 
 suite/no-action-under-test/test_bad_constants_only.py
   suite/no-action-under-test/test_bad_constants_only.py:5: DS102 no-action-under-test [fail] in test_discount_rate
@@ -825,6 +1187,15 @@ suite/no-real-assertion/test_bad_final_push.py
     Fix:   In `test_mock_configured_but_never_checked`, line 36: assert on what
            `pytest_drill_sergeant.cli.main(...)` returns or changes, or wrap the call in
            `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_final_push.py:37: DS302 mock-without-spec [warn] in test_mock_configured_but_never_checked
+    "The real interface changed and your mock never noticed! SPEC IT, maggot!"
+    Found: `test_mock_configured_but_never_checked` makes a mock with no spec:
+           `mocker.patch('pytest_drill_sergeant.cli.main', return_value=0)`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_mock_configured_but_never_checked`, line 37: in
+           `mocker.patch('pytest_drill_sergeant.cli.main', return_value=0)`, pass `autospec=True`,
+           so the mock it puts in place has the real target's attributes and signature.
   suite/no-real-assertion/test_bad_final_push.py:41: DS101 no-real-assertion [fail] in test_fail_method_on_some_object
     "You call that a test, recruit? It runs the code and checks NOTHING!"
     Found: `test_fail_method_on_some_object` has no real assertion: no `assert` that can fail, no
@@ -893,6 +1264,48 @@ suite/no-real-assertion/test_bad_tiny_coverage.py
     Fix:   In `test_async_boost`, line 39: assert on what `pytest_drill_sergeant.run(...)` returns
            or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
 
+suite/overgrown-mock-setup/test_bad_nested_mock_tree.py
+  suite/overgrown-mock-setup/test_bad_nested_mock_tree.py:7: DS303 overgrown-mock-setup [fail] in test_sync_counts_pages
+    "Twenty lines of rehearsal for one line of combat! Use a fake, maggot!"
+    Found: `test_sync_counts_pages` has 11 mock-setup statements, more than the 10 allowed: it
+           scripts its collaborators' calls instead of using them.
+    Why:   A test buried in mock setup restates the implementation's call sequence, so it breaks on
+           any refactor, stays green when the real collaborators change, and hides what it checks.
+    Fix:   In `test_sync_counts_pages`, line 7: replace the mocks set up on lines 8, 10, 11, 12, 13,
+           14, 15, 16, 17, 18, 19 with a fake of each collaborator, built once in a fixture, or test
+           one level up with real objects.
+
+suite/overgrown-mock-setup/test_bad_patch_stack.py
+  suite/overgrown-mock-setup/test_bad_patch_stack.py:17: DS303 overgrown-mock-setup [fail] in test_daily_report
+    "Twenty lines of rehearsal for one line of combat! Use a fake, maggot!"
+    Found: `test_daily_report` has 11 mock-setup statements, more than the 10 allowed: it scripts
+           its collaborators' calls instead of using them.
+    Why:   A test buried in mock setup restates the implementation's call sequence, so it breaks on
+           any refactor, stays green when the real collaborators change, and hides what it checks.
+    Fix:   In `test_daily_report`, line 17: replace the mocks set up on lines 11, 12, 13, 14, 15,
+           16, 18, 19, 20, 21, 22 with a fake of each collaborator, built once in a fixture, or test
+           one level up with real objects.
+  suite/overgrown-mock-setup/test_bad_patch_stack.py:27: DS303 overgrown-mock-setup [fail] in TestReport::test_weekly_report
+    "More mock setup than test! You're writing a SCREENPLAY, recruit!"
+    Found: `TestReport::test_weekly_report` has 11 mock-setup statements, more than the 10 allowed:
+           it scripts its collaborators' calls instead of using them.
+    Why:   A test buried in mock setup restates the implementation's call sequence, so it breaks on
+           any refactor, stays green when the real collaborators change, and hides what it checks.
+    Fix:   In `TestReport::test_weekly_report`, line 27: replace the mocks set up on lines 29, 30,
+           31, 32, 34, 35, 36, 37, 38, 39, 40 with a fake of each collaborator, built once in a
+           fixture, or test one level up with real objects.
+
+suite/overgrown-mock-setup/test_bad_scripted_collaborators.py
+  suite/overgrown-mock-setup/test_bad_scripted_collaborators.py:9: DS303 overgrown-mock-setup [fail] in test_checkout_total
+    "This test scripts every call the code makes! Change one and it COLLAPSES!"
+    Found: `test_checkout_total` has 11 mock-setup statements, more than the 10 allowed: it scripts
+           its collaborators' calls instead of using them.
+    Why:   A test buried in mock setup restates the implementation's call sequence, so it breaks on
+           any refactor, stays green when the real collaborators change, and hides what it checks.
+    Fix:   In `test_checkout_total`, line 9: replace the mocks set up on lines 10, 11, 12, 13, 14,
+           15, 16, 17, 18, 19, 20 with a fake of each collaborator, built once in a fixture, or test
+           one level up with real objects.
+
 suite/private-state-assertion/test_bad_cache_internals.py
   suite/private-state-assertion/test_bad_cache_internals.py:10: DS602 private-state-assertion [fail] in test_cache_stores_the_key
     "Rename one private field and this test dies! A change detector is not a test, maggot!"
@@ -945,6 +1358,14 @@ suite/private-state-assertion/test_bad_mangled_and_calls.py
     Fix:   In `test_mangled_balance`, line 11: replace `account._Account__balance` with the public
            behaviour it stands for: a return value, a public attribute or method, or what a fake
            collaborator received.
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:15: DS302 mock-without-spec [warn] in test_private_method_was_called
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_private_method_was_called` makes a mock with no spec: `mocker.Mock()`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_private_method_was_called`, line 15: in `mocker.Mock()`, build it from the real
+           class, `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so a call
+           the real object doesn't support fails.
   suite/private-state-assertion/test_bad_mangled_and_calls.py:17: DS602 private-state-assertion [fail] in test_private_method_was_called
     "Who gave you clearance to rifle through PRIVATE quarters, recruit?!"
     Found: `test_private_method_was_called` asserts on private state: `service._client`.
@@ -1826,4 +2247,16 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Fix:   In `test_async_import`, line 30: replace the weak assertions on line 30 with exact
            checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-202 findings: 193 fail, 9 warn. Fix them, recruit. DISMISSED!
+Waived findings
+  suite/malformed-waiver/test_good_waived_on_def_line.py:8: DS101 no-real-assertion [fail] in test_cli_smoke
+    Reason: the exit code is checked by CI
+  suite/malformed-waiver/test_good_waived_on_def_line.py:15: DS201 weak-assertion [fail] in test_loads_anything
+    Reason: any loaded value will do
+  suite/malformed-waiver/test_good_waived_on_def_line.py:19: DS101 no-real-assertion [fail] in TestServer::test_starts
+    Reason: startup is the behaviour
+  suite/malformed-waiver/test_good_waived_on_flagged_line.py:8: DS201 weak-assertion [fail] in test_reads_a_value
+    Reason: read() may return anything
+  suite/malformed-waiver/test_good_waived_on_flagged_line.py:13: DS201 weak-assertion [fail] in test_reads_a_flag
+    Reason: a truthy flag is the whole contract
+
+245 findings: 218 fail, 27 warn; 5 waived. Fix them, recruit. DISMISSED!

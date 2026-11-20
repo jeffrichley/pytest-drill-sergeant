@@ -2,42 +2,39 @@
 fourth test pastes too: one finding, for the first block, since a statement is
 reported in one block at most. Analysed, never run."""
 
-from unittest.mock import MagicMock
-
-from hosts import Provider
+from hosts import FakeRepo, Issue, Provider
 
 
 def test_provider_reads_the_issue_title():
-    issue = MagicMock()  # expect: DS501
+    issue = Issue(number=1)  # expect: DS501
     issue.title = "T"
-    repo = MagicMock()
-    repo.get_issue.return_value = issue
+    repo = FakeRepo()
+    repo.store(issue)
     provider = Provider(repo)
     assert provider.issue(1).title == "T"
 
 
 def test_provider_reads_the_issue_number():
-    issue = MagicMock()
+    issue = Issue(number=1)
     issue.title = "T"
-    repo = MagicMock()
-    repo.get_issue.return_value = issue
+    repo = FakeRepo()
+    repo.store(issue)
     provider = Provider(repo)
-    assert provider.issue(7).number == 7
+    assert provider.issue(1).number == 1
 
 
-def test_provider_asks_the_repo_once():
-    issue = MagicMock()
+def test_provider_counts_the_issues():
+    issue = Issue(number=1)
     issue.title = "T"
-    repo = MagicMock()
-    repo.get_issue.return_value = issue
+    repo = FakeRepo()
+    repo.store(issue)
     provider = Provider(repo)
-    provider.issue(1)
-    repo.get_issue.assert_called_once_with(1)
+    assert provider.count() == 1
 
 
 def test_provider_passes_none_through():
     issue = None
-    repo = MagicMock()
-    repo.get_issue.return_value = issue
+    repo = FakeRepo()
+    repo.store(issue)
     provider = Provider(repo)
     assert provider.issue(1) is None

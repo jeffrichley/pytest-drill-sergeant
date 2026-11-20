@@ -5,7 +5,7 @@ Analysed, never run."""
 from unittest import mock
 
 import pytest
-from shop import apply_discount, make_order, notify
+from shop import Sender, apply_discount, make_order, notify
 
 import pytest_drill_sergeant
 
@@ -23,7 +23,7 @@ def test_total_after_a_guard():
 
 
 def test_weak_check_beside_mock_verification():
-    sender = mock.Mock()
+    sender = mock.Mock(spec=Sender)
     result = notify(sender, "hi")
     assert result
     sender.send.assert_called_once_with("hi")

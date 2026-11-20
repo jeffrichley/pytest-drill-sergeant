@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from pytest_drill_sergeant.findings import Level
+from pytest_drill_sergeant.waivers import Waiver
 
 FunctionNode = ast.FunctionDef | ast.AsyncFunctionDef
 
@@ -67,6 +68,8 @@ class TestFile:
         module: The file's syntax tree, for checks that need more than the tests
             (imports, module-level code).
         tests: The tests pytest would collect from it, in source order.
+        waivers: Its `# drill: waive` comments, complete or not; none when inline
+            waivers are off.
         thresholds: The configured thresholds, for checks that measure.
     """
 
@@ -75,6 +78,7 @@ class TestFile:
     path: Path
     module: ast.Module
     tests: tuple[TestFunction, ...]
+    waivers: tuple[Waiver, ...] = ()
     thresholds: Thresholds = Thresholds()
 
 
