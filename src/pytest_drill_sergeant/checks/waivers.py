@@ -56,7 +56,7 @@ MALFORMED_WAIVER = Check(
     name="malformed-waiver",
     default_level=Level.FAIL,
     voice=(
-        "A waiver with no code and no reason is just a shrug in a comment, recruit!",
+        "A waiver without a code AND a reason is just a shrug in a comment, recruit!",
         "You want out of an inspection? Name the check and SAY WHY, maggot!",
         "Nobody silences my findings with a mumble! Code and reason, or fix it!",
     ),

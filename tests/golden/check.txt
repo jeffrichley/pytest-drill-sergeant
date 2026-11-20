@@ -495,7 +495,7 @@ suite/malformed-waiver/test_bad_no_code.py
     Fix:   In `test_adds`, line 6: write it as `# drill: waive DS### -- <reason>` once a human has
            agreed to waive this finding, or remove it and fix the finding.
   suite/malformed-waiver/test_bad_no_code.py:10: DS001 malformed-waiver [fail] in test_subtracts
-    "A waiver with no code and no reason is just a shrug in a comment, recruit!"
+    "A waiver without a code AND a reason is just a shrug in a comment, recruit!"
     Found: The waiver on line 10 gives no check code and no reason, so it waives nothing.
     Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
            both it waives nothing and hides what was meant.
@@ -526,7 +526,7 @@ suite/malformed-waiver/test_bad_no_reason.py
     Fix:   In `test_parses_numbers`, line 6: write it as `# drill: waive DS201 -- <reason>` once a
            human has agreed to waive this finding, or remove it and fix the finding.
   suite/malformed-waiver/test_bad_no_reason.py:12: DS001 malformed-waiver [fail] in test_parses_floats
-    "A waiver with no code and no reason is just a shrug in a comment, recruit!"
+    "A waiver without a code AND a reason is just a shrug in a comment, recruit!"
     Found: The waiver on line 12 gives no reason after `--`, so it waives nothing.
     Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
            both it waives nothing and hides what was meant.
@@ -541,7 +541,7 @@ suite/malformed-waiver/test_bad_no_reason.py
     Fix:   In `test_parses_floats`, line 12: replace the weak assertions on line 12 with exact
            checks: assert what `value` should equal, as in `assert value == expected`.
   suite/malformed-waiver/test_bad_no_reason.py:16: DS001 malformed-waiver [fail] in TestParser::test_parses_negatives
-    "A waiver with no code and no reason is just a shrug in a comment, recruit!"
+    "A waiver without a code AND a reason is just a shrug in a comment, recruit!"
     Found: The waiver on line 16 gives no reason after `--`, so it waives nothing.
     Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
            both it waives nothing and hides what was meant.
@@ -551,14 +551,14 @@ suite/malformed-waiver/test_bad_no_reason.py
 
 suite/malformed-waiver/test_bad_outside_tests.py
   suite/malformed-waiver/test_bad_outside_tests.py:3: DS001 malformed-waiver [fail] in <module>
-    "A waiver with no code and no reason is just a shrug in a comment, recruit!"
+    "A waiver without a code AND a reason is just a shrug in a comment, recruit!"
     Found: The waiver on line 3 gives no check code and no reason, so it waives nothing.
     Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
            both it waives nothing and hides what was meant.
     Fix:   Line 3: write it as `# drill: waive DS### -- <reason>` once a human has agreed to waive
            this finding, or remove it and fix the finding.
   suite/malformed-waiver/test_bad_outside_tests.py:7: DS001 malformed-waiver [fail] in <module>
-    "A waiver with no code and no reason is just a shrug in a comment, recruit!"
+    "A waiver without a code AND a reason is just a shrug in a comment, recruit!"
     Found: The waiver on line 7 gives no reason after `--`, so it waives nothing.
     Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
            both it waives nothing and hides what was meant.
