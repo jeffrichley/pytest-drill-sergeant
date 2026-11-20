@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 202 findings in 56 files. FALL IN!
+DRILL SERGEANT INSPECTION: 224 findings in 59 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -314,6 +314,15 @@ suite/broad-raises/test_bad_catch_all.py
            exception the code raises, and add `match=` for the part of its message that matters.
 
 suite/broad-raises/test_bad_hidden_in_flow.py
+  suite/broad-raises/test_bad_hidden_in_flow.py:17: DS107 conditional-logic [warn] in test_every_bad_input_raises
+    "Your loop checks nothing when it's empty, and you'll never know it!"
+    Found: `test_every_bad_input_raises` asserts inside a `for` loop on line 17: if the loop runs
+           zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_every_bad_input_raises`, line 17: assert once on everything `range(2)` gives, as
+           a whole (`assert [... for _ in range(2)] == [...]`), so an empty result fails the test;
+           or `parametrize` over known inputs.
   suite/broad-raises/test_bad_hidden_in_flow.py:18: DS701 broad-raises [fail] in test_every_bad_input_raises
     "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
     Found: `test_every_bad_input_raises` expects `Exception` with no `match=`, so any error at all
@@ -405,6 +414,158 @@ suite/broad-raises/test_bad_other_spellings.py
            from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix:   In `test_aliased_name`, line 45: replace `BaseException` with the specific exception the
            code raises, and add `match=` for the part of its message that matters.
+
+suite/conditional-logic/test_bad_branch_on_the_outcome.py
+  suite/conditional-logic/test_bad_branch_on_the_outcome.py:11: DS107 conditional-logic [warn] in test_strong_assertion_inside_a_branch_still_counts
+    "Your loop checks nothing when it's empty, and you'll never know it!"
+    Found: `test_strong_assertion_inside_a_branch_still_counts` has an `if` on line 11 with
+           assertions inside it, so they run only on some paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_strong_assertion_inside_a_branch_still_counts`, line 11: set up the case so its
+           outcome is known, and assert that one outcome with no branch; write one test per path.
+  suite/conditional-logic/test_bad_branch_on_the_outcome.py:18: DS107 conditional-logic [warn] in test_refund
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_refund` has an `if` on line 18 with assertions inside it, so they run only on some
+           paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_refund`, line 18: set up the case so its outcome is known, and assert that one
+           outcome with no branch; write one test per path.
+  suite/conditional-logic/test_bad_branch_on_the_outcome.py:26: DS107 conditional-logic [warn] in test_parse_reply
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `test_parse_reply` has a `match` on line 26 with assertions inside it, so they run only
+           on some paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_parse_reply`, line 26: set up the case so its outcome is known, and assert that
+           one outcome with no branch; write one test per path.
+  suite/conditional-logic/test_bad_branch_on_the_outcome.py:36: DS107 conditional-logic [warn] in test_upgrade_path
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_upgrade_path` has an `if` on line 36 with assertions inside it, so they run only on
+           some paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_upgrade_path`, line 36: set up the case so its outcome is known, and assert that
+           one outcome with no branch; write one test per path.
+  suite/conditional-logic/test_bad_branch_on_the_outcome.py:42: DS107 conditional-logic [warn] in test_retry_until_it_works
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `test_retry_until_it_works` has an `if` on line 42 with assertions inside it, so they run
+           only on some paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_retry_until_it_works`, line 42: set up the case so its outcome is known, and
+           assert that one outcome with no branch; write one test per path.
+  suite/conditional-logic/test_bad_branch_on_the_outcome.py:52: DS107 conditional-logic [warn] in TestExport::test_export_format
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `TestExport::test_export_format` has an `if` on line 52 with assertions inside it, so
+           they run only on some paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `TestExport::test_export_format`, line 52: set up the case so its outcome is known,
+           and assert that one outcome with no branch; write one test per path.
+
+suite/conditional-logic/test_bad_loop_over_literal.py
+  suite/conditional-logic/test_bad_loop_over_literal.py:18: DS107 conditional-logic [warn] in test_assertion_inside_a_loop
+    "Your loop checks nothing when it's empty, and you'll never know it!"
+    Found: `test_assertion_inside_a_loop` asserts inside a `for` loop on line 18: if the loop runs
+           zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_assertion_inside_a_loop`, line 18: replace the loop with
+           `@pytest.mark.parametrize("text, number", [('1', 1), ('2', 2)])`, so each case runs,
+           passes and fails as its own test.
+  suite/conditional-logic/test_bad_loop_over_literal.py:23: DS107 conditional-logic [warn] in test_raise_after_the_try
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_raise_after_the_try` asserts inside a `for` loop on line 23: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_raise_after_the_try`, line 23: replace the loop with
+           `@pytest.mark.parametrize("text", ['x', 'y'])`, so each case runs, passes and fails as
+           its own test.
+  suite/conditional-logic/test_bad_loop_over_literal.py:32: DS107 conditional-logic [warn] in test_parse_suffixes
+    "Your loop checks nothing when it's empty, and you'll never know it!"
+    Found: `test_parse_suffixes` asserts inside a `for` loop on line 32: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_parse_suffixes`, line 32: replace the loop with `@pytest.mark.parametrize("text,
+           expected", CASES)`, so each case runs, passes and fails as its own test.
+  suite/conditional-logic/test_bad_loop_over_literal.py:37: DS107 conditional-logic [warn] in test_every_unit_is_case_insensitive
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `test_every_unit_is_case_insensitive` asserts inside a `for` loop on line 37: if the loop
+           runs zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_every_unit_is_case_insensitive`, line 37: replace the loop with
+           `@pytest.mark.parametrize("unit", UNITS)`, so each case runs, passes and fails as its own
+           test.
+  suite/conditional-logic/test_bad_loop_over_literal.py:42: DS107 conditional-logic [warn] in test_rejects_garbage
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_rejects_garbage` asserts inside a `for` loop on line 42: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_rejects_garbage`, line 42: replace the loop with
+           `@pytest.mark.parametrize("text", [...])` with the 9 values from line 42, so each case
+           runs, passes and fails as its own test.
+
+suite/conditional-logic/test_bad_loop_over_results.py
+  suite/conditional-logic/test_bad_loop_over_results.py:14: DS107 conditional-logic [warn] in test_loop_variable_named_random
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `test_loop_variable_named_random` asserts inside a `for` loop on line 14: if the loop
+           runs zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_loop_variable_named_random`, line 14: assert once on everything `rngs` gives, as
+           a whole (`assert [... for random in rngs] == [...]`), so an empty result fails the test;
+           or `parametrize` over known inputs.
+  suite/conditional-logic/test_bad_loop_over_results.py:20: DS107 conditional-logic [warn] in test_every_user_is_active
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_every_user_is_active` asserts inside a `for` loop on line 20: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_every_user_is_active`, line 20: assert once on everything `response.json()`
+           gives, as a whole (`assert [... for user in response.json()] == [...]`), so an empty
+           result fails the test; or `parametrize` over known inputs.
+  suite/conditional-logic/test_bad_loop_over_results.py:26: DS107 conditional-logic [warn] in test_rows_import
+    "Your loop checks nothing when it's empty, and you'll never know it!"
+    Found: `test_rows_import` asserts inside a `for` loop on line 26: if the loop runs zero times,
+           nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_rows_import`, line 26: assert once on everything `importer.rows()` gives, as a
+           whole (`assert [... for row in importer.rows()] == [...]`), so an empty result fails the
+           test; or `parametrize` over known inputs.
+  suite/conditional-logic/test_bad_loop_over_results.py:32: DS107 conditional-logic [warn] in test_drain_the_queue
+    "Your loop checks nothing when it's empty, and you'll never know it!"
+    Found: `test_drain_the_queue` asserts inside a `while` loop on line 32: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_drain_the_queue`, line 32: assert once, after the loop, on the whole outcome, so
+           a loop that runs zero times fails the test; or `parametrize` over known inputs.
+  suite/conditional-logic/test_bad_loop_over_results.py:38: DS107 conditional-logic [warn] in test_stream_yields_only_ticks
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `test_stream_yields_only_ticks` asserts inside a `async for` loop on line 38: if the loop
+           runs zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_stream_yields_only_ticks`, line 38: assert once on everything
+           `feed.stream(limit=10)` gives, as a whole (`assert [... async for event in
+           feed.stream(limit=10)] == [...]`), so an empty result fails the test; or `parametrize`
+           over known inputs.
+  suite/conditional-logic/test_bad_loop_over_results.py:44: DS107 conditional-logic [warn] in test_checks_in_a_helper
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_checks_in_a_helper` asserts inside a `for` loop on line 44: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_checks_in_a_helper`, line 44: assert once on everything `items` gives, as a
+           whole (`assert [... for item in items] == [...]`), so an empty result fails the test; or
+           `parametrize` over known inputs.
 
 suite/interleaved-act-assert/test_bad_async_steps.py
   suite/interleaved-act-assert/test_bad_async_steps.py:7: DS104 interleaved-act-assert [warn] in test_connection
@@ -1005,6 +1166,15 @@ suite/private-state-assertion/test_bad_module_private.py
     Fix:   In `test_config_loaded`, line 12: replace `config._loaded` with the public behaviour it
            stands for: a return value, a public attribute or method, or what a fake collaborator
            received.
+  suite/private-state-assertion/test_bad_module_private.py:16: DS107 conditional-logic [warn] in test_private_state_in_a_nested_block
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `test_private_state_in_a_nested_block` asserts inside a `for` loop on line 16: if the
+           loop runs zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_private_state_in_a_nested_block`, line 16: assert once on everything `items`
+           gives, as a whole (`assert [... for item in items] == [...]`), so an empty result fails
+           the test; or `parametrize` over known inputs.
   suite/private-state-assertion/test_bad_module_private.py:18: DS602 private-state-assertion [fail] in test_private_state_in_a_nested_block
     "That underscore means KEEP OUT! Test what it does, not what it hides!"
     Found: `test_private_state_in_a_nested_block` asserts on private state: `item._dirty`.
@@ -1300,6 +1470,15 @@ suite/swallowed-exception/test_bad_make_it_not_crash.py
     Fix:   In `test_sync`, line 14: remove the `try` that catches `Exception` and let the exception
            fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)`
            instead.
+  suite/swallowed-exception/test_bad_make_it_not_crash.py:20: DS107 conditional-logic [warn] in test_sync_each_source
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_sync_each_source` asserts inside a `for` loop on line 20: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_sync_each_source`, line 20: replace the loop with
+           `@pytest.mark.parametrize("source", ['a', 'b'])`, so each case runs, passes and fails as
+           its own test.
   suite/swallowed-exception/test_bad_make_it_not_crash.py:23: DS201 weak-assertion [fail] in test_sync_each_source
     "Truthy, has a length, is a string. You described a potato, maggot!"
     Found: `test_sync_each_source` makes only weak assertions: each holds for almost any value,
@@ -1736,6 +1915,14 @@ suite/weak-assertion/test_bad_coverage_boost.py
     Fix:   In `TestCoverageBoost::test_string_operations`, line 26: replace the weak assertions on
            lines 26 and 30 with exact checks: assert what `version_str` and `str(docstring)` should
            equal, as in `assert value == expected`.
+  suite/weak-assertion/test_bad_coverage_boost.py:29: DS107 conditional-logic [warn] in TestCoverageBoost::test_string_operations
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `TestCoverageBoost::test_string_operations` has an `if` on line 29 with assertions inside
+           it, so they run only on some paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `TestCoverageBoost::test_string_operations`, line 29: set up the case so its outcome
+           is known, and assert that one outcome with no branch; write one test per path.
   suite/weak-assertion/test_bad_coverage_boost.py:35: DS201 weak-assertion [fail] in TestCoverageBoost::test_list_operations
     "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
     Found: `TestCoverageBoost::test_list_operations` makes only weak assertions: each holds for
@@ -1745,6 +1932,15 @@ suite/weak-assertion/test_bad_coverage_boost.py
     Fix:   In `TestCoverageBoost::test_list_operations`, line 35: replace the weak assertions on
            lines 35, 38 and 39 with exact checks: assert what `all_items` and `item` should equal,
            as in `assert value == expected`.
+  suite/weak-assertion/test_bad_coverage_boost.py:37: DS107 conditional-logic [warn] in TestCoverageBoost::test_list_operations
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `TestCoverageBoost::test_list_operations` asserts inside a `for` loop on line 37: if the
+           loop runs zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `TestCoverageBoost::test_list_operations`, line 37: assert once on everything
+           `all_items` gives, as a whole (`assert [... for item in all_items] == [...]`), so an
+           empty result fails the test; or `parametrize` over known inputs.
   suite/weak-assertion/test_bad_coverage_boost.py:43: DS201 weak-assertion [fail] in TestCoverageBoost::test_boolean_operations
     "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
     Found: `TestCoverageBoost::test_boolean_operations` makes only weak assertions: each holds for
@@ -1836,4 +2032,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Fix:   In `test_async_import`, line 30: replace the weak assertions on line 30 with exact
            checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-202 findings: 193 fail, 9 warn. Fix them, recruit. DISMISSED!
+224 findings: 193 fail, 31 warn. Fix them, recruit. DISMISSED!

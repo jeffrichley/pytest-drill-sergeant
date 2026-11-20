@@ -17,7 +17,7 @@ def test_sync():  # expect: DS101
 
 
 def test_sync_each_source():
-    for source in ["a", "b"]:
+    for source in ["a", "b"]:  # expect: DS107
         try:
             sync_all()
             assert source  # expect: DS201

@@ -19,6 +19,7 @@ from pytest_drill_sergeant.checks.flakiness import (
 )
 from pytest_drill_sergeant.checks.structure import (
     ASSERT_BEFORE_ACT,
+    CONDITIONAL_LOGIC,
     INTERLEAVED_ACT_ASSERT,
     LONG_FILE,
     LONG_TEST,
@@ -33,6 +34,7 @@ CHECKS: tuple[Check, ...] = (
     INTERLEAVED_ACT_ASSERT,
     LONG_TEST,
     LONG_FILE,
+    CONDITIONAL_LOGIC,
     WEAK_ASSERTION,
     TAUTOLOGICAL_ASSERTION,
     MIRROR_ASSERTION,
