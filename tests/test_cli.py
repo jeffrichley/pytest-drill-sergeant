@@ -240,6 +240,28 @@ def test_voice_off_keeps_found_why_fix_and_drops_the_voice(
     assert not any(line.startswith('    "') for line in plain.splitlines())
 
 
+LONG_LOCATION = (
+    f"test_long.py:1: DS101 no-real-assertion [fail] in test_{'very_' * 10}long"
+)
+
+
+def test_a_narrow_terminal_wraps_each_fact_under_its_text_and_keeps_the_location_whole(
+    cli, long_named_test, monkeypatch, wrapped
+):
+    monkeypatch.setenv("COLUMNS", "60")
+
+    output = cli("check", "test_long.py").output
+
+    location, *rest = [line for line in output.splitlines() if "DS101" in line]
+    assert LONG_LOCATION in location
+    assert not rest
+    for label, after in [("Found:", "Why:"), ("Why:", "Fix:"), ("Fix:", "")]:
+        continuations, following = wrapped(output, label)
+        assert continuations, label
+        assert following.lstrip().startswith(after), label
+    assert max(len(line) for line in output.splitlines() if line != location) <= 60
+
+
 # A change to the report changes golden/check.txt: rerun `drill-sergeant check suite`
 # over a copy of the corpus with NO_COLOR=1 COLUMNS=100, and review the diff.
 def test_check_output_matches_the_golden_report(cli, tmp_path):

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Annotated, NoReturn
 
 import typer
+from rich.console import Console
 
 from pytest_drill_sergeant.config import ConfigError, refusal, resolve
 from pytest_drill_sergeant.discovery import discover, load, test_files
@@ -61,6 +62,8 @@ def check(
             f"drill-sergeant: cannot parse {error.filename}, line {error.lineno}: "
             f"{error.msg}"
         )
-    typer.echo(render(findings, voice=config.voice), nl=False)
+    # The console reads the terminal as it is now: its width (or COLUMNS), and
+    # whether it takes colour (not when piped, or under NO_COLOR).
+    Console(highlight=False).print(render(findings, voice=config.voice), crop=False)
     if any(f.level is Level.FAIL for f in findings):
         raise typer.Exit(1)

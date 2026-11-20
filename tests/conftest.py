@@ -85,3 +85,30 @@ def failing_test(pytester):
     return pytester.makepyfile(
         test_broken="def test_broken():\n    assert sorted([2, 1]) == [2, 1]\n"
     )
+
+
+@pytest.fixture
+def long_named_test(tmp_path):
+    """A test file in `tmp_path` holding one test with no real assertion (DS101 on
+    line 1) whose name makes its location line longer than a narrow terminal."""
+    path = tmp_path / "test_long.py"
+    path.write_text(f"def test_{'very_' * 10}long():\n    run()\n")
+    return path
+
+
+@pytest.fixture
+def wrapped():
+    """Split a report at a fact (`Found:`, `Why:`, `Fix:`): return the lines indented
+    exactly under the fact's text after its first line, and the line after them."""
+
+    def split(output: str, label: str) -> tuple[list[str], str]:
+        lines = output.splitlines()
+        start = next(i for i, ln in enumerate(lines) if ln.lstrip().startswith(label))
+        first = lines[start]
+        column = len(first) - len(first[first.index(label) + len(label) :].lstrip())
+        end = start + 1
+        while end < len(lines) and len(lines[end]) - len(lines[end].lstrip()) == column:
+            end += 1
+        return lines[start + 1 : end], lines[end] if end < len(lines) else ""
+
+    return split

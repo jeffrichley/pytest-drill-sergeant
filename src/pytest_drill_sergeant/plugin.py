@@ -11,6 +11,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
+from rich.console import Console
 
 from pytest_drill_sergeant.config import (
     OPTIONS,
@@ -150,12 +151,24 @@ class _Run:
         if self.findings is None:
             return result
         terminalreporter.write_sep("=", "drill sergeant")
-        terminalreporter.write(
+        writer = self.config.get_terminal_writer()
+        # Width and colour are pytest's own, so the section matches the run's output
+        # and follows `--color`.
+        console = Console(
+            file=writer,  # type: ignore[arg-type]  # it writes text, as Rich needs
+            width=writer.fullwidth,
+            force_terminal=writer.hasmarkup,
+            no_color=not writer.hasmarkup,
+            color_system="standard" if writer.hasmarkup else None,
+            highlight=False,
+        )
+        console.print(
             render(
                 self.findings,
                 voice=self.resolved.voice,
                 max_findings=self.resolved.max_findings,
-            )
+            ),
+            crop=False,
         )
         return result
 
