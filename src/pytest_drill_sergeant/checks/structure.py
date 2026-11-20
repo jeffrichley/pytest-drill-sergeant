@@ -854,6 +854,18 @@ def _parametrize_values(
     return None
 
 
+def _runs_at_least_once(loop: ast.stmt) -> bool:
+    """Whether a loop is a `for` over a literal written in place with a value in it.
+
+    A starred item may be empty, so it doesn't count as a value.
+    """
+    return (
+        isinstance(loop, ast.For | ast.AsyncFor)
+        and isinstance(loop.iter, _LITERAL_COLLECTION)
+        and any(not isinstance(item, ast.Starred) for item in loop.iter.elts)
+    )
+
+
 def _conditional_fix(
     statement: ast.stmt, file: TestFile, test: TestFunction
 ) -> tuple[str, str]:
@@ -868,10 +880,17 @@ def _conditional_fix(
             "set up the case so its outcome is known, and assert that one outcome "
             "with no branch; write one test per path.",
         )
-    found = (
-        f"asserts inside a `{kind}` loop on line {statement.lineno}: if the loop "
-        "runs zero times, nothing is checked and the test still passes."
-    )
+    if _runs_at_least_once(statement):
+        found = (
+            f"asserts inside a `{kind}` loop on line {statement.lineno}: the first "
+            "value to fail stops the test, hides how the rest do, and is not named "
+            "in the report."
+        )
+    else:
+        found = (
+            f"asserts inside a `{kind}` loop on line {statement.lineno}: if the loop "
+            "runs zero times, nothing is checked and the test still passes."
+        )
     if isinstance(statement, ast.For | ast.AsyncFor):
         values = _parametrize_values(statement, file, test)
         if values is not None:
@@ -928,6 +947,9 @@ CONDITIONAL_LOGIC = Check(
         "is known, assert it unconditionally, and write one test per path. A loop "
         "over values the file writes out (a list, tuple or set literal, or a "
         "top-level name bound to one) gets a `parametrize` suggestion naming them. "
+        "A loop over a literal written in place with a value in it can't run zero "
+        "times, so its finding says what it costs instead: the first value to fail "
+        "stops the test and hides the rest. "
         "Any other loop: assert on the whole collection at once, which fails when "
         "it's empty. It warns by default rather than failing: asserting on each item "
         "of a collection the code returns is sometimes the clearest test, and a "

@@ -432,3 +432,29 @@ def test_category_marker_fix_reads_directory_names_in_any_case(
 
     assert "`@pytest.mark.unit`" in finding.fix
     assert "e2e" not in finding.fix
+
+
+@pytest.mark.parametrize(
+    ("values", "can_run_zero_times"),
+    [
+        ('("a", "b")', False),
+        ('["a"]', False),
+        ('{"a", *more}', False),
+        ("()", True),
+        ("(*more,)", True),
+        ("WORDS", True),
+        ("words()", True),
+    ],
+)
+def test_loop_finding_says_zero_times_only_when_the_loop_can_run_zero_times(
+    write_test_file, values, can_run_zero_times
+):
+    path = write_test_file(
+        f"WORDS = ('a',)\n\ndef test_text(text, more, words):\n"
+        f"    for word in {values}:\n        assert word not in text\n"
+    )
+
+    [finding] = analyze([path], Config())
+
+    assert finding.code == "DS107"
+    assert ("zero times" in finding.found) is can_run_zero_times

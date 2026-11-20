@@ -54,3 +54,8 @@ def test_rejects_garbage():
     }:
         with pytest.raises(ValueError, match="quantity"):
             parse(text)
+
+
+def test_law_names_every_kind(law):
+    for text in ("WOMENS-LAW", "CLUB-LAW", "CREW-LAW"):  # expect: DS107
+        assert text in law
