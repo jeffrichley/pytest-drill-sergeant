@@ -1,11 +1,13 @@
 """Near-misses: code runs before the last assertion, so the assertions check an act:
 a value made by a call (assigned, or bound by a `with`), an `await` kept, a call
-inside an assertion, pytest's call form. A call after them is a trailing call, a
-separate check's (#208), not DS103's. Modelled on stagehand's `reply = await
-client.post(...)` then `await house.close()`, networkx's `pytest.raises(E,
+inside an assertion, pytest's call form, a `with` on code outside the standard
+library, a bare call into a third-party package. A call after them is a trailing
+call, a separate check's (#208), not DS103's. Modelled on stagehand's `reply =
+await client.post(...)` then `await house.close()`, networkx's `pytest.raises(E,
 nx.watts_strogatz_graph, ...)` and pandas' `with ExcelWriter(...) as writer:`.
 Analysed, never run."""
 
+import httpx
 import pytest
 
 pytestmark = pytest.mark.unit
@@ -51,3 +53,20 @@ def test_writer_made_by_the_with_then_written(tmp_path, writer_class):
     with writer_class(tmp_path, engine="fast") as writer:
         assert writer.book.write_only is False
         writer.write([])
+
+
+def test_one_line_with_then_unlinked(path):
+    with open(path) as f: assert f.readable  # noqa: E701  # fmt: skip
+    path.unlink()
+
+
+def test_app_run_by_a_with_then_shut_down(app):
+    with app.running():
+        assert app.up
+    app.shutdown()
+
+
+def test_third_party_act_checked_then_reset(server):
+    httpx.post(server.url, json={})
+    assert server.received == 1
+    server.reset()

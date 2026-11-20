@@ -1,6 +1,7 @@
 """The structure family (DS1xx): how a test is put together."""
 
 import ast
+import builtins
 import re
 import sys
 from collections import Counter
@@ -14,6 +15,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
     is_known_non_act,
     is_real_assertion,
     own_statements,
+    qualified,
     setup,
     skips_unconditionally,
     value_params,
@@ -284,11 +286,14 @@ def _bare_call(statement: ast.Expr) -> ast.Call | None:
 class _Order:
     """What reading a test's statements in order needs to know about the test."""
 
-    def __init__(self, test: TestFunction, file: TestFile) -> None:
+    def __init__(
+        self, test: TestFunction, file: TestFile, *, follow: bool = False
+    ) -> None:
+        """Read `test`; with `follow`, a bare call can assert (`asserts`)."""
         self.test = test
         self.names = test.imports
         self.excinfos = excinfo_names(test)
-        self.assertions = file.assertions
+        self.assertions = file.assertions if follow else None
         # The `with` blocks `steps` opened up, in order.
         self.opened: list[ast.With | ast.AsyncWith] = []
 
@@ -301,13 +306,18 @@ class _Order:
         tree that asserts, at any depth (a `def` nested in the test asserts where
         it is called), or into a third-party package, code the check can't see,
         which may. A call whose value is kept, or passed on, makes a value: that
-        is setup, even when the function may assert.
+        is setup, even when the function may assert. Bare calls are read so only
+        when the order follows them (DS103); DS104 and DS108 don't yet.
         """
         if is_real_assertion(node, self.names):
             return True
         if isinstance(node, ast.Expr):
             call = _bare_call(node)
-            return call is not None and self.assertions.holds(self.test, [call])
+            return (
+                call is not None
+                and self.assertions is not None
+                and self.assertions.holds(self.test, [call])
+            )
         return (
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Attribute)
@@ -371,52 +381,112 @@ def _steps(test: TestFunction, file: TestFile) -> list[tuple[ast.stmt, _Step]]:
     return _Order(test, file).steps(test.node.body)
 
 
-def _runs(order: _Order, statement: ast.AST) -> bool:
-    """Whether a statement or expression runs anything: what `# Act` must hold.
+def _runs(order: _Order, statement: ast.stmt) -> bool:
+    """Whether a statement runs anything: what an `# Act` section must hold.
 
-    That is a call or `await` that isn't an assertion (a bare call into a helper
-    that asserts is one), known output or a pytest instrument
-    (`ast_tools.is_known_non_act`), or pytest's call form (`pytest.raises(E, func,
-    arg)`), which runs `func`. Unlike a step's act, an assignment from a call
-    counts, and so does a call inside an assertion: `total = cart.total()` runs the
-    code under test as surely as `cart.add(item)` does.
+    That is a call or `await` that isn't an assertion, known output or a pytest
+    instrument (`ast_tools.is_known_non_act`). Unlike DS103's act, an assignment
+    from a call counts: `total = cart.total()` runs the code under test as surely
+    as `cart.add(item)` does.
     """
-    nodes = list(_walk_own(statement))
-    # A bare call that asserts, and the `await` around it, run nothing to check.
-    asserting: set[ast.AST] = set()
-    for node in nodes:
-        if isinstance(node, ast.Expr) and order.asserts(node):
-            asserting.add(node.value)
-            if isinstance(node.value, ast.Await):
-                asserting.add(node.value.value)
     return any(
-        _calls_through_pytest(node, order.names)
+        isinstance(node, ast.Await)
         or (
-            node not in asserting
+            isinstance(node, ast.Call)
+            and not order.asserts(node)
+            and not is_known_non_act(node, order.test)
+        )
+        for node in _walk_own(statement)
+    )
+
+
+# Builtins that only look at a value, so calling one runs no code under test.
+_INSPECTING_BUILTINS = frozenset(
+    {"callable", "hasattr", "id", "isinstance", "issubclass", "len", "type"}
+)
+
+
+def _inspects(call: ast.Call, names: Mapping[str, str]) -> bool:
+    """Whether a call is a builtin that only looks at a value, which no import rebinds."""
+    return (
+        isinstance(call.func, ast.Name)
+        and call.func.id in _INSPECTING_BUILTINS
+        and call.func.id not in names
+    )
+
+
+def _uses_code_outside(call: ast.Call, names: Mapping[str, str]) -> bool:
+    """Whether a call goes outside the standard library, the builtins and pytest.
+
+    Known through the imports; a `with` on such a call may run the code under test.
+    """
+    if isinstance(call.func, ast.Name) and call.func.id not in names:
+        return call.func.id not in dir(builtins)
+    name = qualified(call.func, names)
+    top = name.split(".")[0] if name else None
+    return top not in sys.stdlib_module_names and top not in {"pytest", "_pytest"}
+
+
+def _code_run(order: _Order, node: ast.AST) -> bool:
+    """Whether a statement or expression runs code an assertion can check (DS103).
+
+    That is a call or `await` that isn't a real assertion, a bare call into a
+    test-tree helper that asserts, known output, a pytest instrument or a builtin
+    that only looks at a value; pytest's call form (`pytest.raises(E, func,
+    arg)`), which runs `func`, counts. Unlike a step's act, a call in an
+    assignment or inside an assertion counts, and so does a bare call into a
+    third-party package: it may assert, but it surely runs.
+    """
+    nodes = list(_walk_own(node))
+    checks: set[ast.AST] = set()
+    for expr in nodes:
+        if not isinstance(expr, ast.Expr):
+            continue
+        call = _bare_call(expr)
+        if (
+            call is not None
+            and order.assertions is not None
+            and order.assertions.holds(order.test, [call], unseen=False)
+        ):
+            checks |= {expr.value, call}
+    return any(
+        _calls_through_pytest(n, order.names)
+        or (
+            n not in checks
             and (
-                isinstance(node, ast.Await)
+                isinstance(n, ast.Await)
                 or (
-                    isinstance(node, ast.Call)
-                    and not order.asserts(node)
-                    and not is_known_non_act(node, order.test)
+                    isinstance(n, ast.Call)
+                    and not order.asserts(n)
+                    and not is_known_non_act(n, order.test)
+                    and not _inspects(n, order.names)
                 )
             )
         )
-        for node in nodes
+        for n in nodes
     )
 
 
 def _runs_by(order: _Order, steps: list[tuple[ast.stmt, _Step]], last: int) -> bool:
-    """Whether anything runs up to and including the step at `last`.
+    """Whether code runs up to and including the step at `last` (DS103).
 
-    A `with` block opened up before it runs its items too, and a value it binds
-    (`with Writer(path) as writer:`) is made by a call as an assignment's is.
+    A `with` block opened up at or before it runs its items too: one that binds
+    a value (`with Writer(path) as writer:`) made by a call, as an assignment
+    does, or one whose call goes outside the standard library and pytest, which
+    may run the code under test (`with app.running():`, not `mock.patch`).
     """
     line = steps[last][0].lineno
-    return any(_runs(order, s) for s, _ in steps[: last + 1]) or any(
-        item.optional_vars is not None and _runs(order, item.context_expr)
+    return any(_code_run(order, s) for s, _ in steps[: last + 1]) or any(
+        _code_run(order, item.context_expr)
+        and (
+            item.optional_vars is not None
+            or (
+                isinstance(item.context_expr, ast.Call)
+                and _uses_code_outside(item.context_expr, order.names)
+            )
+        )
         for block in order.opened
-        if block.lineno < line
+        if block.lineno <= line
         for item in block.items
     )
 
@@ -430,14 +500,14 @@ def _describe(statement: ast.stmt) -> str:
 
 def _find_assert_before_act(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        order = _Order(test, file)
+        order = _Order(test, file, follow=True)
         steps = order.steps(test.node.body)
         last = max(
             (i for i, (_, step) in enumerate(steps) if step is _Step.ASSERT),
             default=None,
         )
         # Code run up to the last assertion is an act it can check: a call after
-        # that is #208's, not this check's.
+        # that is a trailing call, a separate check's (#208).
         if last is None or _runs_by(order, steps, last):
             continue
         unchecked = [s for s, step in steps[last + 1 :] if step is _Step.ACT]
@@ -480,30 +550,34 @@ ASSERT_BEFORE_ACT = Check(
         "wrong thing."
     ),
     explain=(
-        "Flags a test whose assertions all run before anything else does: nothing "
-        "up to its last assertion runs code (a call or `await` that isn't itself an "
-        "assertion, whether alone, in an assignment, in a `with` that binds its "
-        "value or inside an assertion; pytest's call form, `pytest.raises(E, func, "
-        "arg)`, runs `func`), and an act follows it, a bare call or `await` made "
-        "for its effect. So the test checks "
-        "only the values it was handed, fixtures and parameters, and never what "
-        "the act did. Not an act: output known from the code (the builtin "
-        "`print()`, `logging` or a logger from `logging.getLogger()`); a method of a "
-        "pytest built-in fixture the test takes (`caplog.clear()`, "
-        "`capsys.readouterr()`, `monkeypatch.setenv()`); `.match()` on what "
-        "`pytest.raises` caught; a call into a function of the test tree that holds "
-        "a real assertion, at any depth (a helper in the file or imported, a "
-        "method through `self` or `cls`, a `def` nested in the test, counted where "
-        "it is called), which is an assertion; and a bare call into a third-party "
-        "package (a module found neither under the project nor in the standard "
-        "library), code the check can't see, which may assert. A name never "
-        "counts: `server.stop()` on a value the file doesn't show the type of is "
-        "an act. A test that runs code, asserts on it, then makes another call is "
-        "not this check's: that trailing call, cleanup or a second act nobody "
-        "checks, is #208's. Either way, cleanup belongs in a `yield` fixture or a "
-        "`finally`, where it runs even when an assertion fails. A guard assertion "
-        "on the starting state is fine when the outcome is also asserted after the "
-        "act. Move the assertion after the act, or add one there."
+        "Flags a test whose assertions all run before anything else does, then "
+        "acts: nothing up to its last assertion runs code, and a bare call or "
+        "`await` made for its effect follows it. So the test checks only the "
+        "values it was handed, fixtures and parameters, and never what the act "
+        "did. Runs code: any call or `await`, alone, in an assignment or inside an "
+        "assertion; a `with` that binds a value made by a call, or whose call goes "
+        "outside the standard library and pytest (`with app.running():`, not "
+        "`mock.patch`); pytest's call form, `pytest.raises(E, func, arg)`, which "
+        "runs `func`. Runs no code: a real assertion; a builtin that only looks at "
+        "a value (`len`, `isinstance`); a call into a function of the test tree "
+        "that holds a real assertion, at any depth (a helper in the file or "
+        "imported, a method through `self` or `cls`, a `def` nested in the test, "
+        "counted where it is called), which is an assertion. A bare call into a "
+        "third-party package (a module found neither under the project nor in the "
+        "standard library) runs code the check can't see, which may assert, so it "
+        "isn't an act after the last assertion either. Not an act: output known "
+        "from the code (the builtin `print()`, `logging` or a logger from "
+        "`logging.getLogger()`); a method of a pytest built-in fixture the test "
+        "takes (`caplog.clear()`, `capsys.readouterr()`, `monkeypatch.setenv()`); "
+        "`.match()` on what `pytest.raises` caught. A name never counts: "
+        "`server.stop()` on a value the file doesn't show the type of is an act. "
+        "A test that runs code, asserts on it, then makes another call is not this "
+        "check's: that trailing call, cleanup or a second act nobody checks, is "
+        "left to a separate check (#208). Either way, cleanup belongs in a `yield` "
+        "fixture or a `finally`, where it runs even when an assertion fails. A "
+        "guard assertion on the starting state is fine when the outcome is also "
+        "asserted after the act. Move the assertion after the act, or add one "
+        "there."
     ),
     bad_example=(
         "def test_add_item(cart):\n    assert cart.items == []\n    cart.add('apple')\n"

@@ -33,3 +33,9 @@ def test_import_rows(importer, rows):
 def test_stop_named_like_cleanup(server):
     assert server.running
     server.stop()  # expect: DS103
+
+
+def test_add_after_guards_that_only_look(cart):
+    assert len(cart.items) == 0
+    assert isinstance(cart.items, list)
+    cart.add("apple")  # expect: DS103
