@@ -144,3 +144,24 @@ def waived_test(tmp_path):
         "def test_waived():  # drill: waive DS101 -- smoke test\n    run()\n"
     )
     return path
+
+
+@pytest.fixture
+def snapshot():
+    """Snapshot a directory: every file under it with its inode and modification
+    time, so a later snapshot differs if anything there was written."""
+
+    def take(directory: Path) -> dict[Path, tuple[int, int]]:
+        return {
+            p: (p.stat().st_ino, p.stat().st_mtime_ns)
+            for p in directory.rglob("*")
+            if p.is_file()
+        }
+
+    return take
+
+
+@pytest.fixture
+def cache_dir(tmp_path):
+    """A cache directory in `tmp_path`, `cache/`, not yet made."""
+    return tmp_path / "cache"
