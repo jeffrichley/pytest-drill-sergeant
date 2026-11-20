@@ -49,7 +49,7 @@ The step that reads one test file on its own and gives that file's findings and 
 _Avoid_: Local pass, file scan
 
 **Per-file summary**:
-What per-file analysis records of each test in a file for cross-file analysis: its name and line; the fingerprint, lines and bound names of each setup statement; and the fingerprint and shape of its whole body. Plain data, never the syntax tree.
+What per-file analysis records of each test in a file for cross-file analysis: its name and line; the fingerprint, lines and bound names of each setup statement; the fingerprint and shape of its whole body, with the names and literals that shape blanks; and the fingerprint of its `def` line and decorators. Plain data, never the syntax tree.
 _Avoid_: File index, digest
 
 **Cross-file analysis**:

@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 245 findings in 67 files. FALL IN!
+DRILL SERGEANT INSPECTION: 251 findings in 72 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -995,6 +995,73 @@ suite/mock-without-spec/test_bad_patches_without_autospec.py
     Fix:   In `TestNotifier::test_ping_reports`, line 21: in `patch.object(Mailer, 'deliver')`, pass
            `autospec=True`, so the mock it puts in place has the real target's attributes and
            signature.
+
+suite/near-duplicate-tests/test_bad_exact_copies.py
+  suite/near-duplicate-tests/test_bad_exact_copies.py:7: DS502 near-duplicate-tests [fail] in test_empty_cart_totals_zero
+    "One test in a fresh coat of paint is still ONE test, maggot! Parametrize it!"
+    Found: `test_empty_cart_totals_zero` is a copy of 1 other test in its file, alike in every name
+           and literal: `test_new_cart_has_no_total` (line 12).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_empty_cart_totals_zero`, line 7: keep this test and delete
+           `test_new_cart_has_no_total` (line 12).
+  suite/near-duplicate-tests/test_bad_exact_copies.py:17: DS502 near-duplicate-tests [fail] in test_refund_of_one_lowers_the_balance
+    "Same test, different numbers! You think I can't SEE that, recruit?"
+    Found: `test_refund_of_one_lowers_the_balance` and 1 other test in its file differ only in their
+           literals: `test_refund_of_five_lowers_the_balance` (line 23).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_refund_of_one_lowers_the_balance`, line 17: merge it with
+           `test_refund_of_five_lowers_the_balance` (line 23) into one test, with the literals that
+           differ as parameters: `@pytest.mark.parametrize("value", [-1, -5])`.
+
+suite/near-duplicate-tests/test_bad_in_a_class.py
+  suite/near-duplicate-tests/test_bad_in_a_class.py:10: DS502 near-duplicate-tests [fail] in TestDiscounts::test_ten_percent_off
+    "Same test, different numbers! You think I can't SEE that, recruit?"
+    Found: `TestDiscounts::test_ten_percent_off` and 2 other tests in its file differ only in their
+           literals: `TestDiscounts::test_half_off` (line 15) and `TestDiscounts::test_no_discount`
+           (line 24).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `TestDiscounts::test_ten_percent_off`, line 10: merge it with
+           `TestDiscounts::test_half_off` (line 15) and `TestDiscounts::test_no_discount` (line 24)
+           into one test, with the literals that differ as parameters:
+           `@pytest.mark.parametrize(("value_1", "value_2"), [(10, 90), (50, 50), (0, 100)])`.
+
+suite/near-duplicate-tests/test_bad_same_parametrize.py
+  suite/near-duplicate-tests/test_bad_same_parametrize.py:9: DS502 near-duplicate-tests [fail] in test_one_fruit_costs_three
+    "Same test, different numbers! You think I can't SEE that, recruit?"
+    Found: `test_one_fruit_costs_three` and 1 other test in its file differ only in their literals:
+           `test_two_fruits_cost_six` (line 16).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_one_fruit_costs_three`, line 9: merge it with `test_two_fruits_cost_six` (line
+           16) into one test, with the literals that differ as parameters:
+           `@pytest.mark.parametrize(("value_1", "value_2"), [(1, 3), (2, 6)])`.
+
+suite/near-duplicate-tests/test_bad_values_differ.py
+  suite/near-duplicate-tests/test_bad_values_differ.py:7: DS502 near-duplicate-tests [fail] in test_one_apple_costs_three
+    "You copied the drill and changed the count! That's a table, not a new drill!"
+    Found: `test_one_apple_costs_three` and 2 other tests in its file differ only in their literals:
+           `test_two_pears_cost_eight` (line 13) and `test_three_plums_cost_fifteen` (line 19).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_one_apple_costs_three`, line 7: merge it with `test_two_pears_cost_eight` (line
+           13) and `test_three_plums_cost_fifteen` (line 19) into one test, with the literals that
+           differ as parameters: `@pytest.mark.parametrize(("value_1", "value_2", "value_3"),
+           [('apple', 1, 3), ('pear', 2, 8), ('plum from the orchard on ...', 3, 15)])`.
+
+suite/near-duplicate-tests/test_bad_with_pasted_setup.py
+  suite/near-duplicate-tests/test_bad_with_pasted_setup.py:8: DS502 near-duplicate-tests [fail] in test_order_of_one_apple
+    "You copied the drill and changed the count! That's a table, not a new drill!"
+    Found: `test_order_of_one_apple` and 2 other tests in its file differ only in their literals:
+           `test_order_of_two_apples` (line 17) and `test_order_of_three_apples` (line 26).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_order_of_one_apple`, line 8: merge it with `test_order_of_two_apples` (line 17)
+           and `test_order_of_three_apples` (line 26) into one test, with the literals that differ
+           as parameters: `@pytest.mark.parametrize(("value_1", "value_2"), [(1, 4), (2, 8), (3,
+           12)])`.
 
 suite/no-action-under-test/test_bad_constants_only.py
   suite/no-action-under-test/test_bad_constants_only.py:5: DS102 no-action-under-test [fail] in test_discount_rate
@@ -2259,4 +2326,4 @@ Waived findings
   suite/malformed-waiver/test_good_waived_on_flagged_line.py:13: DS201 weak-assertion [fail] in test_reads_a_flag
     Reason: a truthy flag is the whole contract
 
-245 findings: 218 fail, 27 warn; 5 waived. Fix them, recruit. DISMISSED!
+251 findings: 224 fail, 27 warn; 5 waived. Fix them, recruit. DISMISSED!

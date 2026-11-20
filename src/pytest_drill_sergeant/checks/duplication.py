@@ -3,9 +3,15 @@
 Its checks compare per-file summaries across every file in the run, never the files
 themselves (cross-file analysis), so a block pasted into tests in different files
 is caught as surely as one pasted within a file.
+
+Near-duplicate tests (DS502) are tests of one file and one class, alike in their
+`def` line, decorators and every name, and differing at most in their body's
+literals: one parametrized test holds them all. Parametrizing them takes their
+shared setup with them, so copy-pasted setup (DS501) counts each such group as one
+test, its first.
 """
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -14,7 +20,9 @@ from pytest_drill_sergeant.checks.base import (
     Hit,
     Statement,
     Summaries,
+    TestSummary,
     Thresholds,
+    and_list,
 )
 from pytest_drill_sergeant.findings import Level
 
@@ -42,11 +50,37 @@ class _Copy:
         return statements[index] if index < len(statements) else None
 
 
+def _near_duplicates(
+    summaries: Summaries,
+) -> Iterator[tuple[Path, list[TestSummary]]]:
+    """Each group of near-duplicate tests, with its file, its tests in source order.
+
+    A group is two tests or more of one file and one class, alike in their `def`
+    line and decorators, and in their body's shape and every name in it.
+    """
+    for path, summary in summaries:
+        groups: dict[tuple[object, ...], list[TestSummary]] = {}
+        for test in summary.tests:
+            scope = test.name.rpartition("::")[0]
+            key = (scope, test.signature, test.shape, test.names)
+            groups.setdefault(key, []).append(test)
+        for tests in groups.values():
+            if len(tests) > 1:
+                yield path, tests
+
+
 def _setups(summaries: Summaries) -> list[_Setup]:
+    """Every test's setup, a group of near-duplicate tests counted as its first."""
+    folded = {
+        (path, test.name)
+        for path, tests in _near_duplicates(summaries)
+        for test in tests[1:]
+    }
     return [
         _Setup(path=path, test=test.name, statements=test.setup)
         for path, summary in summaries
         for test in summary.tests
+        if (path, test.name) not in folded
     ]
 
 
@@ -213,4 +247,117 @@ COPY_PASTE_SETUP = Check(
         "    assert order.status == 'cancelled'\n"
     ),
     find_across=_find_copy_paste_setup,
+)
+
+
+_LONGEST_LITERAL = 30
+
+
+def _shown(literal: str) -> str:
+    """A literal as the fix shows it: a long one cut short, its closing quote kept."""
+    if len(literal) <= _LONGEST_LITERAL:
+        return literal
+    end = literal[-1] if literal[-1] in "'\"" else ""
+    return f"{literal[: _LONGEST_LITERAL - 4]}...{end}"
+
+
+def _parameters(tests: Sequence[TestSummary]) -> list[tuple[str, ...]]:
+    """The literals that differ between the tests, one tuple per test.
+
+    Literals that vary together (each test repeating its own value) are one
+    parameter.
+    """
+    columns = dict.fromkeys(zip(*(test.literals for test in tests), strict=True))
+    varying = [column for column in columns if len(set(column)) > 1]
+    return list(zip(*varying, strict=True))
+
+
+def _parametrize(rows: list[tuple[str, ...]]) -> str:
+    if len(rows[0]) == 1:
+        values = ", ".join(_shown(row[0]) for row in rows)
+        return f'@pytest.mark.parametrize("value", [{values}])'
+    names = ", ".join(f'"value_{n}"' for n in range(1, len(rows[0]) + 1))
+    values = ", ".join(f"({', '.join(_shown(v) for v in row)})" for row in rows)
+    return f"@pytest.mark.parametrize(({names}), [{values}])"
+
+
+def _find_near_duplicate_tests(
+    summaries: Summaries, _thresholds: Thresholds
+) -> Iterator[tuple[Path, Hit]]:
+    for path, tests in _near_duplicates(summaries):
+        first, others = tests[0], tests[1:]
+        named = and_list([f"`{t.name}` (line {t.line})" for t in others])
+        count = f"{len(others)} other test{'s' if len(others) > 1 else ''}"
+        rows = _parameters(tests)
+        if rows:
+            found = f"and {count} in its file differ only in their literals: {named}."
+            fix = (
+                f"merge it with {named} into one test, with the literals that "
+                f"differ as parameters: `{_parametrize(rows)}`."
+            )
+        else:
+            found = (
+                f"is a copy of {count} in its file, alike in every name and "
+                f"literal: {named}."
+            )
+            fix = f"keep this test and delete {named}."
+        yield path, Hit.at(first.name, first.line, found=found, fix=fix)
+
+
+NEAR_DUPLICATE_TESTS = Check(
+    code="DS502",
+    name="near-duplicate-tests",
+    default_level=Level.FAIL,
+    voice=(
+        "Same test, different numbers! You think I can't SEE that, recruit?",
+        "One test in a fresh coat of paint is still ONE test, maggot! Parametrize it!",
+        "You copied the drill and changed the count! That's a table, not a new drill!",
+    ),
+    why=(
+        "Tests that differ only in their values multiply the code to read and "
+        "change, drift apart copy by copy, and hide the one table of cases they "
+        "really are."
+    ),
+    explain=(
+        "Flags two or more tests of one file, and of one class if they are in one, "
+        "that are alike in their parameters, decorators, every name and statement, "
+        "and differ at most in their body's literals; a signed number (`-1`) counts "
+        "as one literal. One finding, on the "
+        "first test, names the others and shows a `pytest.mark.parametrize` holding "
+        "the literals that differ, one row per test; tests alike in every literal "
+        "too are copies, and all but one can go. Not flagged: tests in different "
+        "files or classes (one function can't hold them without moving them), "
+        "tests that differ in a name, such as the function they call, or in any "
+        "statement, and tests that differ in their parameters or decorators, a "
+        "decorator's literals included, which a new `parametrize` can't reach; so "
+        "tests already parametrized are flagged only under the very same "
+        "`parametrize`. Copy-pasted setup "
+        "(DS501) counts a group of near-duplicate tests as one test, since "
+        "parametrizing them removes their shared setup too."
+    ),
+    bad_example=(
+        "def test_one_apple_costs_three():\n"
+        "    cart = Cart()\n"
+        "    cart.add('apple', quantity=1)\n"
+        "    assert cart.total() == 3\n"
+        "\n"
+        "\n"
+        "def test_two_pears_cost_eight():\n"
+        "    cart = Cart()\n"
+        "    cart.add('pear', quantity=2)\n"
+        "    assert cart.total() == 8\n"
+    ),
+    good_example=(
+        "import pytest\n"
+        "\n"
+        "\n"
+        "@pytest.mark.parametrize(\n"
+        "    ('fruit', 'quantity', 'total'), [('apple', 1, 3), ('pear', 2, 8)]\n"
+        ")\n"
+        "def test_cart_total_prices_each_fruit(fruit, quantity, total):\n"
+        "    cart = Cart()\n"
+        "    cart.add(fruit, quantity=quantity)\n"
+        "    assert cart.total() == total\n"
+    ),
+    find_across=_find_near_duplicate_tests,
 )

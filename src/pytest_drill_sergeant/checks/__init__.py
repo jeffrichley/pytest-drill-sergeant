@@ -11,7 +11,10 @@ from pytest_drill_sergeant.checks.brittleness import (
     PRIVATE_STATE_ASSERTION,
     SOURCE_TEXT_GREP,
 )
-from pytest_drill_sergeant.checks.duplication import COPY_PASTE_SETUP
+from pytest_drill_sergeant.checks.duplication import (
+    COPY_PASTE_SETUP,
+    NEAR_DUPLICATE_TESTS,
+)
 from pytest_drill_sergeant.checks.exceptions import BROAD_RAISES, SWALLOWED_EXCEPTION
 from pytest_drill_sergeant.checks.flakiness import (
     SLEEP_IN_TEST,
@@ -44,6 +47,7 @@ CHECKS: tuple[Check, ...] = (
     MOCK_WITHOUT_SPEC,
     OVERGROWN_MOCK_SETUP,
     COPY_PASTE_SETUP,
+    NEAR_DUPLICATE_TESTS,
     BRITTLE_STRING_MATCH,
     PRIVATE_STATE_ASSERTION,
     SOURCE_TEXT_GREP,

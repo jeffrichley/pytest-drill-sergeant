@@ -18,7 +18,13 @@ from pytest_drill_sergeant.checks.ast_tools import (
     is_real_assertion,
     walk_test,
 )
-from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
+from pytest_drill_sergeant.checks.base import (
+    Check,
+    Hit,
+    TestFile,
+    TestFunction,
+    and_list,
+)
 from pytest_drill_sergeant.findings import Level
 
 # Comparisons that hold whenever both sides are the same value.
@@ -401,17 +407,10 @@ def _has_assertion_call(test: TestFunction) -> bool:
     )
 
 
-def _and(items: list[str]) -> str:
-    """Items as a sentence list: `a`, `a and b`, `a, b and c`."""
-    if len(items) == 1:
-        return items[0]
-    return f"{', '.join(items[:-1])} and {items[-1]}"
-
-
 def _line_numbers(verdicts: list[_Verdict]) -> str:
     """The verdicts' line numbers as words: `line 3`, `lines 3 and 5`."""
     numbers = [str(v.node.lineno) for v in verdicts]
-    return f"line{'s' if len(numbers) > 1 else ''} {_and(numbers)}"
+    return f"line{'s' if len(numbers) > 1 else ''} {and_list(numbers)}"
 
 
 def _find_weak_assertion(file: TestFile) -> Iterator[Hit]:
@@ -434,7 +433,7 @@ def _find_weak_assertion(file: TestFile) -> Iterator[Hit]:
             ),
             fix=(
                 f"replace the weak assertions on {_line_numbers(weak)} with exact checks: "
-                f"assert what {_and(subjects)} should equal, as in "
+                f"assert what {and_list(subjects)} should equal, as in "
                 "`assert value == expected`."
             ),
         )

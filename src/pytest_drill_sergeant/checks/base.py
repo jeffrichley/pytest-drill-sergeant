@@ -110,6 +110,11 @@ class TestSummary:
         body: The fingerprint of its whole body.
         shape: Its whole body's shape: the fingerprint with every name and
             literal blanked, alike for tests that differ only in their values.
+        names: The names its shape blanks, in source order.
+        literals: The literals its shape blanks, each as it reads in source
+            (`'apple'`, `-1`), in source order.
+        signature: The fingerprint of its `def` line (parameters, `async`) and
+            decorators, blind to its name.
     """
 
     __test__ = False  # Not a pytest test class, despite the name.
@@ -119,6 +124,9 @@ class TestSummary:
     setup: tuple[Statement, ...]
     body: str
     shape: str
+    names: tuple[str, ...]
+    literals: tuple[str, ...]
+    signature: str
 
 
 @dataclass(frozen=True)
@@ -166,6 +174,13 @@ class Hit:
             found=f"`{test}` {found}",
             fix=f"In `{test}`, line {line}: {fix}",
         )
+
+
+def and_list(items: Sequence[str]) -> str:
+    """Items as a sentence list: `a`, `a and b`, `a, b and c`."""
+    if len(items) == 1:
+        return items[0]
+    return f"{', '.join(items[:-1])} and {items[-1]}"
 
 
 # The files a cross-file check compares, each as given to the engine with its
