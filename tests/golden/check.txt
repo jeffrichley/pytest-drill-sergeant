@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 196 findings in 50 files. FALL IN!
+DRILL SERGEANT INSPECTION: 207 findings in 53 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -565,6 +565,148 @@ suite/mirror-assertion/test_bad_two_bindings_of_one_call.py
            both sides at once and the test stays green.
     Fix:   In `test_dump_is_stable`, line 16: keep `serializer.dump(order)` on one side and put the
            value it should return, worked out by hand, on the other.
+
+suite/mock-only-assertion/test_bad_echoes_the_return_value.py
+  suite/mock-only-assertion/test_bad_echoes_the_return_value.py:7: DS301 mock-only-assertion [fail] in test_get_customer
+    "This test is a MOCK-UP of a test! Check the OUTCOME, not the wiring!"
+    Found: `test_get_customer` asserts only on mocks (a mock, `repo`): how they were called, or what
+           they were told to return, never what the code under test returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_get_customer`, line 7: assert on what the code under test returns or changes,
+           preferring a fake you can inspect to a mock, `repo`. If the call to a mock, `repo` is
+           itself the behaviour under test, ask the human for a waiver (`# drill: waive DS301 --
+           <reason>`); don't write one yourself.
+  suite/mock-only-assertion/test_bad_echoes_the_return_value.py:15: DS301 mock-only-assertion [fail] in test_label_uses_today
+    "You told the mock what to say, then asserted it said it! Brilliant, maggot!"
+    Found: `test_label_uses_today` asserts only on mocks (a mock): how they were called, or what
+           they were told to return, never what the code under test returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_label_uses_today`, line 15: assert on what the code under test returns or
+           changes, preferring a fake you can inspect to a mock. If the call to a mock is itself the
+           behaviour under test, ask the human for a waiver (`# drill: waive DS301 -- <reason>`);
+           don't write one yourself.
+  suite/mock-only-assertion/test_bad_echoes_the_return_value.py:20: DS301 mock-only-assertion [fail] in test_find_returns_what_the_repo_gives
+    "You told the mock what to say, then asserted it said it! Brilliant, maggot!"
+    Found: `test_find_returns_what_the_repo_gives` asserts only on mocks (`repo`): how they were
+           called, or what they were told to return, never what the code under test returns or
+           changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_find_returns_what_the_repo_gives`, line 20: assert on what the code under test
+           returns or changes, preferring a fake you can inspect to `repo`. If the call to `repo` is
+           itself the behaviour under test, ask the human for a waiver (`# drill: waive DS301 --
+           <reason>`); don't write one yourself.
+  suite/mock-only-assertion/test_bad_echoes_the_return_value.py:26: DS301 mock-only-assertion [fail] in test_clock_value_passed_through
+    "You checked the mock got called! Did the MISSION succeed, recruit?!"
+    Found: `test_clock_value_passed_through` asserts only on mocks (`reading`): how they were
+           called, or what they were told to return, never what the code under test returns or
+           changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_clock_value_passed_through`, line 26: assert on what the code under test returns
+           or changes, preferring a fake you can inspect to `reading`. If the call to `reading` is
+           itself the behaviour under test, ask the human for a waiver (`# drill: waive DS301 --
+           <reason>`); don't write one yourself.
+
+suite/mock-only-assertion/test_bad_only_call_checks.py
+  suite/mock-only-assertion/test_bad_only_call_checks.py:9: DS301 mock-only-assertion [fail] in test_notify_sends
+    "This test is a MOCK-UP of a test! Check the OUTCOME, not the wiring!"
+    Found: `test_notify_sends` asserts only on mocks (`sender`): how they were called, or what they
+           were told to return, never what the code under test returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_notify_sends`, line 9: assert on what the code under test returns or changes,
+           preferring a fake you can inspect to `sender`. If the call to `sender` is itself the
+           behaviour under test, ask the human for a waiver (`# drill: waive DS301 -- <reason>`);
+           don't write one yourself.
+  suite/mock-only-assertion/test_bad_only_call_checks.py:15: DS301 mock-only-assertion [fail] in test_called_flag
+    "This test is a MOCK-UP of a test! Check the OUTCOME, not the wiring!"
+    Found: `test_called_flag` asserts only on mocks (`send`): how they were called, or what they
+           were told to return, never what the code under test returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_called_flag`, line 15: assert on what the code under test returns or changes,
+           preferring a fake you can inspect to `send`. If the call to `send` is itself the
+           behaviour under test, ask the human for a waiver (`# drill: waive DS301 -- <reason>`);
+           don't write one yourself.
+  suite/mock-only-assertion/test_bad_only_call_checks.py:21: DS301 mock-only-assertion [fail] in test_call_count_and_args
+    "This test is a MOCK-UP of a test! Check the OUTCOME, not the wiring!"
+    Found: `test_call_count_and_args` asserts only on mocks (`send`): how they were called, or what
+           they were told to return, never what the code under test returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_call_count_and_args`, line 21: assert on what the code under test returns or
+           changes, preferring a fake you can inspect to `send`. If the call to `send` is itself the
+           behaviour under test, ask the human for a waiver (`# drill: waive DS301 -- <reason>`);
+           don't write one yourself.
+  suite/mock-only-assertion/test_bad_only_call_checks.py:31: DS301 mock-only-assertion [fail] in test_mock_verification_is_an_assertion
+    "You checked the mock got called! Did the MISSION succeed, recruit?!"
+    Found: `test_mock_verification_is_an_assertion` asserts only on mocks (`sender`): how they were
+           called, or what they were told to return, never what the code under test returns or
+           changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_mock_verification_is_an_assertion`, line 31: assert on what the code under test
+           returns or changes, preferring a fake you can inspect to `sender`. If the call to
+           `sender` is itself the behaviour under test, ask the human for a waiver (`# drill: waive
+           DS301 -- <reason>`); don't write one yourself.
+
+suite/mock-only-assertion/test_bad_patch_decorators.py
+  suite/mock-only-assertion/test_bad_patch_decorators.py:12: DS301 mock-only-assertion [fail] in test_both_called
+    "You checked the mock got called! Did the MISSION succeed, recruit?!"
+    Found: `test_both_called` asserts only on mocks (`send`, `audit`): how they were called, or what
+           they were told to return, never what the code under test returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `test_both_called`, line 12: assert on what the code under test returns or changes,
+           preferring a fake you can inspect to `send`, `audit`. If the call to `send`, `audit` is
+           itself the behaviour under test, ask the human for a waiver (`# drill: waive DS301 --
+           <reason>`); don't write one yourself.
+  suite/mock-only-assertion/test_bad_patch_decorators.py:20: DS301 mock-only-assertion [fail] in TestNotifier::test_delivers
+    "You told the mock what to say, then asserted it said it! Brilliant, maggot!"
+    Found: `TestNotifier::test_delivers` asserts only on mocks (`deliver`): how they were called, or
+           what they were told to return, never what the code under test returns or changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `TestNotifier::test_delivers`, line 20: assert on what the code under test returns or
+           changes, preferring a fake you can inspect to `deliver`. If the call to `deliver` is
+           itself the behaviour under test, ask the human for a waiver (`# drill: waive DS301 --
+           <reason>`); don't write one yourself.
+  suite/mock-only-assertion/test_bad_patch_decorators.py:25: DS301 mock-only-assertion [fail] in TestNotifier::test_logs_through_an_alias
+    "You told the mock what to say, then asserted it said it! Brilliant, maggot!"
+    Found: `TestNotifier::test_logs_through_an_alias` asserts only on mocks (`write`): how they were
+           called, or what they were told to return, never what the code under test returns or
+           changes.
+    Why:   A test that asserts only on mocks checks the wiring it set up itself, which calls were
+           made or that a value it fed in came back, so it stays green when the behaviour breaks and
+           goes red on a harmless refactor. The house rule is to mock only when the call itself is
+           the behaviour; when it is, the human grants a waiver.
+    Fix:   In `TestNotifier::test_logs_through_an_alias`, line 25: assert on what the code under
+           test returns or changes, preferring a fake you can inspect to `write`. If the call to
+           `write` is itself the behaviour under test, ask the human for a waiver (`# drill: waive
+           DS301 -- <reason>`); don't write one yourself.
 
 suite/no-action-under-test/test_bad_constants_only.py
   suite/no-action-under-test/test_bad_constants_only.py:5: DS102 no-action-under-test [fail] in test_discount_rate
@@ -1758,4 +1900,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Fix:   In `test_async_import`, line 30: replace the weak assertions on line 30 with exact
            checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-196 findings: 187 fail, 9 warn. Fix them, recruit. DISMISSED!
+207 findings: 198 fail, 9 warn. Fix them, recruit. DISMISSED!

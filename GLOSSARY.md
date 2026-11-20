@@ -32,6 +32,14 @@ _Avoid_: Trivial assertion, always-true assertion
 An `==` whose expected side is taken from the code under test: the same call on both sides, directly or through names the test bound to it. Names never matter: `first == second`, each bound to the same call, is one just as `result == expected` is.
 _Avoid_: Self-check, circular assertion
 
+**Mock**:
+A test double made by `unittest.mock` or a pytest-mock fixture such as `mocker` (`Mock()`, `create_autospec`, `patch`), as the file shows it: made in the test, handed in by a `patch` decorator, or reached from one. A name such as `mock_db` never makes a value one.
+_Avoid_: Stub, fake (a fake is a working stand-in, not a mock)
+
+**Mock setup**:
+A statement in a test that makes, patches in or configures a mock: `repo = mock.Mock(spec=Repo)`, a `patch` decorator or `with` item, `repo.get.return_value = ...`.
+_Avoid_: Mock configuration, arrange
+
 **Category marker**:
 A pytest marker that classifies a test by kind (e.g. unit, integration, e2e) so whole categories can be selected or skipped.
 _Avoid_: Test type, tag
