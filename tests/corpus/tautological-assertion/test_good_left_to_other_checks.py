@@ -2,7 +2,10 @@
 and a test whose only assertion is `assert False` on a branch. Analysed, never
 run."""
 
+import pytest
 from shop import parse
+
+pytestmark = pytest.mark.unit
 
 
 def test_assert_true_beside_a_real_assertion():

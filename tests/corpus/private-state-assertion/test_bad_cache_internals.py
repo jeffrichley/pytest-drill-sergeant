@@ -1,7 +1,10 @@
 """Assertions that reach into an object's private attributes. Seeded from the
 failure-modes catalog (#22). Analysed, never run."""
 
+import pytest
 from app import Cache, Queue
+
+pytestmark = pytest.mark.unit
 
 
 def test_cache_stores_the_key():
@@ -21,6 +24,11 @@ def test_queue_holds_two_items():
 def test_two_private_names_in_one_assert():
     cache = Cache()
     assert cache._hits + cache._misses == 0  # expect: DS602
+
+
+# A module-level test's `cls` is a fixture like any other, not the test's class.
+def test_private_state_of_a_fixture_named_cls(cls):
+    assert cls._hits == 0  # expect: DS602
 
 
 def test_private_state_inside_a_generator(caches):

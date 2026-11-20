@@ -1,7 +1,10 @@
 """A mirror is reported even beside a strong assertion, line by line.
 Analysed, never run."""
 
+import pytest
 from shop import gross_price, net_price
+
+pytestmark = pytest.mark.unit
 
 
 def test_prices():

@@ -9,6 +9,8 @@ import pytest
 
 import pytest_drill_sergeant
 
+pytestmark = pytest.mark.unit
+
 
 def test_final_coverage_push():  # expect: DS101
     """Final test to push coverage to 50%."""
@@ -26,7 +28,7 @@ def test_attributes_exist(name):  # expect: DS101
     getattr(pytest_drill_sergeant, name)
 
 
-def test_smoke_with_a_try():  # expect: DS101
+def test_smoke_with_a_try():
     try:
         pytest_drill_sergeant.run()
     except Exception:  # expect: DS702
@@ -34,7 +36,7 @@ def test_smoke_with_a_try():  # expect: DS101
 
 
 def test_mock_configured_but_never_checked(mocker):  # expect: DS101
-    mocker.patch("pytest_drill_sergeant.cli.main", return_value=0)
+    mocker.patch("pytest_drill_sergeant.cli.main", return_value=0)  # expect: DS302
     pytest_drill_sergeant.cli.main()
 
 

@@ -4,6 +4,8 @@ Analysed, never run."""
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 def parse(text):
     return int(text)
@@ -34,7 +36,7 @@ def test_base_exception_handler_catches_pytest_fail():
         pass
 
 
-def test_handler_catches_the_raise():  # expect: DS101
+def test_handler_catches_the_raise():
     try:
         parse("x")
         raise RuntimeError("parse accepted garbage")
@@ -42,7 +44,7 @@ def test_handler_catches_the_raise():  # expect: DS101
         pass
 
 
-def test_skip_is_not_a_failure():  # expect: DS101
+def test_skip_is_not_a_failure():
     try:
         parse("x")
         pytest.skip("parse accepted garbage")

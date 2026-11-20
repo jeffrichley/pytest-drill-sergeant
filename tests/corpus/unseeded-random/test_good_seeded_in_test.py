@@ -9,6 +9,8 @@ from cart import Cart
 
 from . import factories
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def seeded_random():
@@ -36,6 +38,6 @@ def test_draws_after_a_seeding_fixture(seeded_random):
     assert Cart([random.choice(["apple"])]).total == 5
 
 
-def test_loop_variable_named_random(rngs):
-    for random in rngs:  # noqa: F402 -- the shadowing is the near-miss
+def test_context_variable_named_random(rng_factory):
+    with rng_factory() as random:  # noqa: F811 -- the shadowing is the near-miss
         assert random.choice(["apple"]) == "apple"

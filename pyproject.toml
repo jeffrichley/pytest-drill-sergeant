@@ -63,6 +63,9 @@ packages = ["src/pytest_drill_sergeant"]
 line-length = 88
 target-version = "py311"
 src = ["src", "tests"]
+# The perf test's fixture suite and the golden suite are frozen data: analysed, never
+# run or edited, so a fix never moves the lines their findings are on.
+extend-exclude = ["tests/perf/suite", "tests/golden/suite"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -154,7 +157,16 @@ testpaths = ["tests"]
 # the worker, and xdist reports whatever test it was running as failed).
 timeout = 60
 # Why each test failed, and a report of every run, so a flake leaves evidence.
-addopts = ["-ra", "--junitxml=test-report.xml"]
+# The perf test is left out of the default run, so `just check` skips it; `just perf`
+# runs it, and so does its own CI job.
+addopts = ["-ra", "--junitxml=test-report.xml", "-m", "not perf"]
+markers = [
+    "perf: the speed budget; left out of the default run, run by `just perf`",
+]
 # Our own suite runs with the plugin on and passes its own checks. The corpus is bad
-# tests on purpose, so no check reports on it (`DS` is every family).
-drill_sergeant_per_file_ignores = ["tests/corpus/**: DS"]
+# tests on purpose, and so is the golden suite, so no check reports on them (`DS` is
+# every family).
+drill_sergeant_per_file_ignores = ["tests/corpus/**: DS", "tests/golden/suite/**: DS"]
+# Every test carries a category marker (DS901): `unit` for the engine seam,
+# `integration` for the CLI and plugin, `perf` for the speed budget.
+drill_sergeant_category_markers = ["unit", "integration", "e2e", "perf"]

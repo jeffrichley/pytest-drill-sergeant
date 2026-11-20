@@ -1,6 +1,10 @@
 """Near-misses: one act, then several assertions, reading results in between.
 Analysed, never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_get_user(client):
     response = client.get("/users/1")

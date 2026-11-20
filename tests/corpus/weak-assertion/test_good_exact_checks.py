@@ -1,7 +1,10 @@
 """Near-misses: assertions that look like the weak forms but pin a value.
 Analysed, never run."""
 
+import pytest
 from shop import apply_discount, make_order, validate
+
+pytestmark = pytest.mark.unit
 
 
 def test_nothing_is_returned():

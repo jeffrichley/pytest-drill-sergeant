@@ -4,6 +4,8 @@ Analysed, never run."""
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 def test_withdraw_too_much(account):
     assert account.balance == 10

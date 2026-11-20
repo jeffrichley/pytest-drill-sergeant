@@ -1,6 +1,10 @@
 """Swallowed exceptions in classes, async tests, nested `try`s and `except*`.
 Analysed, never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 async def fetch(url):
     raise ConnectionError(url)
@@ -34,7 +38,7 @@ def test_nested_try_inner_swallowed():
         raise
 
 
-def test_exception_group_swallowed():  # expect: DS101
+def test_exception_group_swallowed():
     try:
         fetch("d")
     except* ConnectionError:  # expect: DS702

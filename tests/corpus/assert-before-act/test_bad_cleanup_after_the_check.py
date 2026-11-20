@@ -5,6 +5,10 @@ different. Analysed, never run."""
 import os
 import shutil
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_writes_report(tmp_path, report):
     path = tmp_path / "out.txt"

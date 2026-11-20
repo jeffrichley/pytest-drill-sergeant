@@ -4,7 +4,12 @@ import ast
 from collections.abc import Iterator
 
 from pytest_drill_sergeant.checks.assertions import tautological_asserts
-from pytest_drill_sergeant.checks.ast_tools import call_name, is_assert_call, walk_test
+from pytest_drill_sergeant.checks.ast_tools import (
+    call_name,
+    instance_param,
+    is_assert_call,
+    walk_test,
+)
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
 from pytest_drill_sergeant.findings import Level
 
@@ -161,11 +166,11 @@ _PUBLIC_UNDERSCORED = frozenset(
 )
 
 
-def _is_private_attribute(node: ast.AST) -> bool:
+def _is_private_attribute(node: ast.AST, test: TestFunction) -> bool:
     """Whether a node reads a private attribute of something other than the test.
 
     Dunders are public protocol, namedtuple's `_asdict` and kin are public API, and
-    `self._x` or `cls._x` belongs to the test class itself.
+    an attribute of the instance a test in a class takes belongs to the test itself.
     """
     if not isinstance(node, ast.Attribute):
         return False
@@ -174,7 +179,12 @@ def _is_private_attribute(node: ast.AST) -> bool:
         return False
     if name.startswith("__") and name.endswith("__"):
         return False
-    return not (isinstance(node.value, ast.Name) and node.value.id in {"self", "cls"})
+    instance = instance_param(test)
+    return not (
+        instance is not None
+        and isinstance(node.value, ast.Name)
+        and node.value.id == instance
+    )
 
 
 def _find_private_state_assertion(file: TestFile) -> Iterator[Hit]:
@@ -189,7 +199,8 @@ def _find_private_state_assertion(file: TestFile) -> Iterator[Hit]:
                     f"{ast.unparse(node.value)}.{node.attr}"
                     for expression in checked
                     for node in ast.walk(expression)
-                    if isinstance(node, ast.Attribute) and _is_private_attribute(node)
+                    if isinstance(node, ast.Attribute)
+                    and _is_private_attribute(node, test)
                 )
             )
             if not names:
@@ -227,8 +238,8 @@ PRIVATE_STATE_ASSERTION = Check(
         "attribute: one starting with `_`, such as `cache._store` or a "
         "name-mangled `obj._Class__x`. Dunders such as `__dict__` or `__name__`, "
         "namedtuple's `_asdict`, `_replace`, `_fields`, `_field_defaults` and "
-        "`_make`, and the test's own `self._x` are exempt, as is private access "
-        "outside an assertion (injecting a fake in setup) and an `assert` that "
+        "`_make`, and the test's own instance (`self._x`, by whatever name the "
+        "instance goes) are exempt, as is private access outside an assertion (injecting a fake in setup) and an `assert` that "
         "can't fail, which tautological-assertion reports. Assert on the public "
         "behaviour instead."
     ),

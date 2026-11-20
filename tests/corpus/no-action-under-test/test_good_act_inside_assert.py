@@ -3,6 +3,8 @@ Analysed, never run."""
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 def slugify(text):
     return text.lower().replace(" ", "-")

@@ -1,6 +1,9 @@
 """Assertions that compare an expression with itself. Analysed, never run."""
 
+import pytest
 from shop import make_order
+
+pytestmark = pytest.mark.unit
 
 
 def test_order_equals_itself():

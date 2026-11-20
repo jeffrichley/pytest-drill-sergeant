@@ -4,6 +4,10 @@ it can meet, such as a file already gone. Analysed, never run."""
 import os
 import shutil
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def save(path, text):
     path.write_text(text)

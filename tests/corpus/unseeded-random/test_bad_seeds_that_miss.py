@@ -5,7 +5,10 @@ numpy seed for a stdlib draw. Analysed, never run.
 import random
 
 import numpy as np
+import pytest
 from cart import Cart
+
+pytestmark = pytest.mark.unit
 
 random.seed()
 np.random.seed(0)
@@ -29,4 +32,5 @@ def test_seeds_only_after_drawing():
 
 def test_seeds_with_none():
     random.seed(None)
-    assert Cart([random.choice(["apple"])]).total == 5  # expect: DS803
+    item = random.choice(["apple"])  # expect: DS803
+    assert Cart([item]).total == 5

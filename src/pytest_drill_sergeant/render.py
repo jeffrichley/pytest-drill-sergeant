@@ -8,7 +8,7 @@ colour and hyperlinks.
 
 import hashlib
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from itertools import groupby
 from pathlib import Path
 
@@ -19,6 +19,7 @@ from rich.text import Text
 
 from pytest_drill_sergeant.checks import CHECKS
 from pytest_drill_sergeant.findings import Finding, Level
+from pytest_drill_sergeant.waivers import WaivedFinding
 
 _VOICE = {check.code: check.voice for check in CHECKS}
 
@@ -116,7 +117,9 @@ def _voice(finding: Finding) -> _Hanging:
 def _location(finding: Finding) -> Text:
     """The finding's header line: where it is, which check, its level and its test.
 
-    `path:line` links to the file, for a terminal that follows hyperlinks.
+    The test is where a finding is (`Finding.test`): a class, a function or
+    `<module>` for one about no test. `path:line` links to the file, for a terminal
+    that follows hyperlinks.
     """
     path = finding.file.as_posix()
     text = Text(" " * _FINDING_INDENT)
@@ -141,29 +144,58 @@ def _finding(finding: Finding, *, voice: bool) -> Iterable[RenderableType]:
     yield _facts(finding)
 
 
-def _tally(findings: list[Finding], *, voice: bool) -> Text:
+def _waived_finding(waived: WaivedFinding) -> Iterable[RenderableType]:
+    yield _Unwrapped(_location(waived.finding))
+    yield _Hanging(
+        [
+            (
+                Text.assemble(" " * _FACT_INDENT, ("Reason:", _LABEL), " "),
+                Text(waived.reason),
+            )
+        ]
+    )
+
+
+def _tally(findings: list[Finding], waived: int, *, voice: bool) -> Text:
     levels = Counter(f.level for f in findings)
     text = Text(f"{_plural(len(findings), 'finding')}: ", "bold")
     text.append(f"{levels[Level.FAIL]} fail", _LEVEL_STYLE[Level.FAIL])
     text.append(", ")
     text.append(f"{levels[Level.WARN]} warn", _LEVEL_STYLE[Level.WARN])
-    text.append(".")
+    text.append(f"; {waived} waived.")
     if voice:
         text.append(" Fix them, recruit. DISMISSED!", _BANNER)
     return text
 
 
-def render(
-    findings: list[Finding], *, voice: bool = True, max_findings: int = 0
+def _all_clear(waived: int, *, voice: bool) -> Text:
+    if voice:
+        return Text(
+            f"DRILL SERGEANT INSPECTION: no findings, {waived} waived. As you were!",
+            _BANNER,
+        )
+    return Text(f"No findings, {waived} waived.")
+
+
+def render(  # noqa: PLR0913  # One report's options, keyword-only, each with a default.
+    findings: list[Finding],
+    *,
+    waived: Sequence[WaivedFinding] = (),
+    show_waived: bool = False,
+    voice: bool = True,
+    max_findings: int = 0,
+    note: str | None = None,
 ) -> RenderableType:
     """Render findings as the report.
 
-    The report is a banner, the findings grouped by file and findings by line, each
-    with one voice line and plain Found/Why/Fix, and a closing tally by level with
-    a flourish. With `max_findings`, only the first that many findings are shown, then a
-    line counting the rest; the banner and tally still count every finding. With
-    the voice off there is no banner, voice line or flourish; the
-    Found/Why/Fix lines are unchanged.
+    The report is the note, when there is one, as one line however narrow the
+    terminal, then a banner, the findings grouped by file and findings by line, each
+    with one voice line and plain Found/Why/Fix, and a closing tally by level, with
+    the number of waived findings, and a flourish. With `max_findings`, only the
+    first that many findings are shown, then a line counting the rest; the banner
+    and tally still count every finding. With `show_waived`, each waived finding is
+    listed with its waiver's reason before the tally. With the voice off there is
+    no banner, voice line or flourish; the Found/Why/Fix lines are unchanged.
 
     A finding's location line is never wrapped; its Found/Why/Fix wrap to the
     console's width, each wrapped line under the text it continues. Print the report
@@ -172,39 +204,47 @@ def render(
     Args:
         findings: The findings to report, in the engine's order (by file, line and
             code), which keeps each file's findings together.
+        waived: The findings inline waivers silenced, in the engine's order.
+        show_waived: Whether to list the waived findings, not only count them.
         voice: Whether to deliver the report in the voice.
         max_findings: The most findings to show; 0 shows them all.
+        note: A line saying which checks were skipped and why
+            (`ProductionCode.note`), or `None`.
 
     Returns:
         The report, ready for `Console.print`.
     """
-    if not findings:
-        return (
-            Text("DRILL SERGEANT INSPECTION: no findings. As you were!", _BANNER)
-            if voice
-            else Text("No findings.")
-        )
-    files = len({f.file for f in findings})
-    out: list[RenderableType] = []
-    if voice:
-        out += [
-            Text(
-                f"DRILL SERGEANT INSPECTION: {_plural(len(findings), 'finding')} in "
-                f"{_plural(files, 'file')}. FALL IN!",
-                _BANNER,
-            ),
-            Text(),
-        ]
-    shown = findings[:max_findings] if max_findings else findings
-    for file, group in groupby(shown, key=lambda f: f.file.as_posix()):
-        out.append(Text(file, _FILE))
-        for f in group:
-            out += _finding(f, voice=voice)
+    out: list[RenderableType] = [_Unwrapped(Text(note))] if note else []
+    if findings:
+        files = len({f.file for f in findings})
+        if voice:
+            out += [
+                Text(
+                    f"DRILL SERGEANT INSPECTION: {_plural(len(findings), 'finding')} "
+                    f"in {_plural(files, 'file')}. FALL IN!",
+                    _BANNER,
+                ),
+                Text(),
+            ]
+        shown = findings[:max_findings] if max_findings else findings
+        for file, group in groupby(shown, key=lambda f: f.file.as_posix()):
+            out.append(Text(file, _FILE))
+            for f in group:
+                out += _finding(f, voice=voice)
+            out.append(Text())
+        if len(shown) < len(findings):
+            cap = Text(f"…and {len(findings) - len(shown)} more, run ", "bold")
+            cap.append("`drill-sergeant check`", "bold cyan")
+            cap.append(" for all", "bold")
+            out += [cap, Text()]
+    if show_waived and waived:
+        out.append(Text("Waived findings", _FILE))
+        for w in waived:
+            out += _waived_finding(w)
         out.append(Text())
-    if len(shown) < len(findings):
-        cap = Text(f"…and {len(findings) - len(shown)} more, run ", "bold")
-        cap.append("`drill-sergeant check`", "bold cyan")
-        cap.append(" for all", "bold")
-        out += [cap, Text()]
-    out.append(_tally(findings, voice=voice))
+    out.append(
+        _tally(findings, len(waived), voice=voice)
+        if findings
+        else _all_clear(len(waived), voice=voice)
+    )
     return Group(*out)

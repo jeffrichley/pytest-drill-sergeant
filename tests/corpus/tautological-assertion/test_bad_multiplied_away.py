@@ -1,7 +1,10 @@
 """Assertions that multiply the result away, as in the Lemmy-reported Claude test
 `assert(5 + (funcToTest(846) * 0) == 5)`. Analysed, never run."""
 
+import pytest
 from shop import price
+
+pytestmark = pytest.mark.unit
 
 
 def test_price_of_846():

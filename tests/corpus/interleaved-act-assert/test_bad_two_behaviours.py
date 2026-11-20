@@ -3,6 +3,10 @@ Analysed, never run."""
 
 import logging
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_cart(cart):
     cart.add("apple")

@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from fnmatch import fnmatch
 from pathlib import Path
 
+from pytest_drill_sergeant.cache import location
 from pytest_drill_sergeant.config import ConfigError, RawValue
 
 # pytest's defaults for the ini options that pick test files.
@@ -154,6 +155,15 @@ def discover(paths: Iterable[Path]) -> IniSource:
                         values={k: _raw(v) for k, v in values.items()},
                     )
     return IniSource(root=ancestor)
+
+
+def cache_dir(source: IniSource) -> Path:
+    """drill-sergeant's cache directory under this config (`cache.location`).
+
+    pytest's cache directory is the config's `cache_dir`, or `.pytest_cache`,
+    relative to the config root.
+    """
+    return location(source.root, str(source.values.get("cache_dir", ".pytest_cache")))
 
 
 def _patterns(source: IniSource, name: str, default: tuple[str, ...]) -> list[str]:

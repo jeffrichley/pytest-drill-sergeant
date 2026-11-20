@@ -3,6 +3,10 @@ failure-modes catalog (#23). Analysed, never run."""
 
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_retry_enabled():
     assert "retry=True" in Path("src/client.py").read_text()  # expect: DS603

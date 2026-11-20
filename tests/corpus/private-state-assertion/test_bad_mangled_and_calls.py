@@ -3,7 +3,10 @@ Analysed, never run."""
 
 import unittest
 
+import pytest
 from app import Account, Service
+
+pytestmark = pytest.mark.unit
 
 
 def test_mangled_balance():
@@ -12,7 +15,7 @@ def test_mangled_balance():
 
 
 def test_private_method_was_called(mocker):
-    service = Service(client=mocker.Mock())
+    service = Service(client=mocker.Mock())  # expect: DS302
     service.run()
     service._client.send.assert_called_once()  # expect: DS602
 

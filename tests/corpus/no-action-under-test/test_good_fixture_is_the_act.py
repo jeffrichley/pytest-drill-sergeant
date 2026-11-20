@@ -3,6 +3,8 @@ the value under test. Analysed, never run."""
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 def test_default_timeout(settings):
     assert settings.timeout == 30
@@ -19,6 +21,20 @@ class TestFromSetup:
 
     def test_name_from_setup(self):
         assert self.user["name"] == "Ada"
+
+
+class TestFromSetupUnderAnyName:
+    # The instance is the first parameter, whatever it is called.
+    def setup_method(this):
+        this.user = make_user()
+
+    def test_name_from_setup(this):
+        assert this.user["name"] == "Ada"
+
+
+# A module-level test's `cls` is a fixture like any other.
+def test_fixture_named_cls(cls):
+    assert cls.timeout == 30
 
 
 def make_user():

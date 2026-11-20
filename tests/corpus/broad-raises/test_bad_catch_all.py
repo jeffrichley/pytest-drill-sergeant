@@ -3,6 +3,8 @@ never run."""
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 def parse(text):
     return int(text)

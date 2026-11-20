@@ -6,7 +6,10 @@ Analysed, never run.
 import random
 from random import shuffle
 
+import pytest
 from cart import Cart
+
+pytestmark = pytest.mark.unit
 
 
 def test_cart_total_for_a_random_quantity():

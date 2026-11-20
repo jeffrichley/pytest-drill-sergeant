@@ -1,7 +1,10 @@
 """Near-misses: `.py` files the test writes or the code under test generates, and
 text that was never read from a file. Analysed, never run."""
 
+import pytest
 from app import generate_stub, render_snippet, run_tool
+
+pytestmark = pytest.mark.unit
 
 SNIPPET = "def handler():\n    return 1\n"
 

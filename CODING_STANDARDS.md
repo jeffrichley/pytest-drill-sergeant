@@ -24,6 +24,14 @@ these rules started.
 
 ## Code
 
+- **A check knows a thing; it never guesses from a name.** A check decides what a
+  variable, parameter or call is only from what the file shows: its imports, an
+  assignment traced to its source, pytest's built-in fixtures taken as parameters, or
+  its position (a method's first parameter). A name (`mock_db`, `log`, `self`,
+  `expected`, a method called `close`) is never evidence. A pattern that is sometimes
+  legitimate defaults to `warn` instead of gaining an exception list.
+- **One finding per problem.** When two checks report the same problem in a test, the
+  more specific one wins, and only while it is enabled.
 - **A helper whose job is to refuse is `require_*`.** A new function named for what it
   returns, which then raises for the caller to catch, gets renamed or returns instead.
   (stagehand#151)

@@ -2,7 +2,10 @@
 The first is the catalog's example; the second is the Hacker News `a = 1`.
 Analysed, never run."""
 
+import pytest
 from shop import load_config
+
+pytestmark = pytest.mark.unit
 
 
 def test_config_loads():

@@ -1,7 +1,10 @@
 """Near-misses: underscores that aren't private attributes: namedtuple's public
 methods, keys and local names. Analysed, never run."""
 
+import pytest
 from app import Point, load
+
+pytestmark = pytest.mark.unit
 
 
 def test_namedtuple_as_dict():

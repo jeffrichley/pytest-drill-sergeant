@@ -1,6 +1,10 @@
 """A call between checks that only its name suggests is a reset or cleanup: nothing
 the file says makes it so, so it is a second act. Analysed, never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_mock_reset_between_checks(notifier, sender):
     notifier.notify("hi")

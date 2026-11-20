@@ -2,6 +2,10 @@
 nothing the file says makes them so, so each is an act nothing checks.
 Analysed, never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_server_answers(server):
     reply = server.request("/ping")

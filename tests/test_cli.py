@@ -3,7 +3,9 @@ from pathlib import Path
 
 import pytest
 
-CORPUS = Path(__file__).parent / "corpus"
+pytestmark = pytest.mark.integration
+
+GOLDEN = Path(__file__).parent / "golden"
 
 
 def test_help_names_the_command(cli):
@@ -13,11 +15,7 @@ def test_help_names_the_command(cli):
     assert "drill-sergeant" in result.output
 
 
-def test_check_exits_zero_on_a_clean_file(cli, tmp_path):
-    (tmp_path / "test_ok.py").write_text(
-        "def test_ok():\n    assert sum([1, 1]) == 2\n"
-    )
-
+def test_check_exits_zero_on_a_clean_file(cli, clean_test):
     result = cli("check", "test_ok.py")
 
     assert result.exit_code == 0, result.output
@@ -154,10 +152,12 @@ def test_config_option_overrides_discovery(cli, tmp_path, assertion_free_test):
     assert cli("check", "--config", "ci/pytest.ini", "test_it.py").exit_code == 0
 
 
-def test_per_file_ignore_globs_are_relative_to_the_config_file(cli, tmp_path):
+def test_per_file_ignore_globs_are_relative_to_the_config_file(
+    cli, tmp_path, unit_mark
+):
     legacy = tmp_path / "legacy"
     legacy.mkdir()
-    (legacy / "test_old.py").write_text("def test_old():\n    run()\n")
+    (legacy / "test_old.py").write_text("def test_old():\n    run()\n" + unit_mark)
     (tmp_path / "pytest.ini").write_text(
         "[pytest]\ndrill_sergeant_per_file_ignores =\n    legacy/*: DS101\n"
     )
@@ -174,8 +174,15 @@ def test_per_file_ignore_globs_are_relative_to_the_config_file(cli, tmp_path):
         "drill_sergeant_levels = DS999=warn",
         "drill_sergeant_levels = DS101=loud",
         "drill_sergeant_max_test_lines = fifty",
+        "drill_sergeant_source_dirs = nowhere",
     ],
-    ids=["unknown-key", "unknown-code", "bad-level", "non-numeric-threshold"],
+    ids=[
+        "unknown-key",
+        "unknown-code",
+        "bad-level",
+        "non-numeric-threshold",
+        "missing-source-dir",
+    ],
 )
 def test_check_refuses_bad_config(cli, tmp_path, assertion_free_test, ini):
     (tmp_path / "pytest.ini").write_text(f"[pytest]\n{ini}\n")
@@ -183,8 +190,13 @@ def test_check_refuses_bad_config(cli, tmp_path, assertion_free_test, ini):
     assert cli("check", "test_it.py").exit_code == 2
 
 
-def test_check_refuses_a_missing_config_file(cli, assertion_free_test):
-    assert cli("check", "--config", "nowhere.ini", "test_it.py").exit_code == 2
+@pytest.mark.parametrize(
+    "option",
+    [("--config", "nowhere.ini"), ("--mode", "off")],
+    ids=["missing-config-file", "no-flag-configures-drill-sergeant"],
+)
+def test_check_refuses_a_bad_option(cli, assertion_free_test, option):
+    assert cli("check", *option, "test_it.py").exit_code == 2
 
 
 @pytest.mark.parametrize(
@@ -216,10 +228,6 @@ def test_no_environment_variable_configures_drill_sergeant(
     assert cli("check", "test_it.py").exit_code == 1
 
 
-def test_no_command_line_flag_configures_drill_sergeant(cli, assertion_free_test):
-    assert cli("check", "--mode", "off", "test_it.py").exit_code == 2
-
-
 def test_voice_off_keeps_found_why_fix_and_drops_the_voice(
     cli, tmp_path, assertion_free_test
 ):
@@ -245,9 +253,7 @@ LONG_LOCATION = (
 )
 
 
-def test_a_narrow_terminal_wraps_each_fact_under_its_text_and_keeps_the_location_whole(
-    cli, long_named_test, monkeypatch, wrapped
-):
+def test_a_narrow_terminal_keeps_the_location_whole(cli, long_named_test, monkeypatch):
     monkeypatch.setenv("COLUMNS", "60")
 
     output = cli("check", "test_long.py").output
@@ -255,11 +261,27 @@ def test_a_narrow_terminal_wraps_each_fact_under_its_text_and_keeps_the_location
     location, *rest = [line for line in output.splitlines() if "DS101" in line]
     assert LONG_LOCATION in location
     assert not rest
-    for label, after in [("Found:", "Why:"), ("Why:", "Fix:"), ("Fix:", "")]:
-        continuations, following = wrapped(output, label)
-        assert continuations, label
-        assert following.lstrip().startswith(after), label
-    assert max(len(line) for line in output.splitlines() if line != location) <= 60
+    # The note that DS403 was skipped, for want of production code, is never wrapped.
+    facts = [
+        ln
+        for ln in output.splitlines()
+        if ln != location and not ln.startswith("drill-sergeant: ")
+    ]
+    assert max(len(line) for line in facts) <= 60
+
+
+@pytest.mark.parametrize(
+    ("label", "after"), [("Found:", "Why:"), ("Why:", "Fix:"), ("Fix:", "")]
+)
+def test_a_narrow_terminal_wraps_each_fact_under_its_text(
+    cli, long_named_test, monkeypatch, wrapped, label, after
+):
+    monkeypatch.setenv("COLUMNS", "60")
+
+    continuations, following = wrapped(cli("check", "test_long.py").output, label)
+
+    assert continuations
+    assert following.lstrip().startswith(after)
 
 
 def test_check_writes_no_escape_codes_when_colour_is_off(cli, assertion_free_test):
@@ -278,13 +300,157 @@ def test_forced_colour_styles_the_report_and_links_the_location_to_its_file(
     assert f";{assertion_free_test.resolve().as_uri()}\x1b\\test_it.py:1" in output
 
 
-# A change to the report changes golden/check.txt: rerun `drill-sergeant check suite`
-# over a copy of the corpus with NO_COLOR=1 COLUMNS=100, and review the diff.
+def test_check_reads_production_code_under_src(
+    cli, tmp_path, assertion_free_test, special_casing_module
+):
+    special_casing_module(tmp_path / "src")
+
+    assert "src/app.py:4: DS403" in cli("check", "test_it.py").output
+
+
+def test_check_reads_the_configured_source_dirs_instead_of_src(
+    cli, tmp_path, assertion_free_test, special_casing_module
+):
+    special_casing_module(tmp_path / "lib")
+    special_casing_module(tmp_path / "src")
+    (tmp_path / "pytest.ini").write_text("[pytest]\ndrill_sergeant_source_dirs = lib\n")
+
+    output = cli("check", "test_it.py").output
+
+    assert "lib/app.py:4: DS403" in output
+    assert "src/app.py" not in output
+
+
+def test_without_production_code_the_special_casing_check_is_skipped_with_a_note(
+    cli, clean_test
+):
+    result = cli("check", "test_ok.py")
+
+    assert result.exit_code == 0, result.output
+    assert "DS403" in result.output
+    assert "drill_sergeant_source_dirs" in result.output
+
+
+@pytest.mark.parametrize(
+    "ini",
+    ["drill_sergeant_levels = DS403=off", "drill_sergeant_mode = off"],
+    ids=["check-off", "mode-off"],
+)
+def test_no_note_when_the_special_casing_check_does_not_run(
+    cli, tmp_path, assertion_free_test, ini
+):
+    (tmp_path / "pytest.ini").write_text(f"[pytest]\n{ini}\n")
+
+    assert "drill_sergeant_source_dirs" not in cli("check", "test_it.py").output
+
+
+def test_production_code_is_read_in_full_on_every_run(
+    cli, tmp_path, assertion_free_test, special_casing_module
+):
+    app = special_casing_module(tmp_path / "src")
+    cli("check", "test_it.py")
+    with app.open("a") as source:
+        source.write("LATE = os.environ.get('PYTEST_CURRENT_TEST')\n")
+
+    output = cli("check", "test_it.py").output
+
+    assert "src/app.py:4: DS403" in output
+    assert "src/app.py:5: DS403" in output
+
+
+# The golden suite is a small fixed suite, apart from the corpus, so only a change to
+# the report (or a check firing on its files) changes golden/check.txt. Regenerate it
+# with `just golden` and review `git diff tests/golden`.
 def test_check_output_matches_the_golden_report(cli, tmp_path):
-    golden = Path(__file__).parent / "golden" / "check.txt"
-    suite = tmp_path / "suite"
-    shutil.copytree(CORPUS, suite)
+    shutil.copytree(GOLDEN / "suite", tmp_path / "suite")
 
-    result = cli("check", "suite")
+    result = cli("check", "--show-waived", "suite")
 
-    assert result.output == golden.read_text()
+    assert result.output == (GOLDEN / "check.txt").read_text()
+
+
+def test_waived_findings_leave_the_exit_code_and_are_tallied(cli, waived_test):
+    result = cli("check", "test_waived.py")
+
+    assert result.exit_code == 0, result.output
+    assert "1 waived" in result.output
+    assert "smoke test" not in result.output
+
+
+def test_tally_counts_waived_findings_beside_the_findings_that_stand(
+    cli, waived_test, assertion_free_test
+):
+    result = cli("check", "test_waived.py", "test_it.py")
+
+    assert result.exit_code == 1, result.output
+    assert "1 waived" in result.output.splitlines()[-1]
+
+
+def test_show_waived_lists_each_waived_finding_with_its_reason(cli, waived_test):
+    result = cli("check", "--show-waived", "test_waived.py")
+
+    assert result.exit_code == 0, result.output
+    [listed] = [line for line in result.output.splitlines() if "DS101" in line]
+    assert "test_waived.py:1" in listed
+    assert "smoke test" in result.output
+
+
+def test_with_inline_waivers_off_the_cli_reports_the_waived_finding(
+    cli, tmp_path, waived_test
+):
+    (tmp_path / "pytest.ini").write_text(
+        "[pytest]\ndrill_sergeant_inline_waivers = false\n"
+    )
+
+    result = cli("check", "test_waived.py")
+
+    assert result.exit_code == 1, result.output
+    assert "0 waived" in result.output
+
+
+def test_check_caches_under_pytests_cache_dir_at_the_config_root(
+    cli, tmp_path, assertion_free_test
+):
+    (tmp_path / "pytest.ini").write_text("[pytest]\n")
+
+    cli("check", str(assertion_free_test))
+
+    assert (tmp_path / ".pytest_cache" / "d" / "drill-sergeant").is_dir()
+
+
+def test_check_follows_the_configs_cache_dir(cli, tmp_path, assertion_free_test):
+    (tmp_path / "pytest.ini").write_text("[pytest]\ncache_dir = build/cache\n")
+
+    cli("check", str(assertion_free_test))
+
+    assert (tmp_path / "build" / "cache" / "d" / "drill-sergeant").is_dir()
+
+
+def test_cache_dir_the_check_makes_is_ignored_by_git(
+    cli, tmp_path, assertion_free_test
+):
+    cli("check", str(assertion_free_test))
+
+    assert (tmp_path / ".pytest_cache" / ".gitignore").read_text().strip().endswith("*")
+
+
+def test_check_with_cache_off_writes_no_cache(cli, tmp_path, assertion_free_test):
+    (tmp_path / "pytest.ini").write_text("[pytest]\ndrill_sergeant_cache = false\n")
+
+    result = cli("check", str(assertion_free_test))
+
+    assert result.exit_code == 1
+    assert not (tmp_path / ".pytest_cache").exists()
+
+
+def test_warm_check_with_nothing_changed_writes_nothing(
+    cli, tmp_path, assertion_free_test, watch
+):
+    cli("check", str(assertion_free_test))
+    written = watch(tmp_path / ".pytest_cache")
+
+    result = cli("check", str(assertion_free_test))
+
+    assert result.exit_code == 1
+    assert (tmp_path / ".pytest_cache" / "d" / "drill-sergeant").is_dir()
+    assert written() == []

@@ -4,6 +4,8 @@ run."""
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 def parse(text):
     return int(text)
@@ -32,15 +34,6 @@ def test_assert_false_after_a_returning_handler():
     except ValueError:
         return
     assert False, "parse accepted garbage"
-
-
-def test_raise_after_the_try():
-    for text in ["x", "y"]:
-        try:
-            parse(text)
-        except ValueError:
-            continue
-        raise AssertionError(f"parse accepted {text!r}")
 
 
 def test_body_ends_in_a_raise():

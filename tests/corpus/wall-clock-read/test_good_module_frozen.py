@@ -9,7 +9,7 @@ import pytest
 from billing import Invoice
 from freezegun import freeze_time
 
-pytestmark = [pytest.mark.freeze_time("2026-01-01")]
+pytestmark = [pytest.mark.freeze_time("2026-01-01"), pytest.mark.unit]
 
 
 def test_invoice_dated_under_a_module_freeze():

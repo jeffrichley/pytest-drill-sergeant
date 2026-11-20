@@ -5,7 +5,11 @@ assertions an agent would leave out.
 Analysed, never run.
 """
 
+import pytest
+
 import pytest_drill_sergeant
+
+pytestmark = pytest.mark.unit
 
 
 class TestCoverageBoost:

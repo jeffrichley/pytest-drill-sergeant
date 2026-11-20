@@ -6,6 +6,8 @@ import pytest as pt
 from pytest import raises
 from pytest import raises as expect
 
+pytestmark = pytest.mark.unit
+
 
 def parse(text):
     return int(text)
@@ -33,7 +35,7 @@ def test_match_none_is_no_match():
 
 def test_empty_match_matches_everything():
     with pytest.raises(Exception, match=""):  # expect: DS701
-        parse(None)
+        parse([])
 
 
 def test_aliased_module():

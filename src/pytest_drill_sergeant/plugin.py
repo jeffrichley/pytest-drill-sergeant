@@ -2,9 +2,13 @@
 
 Installing the package turns it on; `-p no:drill_sergeant` or
 `drill_sergeant_mode = off` turns it off. After collection it analyses the files that
-contributed collected test functions, once, on the xdist controller only; the tests
-then run as always. The findings section after the test results shows them, and a
+contributed collected test functions, and the production code, once, on the xdist
+controller only; the tests then run as always. The findings section after the test results shows them, and a
 run whose tests ran and passed exits 1 when any finding is at the `fail` level.
+
+Per-file results are cached under pytest's cache directory, shared with the CLI,
+unless `drill_sergeant_cache = false` or `-p no:cacheprovider`; the cache is the
+only file the plugin writes.
 """
 
 from collections.abc import Generator
@@ -13,6 +17,7 @@ from pathlib import Path
 import pytest
 from rich.console import Console
 
+from pytest_drill_sergeant.cache import location
 from pytest_drill_sergeant.config import (
     OPTIONS,
     PREFIX,
@@ -22,8 +27,10 @@ from pytest_drill_sergeant.config import (
     refusal,
     resolve,
 )
-from pytest_drill_sergeant.engine import analyze
-from pytest_drill_sergeant.findings import Finding, Level
+from pytest_drill_sergeant.engine import Inspection, inspect
+from pytest_drill_sergeant.findings import Level
+from pytest_drill_sergeant.paths import relative
+from pytest_drill_sergeant.production import production_code
 from pytest_drill_sergeant.render import render
 
 # The name the run's state is registered under with pytest's plugin manager.
@@ -74,12 +81,17 @@ def _require_config(config: pytest.Config) -> Config:
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    """Resolve the config and, unless the mode is `off`, start the run.
+    """Resolve the config, register the category markers and start the run.
+
+    The markers are registered whatever the mode, so `--strict-markers` accepts them;
+    the run starts unless the mode is `off`.
 
     An xdist worker only runs tests and tells the controller which files it collected
     them from; the controller analyses.
     """
     resolved = _require_config(config)
+    for marker in resolved.category_markers:
+        config.addinivalue_line("markers", f"{marker}: a category marker")
     if resolved.mode is Level.OFF:
         return
     if hasattr(config, "workerinput"):
@@ -110,21 +122,33 @@ class _Worker:
 
 
 class _Run:
-    """One drill-sergeant run: the files analysed, the findings, the report."""
+    """One drill-sergeant run: the files analysed, what they hold, the report."""
 
     def __init__(self, config: pytest.Config, resolved: Config) -> None:
         self.config = config
         self.resolved = resolved
-        self.findings: list[Finding] | None = None
+        self.inspection: Inspection | None = None
+        self.production = production_code(resolved, config.invocation_params.dir)
 
     def _analyze(self, paths: set[Path]) -> None:
-        if self.findings is not None:
+        if self.inspection is not None:
             return
         here = self.config.invocation_params.dir
-        self.findings = analyze(
-            sorted(p.relative_to(here) if p.is_relative_to(here) else p for p in paths),
+        self.inspection = inspect(
+            sorted(relative(p, here) for p in paths),
             self.resolved,
+            self.production.files,
+            cache_dir=self._cache_dir(),
         )
+
+    def _cache_dir(self) -> Path | None:
+        """The cache's directory under pytest's cache directory, if pytest has one.
+
+        Under `-p no:cacheprovider` pytest has none, and the run is uncached.
+        """
+        if getattr(self.config, "cache", None) is None or not self.resolved.cache:
+            return None
+        return location(self.config.rootpath, self.config.getini("cache_dir"))
 
     def pytest_collection_finish(self, session: pytest.Session) -> None:
         """Analyse the files that contributed collected tests."""
@@ -148,7 +172,7 @@ class _Run:
     ) -> Generator[None]:
         """Show the findings section after the test results and their summary."""
         result = yield
-        if self.findings is None:
+        if self.inspection is None:
             return result
         terminalreporter.write_sep("=", "drill sergeant")
         writer = self.config.get_terminal_writer()
@@ -164,9 +188,11 @@ class _Run:
         )
         console.print(
             render(
-                self.findings,
+                self.inspection.findings,
+                waived=self.inspection.waived,
                 voice=self.resolved.voice,
                 max_findings=self.resolved.max_findings,
+                note=self.production.note,
             ),
             crop=False,
         )
@@ -177,6 +203,7 @@ class _Run:
         if (
             session.exitstatus == pytest.ExitCode.OK
             and not self.config.option.collectonly
-            and any(f.level is Level.FAIL for f in self.findings or ())
+            and self.inspection is not None
+            and any(f.level is Level.FAIL for f in self.inspection.findings)
         ):
             session.exitstatus = pytest.ExitCode.TESTS_FAILED

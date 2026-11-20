@@ -1,6 +1,10 @@
 """Tests that assert the starting state, then act, and never check what the act did.
 Analysed, never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 class Cart:
     def __init__(self):

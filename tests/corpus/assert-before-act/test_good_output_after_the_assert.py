@@ -6,6 +6,8 @@ import logging
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 log = logging.getLogger(__name__)
 
 

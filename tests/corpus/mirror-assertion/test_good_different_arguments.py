@@ -1,7 +1,10 @@
 """Near-misses: the same function on both sides, called with different
 arguments, which tests a real property. Analysed, never run."""
 
+import pytest
 from shop import normalise, slugify
+
+pytestmark = pytest.mark.unit
 
 
 def test_slug_ignores_case():

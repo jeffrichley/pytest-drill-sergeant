@@ -5,10 +5,14 @@ copy-pasted setup, assertions that prove nothing, mocks asserted on instead of
 behaviour, skips added to go green, sleeps, and test files too long to follow. It
 reports them as findings that fail the run, in the drill-sergeant voice.
 
-**Status:** v1 is being rebuilt from scratch. So far the structure checks (DS101-DS104),
-the assertion checks (DS201-DS203), the brittleness checks (DS601-DS603), the exception
-checks (DS701, DS702) and the flakiness checks (DS801-DS803) are
-reported both by the pytest plugin and by `drill-sergeant check <paths>`. The plan is
+**Status:** v1 is being rebuilt from scratch. So far the malformed-waiver check (DS001),
+the structure checks (DS101-DS108; DS108, AAA comments, is off until
+`drill_sergeant_levels` turns it on), the assertion checks (DS201-DS203), the mocking
+checks (DS301-DS303), the cheating checks (DS401-DS403), copy-pasted setup (DS501),
+near-duplicate tests (DS502), the brittleness checks (DS601-DS603), the exception
+checks (DS701, DS702), the flakiness checks (DS801-DS803) and the missing category
+marker (DS901) are reported both by the pytest plugin and by
+`drill-sergeant check <paths>`. The plan is
 the [v1 spec](https://github.com/jeffrichley/pytest-drill-sergeant/issues/118). Version
 0.4 is archived under the tag `archive/2026-11-19/v0.4/main`.
 
@@ -26,9 +30,50 @@ Installing the package turns the plugin on: every `pytest` run is a drill-sergea
 - The section shows the first `drill_sergeant_max_findings` findings (25 by default,
   0 for all), then `…and N more, run drill-sergeant check for all`. The exit code
   counts every finding.
+- The section closes with a tally of the findings by level and the number of waived
+  findings.
 - Under pytest-xdist the controller analyses; the workers only run tests.
+- It registers the configured category markers with pytest, so `--strict-markers`
+  accepts them.
 - `-p no:drill_sergeant` or `drill_sergeant_mode = "off"` turns it off. Bad config
   is a pytest usage error (exit 4).
+
+## The cache
+
+Each file's analysis is cached, so a run with nothing changed adds only tens of
+milliseconds, and an edit costs only the files it touched.
+
+- The cache lives under pytest's cache directory (`.pytest_cache/d/drill-sergeant/`,
+  or under your `cache_dir`), and the plugin and `drill-sergeant check` share it. It
+  is the only file a run writes.
+- A file is analysed again when its bytes change, when drill-sergeant changes, or
+  when an option that shapes per-file analysis does (thresholds, category markers,
+  source dirs, inline waivers). Changing levels, mode or per-file ignores reuses it.
+- A corrupt or unreadable cache is rebuilt without a word.
+- `drill_sergeant_cache = false` turns it off; so does `-p no:cacheprovider`, which
+  turns off pytest's own cache. `pytest --cache-clear` empties it.
+
+## Waivers
+
+When a human agrees that a finding is a false positive, a waiver silences it:
+
+```python
+def test_cli_smoke():  # drill: waive DS101 -- the exit code is checked by CI
+    main(["--help"])
+```
+
+- A waiver is a `# drill: waive DS### -- <reason>` comment on the test's `def` line
+  (or the `):` line a wrapped signature closes on),
+  where it covers that check anywhere in the test, or on the line the finding is
+  reported on. It silences only the check it names.
+- The code and the reason are both required. A waiver missing either waives nothing
+  and is itself a finding (DS001, `fail`), which no waiver can silence.
+- Every run's closing tally counts the waived findings; `drill-sergeant check
+  --show-waived` lists each one with its reason. A waiver that matches no finding is
+  not reported.
+- `drill_sergeant_inline_waivers = false` turns waivers off: their findings stand,
+  and DS001 reports nothing. Silencing then goes only through config (levels and
+  per-file ignores).
 
 ## Configuration
 
@@ -58,15 +103,26 @@ drill_sergeant_voice = false
 | `drill_sergeant_max_mock_setup` | whole number | 10 |
 | `drill_sergeant_duplicate_setup_min_statements` | whole number | 3 |
 | `drill_sergeant_duplicate_setup_min_tests` | whole number | 3 |
-| `drill_sergeant_category_markers` | marker names | `unit integration e2e` |
-| `drill_sergeant_source_dirs` | directory lines | `src/` if it exists |
+| `drill_sergeant_category_markers` | marker names; every test must carry one (DS901), and the plugin registers them | `unit integration e2e` |
+| `drill_sergeant_source_dirs` | directory lines, relative to the config file; each must exist. The production code DS403 reads in full; with none and no `src/`, DS403 is skipped and the output says so | `src/` if it exists |
 | `drill_sergeant_voice` | `true` or `false`; off prints Found/Why/Fix without the voice | `true` |
 | `drill_sergeant_max_findings` | whole number, 0 for all | 25 |
 | `drill_sergeant_inline_waivers` | `true` or `false` | `true` |
-| `drill_sergeant_cache` | `true` or `false` | `true` |
+| `drill_sergeant_cache` | `true` or `false`; off analyses every file on every run | `true` |
 
-The thresholds, markers, source dirs, waivers and cache are accepted now and take
-effect as the checks that use them land.
+### Category markers
+
+DS901 requires every test to carry one of the configured category markers, as
+`pytest.mark.<marker>` on the test, its class or the module's `pytestmark`. Its fix
+suggests the marker named by the nearest directory in the file's path, relative to the
+config file's directory (`tests/integration/test_x.py` suggests
+`@pytest.mark.integration`), and otherwise lists the configured markers. The check
+reads the files, never edits them.
+
+**Known limitation:** markers a project's own conftest hook adds at collection time
+(`pytest_collection_modifyitems` marking by directory, say) are not in the test files,
+so the check can't see them. Such projects turn it off:
+`drill_sergeant_levels = ["DS901=off"]`.
 
 ## Development
 
@@ -74,6 +130,7 @@ effect as the checks that use them land.
 just sync           # create .venv with the dev tools
 just install-hooks  # pre-commit and commit-msg hooks
 just check          # the gate: lint, format, types, dead code, tests
+just perf           # the speed budget: a warm run over 300 test files (not in the gate)
 ```
 
 ## License

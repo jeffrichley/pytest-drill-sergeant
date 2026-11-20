@@ -7,6 +7,8 @@ from datetime import datetime
 import pytest
 from billing import Invoice
 
+pytestmark = pytest.mark.unit
+
 
 def stamp():
     return datetime.now()

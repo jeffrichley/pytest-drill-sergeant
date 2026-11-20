@@ -46,6 +46,16 @@ test:
 stress count="5":
     uv run pytest -q -n 4 --count={{count}} --junitxml=stress-report.xml
 
+# The speed budget: a warm run with nothing changed, over the committed 300-file
+# suite. Not in the gate (timings belong to the machine), so CI runs it as its own
+# job.
+perf:
+    uv run pytest -q -p no:randomly -m perf tests/perf
+
+# Rewrite tests/golden/check.txt as the golden test runs it; review `git diff tests/golden`.
+golden:
+    uv run python tests/golden/regenerate.py
+
 # The commit hooks: the fast checks before a commit, the message convention on it.
 install-hooks:
     uv run pre-commit install

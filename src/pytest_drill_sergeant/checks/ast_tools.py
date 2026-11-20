@@ -15,6 +15,7 @@ import ast
 from collections.abc import Iterator, Mapping
 
 from pytest_drill_sergeant.checks.base import FunctionNode, TestFunction
+from pytest_drill_sergeant.findings import MODULE
 
 # pytest's helpers that fail the test: `pytest.fail`, and the context managers that
 # require an exception or warning.
@@ -77,7 +78,7 @@ def _bind_imports(
             names[alias.asname or alias.name] = f"{statement.module}.{alias.name}"
 
 
-def _bound_names(statement: ast.stmt) -> Iterator[str]:
+def bound_names(statement: ast.stmt) -> Iterator[str]:
     """The names a statement binds where it stands, imports aside.
 
     That is a `def` or `class`, an assignment, a `for` target or a `with ... as`.
@@ -132,20 +133,43 @@ def module_imports(module: ast.Module) -> dict[str, str]:
         elif (logger := _logger_bound_by(statement, names)) is not None:
             names[logger] = _LOGGER
         else:
-            for bound in _bound_names(statement):
+            for bound in bound_names(statement):
                 names.pop(bound, None)
     return names
 
 
-def value_params(node: FunctionNode) -> set[str]:
+def _param_names(node: FunctionNode) -> list[str]:
+    """Every parameter a function takes, in order, positional ones first."""
+    args = node.args
+    starred = [a for a in (args.vararg, args.kwarg) if a is not None]
+    return [a.arg for a in args.posonlyargs + args.args + args.kwonlyargs + starred]
+
+
+def instance_param(test: TestFunction) -> str | None:
+    """The parameter a test in a class takes its instance by; `None` at module level.
+
+    It is the first positional parameter, whatever it is called.
+    """
+    args = test.node.args
+    positional = args.posonlyargs + args.args
+    return positional[0].arg if test.classes and positional else None
+
+
+def positional_params(test: TestFunction) -> list[str]:
+    """The test's positional parameters in order, without its instance."""
+    args = test.node.args
+    params = [a.arg for a in args.posonlyargs + args.args]
+    return params[1:] if instance_param(test) is not None else params
+
+
+def value_params(test: TestFunction) -> set[str]:
     """A test's value parameters: the fixtures and parameters it takes.
 
-    `self` and `cls` are the test's own class, not values handed in.
+    A test in a class takes its instance first, whatever the parameter is
+    called; that is the test's own object, not a value handed in. At module
+    level every parameter is one, `self` and `cls` included.
     """
-    return {arg.arg for arg in ast.walk(node.args) if isinstance(arg, ast.arg)} - {
-        "self",
-        "cls",
-    }
+    return set(_param_names(test.node)) - {instance_param(test)}
 
 
 def imports_seen_by(
@@ -157,14 +181,14 @@ def imports_seen_by(
     `def sleep`, hides the module's import of the same name.
     """
     names = dict(module_names)
-    shadows = value_params(node)
+    shadows = set(_param_names(node))
     for child in ast.walk(node):
         if child is node:
             continue
         if isinstance(child, ast.Import | ast.ImportFrom):
             _bind_imports(child, names)
         elif isinstance(child, ast.stmt):
-            shadows.update(_bound_names(child))
+            shadows.update(bound_names(child))
     for shadow in shadows:
         names.pop(shadow, None)
     return names
@@ -240,6 +264,25 @@ def is_real_assertion(node: ast.AST, names: Mapping[str, str]) -> bool:
     return False
 
 
+def own_statements(test: TestFunction) -> list[ast.stmt]:
+    """A test's own statements, in order, its docstring aside."""
+    body = test.node.body
+    return body[1:] if ast.get_docstring(test.node) is not None else body
+
+
+def setup(test: TestFunction) -> list[ast.stmt]:
+    """A test's setup: its statements before the first that holds a real assertion.
+
+    The docstring is set aside (`own_statements`); a test with no real assertion
+    is all setup.
+    """
+    statements = own_statements(test)
+    for index, statement in enumerate(statements):
+        if any(is_real_assertion(node, test.imports) for node in ast.walk(statement)):
+            return statements[:index]
+    return statements
+
+
 def excinfo_names(test: TestFunction) -> set[str]:
     """The names a test binds to what `pytest.raises` caught (`with ... as e`)."""
     return {
@@ -288,7 +331,7 @@ def _uses_a_pytest_instrument(call: ast.Call, test: TestFunction) -> bool:
     return (
         isinstance(receiver, ast.Name)
         and receiver.id in _PYTEST_INSTRUMENTS
-        and receiver.id in value_params(test.node)
+        and receiver.id in value_params(test)
     )
 
 
@@ -316,3 +359,166 @@ def is_cleanup(call: ast.Call, names: Mapping[str, str]) -> bool:
     imports, never guessed from a name.
     """
     return qualified(call.func, names) in _CLEANUP_FUNCTIONS
+
+
+# How pytest joins a test's classes and its name: `TestX::test_y`.
+TEST_PATH = "::"
+
+
+def inside(where: str, name: str, separator: str) -> str:
+    """The name of a function or class defined in a place (`MODULE` or a name).
+
+    `Parser.parse` with `.`, `TestX::test_y` with `TEST_PATH`; at module level, the
+    name alone.
+    """
+    return name if where == MODULE else f"{where}{separator}{name}"
+
+
+# pytest's marks that skip a test, or expect it to fail.
+SKIP = "pytest.mark.skip"
+SKIPIF = "pytest.mark.skipif"
+XFAIL = "pytest.mark.xfail"
+_SKIP_MARKS = frozenset({SKIP, SKIPIF, XFAIL})
+
+# pytest's calls that skip a test, or mark it an expected failure, as it runs.
+SKIP_CALL = "pytest.skip"
+XFAIL_CALL = "pytest.xfail"
+
+
+def mark_name(expr: ast.expr, names: Mapping[str, str]) -> str | None:
+    """What a decorator or `pytestmark` entry names in full, called or not, or `None`.
+
+    `m.unit()` is `pytest.mark.unit` after `from pytest import mark as m`; a mark no
+    import reaches is `None`.
+    """
+    return qualified(expr.func if isinstance(expr, ast.Call) else expr, names)
+
+
+def skip_mark(expr: ast.expr, names: Mapping[str, str]) -> str | None:
+    """Which of pytest's skip marks a decorator or `pytestmark` entry is, or `None`.
+
+    That is `pytest.mark.skip`, `pytest.mark.skipif` or `pytest.mark.xfail`, called
+    or not, through whatever name the imports give it.
+    """
+    mark = mark_name(expr, names)
+    return mark if mark in _SKIP_MARKS else None
+
+
+def pytestmark_entries(statement: ast.stmt) -> list[ast.expr]:
+    """The marks a `pytestmark = ...` statement applies; none for any other."""
+    if not (
+        isinstance(statement, ast.Assign)
+        and any(
+            isinstance(t, ast.Name) and t.id == "pytestmark" for t in statement.targets
+        )
+    ):
+        return []
+    value = statement.value
+    return list(value.elts) if isinstance(value, ast.List | ast.Tuple) else [value]
+
+
+def is_always_skipped_by(expr: ast.expr, names: Mapping[str, str]) -> bool:
+    """Whether a mark skips whatever the run: `skip`, or `skipif` on a truthy constant.
+
+    A string condition is code pytest evaluates, so it is not a constant here.
+    """
+    mark = skip_mark(expr, names)
+    if mark == SKIP:
+        return True
+    return (
+        mark == SKIPIF
+        and isinstance(expr, ast.Call)
+        and bool(expr.args)
+        and all(
+            isinstance(arg, ast.Constant)
+            and not isinstance(arg.value, str)
+            and bool(arg.value)
+            for arg in expr.args
+        )
+    )
+
+
+def top_level_skips(body: list[ast.stmt], names: Mapping[str, str]) -> list[ast.Call]:
+    """The `pytest.skip(...)` calls that are statements of the body itself.
+
+    One under an `if`, a loop, a `try` or a `with` runs only sometimes, so it isn't
+    one of them.
+    """
+    return [
+        statement.value
+        for statement in body
+        if isinstance(statement, ast.Expr)
+        and isinstance(statement.value, ast.Call)
+        and qualified(statement.value.func, names) == SKIP_CALL
+    ]
+
+
+def _pytestmark(body: list[ast.stmt]) -> Iterator[ast.expr]:
+    """The marks a module's or class's own `pytestmark` statements apply."""
+    for statement in body:
+        yield from pytestmark_entries(statement)
+
+
+def marks_on(test: TestFunction, module: ast.Module) -> Iterator[ast.expr]:
+    """Every mark pytest applies to a test, as written.
+
+    Those are its own decorators, its classes' decorators and `pytestmark` entries,
+    and the module's `pytestmark`. Each is read through the module's imports
+    (`mark_name`, `skip_mark`).
+    """
+    yield from test.node.decorator_list
+    for cls in test.classes:
+        yield from cls.decorator_list
+        yield from _pytestmark(cls.body)
+    yield from _pytestmark(module.body)
+
+
+def skips_unconditionally(test: TestFunction, module: ast.Module) -> bool:
+    """Whether a test skips whatever the run, by a mark or its own body.
+
+    A mark pytest applies to it (`marks_on`) is `pytest.mark.skip` (or `skipif` on
+    a truthy constant), or one of its own body's statements, or of the module's, is
+    `pytest.skip(...)`.
+    """
+    names = module_imports(module)
+    return (
+        any(is_always_skipped_by(mark, names) for mark in marks_on(test, module))
+        or bool(top_level_skips(test.node.body, test.imports))
+        or bool(top_level_skips(module.body, names))
+    )
+
+
+def scoped_walk(
+    module: ast.Module, separator: str
+) -> Iterator[tuple[str, ast.AST, Mapping[str, str]]]:
+    """Every node of a module with where it is and the imported names it sees.
+
+    Where it is names the innermost function or class around it, with the ones
+    around that (`Parser.parse`, or `TestX::test_y` with `::`), or `<module>`. A
+    `def` or `class` itself, its decorators included, is where its name is bound;
+    what is inside it is in it, and a function's own imports and parameters change
+    the names its code sees, as `imports_seen_by` says.
+    """
+
+    def visit(
+        node: ast.AST, where: str, names: Mapping[str, str]
+    ) -> Iterator[tuple[str, ast.AST, Mapping[str, str]]]:
+        for child in ast.iter_child_nodes(node):
+            yield where, child, names
+            if isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
+                inner = inside(where, child.name, separator)
+                inner_names = (
+                    names
+                    if isinstance(child, ast.ClassDef)
+                    else imports_seen_by(child, names)
+                )
+                for decorator in child.decorator_list:
+                    for sub in ast.walk(decorator):
+                        yield where, sub, names
+                for part in child.body:
+                    yield inner, part, inner_names
+                    yield from visit(part, inner, inner_names)
+            else:
+                yield from visit(child, where, names)
+
+    yield from visit(module, MODULE, module_imports(module))

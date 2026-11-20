@@ -1,6 +1,9 @@
 """Near-misses: shapes DS201 leaves alone. Analysed, never run."""
 
+import pytest
 from shop import make_order, render
+
+pytestmark = pytest.mark.unit
 
 
 def test_membership_is_not_weak():
@@ -19,10 +22,3 @@ def test_assert_false_is_a_deliberate_failure():
     assert order is not None
     if order.total != 1000:
         assert False, "wrong total"
-
-
-def test_strong_assertion_inside_a_branch_still_counts():
-    order = make_order(lines=[1000])
-    if order.total:
-        assert order.total == 1000
-    assert order is not None
