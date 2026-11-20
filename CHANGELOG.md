@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.0.0-alpha.1](https://github.com/jeffrichley/pytest-drill-sergeant/compare/pytest-drill-sergeant-v0.4.0...pytest-drill-sergeant-v1.0.0-alpha.1) (2026-11-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* reboot for v1 ([#143](https://github.com/jeffrichley/pytest-drill-sergeant/issues/143))
+
+### Features
+
+* drill-sergeant check reports tests with no real assertion ([#145](https://github.com/jeffrichley/pytest-drill-sergeant/issues/145)) ([c598a44](https://github.com/jeffrichley/pytest-drill-sergeant/commit/c598a44675529433bbac14e9e46b87c74a412ab7))
+* runnable plugin milestone (config, plugin, first check families) ([#146](https://github.com/jeffrichley/pytest-drill-sergeant/issues/146)) ([b0855ea](https://github.com/jeffrichley/pytest-drill-sergeant/commit/b0855ea1f85e1441d2b11768457588f48728a705))
+* waivers, headline duplication and more check families ([#147](https://github.com/jeffrichley/pytest-drill-sergeant/issues/147)) ([dedfeed](https://github.com/jeffrichley/pytest-drill-sergeant/commit/dedfeede902d6e297d4d36b2ec02c7b26bf67836))
+
+
+### Bug Fixes
+
+* count assertions made through assertion libraries ([#150](https://github.com/jeffrichley/pytest-drill-sergeant/issues/150)) ([620c262](https://github.com/jeffrichley/pytest-drill-sergeant/commit/620c262e65c0321337c530cf4a26f739bb4b4bfb))
+
+
+### Miscellaneous Chores
+
+* reboot for v1 ([#143](https://github.com/jeffrichley/pytest-drill-sergeant/issues/143)) ([c2e29f4](https://github.com/jeffrichley/pytest-drill-sergeant/commit/c2e29f47dfd93baa63c55ef05f75324cb4ea9c1a))
+
 ## [0.4.0](https://github.com/jeffrichley/pytest-drill-sergeant/compare/pytest-drill-sergeant-v0.3.1...pytest-drill-sergeant-v0.4.0) (2026-02-20)
 
 
