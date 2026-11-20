@@ -257,6 +257,7 @@ def _analyze_file(path: Path, source: bytes, config: Config) -> _FileResult:
         category_markers=config.category_markers,
         directories=_directories(relative(path, config.root)),
         comments=tokens.comments,
+        code_lines=tokens.code_lines,
     )
     return _FileResult(
         hits={c.code: hits for c in CHECKS if (hits := tuple(c.find(file)))},

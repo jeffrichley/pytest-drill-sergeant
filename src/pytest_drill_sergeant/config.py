@@ -50,7 +50,7 @@ class Config:
         root: The directory per-file ignore globs and source dirs are relative
             to: the config file's.
         max_file_lines: The most lines a test file may have.
-        max_test_lines: The most lines a test function may have.
+        max_test_lines: The most lines of code a test function may have.
         max_mock_setup: The most mock-setup statements a test may have.
         duplicate_setup_min_statements: The fewest statements a copy-pasted setup
             block has.
@@ -130,7 +130,7 @@ OPTIONS: tuple[Option, ...] = (
         "drill_sergeant_max_test_lines",
         "int",
         _DEFAULT.max_test_lines,
-        "the most lines a test function may have",
+        "the most lines of code a test function may have",
     ),
     Option(
         "drill_sergeant_max_mock_setup",

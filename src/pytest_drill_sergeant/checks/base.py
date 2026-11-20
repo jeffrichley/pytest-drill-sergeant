@@ -66,7 +66,7 @@ class Thresholds:
 
     Attributes:
         max_file_lines: The most lines a test file may have.
-        max_test_lines: The most lines a test function may have.
+        max_test_lines: The most lines of code a test function may have.
         max_mock_setup: The most mock-setup statements a test may have.
         duplicate_setup_min_statements: The fewest statements a copy-pasted setup
             block has.
@@ -98,6 +98,8 @@ class TestFile:
             first, from its path relative to the config root (or as given, when it
             is outside the root).
         comments: Its comments, in line order.
+        code_lines: The lines holding code: every line but blank and comment-only
+            ones.
     """
 
     __test__ = False  # Not a pytest test class, despite the name.
@@ -111,6 +113,7 @@ class TestFile:
     category_markers: tuple[str, ...]
     directories: tuple[str, ...]
     comments: tuple[Comment, ...]
+    code_lines: frozenset[int]
 
 
 @dataclass(frozen=True)

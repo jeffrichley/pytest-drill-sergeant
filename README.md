@@ -184,7 +184,7 @@ drill_sergeant_voice = false
 | `drill_sergeant_levels` | `CODE=level` lines; a family prefix (`DS1`, `DS1xx`) covers the family; the most specific entry wins | each check's default |
 | `drill_sergeant_per_file_ignores` | `glob: codes` lines, globs relative to the config file; a glob with no `/` also matches file names | none |
 | `drill_sergeant_max_file_lines` | whole number | 500 |
-| `drill_sergeant_max_test_lines` | whole number | 50 |
+| `drill_sergeant_max_test_lines` | whole number: the most lines of code a test may have; `drill-sergeant explain DS105` says what counts | 50 |
 | `drill_sergeant_max_mock_setup` | whole number | 10 |
 | `drill_sergeant_duplicate_setup_min_statements` | whole number | 3 |
 | `drill_sergeant_duplicate_setup_min_tests` | whole number | 3 |

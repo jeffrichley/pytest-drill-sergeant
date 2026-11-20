@@ -121,7 +121,7 @@ A config entry (`glob: codes`) that keeps the named checks off the files matchin
 _Avoid_: Exclude, waiver
 
 **Threshold**:
-A configured number a check measures against, such as the most lines a test may have.
+A configured number a check measures against, such as the most lines of code a test may have.
 _Avoid_: Limit, setting
 
 **Findings section**:
