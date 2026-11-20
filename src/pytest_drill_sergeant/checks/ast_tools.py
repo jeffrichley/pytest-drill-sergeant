@@ -24,6 +24,46 @@ _PYTEST_ASSERTING = frozenset(
 )
 PYTEST_RAISES = frozenset({"pytest.raises"})
 
+# pytest-check's helpers, each of which fails the test when its check doesn't hold,
+# reached through the module or its `check` object.
+_PYTEST_CHECK_HELPERS = (
+    "equal",
+    "not_equal",
+    "is_",
+    "is_not",
+    "is_true",
+    "is_false",
+    "is_none",
+    "is_not_none",
+    "is_nan",
+    "is_not_nan",
+    "is_in",
+    "is_not_in",
+    "is_instance",
+    "is_not_instance",
+    "almost_equal",
+    "not_almost_equal",
+    "greater",
+    "greater_equal",
+    "less",
+    "less_equal",
+    "between",
+    "between_equal",
+    "raises",
+    "fail",
+)
+_LIBRARY_ASSERTING = frozenset(
+    f"{owner}.{helper}"
+    for owner in ("pytest_check", "pytest_check.check")
+    for helper in _PYTEST_CHECK_HELPERS
+)
+
+# Playwright's `expect`: a matcher called on what it returns
+# (`expect(page).to_have_title(...)`) fails the test.
+_EXPECT_FUNCTIONS = frozenset(
+    {"playwright.sync_api.expect", "playwright.async_api.expect"}
+)
+
 # The decorators that make a function a fixture, which pytest never collects.
 FIXTURE_DECORATORS = frozenset({"pytest.fixture", "pytest_asyncio.fixture"})
 
@@ -242,13 +282,23 @@ def is_assert_call(node: ast.AST) -> bool:
     return name is not None and name.lower().startswith("assert")
 
 
+def _is_expect_matcher(call: ast.Call, names: Mapping[str, str]) -> bool:
+    """Whether a call is a matcher on Playwright's `expect(...)`, known by import."""
+    func = call.func
+    return isinstance(func, ast.Attribute) and calls_to(
+        func.value, _EXPECT_FUNCTIONS, names
+    )
+
+
 def is_real_assertion(node: ast.AST, names: Mapping[str, str]) -> bool:
     """Whether a node can fail the test on the outcome it checks.
 
     An `assert` of anything but a truthy constant or non-empty tuple counts, and so
     does a call to `pytest.raises`, `pytest.warns`, `pytest.deprecated_call` or
     `pytest.fail` (through whatever name the imports give it), any `assert*` call,
-    and raising `AssertionError`.
+    a call made through an assertion library the imports reach (a pytest-check
+    helper such as `check.equal`, a matcher on Playwright's `expect(...)`), and
+    raising `AssertionError`.
 
     Args:
         node: The node.
@@ -257,7 +307,11 @@ def is_real_assertion(node: ast.AST, names: Mapping[str, str]) -> bool:
     if isinstance(node, ast.Assert):
         return not is_always_true(node.test)
     if isinstance(node, ast.Call):
-        return calls_to(node, _PYTEST_ASSERTING, names) or is_assert_call(node)
+        return (
+            calls_to(node, _PYTEST_ASSERTING | _LIBRARY_ASSERTING, names)
+            or is_assert_call(node)
+            or _is_expect_matcher(node, names)
+        )
     if isinstance(node, ast.Raise) and node.exc is not None:
         exc = node.exc.func if isinstance(node.exc, ast.Call) else node.exc
         return isinstance(exc, ast.Name) and exc.id == "AssertionError"
