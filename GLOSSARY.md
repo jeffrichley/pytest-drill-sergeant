@@ -13,7 +13,7 @@ One deterministic detection of a single failure mode.
 _Avoid_: Rule, validator, detector, analyzer
 
 **Finding**:
-One occurrence of a failure mode in a specific test, reported by a check. A test file too long is the one failure mode of a whole file: its finding names the file and no test.
+One occurrence of a failure mode in a specific test, reported by a check. A finding names where it is, as a test's name would be: a class for a mark on the class, a function in production code, and `<module>` outside all of them, as for a skip mark in the module's `pytestmark` or a test file too long (the one failure mode of a whole file).
 _Avoid_: Violation, error, issue, warning
 
 **Real assertion**:

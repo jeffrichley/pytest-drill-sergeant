@@ -23,7 +23,9 @@ from pytest_drill_sergeant.checks import (
 )
 from pytest_drill_sergeant.checks.ast_tools import (
     FIXTURE_DECORATORS,
+    TEST_PATH,
     imports_seen_by,
+    inside,
     module_imports,
     qualified,
 )
@@ -34,7 +36,7 @@ from pytest_drill_sergeant.checks.base import (
 )
 from pytest_drill_sergeant.checks.summary import summarize
 from pytest_drill_sergeant.config import Config
-from pytest_drill_sergeant.findings import Finding, Level
+from pytest_drill_sergeant.findings import MODULE, Finding, Level
 from pytest_drill_sergeant.tokens import read
 from pytest_drill_sergeant.waivers import (
     FileWaivers,
@@ -85,7 +87,7 @@ def _is_collected_class(node: ast.ClassDef) -> bool:
 def _tests_in(
     body: list[ast.stmt],
     names: Mapping[str, str],
-    prefix: str = "",
+    where: str = MODULE,
     classes: tuple[ast.ClassDef, ...] = (),
 ) -> Iterator[TestFunction]:
     """The tests pytest's default rules collect.
@@ -100,14 +102,14 @@ def _tests_in(
             and not _is_fixture(node, names)
         ):
             yield TestFunction(
-                name=f"{prefix}{node.name}",
+                name=inside(where, node.name, TEST_PATH),
                 node=node,
                 imports=imports_seen_by(node, names),
                 classes=classes,
             )
         elif isinstance(node, ast.ClassDef) and _is_collected_class(node):
             yield from _tests_in(
-                node.body, names, f"{prefix}{node.name}::", (*classes, node)
+                node.body, names, inside(where, node.name, TEST_PATH), (*classes, node)
             )
 
 

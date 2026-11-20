@@ -23,8 +23,8 @@ suite/test_checkout.py
            fixture.
 
 suite/test_inventory.py
-  suite/test_inventory.py:1: DS106 long-file [fail]
-    "This file is a WAREHOUSE, recruit! Nobody can find anything in here!"
+  suite/test_inventory.py:1: DS106 long-file [fail] in <module>
+    "You've lost track of what's in this file, and so has everyone else!"
     Found: `test_inventory.py` is 48 lines long, more than the 40 a test file may have; it holds 5
            tests.
     Why:   A test file this long can't be held in mind: tests in it get duplicated or contradict

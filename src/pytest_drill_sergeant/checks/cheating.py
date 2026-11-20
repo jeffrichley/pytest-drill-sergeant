@@ -9,12 +9,13 @@ import ast
 from collections.abc import Iterator, Mapping
 
 from pytest_drill_sergeant.checks.ast_tools import (
-    MODULE,
     SKIP,
     SKIP_CALL,
+    TEST_PATH,
     XFAIL,
     XFAIL_CALL,
     calls_to,
+    inside,
     is_always_skipped_by,
     module_imports,
     pytestmark_entries,
@@ -24,23 +25,15 @@ from pytest_drill_sergeant.checks.ast_tools import (
     top_level_skips,
 )
 from pytest_drill_sergeant.checks.base import Check, Hit, SourceFile, TestFile
-from pytest_drill_sergeant.findings import Level
+from pytest_drill_sergeant.findings import MODULE, Level
 
 _SKIP_CALLS = frozenset({SKIP_CALL, XFAIL_CALL})
-
-# Where a test sits in its class, as pytest names it.
-_TEST_PATH = "::"
 
 # What production code can ask about the process it runs in: the modules loaded,
 # the command line and the environment.
 _PROBES = frozenset(
     {"sys.modules", "sys.argv", "os.environ", "os.environb", "os.getenv", "os.getenvb"}
 )
-
-
-def _inside(where: str, name: str, separator: str) -> str:
-    """The name of a function or class defined in a place."""
-    return name if where == MODULE else f"{where}{separator}{name}"
 
 
 def _blank(reason: ast.expr | None) -> bool:
@@ -89,9 +82,9 @@ def _marks(module: ast.Module) -> Iterator[tuple[str, ast.expr, Mapping[str, str
     Each comes with what it marks (the test, class or `<module>`) and the imported
     names it sees.
     """
-    for where, node, names in scoped_walk(module, _TEST_PATH):
+    for where, node, names in scoped_walk(module, TEST_PATH):
         if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
-            marked = _inside(where, node.name, _TEST_PATH)
+            marked = inside(where, node.name, TEST_PATH)
             for decorator in node.decorator_list:
                 yield marked, decorator, names
         elif isinstance(node, ast.stmt):
@@ -137,7 +130,7 @@ def _find_skip_without_reason(file: TestFile) -> Iterator[Hit]:
                 fix=fix,
             )
     unconditional = {id(call) for _, call in _unconditional_skip_calls(file)}
-    for where, node, names in scoped_walk(file.module, _TEST_PATH):
+    for where, node, names in scoped_walk(file.module, TEST_PATH):
         if (
             isinstance(node, ast.Call)
             and id(node) not in unconditional

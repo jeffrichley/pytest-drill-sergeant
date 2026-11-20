@@ -117,8 +117,9 @@ def _voice(finding: Finding) -> _Hanging:
 def _location(finding: Finding) -> Text:
     """The finding's header line: where it is, which check, its level and its test.
 
-    A finding about the whole file names no test. `path:line` links to the file,
-    for a terminal that follows hyperlinks.
+    The test is where a finding is (`Finding.test`): a class, a function or
+    `<module>` for one about no test. `path:line` links to the file, for a terminal
+    that follows hyperlinks.
     """
     path = finding.file.as_posix()
     text = Text(" " * _FINDING_INDENT)
@@ -131,9 +132,8 @@ def _location(finding: Finding) -> Text:
     text.append(finding.name, "dim")
     text.append(" ")
     text.append(f"[{finding.level}]", _LEVEL_STYLE.get(finding.level, ""))
-    if finding.test:
-        text.append(" in ")
-        text.append(finding.test, "bold")
+    text.append(" in ")
+    text.append(finding.test, "bold")
     return text
 
 

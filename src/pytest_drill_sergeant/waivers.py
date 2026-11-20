@@ -20,7 +20,7 @@ from pytest_drill_sergeant.findings import Finding
 from pytest_drill_sergeant.tokens import Comment
 
 # The malformed-waiver check's code: its own findings are never waived.
-MALFORMED_WAIVER = "DS001"
+MALFORMED_WAIVER_CODE = "DS001"
 
 _WAIVER = re.compile(r"#\s*drill:\s*waive\b(?P<rest>.*)", re.DOTALL)
 _CODE = re.compile(r"DS\d{3}")
@@ -113,7 +113,7 @@ def apply(
     waived: list[WaivedFinding] = []
     for finding in findings:
         reason = _reason_for(finding, files[finding.file])
-        if reason is None or finding.code == MALFORMED_WAIVER:
+        if reason is None or finding.code == MALFORMED_WAIVER_CODE:
             kept.append(finding)
         else:
             waived.append(WaivedFinding(finding=finding, reason=reason))

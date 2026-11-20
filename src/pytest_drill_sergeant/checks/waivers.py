@@ -3,12 +3,8 @@
 from collections.abc import Iterator
 
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile
-from pytest_drill_sergeant.findings import Level
-from pytest_drill_sergeant.waivers import MALFORMED_WAIVER as MALFORMED_WAIVER_CODE
-from pytest_drill_sergeant.waivers import Waiver
-
-# The name a finding outside every test is reported under.
-_MODULE = "<module>"
+from pytest_drill_sergeant.findings import MODULE, Level
+from pytest_drill_sergeant.waivers import MALFORMED_WAIVER_CODE, Waiver
 
 
 def _missing(waiver: Waiver) -> str:
@@ -25,7 +21,7 @@ def _test_at(file: TestFile, line: int) -> str:
             for t in file.tests
             if t.node.lineno <= line <= (t.node.end_lineno or t.node.lineno)
         ),
-        _MODULE,
+        MODULE,
     )
 
 
@@ -34,7 +30,7 @@ def _find_malformed_waiver(file: TestFile) -> Iterator[Hit]:
         if waiver.complete:
             continue
         test = _test_at(file, waiver.line)
-        where = "Line" if test == _MODULE else f"In `{test}`, line"
+        where = "Line" if test == MODULE else f"In `{test}`, line"
         code = waiver.code or "DS###"
         yield Hit(
             line=waiver.line,

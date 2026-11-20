@@ -15,7 +15,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from pytest_drill_sergeant.findings import Level
+from pytest_drill_sergeant.findings import MODULE, Level
 from pytest_drill_sergeant.tokens import Comment
 from pytest_drill_sergeant.waivers import Waiver
 
@@ -171,11 +171,12 @@ class FileSummary:
 class Hit:
     """What a check reports, before the engine makes it a finding.
 
-    A hit is about one test, or about the whole file (a file too long).
+    A hit is about one test, or a class, a function or the module (`MODULE`), as
+    a finding is.
 
     Attributes:
         line: The line to report.
-        test: The test's name, or empty for a hit about the whole file.
+        test: Where it is, as `Finding.test` names it.
         found: What the check found, in plain words.
         fix: How to fix it, naming the specifics where the check knows them.
     """
@@ -209,14 +210,14 @@ class Hit:
 
     @classmethod
     def on_file(cls, file: "TestFile", *, found: str, fix: str) -> "Hit":
-        """A hit about a whole file, reported on its first line.
+        """A hit about a whole file, reported on its first line, in `MODULE`.
 
         `found` follows "`<file name>` " and `fix` follows "In `<file name>`: ",
         the file standing where a test's name would.
         """
         return cls(
             line=1,
-            test="",
+            test=MODULE,
             found=f"`{file.path.name}` {found}",
             fix=f"In `{file.path.name}`: {fix}",
         )

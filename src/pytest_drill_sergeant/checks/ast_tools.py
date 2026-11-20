@@ -15,6 +15,7 @@ import ast
 from collections.abc import Iterator, Mapping
 
 from pytest_drill_sergeant.checks.base import FunctionNode, TestFunction
+from pytest_drill_sergeant.findings import MODULE
 
 # pytest's helpers that fail the test: `pytest.fail`, and the context managers that
 # require an exception or warning.
@@ -318,8 +319,18 @@ def is_cleanup(call: ast.Call, names: Mapping[str, str]) -> bool:
     return qualified(call.func, names) in _CLEANUP_FUNCTIONS
 
 
-# What a place outside every function and class is called in a finding.
-MODULE = "<module>"
+# How pytest joins a test's classes and its name: `TestX::test_y`.
+TEST_PATH = "::"
+
+
+def inside(where: str, name: str, separator: str) -> str:
+    """The name of a function or class defined in a place (`MODULE` or a name).
+
+    `Parser.parse` with `.`, `TestX::test_y` with `TEST_PATH`; at module level, the
+    name alone.
+    """
+    return name if where == MODULE else f"{where}{separator}{name}"
+
 
 # pytest's marks that skip a test, or expect it to fail.
 SKIP = "pytest.mark.skip"
@@ -453,9 +464,7 @@ def scoped_walk(
         for child in ast.iter_child_nodes(node):
             yield where, child, names
             if isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
-                inner = (
-                    child.name if where == MODULE else f"{where}{separator}{child.name}"
-                )
+                inner = inside(where, child.name, separator)
                 inner_names = (
                     names
                     if isinstance(child, ast.ClassDef)
