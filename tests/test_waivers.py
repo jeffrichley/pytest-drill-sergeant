@@ -45,47 +45,35 @@ def test_waiver_on_the_flagged_line_waives_the_finding(write_test_file):
     ]
 
 
-def test_def_line_waiver_covers_a_finding_anywhere_in_its_test(write_test_file):
-    path = write_test_file(
-        "def test_it():  # drill: waive DS201 -- any value will do\n"
-        "    value = make()\n"
-        "    assert value is not None\n"
-    )
-
-    result = inspect([path], Config())
-
-    assert flagged(result.findings) == []
-    assert flagged(w.finding for w in result.waived) == [("DS201", 3)]
-
-
-def test_waiver_on_a_wrapped_signatures_closing_line_counts_as_the_def_line(
-    write_test_file,
+@pytest.mark.parametrize(
+    ("source", "line"),
+    [
+        (
+            "def test_it():  # drill: waive DS201 -- any value will do\n"
+            "    value = make()\n"
+            "    assert value is not None\n",
+            3,
+        ),
+        (
+            "def test_it(\n"
+            "    tmp_path,\n"
+            "):  # drill: waive DS201 -- any value will do\n"
+            "    value = make(tmp_path)\n"
+            "    assert value is not None\n",
+            5,
+        ),
+    ],
+    ids=["on-the-def-line", "on-a-wrapped-signatures-closing-line"],
+)
+def test_def_line_waiver_covers_a_finding_anywhere_in_its_test(
+    write_test_file, source, line
 ):
-    path = write_test_file(
-        "def test_it(\n"
-        "    tmp_path,\n"
-        "):  # drill: waive DS201 -- any value will do\n"
-        "    value = make(tmp_path)\n"
-        "    assert value is not None\n"
-    )
+    path = write_test_file(source)
 
     result = inspect([path], Config())
 
     assert flagged(result.findings) == []
-    assert flagged(w.finding for w in result.waived) == [("DS201", 5)]
-
-
-def test_waiver_on_a_decorator_line_is_not_the_def_line(write_test_file):
-    path = write_test_file(
-        "@pytest.mark.slow  # drill: waive DS201 -- any value will do\n"
-        "def test_it():\n"
-        "    value = make()\n"
-        "    assert value is not None\n"
-    )
-
-    result = inspect([path], Config())
-
-    assert flagged(result.findings) == [("DS201", 4)]
+    assert flagged(w.finding for w in result.waived) == [("DS201", line)]
 
 
 def test_def_line_waiver_leaves_other_tests_findings_standing(write_test_file):
@@ -102,19 +90,25 @@ def test_def_line_waiver_leaves_other_tests_findings_standing(write_test_file):
 
 
 @pytest.mark.parametrize(
-    "body",
+    ("source", "line"),
     [
-        "    run()  # drill: waive DS101 -- smoke test\n",
-        "    # drill: waive DS101 -- smoke test\n    run()\n",
+        ("def test_it():\n    run()  # drill: waive DS101 -- smoke test\n", 1),
+        ("def test_it():\n    # drill: waive DS101 -- smoke test\n    run()\n", 1),
+        (
+            "@pytest.mark.slow  # drill: waive DS101 -- smoke test\ndef test_it():\n    run()\n",
+            2,
+        ),
     ],
-    ids=["on-another-line", "on-its-own-line"],
+    ids=["on-another-line", "on-its-own-line", "on-a-decorator-line"],
 )
-def test_waiver_off_the_def_and_flagged_lines_waives_nothing(write_test_file, body):
-    path = write_test_file(f"def test_it():\n{body}")
+def test_waiver_off_the_def_and_flagged_lines_waives_nothing(
+    write_test_file, source, line
+):
+    path = write_test_file(source)
 
     result = inspect([path], Config())
 
-    assert (flagged(result.findings), result.waived) == ([("DS101", 1)], [])
+    assert (flagged(result.findings), result.waived) == ([("DS101", line)], [])
 
 
 @pytest.mark.parametrize(
