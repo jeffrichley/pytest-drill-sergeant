@@ -29,3 +29,10 @@ class TestNotifier:
         write = log.write
         Notifier().ping()
         write.assert_called_once_with("ping")
+
+    @patch.object(Mailer, "deliver", autospec=True)
+    def test_delivers_twice(notifier_test, deliver):  # expect: DS301
+        notifier = Notifier()
+        notifier.ping()
+        notifier.ping()
+        assert deliver.call_count == 2

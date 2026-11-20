@@ -109,9 +109,13 @@ def _patch_decorators(test: TestFunction) -> list[ast.Call]:
 
 
 def _positional_params(test: TestFunction) -> list[str]:
-    """The test's positional parameters in order, without `self` or `cls`."""
+    """The test's positional parameters in order, without its instance.
+
+    A test in a class takes its instance first, whatever the parameter is called.
+    """
     args = test.node.args
-    return [a.arg for a in args.posonlyargs + args.args if a.arg not in {"self", "cls"}]
+    params = [a.arg for a in args.posonlyargs + args.args]
+    return params[1:] if test.classes else params
 
 
 def _bindings(node: ast.AST) -> Iterator[tuple[str, ast.expr]]:
