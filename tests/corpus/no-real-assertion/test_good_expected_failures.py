@@ -4,7 +4,9 @@ failure. Analysed, never run."""
 import warnings
 
 import pytest
+import pytest as pt
 from pytest import raises
+from pytest import warns as expect_warning
 
 
 def parse(text):
@@ -46,4 +48,14 @@ def test_assert_false_on_the_unreachable_branch():
 
 def test_deprecated_call_is_an_assertion():
     with pytest.deprecated_call(match="old"):
+        warnings.warn("old", DeprecationWarning, stacklevel=1)
+
+
+def test_raises_through_an_aliased_module():
+    with pt.raises(ValueError, match="invalid literal"):
+        parse("x")
+
+
+def test_warns_through_an_aliased_name():
+    with expect_warning(DeprecationWarning, match="old"):
         warnings.warn("old", DeprecationWarning, stacklevel=1)

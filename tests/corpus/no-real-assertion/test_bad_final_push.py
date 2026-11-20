@@ -29,7 +29,7 @@ def test_attributes_exist(name):  # expect: DS101
 def test_smoke_with_a_try():  # expect: DS101
     try:
         pytest_drill_sergeant.run()
-    except Exception:
+    except Exception:  # expect: DS702
         pass
 
 
@@ -44,3 +44,9 @@ def test_fail_method_on_some_object(job):  # expect: DS101
 
 def test_tuple_assert_is_always_true():  # expect: DS101
     assert (pytest_drill_sergeant.run(), "should run")
+
+
+def test_raises_from_another_library():  # expect: DS101
+    from contracts import raises
+
+    raises(ValueError)

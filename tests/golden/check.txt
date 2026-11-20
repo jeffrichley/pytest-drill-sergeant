@@ -1,84 +1,1761 @@
-DRILL SERGEANT INSPECTION: 15 findings in 3 files. FALL IN!
+DRILL SERGEANT INSPECTION: 196 findings in 50 files. FALL IN!
+
+suite/assert-before-act/test_bad_act_after_the_check.py
+  suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
+    "You checked the ground, then fired blind! Assert AFTER you act, recruit!"
+    Found: `test_register_then_rename` runs `registry.rename('ada', 'grace')` on line 8 after its
+           last assertion (line 7), so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_register_then_rename`, line 8: assert on what the act on line 8 returns or
+           changes, after it runs; keep an assertion before it only as a guard on the starting
+           state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a
+           `finally`.
+  suite/assert-before-act/test_bad_act_after_the_check.py:13: DS103 assert-before-act [fail] in test_import_rows
+    "Asserting before the action is inspecting your rifle after the battle!"
+    Found: `test_import_rows` runs the `for` block on line 13 after its last assertion (line 12), so
+           nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_import_rows`, line 13: assert on what the act on line 13 returns or changes,
+           after it runs; keep an assertion before it only as a guard on the starting state. If it
+           is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
+  suite/assert-before-act/test_bad_act_after_the_check.py:20: DS103 assert-before-act [fail] in test_remove_after_the_check
+    "Asserting before the action is inspecting your rifle after the battle!"
+    Found: `test_remove_after_the_check` runs `cart.remove('apple')` on line 20 after its last
+           assertion (line 19), so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_remove_after_the_check`, line 20: assert on what the act on line 20 returns or
+           changes, after it runs; keep an assertion before it only as a guard on the starting
+           state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a
+           `finally`.
+
+suite/assert-before-act/test_bad_cleanup_after_the_check.py
+  suite/assert-before-act/test_bad_cleanup_after_the_check.py:13: DS103 assert-before-act [fail] in test_writes_report
+    "Asserting before the action is inspecting your rifle after the battle!"
+    Found: `test_writes_report` runs `path.unlink()` on line 13 after its last assertion (line 12),
+           so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_writes_report`, line 13: assert on what the act on line 13 returns or changes,
+           after it runs; keep an assertion before it only as a guard on the starting state. If it
+           is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
+  suite/assert-before-act/test_bad_cleanup_after_the_check.py:20: DS103 assert-before-act [fail] in test_files_removed_after
+    "Asserting before the action is inspecting your rifle after the battle!"
+    Found: `test_files_removed_after` runs `os.remove(path)` on line 20 after its last assertion
+           (line 19), so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_files_removed_after`, line 20: assert on what the act on lines 20, 21, 22
+           returns or changes, after it runs; keep an assertion before it only as a guard on the
+           starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture)
+           or a `finally`.
+
+suite/assert-before-act/test_bad_inside_a_patch.py
+  suite/assert-before-act/test_bad_inside_a_patch.py:10: DS103 assert-before-act [fail] in test_refresh_token
+    "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
+    Found: `test_refresh_token` runs `session.refresh()` on line 10 after its last assertion (line
+           9), so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_refresh_token`, line 10: assert on what the act on line 10 returns or changes,
+           after it runs; keep an assertion before it only as a guard on the starting state. If it
+           is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
+  suite/assert-before-act/test_bad_inside_a_patch.py:16: DS103 assert-before-act [fail] in test_retry
+    "Asserting before the action is inspecting your rifle after the battle!"
+    Found: `test_retry` runs `fetcher.fetch('/a')` on line 16 after its last assertion (line 15), so
+           nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_retry`, line 16: assert on what the act on line 16 returns or changes, after it
+           runs; keep an assertion before it only as a guard on the starting state. If it is
+           cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
+
+suite/assert-before-act/test_bad_named_like_cleanup.py
+  suite/assert-before-act/test_bad_named_like_cleanup.py:9: DS103 assert-before-act [fail] in test_server_answers
+    "You checked the ground, then fired blind! Assert AFTER you act, recruit!"
+    Found: `test_server_answers` runs `server.stop()` on line 9 after its last assertion (line 8),
+           so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_server_answers`, line 9: assert on what the act on line 9 returns or changes,
+           after it runs; keep an assertion before it only as a guard on the starting state. If it
+           is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
+  suite/assert-before-act/test_bad_named_like_cleanup.py:15: DS103 assert-before-act [fail] in test_notifier_reset_after
+    "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
+    Found: `test_notifier_reset_after` runs `sender.reset_mock()` on line 15 after its last
+           assertion (line 14), so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_notifier_reset_after`, line 15: assert on what the act on line 15 returns or
+           changes, after it runs; keep an assertion before it only as a guard on the starting
+           state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a
+           `finally`.
+  suite/assert-before-act/test_bad_named_like_cleanup.py:21: DS103 assert-before-act [fail] in test_logger_fixture_called_after
+    "You checked the ground, then fired blind! Assert AFTER you act, recruit!"
+    Found: `test_logger_fixture_called_after` runs `logger.info('written')` on line 21 after its
+           last assertion (line 20), so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_logger_fixture_called_after`, line 21: assert on what the act on line 21 returns
+           or changes, after it runs; keep an assertion before it only as a guard on the starting
+           state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a
+           `finally`.
+  suite/assert-before-act/test_bad_named_like_cleanup.py:28: DS103 assert-before-act [fail] in test_recorder_named_like_a_fixture
+    "You checked the ground, then fired blind! Assert AFTER you act, recruit!"
+    Found: `test_recorder_named_like_a_fixture` runs `caplog.clear()` on line 28 after its last
+           assertion (line 27), so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_recorder_named_like_a_fixture`, line 28: assert on what the act on line 28
+           returns or changes, after it runs; keep an assertion before it only as a guard on the
+           starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture)
+           or a `finally`.
+  suite/assert-before-act/test_bad_named_like_cleanup.py:35: DS103 assert-before-act [fail] in TestJob::test_job_logs
+    "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
+    Found: `TestJob::test_job_logs` runs `self.log.info('ran')` on line 35 after its last assertion
+           (line 34), so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `TestJob::test_job_logs`, line 35: assert on what the act on line 35 returns or
+           changes, after it runs; keep an assertion before it only as a guard on the starting
+           state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a
+           `finally`.
+
+suite/assert-before-act/test_bad_precondition_only.py
+  suite/assert-before-act/test_bad_precondition_only.py:16: DS103 assert-before-act [fail] in test_add_item
+    "Asserting before the action is inspecting your rifle after the battle!"
+    Found: `test_add_item` runs `cart.add('apple')` on line 16 after its last assertion (line 15),
+           so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_add_item`, line 16: assert on what the act on line 16 returns or changes, after
+           it runs; keep an assertion before it only as a guard on the starting state. If it is
+           cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
+  suite/assert-before-act/test_bad_precondition_only.py:23: DS103 assert-before-act [fail] in test_add_two_items
+    "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
+    Found: `test_add_two_items` runs `cart.add('apple')` on line 23 after its last assertion (line
+           22), so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_add_two_items`, line 23: assert on what the act on lines 23, 24 returns or
+           changes, after it runs; keep an assertion before it only as a guard on the starting
+           state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a
+           `finally`.
+  suite/assert-before-act/test_bad_precondition_only.py:29: DS103 assert-before-act [fail] in test_send_message
+    "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
+    Found: `test_send_message` runs `await client.send('hello')` on line 29 after its last assertion
+           (line 28), so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_send_message`, line 29: assert on what the act on line 29 returns or changes,
+           after it runs; keep an assertion before it only as a guard on the starting state. If it
+           is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
+
+suite/brittle-string-match/test_bad_captured_output.py
+  suite/brittle-string-match/test_bad_captured_output.py:10: DS601 brittle-string-match [fail] in test_greeting_printed
+    "You memorized the whole sentence, recruit? Check what MATTERS!"
+    Found: `test_greeting_printed` compares `capsys.readouterr().out` with a whole sentence of
+           expected text.
+    Why:   Comparing rendered text with a whole sentence breaks on any rewording, so the test fails
+           when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix:   In `test_greeting_printed`, line 10: assert that `capsys.readouterr().out` contains the
+           words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on
+           structured data instead of the wording.
+  suite/brittle-string-match/test_bad_captured_output.py:16: DS601 brittle-string-match [fail] in test_error_printed
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_error_printed` compares `captured.err` with a whole sentence of expected text.
+    Why:   Comparing rendered text with a whole sentence breaks on any rewording, so the test fails
+           when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix:   In `test_error_printed`, line 16: assert that `captured.err` contains the words that
+           matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured
+           data instead of the wording.
+  suite/brittle-string-match/test_bad_captured_output.py:22: DS601 brittle-string-match [fail] in test_log_line
+    "You memorized the whole sentence, recruit? Check what MATTERS!"
+    Found: `test_log_line` compares `caplog.text` with a whole sentence of expected text.
+    Why:   Comparing rendered text with a whole sentence breaks on any rewording, so the test fails
+           when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix:   In `test_log_line`, line 22: assert that `caplog.text` contains the words that matter
+           (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data
+           instead of the wording.
+  suite/brittle-string-match/test_bad_captured_output.py:27: DS601 brittle-string-match [fail] in test_cli_output
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_cli_output` compares `result.output` with a whole sentence of expected text.
+    Why:   Comparing rendered text with a whole sentence breaks on any rewording, so the test fails
+           when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix:   In `test_cli_output`, line 27: assert that `result.output` contains the words that matter
+           (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data
+           instead of the wording.
+  suite/brittle-string-match/test_bad_captured_output.py:32: DS601 brittle-string-match [fail] in test_subprocess_stdout
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_subprocess_stdout` compares `completed.stdout` with a whole sentence of expected
+           text.
+    Why:   Comparing rendered text with a whole sentence breaks on any rewording, so the test fails
+           when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix:   In `test_subprocess_stdout`, line 32: assert that `completed.stdout` contains the words
+           that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on
+           structured data instead of the wording.
+
+suite/brittle-string-match/test_bad_error_messages.py
+  suite/brittle-string-match/test_bad_error_messages.py:10: DS601 brittle-string-match [fail] in test_invalid_email_message
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_invalid_email_message` compares `str(excinfo.value)` with a whole sentence of
+           expected text.
+    Why:   Comparing rendered text with a whole sentence breaks on any rewording, so the test fails
+           when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix:   In `test_invalid_email_message`, line 10: assert that `str(excinfo.value)` contains the
+           words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on
+           structured data instead of the wording.
+  suite/brittle-string-match/test_bad_error_messages.py:19: DS601 brittle-string-match [fail] in test_message_attribute
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_message_attribute` compares `excinfo.value.message` with a whole sentence of
+           expected text.
+    Why:   Comparing rendered text with a whole sentence breaks on any rewording, so the test fails
+           when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix:   In `test_message_attribute`, line 19: assert that `excinfo.value.message` contains the
+           words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on
+           structured data instead of the wording.
+  suite/brittle-string-match/test_bad_error_messages.py:28: DS601 brittle-string-match [fail] in test_stripped_message_on_the_left
+    "Fix one typo in a message and this test goes down! That's not a test, it's a spell checker!"
+    Found: `test_stripped_message_on_the_left` compares `str(err).strip()` with a whole sentence of
+           expected text.
+    Why:   Comparing rendered text with a whole sentence breaks on any rewording, so the test fails
+           when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix:   In `test_stripped_message_on_the_left`, line 28: assert that `str(err).strip()` contains
+           the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on
+           structured data instead of the wording.
+  suite/brittle-string-match/test_bad_error_messages.py:34: DS601 brittle-string-match [fail] in test_f_string_message
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_f_string_message` compares `str(excinfo.value)` with a whole sentence of expected
+           text.
+    Why:   Comparing rendered text with a whole sentence breaks on any rewording, so the test fails
+           when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix:   In `test_f_string_message`, line 34: assert that `str(excinfo.value)` contains the words
+           that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on
+           structured data instead of the wording.
+
+suite/brittle-string-match/test_bad_repr_and_format.py
+  suite/brittle-string-match/test_bad_repr_and_format.py:9: DS601 brittle-string-match [fail] in test_user_repr
+    "You memorized the whole sentence, recruit? Check what MATTERS!"
+    Found: `test_user_repr` compares `repr(user)` with a whole sentence of expected text.
+    Why:   Comparing rendered text with a whole sentence breaks on any rewording, so the test fails
+           when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix:   In `test_user_repr`, line 9: assert that `repr(user)` contains the words that matter
+           (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data
+           instead of the wording.
+  suite/brittle-string-match/test_bad_repr_and_format.py:16: DS601 brittle-string-match [fail] in test_report_str
+    "You memorized the whole sentence, recruit? Check what MATTERS!"
+    Found: `test_report_str` compares `str(report)` with a whole sentence of expected text.
+    Why:   Comparing rendered text with a whole sentence breaks on any rewording, so the test fails
+           when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix:   In `test_report_str`, line 16: assert that `str(report)` contains the words that matter
+           (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on structured data
+           instead of the wording.
+  suite/brittle-string-match/test_bad_repr_and_format.py:20: DS601 brittle-string-match [fail] in test_money_format
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_money_format` compares `format(Money(1234), 'long')` with a whole sentence of
+           expected text.
+    Why:   Comparing rendered text with a whole sentence breaks on any rewording, so the test fails
+           when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix:   In `test_money_format`, line 20: assert that `format(Money(1234), 'long')` contains the
+           words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or assert on
+           structured data instead of the wording.
+  suite/brittle-string-match/test_bad_repr_and_format.py:27: DS601 brittle-string-match [fail] in test_lowered_str_compared_with_not_equal
+    "Exact prose in an assert! One comma moves and your whole squad is dead!"
+    Found: `test_lowered_str_compared_with_not_equal` compares `str(report).lower()` with a whole
+           sentence of expected text.
+    Why:   Comparing rendered text with a whole sentence breaks on any rewording, so the test fails
+           when behaviour hasn't changed and doesn't say which part of the text was the contract.
+    Fix:   In `test_lowered_str_compared_with_not_equal`, line 27: assert that `str(report).lower()`
+           contains the words that matter (`"..." in ...`), use `pytest.raises(..., match=...)`, or
+           assert on structured data instead of the wording.
+
+suite/broad-raises/test_bad_catch_all.py
+  suite/broad-raises/test_bad_catch_all.py:12: DS701 broad-raises [fail] in test_bad_input_raises
+    "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
+    Found: `test_bad_input_raises` expects `Exception` with no `match=`, so any error at all passes
+           it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `test_bad_input_raises`, line 12: replace `Exception` with the specific exception the
+           code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_catch_all.py:17: DS701 broad-raises [fail] in test_bad_input_raises_base_exception
+    "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
+    Found: `test_bad_input_raises_base_exception` expects `BaseException` with no `match=`, so any
+           error at all passes it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `test_bad_input_raises_base_exception`, line 17: replace `BaseException` with the
+           specific exception the code raises, and add `match=` for the part of its message that
+           matters.
+  suite/broad-raises/test_bad_catch_all.py:23: DS701 broad-raises [fail] in TestParser::test_empty_input_raises
+    "Expecting `Exception`? That's not a target, recruit, that's the whole range!"
+    Found: `TestParser::test_empty_input_raises` expects `Exception` with no `match=`, so any error
+           at all passes it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `TestParser::test_empty_input_raises`, line 23: replace `Exception` with the specific
+           exception the code raises, and add `match=` for the part of its message that matters.
+
+suite/broad-raises/test_bad_hidden_in_flow.py
+  suite/broad-raises/test_bad_hidden_in_flow.py:18: DS701 broad-raises [fail] in test_every_bad_input_raises
+    "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
+    Found: `test_every_bad_input_raises` expects `Exception` with no `match=`, so any error at all
+           passes it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `test_every_bad_input_raises`, line 18: replace `Exception` with the specific
+           exception the code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_hidden_in_flow.py:23: DS701 broad-raises [fail] in test_unreachable_host_raises
+    "A typo in your own test raises too, maggot! NAME THE EXCEPTION!"
+    Found: `test_unreachable_host_raises` expects `Exception` with no `match=`, so any error at all
+           passes it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `test_unreachable_host_raises`, line 23: replace `Exception` with the specific
+           exception the code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_hidden_in_flow.py:30: DS701 broad-raises [fail] in test_two_expectations_in_one_test
+    "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
+    Found: `test_two_expectations_in_one_test` expects `BaseException` with no `match=`, so any
+           error at all passes it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `test_two_expectations_in_one_test`, line 30: replace `BaseException` with the
+           specific exception the code raises, and add `match=` for the part of its message that
+           matters.
+  suite/broad-raises/test_bad_hidden_in_flow.py:35: DS701 broad-raises [fail] in test_caught_exception_only_printed
+    "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
+    Found: `test_caught_exception_only_printed` expects `Exception` with no `match=`, so any error
+           at all passes it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `test_caught_exception_only_printed`, line 35: replace `Exception` with the specific
+           exception the code raises, and add `match=` for the part of its message that matters.
+
+suite/broad-raises/test_bad_other_spellings.py
+  suite/broad-raises/test_bad_other_spellings.py:15: DS701 broad-raises [fail] in test_bare_name_raises
+    "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
+    Found: `test_bare_name_raises` expects `Exception` with no `match=`, so any error at all passes
+           it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `test_bare_name_raises`, line 15: replace `Exception` with the specific exception the
+           code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_other_spellings.py:20: DS701 broad-raises [fail] in test_tuple_with_a_broad_member
+    "A typo in your own test raises too, maggot! NAME THE EXCEPTION!"
+    Found: `test_tuple_with_a_broad_member` expects `Exception` with no `match=`, so any error at
+           all passes it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `test_tuple_with_a_broad_member`, line 20: replace `Exception` with the specific
+           exception the code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_other_spellings.py:25: DS701 broad-raises [fail] in test_keyword_form
+    "Expecting `Exception`? That's not a target, recruit, that's the whole range!"
+    Found: `test_keyword_form` expects `BaseException` with no `match=`, so any error at all passes
+           it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `test_keyword_form`, line 25: replace `BaseException` with the specific exception the
+           code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_other_spellings.py:30: DS701 broad-raises [fail] in test_match_none_is_no_match
+    "A typo in your own test raises too, maggot! NAME THE EXCEPTION!"
+    Found: `test_match_none_is_no_match` expects `Exception` with no `match=`, so any error at all
+           passes it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `test_match_none_is_no_match`, line 30: replace `Exception` with the specific
+           exception the code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_other_spellings.py:35: DS701 broad-raises [fail] in test_empty_match_matches_everything
+    "Expecting `Exception`? That's not a target, recruit, that's the whole range!"
+    Found: `test_empty_match_matches_everything` expects `Exception` with no `match=`, so any error
+           at all passes it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `test_empty_match_matches_everything`, line 35: replace `Exception` with the specific
+           exception the code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_other_spellings.py:40: DS701 broad-raises [fail] in test_aliased_module
+    "Expecting `Exception`? That's not a target, recruit, that's the whole range!"
+    Found: `test_aliased_module` expects `Exception` with no `match=`, so any error at all passes
+           it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `test_aliased_module`, line 40: replace `Exception` with the specific exception the
+           code raises, and add `match=` for the part of its message that matters.
+  suite/broad-raises/test_bad_other_spellings.py:45: DS701 broad-raises [fail] in test_aliased_name
+    "Expecting `Exception`? That's not a target, recruit, that's the whole range!"
+    Found: `test_aliased_name` expects `BaseException` with no `match=`, so any error at all passes
+           it.
+    Why:   `pytest.raises(Exception)` with no `match=` passes for any error, including a `TypeError`
+           from a typo in the test, so it can't tell the expected failure from a broken one.
+    Fix:   In `test_aliased_name`, line 45: replace `BaseException` with the specific exception the
+           code raises, and add `match=` for the part of its message that matters.
+
+suite/interleaved-act-assert/test_bad_async_steps.py
+  suite/interleaved-act-assert/test_bad_async_steps.py:7: DS104 interleaved-act-assert [warn] in test_connection
+    "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
+    Found: `test_connection` acts and asserts 2 times: after the assertions on the act at line 5,
+           `await conn.send('ping')` on line 7 acts again.
+    Why:   A test that acts and asserts more than once checks several behaviours: when it fails, its
+           name doesn't say which one broke, and a failing early step hides every later one.
+    Fix:   In `test_connection`, line 7: split the test into one test per act (lines 5, 7), each
+           named for its behaviour, with any shared setup in a fixture.
+  suite/interleaved-act-assert/test_bad_async_steps.py:15: DS104 interleaved-act-assert [warn] in TestDoor::test_door
+    "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
+    Found: `TestDoor::test_door` acts and asserts 2 times: after the assertions on the act at line
+           13, `await door.lock()` on line 15 acts again.
+    Why:   A test that acts and asserts more than once checks several behaviours: when it fails, its
+           name doesn't say which one broke, and a failing early step hides every later one.
+    Fix:   In `TestDoor::test_door`, line 15: split the test into one test per act (lines 13, 15),
+           each named for its behaviour, with any shared setup in a fixture.
+
+suite/interleaved-act-assert/test_bad_blocks.py
+  suite/interleaved-act-assert/test_bad_blocks.py:11: DS104 interleaved-act-assert [warn] in test_counter_under_patch
+    "When this goes red, which act failed? NOBODY KNOWS! Split it up!"
+    Found: `test_counter_under_patch` acts and asserts 2 times: after the assertions on the act at
+           line 9, `counter.reset()` on line 11 acts again.
+    Why:   A test that acts and asserts more than once checks several behaviours: when it fails, its
+           name doesn't say which one broke, and a failing early step hides every later one.
+    Fix:   In `test_counter_under_patch`, line 11: split the test into one test per act (lines 9,
+           11), each named for its behaviour, with any shared setup in a fixture.
+  suite/interleaved-act-assert/test_bad_blocks.py:18: DS104 interleaved-act-assert [warn] in test_queue
+    "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
+    Found: `test_queue` acts and asserts 2 times: after the assertions on the act at line 16, the
+           `for` block on line 18 acts again.
+    Why:   A test that acts and asserts more than once checks several behaviours: when it fails, its
+           name doesn't say which one broke, and a failing early step hides every later one.
+    Fix:   In `test_queue`, line 18: split the test into one test per act (lines 16, 18), each named
+           for its behaviour, with any shared setup in a fixture.
+
+suite/interleaved-act-assert/test_bad_named_like_a_reset.py
+  suite/interleaved-act-assert/test_bad_named_like_a_reset.py:8: DS104 interleaved-act-assert [warn] in test_mock_reset_between_checks
+    "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
+    Found: `test_mock_reset_between_checks` acts and asserts 2 times: after the assertions on the
+           act at line 6, `sender.reset_mock()` on line 8 acts again.
+    Why:   A test that acts and asserts more than once checks several behaviours: when it fails, its
+           name doesn't say which one broke, and a failing early step hides every later one.
+    Fix:   In `test_mock_reset_between_checks`, line 8: split the test into one test per act (lines
+           6, 8), each named for its behaviour, with any shared setup in a fixture.
+  suite/interleaved-act-assert/test_bad_named_like_a_reset.py:15: DS104 interleaved-act-assert [warn] in test_closed_between_checks
+    "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
+    Found: `test_closed_between_checks` acts and asserts 2 times: after the assertions on the act at
+           line 13, `conn.close()` on line 15 acts again.
+    Why:   A test that acts and asserts more than once checks several behaviours: when it fails, its
+           name doesn't say which one broke, and a failing early step hides every later one.
+    Fix:   In `test_closed_between_checks`, line 15: split the test into one test per act (lines 13,
+           15), each named for its behaviour, with any shared setup in a fixture.
+
+suite/interleaved-act-assert/test_bad_two_behaviours.py
+  suite/interleaved-act-assert/test_bad_two_behaviours.py:10: DS104 interleaved-act-assert [warn] in test_cart
+    "When this goes red, which act failed? NOBODY KNOWS! Split it up!"
+    Found: `test_cart` acts and asserts 2 times: after the assertions on the act at line 8,
+           `cart.remove('apple')` on line 10 acts again.
+    Why:   A test that acts and asserts more than once checks several behaviours: when it fails, its
+           name doesn't say which one broke, and a failing early step hides every later one.
+    Fix:   In `test_cart`, line 10: split the test into one test per act (lines 8, 10), each named
+           for its behaviour, with any shared setup in a fixture.
+  suite/interleaved-act-assert/test_bad_two_behaviours.py:17: DS104 interleaved-act-assert [warn] in test_user_lifecycle
+    "When this goes red, which act failed? NOBODY KNOWS! Split it up!"
+    Found: `test_user_lifecycle` acts and asserts 3 times: after the assertions on the act at line
+           15, `users.rename('ada', 'grace')` on line 17 acts again.
+    Why:   A test that acts and asserts more than once checks several behaviours: when it fails, its
+           name doesn't say which one broke, and a failing early step hides every later one.
+    Fix:   In `test_user_lifecycle`, line 17: split the test into one test per act (lines 15, 17,
+           19), each named for its behaviour, with any shared setup in a fixture.
+  suite/interleaved-act-assert/test_bad_two_behaviours.py:28: DS104 interleaved-act-assert [warn] in test_log_cleared_then_add_again
+    "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
+    Found: `test_log_cleared_then_add_again` acts and asserts 2 times: after the assertions on the
+           act at line 25, `cart.add('b')` on line 28 acts again.
+    Why:   A test that acts and asserts more than once checks several behaviours: when it fails, its
+           name doesn't say which one broke, and a failing early step hides every later one.
+    Fix:   In `test_log_cleared_then_add_again`, line 28: split the test into one test per act
+           (lines 25, 28), each named for its behaviour, with any shared setup in a fixture.
+
+suite/mirror-assertion/test_bad_beside_strong.py
+  suite/mirror-assertion/test_bad_beside_strong.py:9: DS203 mirror-assertion [fail] in test_prices
+    "You checked the code against ITSELF! Of course it agrees, recruit!"
+    Found: `test_prices` checks `net_price(120, 20)` against itself: both sides of `==` make the
+           same call.
+    Why:   A mirror assertion takes its expected value from the code under test, so a bug changes
+           both sides at once and the test stays green.
+    Fix:   In `test_prices`, line 9: keep `net_price(120, 20)` on one side and put the value it
+           should return, worked out by hand, on the other.
+
+suite/mirror-assertion/test_bad_expected_from_the_code.py
+  suite/mirror-assertion/test_bad_expected_from_the_code.py:9: DS203 mirror-assertion [fail] in test_gross_price
+    "Same call on both sides! When it breaks, BOTH sides break, maggot!"
+    Found: `test_gross_price` checks `gross_price(100, 20)` against itself: both sides of `==` make
+           the same call.
+    Why:   A mirror assertion takes its expected value from the code under test, so a bug changes
+           both sides at once and the test stays green.
+    Fix:   In `test_gross_price`, line 9: keep `gross_price(100, 20)` on one side and put the value
+           it should return, worked out by hand, on the other.
+  suite/mirror-assertion/test_bad_expected_from_the_code.py:15: DS203 mirror-assertion [fail] in test_slug_result_matches
+    "Asking the suspect for his own alibi? That's not a test, that's a MIRROR!"
+    Found: `test_slug_result_matches` checks `slugify('Hello World')` against itself: both sides of
+           `==` make the same call.
+    Why:   A mirror assertion takes its expected value from the code under test, so a bug changes
+           both sides at once and the test stays green.
+    Fix:   In `test_slug_result_matches`, line 15: keep `slugify('Hello World')` on one side and put
+           the value it should return, worked out by hand, on the other.
+  suite/mirror-assertion/test_bad_expected_from_the_code.py:20: DS203 mirror-assertion [fail] in test_async_gross_price
+    "Asking the suspect for his own alibi? That's not a test, that's a MIRROR!"
+    Found: `test_async_gross_price` checks `await client.gross_price(100, 20)` against itself: both
+           sides of `==` make the same call.
+    Why:   A mirror assertion takes its expected value from the code under test, so a bug changes
+           both sides at once and the test stays green.
+    Fix:   In `test_async_gross_price`, line 20: keep `await client.gross_price(100, 20)` on one
+           side and put the value it should return, worked out by hand, on the other.
+
+suite/mirror-assertion/test_bad_same_call_both_sides.py
+  suite/mirror-assertion/test_bad_same_call_both_sides.py:8: DS203 mirror-assertion [fail] in test_slugify
+    "Same call on both sides! When it breaks, BOTH sides break, maggot!"
+    Found: `test_slugify` checks `slugify('Hello World')` against itself: both sides of `==` make
+           the same call.
+    Why:   A mirror assertion takes its expected value from the code under test, so a bug changes
+           both sides at once and the test stays green.
+    Fix:   In `test_slugify`, line 8: keep `slugify('Hello World')` on one side and put the value it
+           should return, worked out by hand, on the other.
+  suite/mirror-assertion/test_bad_same_call_both_sides.py:12: DS203 mirror-assertion [fail] in test_serializer_round_trip
+    "Asking the suspect for his own alibi? That's not a test, that's a MIRROR!"
+    Found: `test_serializer_round_trip` checks `serializer.dump(order)` against itself: both sides
+           of `==` make the same call.
+    Why:   A mirror assertion takes its expected value from the code under test, so a bug changes
+           both sides at once and the test stays green.
+    Fix:   In `test_serializer_round_trip`, line 12: keep `serializer.dump(order)` on one side and
+           put the value it should return, worked out by hand, on the other.
+  suite/mirror-assertion/test_bad_same_call_both_sides.py:17: DS203 mirror-assertion [fail] in TestSlug::test_strips
+    "Asking the suspect for his own alibi? That's not a test, that's a MIRROR!"
+    Found: `TestSlug::test_strips` checks `slugify(' x ').strip()` against itself: both sides of
+           `==` make the same call.
+    Why:   A mirror assertion takes its expected value from the code under test, so a bug changes
+           both sides at once and the test stays green.
+    Fix:   In `TestSlug::test_strips`, line 17: keep `slugify(' x ').strip()` on one side and put
+           the value it should return, worked out by hand, on the other.
+
+suite/mirror-assertion/test_bad_two_bindings_of_one_call.py
+  suite/mirror-assertion/test_bad_two_bindings_of_one_call.py:10: DS203 mirror-assertion [fail] in test_slugify_gives_the_same_slug_every_time
+    "Asking the suspect for his own alibi? That's not a test, that's a MIRROR!"
+    Found: `test_slugify_gives_the_same_slug_every_time` checks `slugify('Hello World')` against
+           itself: both sides of `==` make the same call.
+    Why:   A mirror assertion takes its expected value from the code under test, so a bug changes
+           both sides at once and the test stays green.
+    Fix:   In `test_slugify_gives_the_same_slug_every_time`, line 10: keep `slugify('Hello World')`
+           on one side and put the value it should return, worked out by hand, on the other.
+  suite/mirror-assertion/test_bad_two_bindings_of_one_call.py:16: DS203 mirror-assertion [fail] in test_dump_is_stable
+    "Asking the suspect for his own alibi? That's not a test, that's a MIRROR!"
+    Found: `test_dump_is_stable` checks `serializer.dump(order)` against itself: both sides of `==`
+           make the same call.
+    Why:   A mirror assertion takes its expected value from the code under test, so a bug changes
+           both sides at once and the test stays green.
+    Fix:   In `test_dump_is_stable`, line 16: keep `serializer.dump(order)` on one side and put the
+           value it should return, worked out by hand, on the other.
+
+suite/no-action-under-test/test_bad_constants_only.py
+  suite/no-action-under-test/test_bad_constants_only.py:5: DS102 no-action-under-test [fail] in test_discount_rate
+    "You're asserting on numbers you wrote yourself, recruit! WHERE IS THE CODE?"
+    Found: `test_discount_rate` asserts but runs nothing: no call, no `await`, and no fixture or
+           parameter to bring a value in.
+    Why:   A test that runs no code under test checks only its own literals or the language, so it
+           passes whatever the code does.
+    Fix:   In `test_discount_rate`, line 5: call the code under test and assert on what it returns
+           or changes; if the test only checks its own literals or Python itself, delete it.
+  suite/no-action-under-test/test_bad_constants_only.py:7: DS202 tautological-assertion [fail] in test_discount_rate
+    "The code under test isn't even IN this assertion! What are you guarding?"
+    Found: `test_discount_rate` has `assert rate == 0.1`, which can't fail: it compares only values
+           the test wrote itself.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_discount_rate`, line 7: replace `assert rate == 0.1` with an assertion on what
+           the code under test returns, against a value worked out by hand.
+  suite/no-action-under-test/test_bad_constants_only.py:10: DS102 no-action-under-test [fail] in test_arithmetic_still_works
+    "You're asserting on numbers you wrote yourself, recruit! WHERE IS THE CODE?"
+    Found: `test_arithmetic_still_works` asserts but runs nothing: no call, no `await`, and no
+           fixture or parameter to bring a value in.
+    Why:   A test that runs no code under test checks only its own literals or the language, so it
+           passes whatever the code does.
+    Fix:   In `test_arithmetic_still_works`, line 10: call the code under test and assert on what it
+           returns or changes; if the test only checks its own literals or Python itself, delete it.
+  suite/no-action-under-test/test_bad_constants_only.py:11: DS202 tautological-assertion [fail] in test_arithmetic_still_works
+    "You asserted that a thing equals itself. Congratulations, you discovered math!"
+    Found: `test_arithmetic_still_works` has `assert 1 + 1 == 2`, which can't fail: it compares only
+           values the test wrote itself.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_arithmetic_still_works`, line 11: replace `assert 1 + 1 == 2` with an assertion
+           on what the code under test returns, against a value worked out by hand.
+  suite/no-action-under-test/test_bad_constants_only.py:14: DS102 no-action-under-test [fail] in test_status_codes
+    "No action, no test! Run the thing you claim to be testing!"
+    Found: `test_status_codes` asserts but runs nothing: no call, no `await`, and no fixture or
+           parameter to bring a value in.
+    Why:   A test that runs no code under test checks only its own literals or the language, so it
+           passes whatever the code does.
+    Fix:   In `test_status_codes`, line 14: call the code under test and assert on what it returns
+           or changes; if the test only checks its own literals or Python itself, delete it.
+
+suite/no-action-under-test/test_bad_python_itself.py
+  suite/no-action-under-test/test_bad_python_itself.py:7: DS102 no-action-under-test [fail] in test_division_by_zero_raises
+    "You're asserting on numbers you wrote yourself, recruit! WHERE IS THE CODE?"
+    Found: `test_division_by_zero_raises` asserts but runs nothing: no call, no `await`, and no
+           fixture or parameter to bring a value in.
+    Why:   A test that runs no code under test checks only its own literals or the language, so it
+           passes whatever the code does.
+    Fix:   In `test_division_by_zero_raises`, line 7: call the code under test and assert on what it
+           returns or changes; if the test only checks its own literals or Python itself, delete it.
+  suite/no-action-under-test/test_bad_python_itself.py:12: DS102 no-action-under-test [fail] in test_missing_key_raises
+    "No action, no test! Run the thing you claim to be testing!"
+    Found: `test_missing_key_raises` asserts but runs nothing: no call, no `await`, and no fixture
+           or parameter to bring a value in.
+    Why:   A test that runs no code under test checks only its own literals or the language, so it
+           passes whatever the code does.
+    Fix:   In `test_missing_key_raises`, line 12: call the code under test and assert on what it
+           returns or changes; if the test only checks its own literals or Python itself, delete it.
+  suite/no-action-under-test/test_bad_python_itself.py:18: DS102 no-action-under-test [fail] in test_list_membership
+    "You're asserting on numbers you wrote yourself, recruit! WHERE IS THE CODE?"
+    Found: `test_list_membership` asserts but runs nothing: no call, no `await`, and no fixture or
+           parameter to bring a value in.
+    Why:   A test that runs no code under test checks only its own literals or the language, so it
+           passes whatever the code does.
+    Fix:   In `test_list_membership`, line 18: call the code under test and assert on what it
+           returns or changes; if the test only checks its own literals or Python itself, delete it.
+  suite/no-action-under-test/test_bad_python_itself.py:20: DS202 tautological-assertion [fail] in test_list_membership
+    "This assertion can't fail, recruit! An alarm that can't ring is a DOORSTOP!"
+    Found: `test_list_membership` has `assert 'ada' in names`, which can't fail: it compares only
+           values the test wrote itself.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_list_membership`, line 20: replace `assert 'ada' in names` with an assertion on
+           what the code under test returns, against a value worked out by hand.
+
+suite/no-action-under-test/test_bad_restated_values.py
+  suite/no-action-under-test/test_bad_restated_values.py:6: DS102 no-action-under-test [fail] in TestUser::test_default_name
+    "This test checks that Python works! Python doesn't need your help, maggot!"
+    Found: `TestUser::test_default_name` asserts but runs nothing: no call, no `await`, and no
+           fixture or parameter to bring a value in.
+    Why:   A test that runs no code under test checks only its own literals or the language, so it
+           passes whatever the code does.
+    Fix:   In `TestUser::test_default_name`, line 6: call the code under test and assert on what it
+           returns or changes; if the test only checks its own literals or Python itself, delete it.
+  suite/no-action-under-test/test_bad_restated_values.py:10: DS102 no-action-under-test [fail] in TestUser::test_flags
+    "You're asserting on numbers you wrote yourself, recruit! WHERE IS THE CODE?"
+    Found: `TestUser::test_flags` asserts but runs nothing: no call, no `await`, and no fixture or
+           parameter to bring a value in.
+    Why:   A test that runs no code under test checks only its own literals or the language, so it
+           passes whatever the code does.
+    Fix:   In `TestUser::test_flags`, line 10: call the code under test and assert on what it
+           returns or changes; if the test only checks its own literals or Python itself, delete it.
+  suite/no-action-under-test/test_bad_restated_values.py:15: DS102 no-action-under-test [fail] in test_mirror
+    "This test checks that Python works! Python doesn't need your help, maggot!"
+    Found: `test_mirror` asserts but runs nothing: no call, no `await`, and no fixture or parameter
+           to bring a value in.
+    Why:   A test that runs no code under test checks only its own literals or the language, so it
+           passes whatever the code does.
+    Fix:   In `test_mirror`, line 15: call the code under test and assert on what it returns or
+           changes; if the test only checks its own literals or Python itself, delete it.
+  suite/no-action-under-test/test_bad_restated_values.py:18: DS202 tautological-assertion [fail] in test_mirror
+    "You asserted that a thing equals itself. Congratulations, you discovered math!"
+    Found: `test_mirror` has `assert actual == expected`, which can't fail: it compares only values
+           the test wrote itself.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_mirror`, line 18: replace `assert actual == expected` with an assertion on what
+           the code under test returns, against a value worked out by hand.
 
 suite/no-real-assertion/test_bad_coverage_boost.py
   suite/no-real-assertion/test_bad_coverage_boost.py:14: DS101 no-real-assertion [fail] in TestCoverageBoost::test_string_operations
     "This test would pass if the code returned garbage! DROP AND GIVE ME AN ASSERT!"
-    Found: `TestCoverageBoost::test_string_operations` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `TestCoverageBoost::test_string_operations`, assert on what `str(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `TestCoverageBoost::test_string_operations` has no real assertion: no `assert` that can
+           fail, no `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `TestCoverageBoost::test_string_operations`, line 14: assert on what `str(...)`
+           returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should
+           raise.
   suite/no-real-assertion/test_bad_coverage_boost.py:19: DS101 no-real-assertion [fail] in TestCoverageBoost::test_list_operations
     "This test would pass if the code returned garbage! DROP AND GIVE ME AN ASSERT!"
-    Found: `TestCoverageBoost::test_list_operations` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `TestCoverageBoost::test_list_operations`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `TestCoverageBoost::test_list_operations` has no real assertion: no `assert` that can
+           fail, no `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `TestCoverageBoost::test_list_operations`, line 19: assert on what the code under test
+           returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should
+           raise.
   suite/no-real-assertion/test_bad_coverage_boost.py:24: DS101 no-real-assertion [fail] in TestCoverageBoost::test_boolean_operations
     "No assertion, no proof! Green means nothing if it can't go red, maggot!"
-    Found: `TestCoverageBoost::test_boolean_operations` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `TestCoverageBoost::test_boolean_operations`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `TestCoverageBoost::test_boolean_operations` has no real assertion: no `assert` that can
+           fail, no `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `TestCoverageBoost::test_boolean_operations`, line 24: assert on what the code under
+           test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should
+           raise.
   suite/no-real-assertion/test_bad_coverage_boost.py:30: DS101 no-real-assertion [fail] in TestCoverageBoost::TestNested::test_nested_boost
     "This test would pass if the code returned garbage! DROP AND GIVE ME AN ASSERT!"
-    Found: `TestCoverageBoost::TestNested::test_nested_boost` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `TestCoverageBoost::TestNested::test_nested_boost`, assert on what `pytest_drill_sergeant.cli.main(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `TestCoverageBoost::TestNested::test_nested_boost` has no real assertion: no `assert`
+           that can fail, no `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `TestCoverageBoost::TestNested::test_nested_boost`, line 30: assert on what
+           `pytest_drill_sergeant.cli.main(...)` returns or changes, or wrap the call in
+           `pytest.raises(..., match=...)` if it should raise.
 
 suite/no-real-assertion/test_bad_final_push.py
   suite/no-real-assertion/test_bad_final_push.py:13: DS101 no-real-assertion [fail] in test_final_coverage_push
     "You call that a test, recruit? It runs the code and checks NOTHING!"
-    Found: `test_final_coverage_push` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `test_final_coverage_push`, assert on what `version.startswith(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `test_final_coverage_push` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_final_coverage_push`, line 13: assert on what `version.startswith(...)` returns
+           or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
   suite/no-real-assertion/test_bad_final_push.py:25: DS101 no-real-assertion [fail] in test_attributes_exist
     "You call that a test, recruit? It runs the code and checks NOTHING!"
-    Found: `test_attributes_exist` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `test_attributes_exist`, assert on what `getattr(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `test_attributes_exist` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_attributes_exist`, line 25: assert on what `getattr(...)` returns or changes, or
+           wrap the call in `pytest.raises(..., match=...)` if it should raise.
   suite/no-real-assertion/test_bad_final_push.py:29: DS101 no-real-assertion [fail] in test_smoke_with_a_try
     "No assertion, no proof! Green means nothing if it can't go red, maggot!"
-    Found: `test_smoke_with_a_try` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `test_smoke_with_a_try`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `test_smoke_with_a_try` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_smoke_with_a_try`, line 29: assert on what the code under test returns or
+           changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_final_push.py:32: DS702 swallowed-exception [fail] in test_smoke_with_a_try
+    "`except: pass` isn't a test, maggot, it's a cover-up!"
+    Found: `test_smoke_with_a_try` catches `Exception` in a handler with no real assertion and no
+           `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_smoke_with_a_try`, line 32: remove the `try` that catches `Exception` and let
+           the exception fail the test; if raising is the expected behaviour, use
+           `pytest.raises(..., match=...)` instead.
   suite/no-real-assertion/test_bad_final_push.py:36: DS101 no-real-assertion [fail] in test_mock_configured_but_never_checked
     "You call that a test, recruit? It runs the code and checks NOTHING!"
-    Found: `test_mock_configured_but_never_checked` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `test_mock_configured_but_never_checked`, assert on what `pytest_drill_sergeant.cli.main(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `test_mock_configured_but_never_checked` has no real assertion: no `assert` that can
+           fail, no `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_mock_configured_but_never_checked`, line 36: assert on what
+           `pytest_drill_sergeant.cli.main(...)` returns or changes, or wrap the call in
+           `pytest.raises(..., match=...)` if it should raise.
   suite/no-real-assertion/test_bad_final_push.py:41: DS101 no-real-assertion [fail] in test_fail_method_on_some_object
     "You call that a test, recruit? It runs the code and checks NOTHING!"
-    Found: `test_fail_method_on_some_object` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `test_fail_method_on_some_object`, assert on what `job.fail(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `test_fail_method_on_some_object` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_fail_method_on_some_object`, line 41: assert on what `job.fail(...)` returns or
+           changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
   suite/no-real-assertion/test_bad_final_push.py:45: DS101 no-real-assertion [fail] in test_tuple_assert_is_always_true
     "No assertion, no proof! Green means nothing if it can't go red, maggot!"
-    Found: `test_tuple_assert_is_always_true` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `test_tuple_assert_is_always_true`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `test_tuple_assert_is_always_true` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_tuple_assert_is_always_true`, line 45: assert on what the code under test
+           returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should
+           raise.
+  suite/no-real-assertion/test_bad_final_push.py:49: DS101 no-real-assertion [fail] in test_raises_from_another_library
+    "You call that a test, recruit? It runs the code and checks NOTHING!"
+    Found: `test_raises_from_another_library` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_raises_from_another_library`, line 49: assert on what `raises(...)` returns or
+           changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
 
 suite/no-real-assertion/test_bad_tiny_coverage.py
   suite/no-real-assertion/test_bad_tiny_coverage.py:13: DS101 no-real-assertion [fail] in test_tiny_coverage_boost
     "This test would pass if the code returned garbage! DROP AND GIVE ME AN ASSERT!"
-    Found: `test_tiny_coverage_boost` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `test_tiny_coverage_boost`, assert on what `list(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `test_tiny_coverage_boost` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_tiny_coverage_boost`, line 13: assert on what `list(...)` returns or changes, or
+           wrap the call in `pytest.raises(..., match=...)` if it should raise.
   suite/no-real-assertion/test_bad_tiny_coverage.py:23: DS101 no-real-assertion [fail] in test_scoring_models_import
     "This test would pass if the code returned garbage! DROP AND GIVE ME AN ASSERT!"
-    Found: `test_scoring_models_import` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `test_scoring_models_import`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `test_scoring_models_import` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_scoring_models_import`, line 23: assert on what the code under test returns or
+           changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
   suite/no-real-assertion/test_bad_tiny_coverage.py:28: DS101 no-real-assertion [fail] in test_import_is_proof_enough
     "This test would pass if the code returned garbage! DROP AND GIVE ME AN ASSERT!"
-    Found: `test_import_is_proof_enough` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `test_import_is_proof_enough`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `test_import_is_proof_enough` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_import_is_proof_enough`, line 28: assert on what the code under test returns or
+           changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
   suite/no-real-assertion/test_bad_tiny_coverage.py:35: DS101 no-real-assertion [fail] in test_coverage_placeholder
     "No assertion, no proof! Green means nothing if it can't go red, maggot!"
-    Found: `test_coverage_placeholder` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `test_coverage_placeholder`, assert on what the code under test returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `test_coverage_placeholder` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_coverage_placeholder`, line 35: assert on what the code under test returns or
+           changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
   suite/no-real-assertion/test_bad_tiny_coverage.py:39: DS101 no-real-assertion [fail] in test_async_boost
     "No assertion, no proof! Green means nothing if it can't go red, maggot!"
-    Found: `test_async_boost` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock verification.
-    Why: A test with no real assertion passes whenever the code doesn't crash, so it stays green when the behaviour breaks.
-    Fix: In `test_async_boost`, assert on what `pytest_drill_sergeant.run(...)` returns or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+    Found: `test_async_boost` has no real assertion: no `assert` that can fail, no `pytest.raises`,
+           no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_async_boost`, line 39: assert on what `pytest_drill_sergeant.run(...)` returns
+           or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
 
-15 findings: 15 fail, 0 warn. Fix them, recruit. DISMISSED!
+suite/private-state-assertion/test_bad_cache_internals.py
+  suite/private-state-assertion/test_bad_cache_internals.py:10: DS602 private-state-assertion [fail] in test_cache_stores_the_key
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `test_cache_stores_the_key` asserts on private state: `cache._store`.
+    Why:   An assertion on private state pins how the code works, not what it does, so a refactor
+           that keeps the behaviour still breaks the test.
+    Fix:   In `test_cache_stores_the_key`, line 10: replace `cache._store` with the public behaviour
+           it stands for: a return value, a public attribute or method, or what a fake collaborator
+           received.
+  suite/private-state-assertion/test_bad_cache_internals.py:11: DS602 private-state-assertion [fail] in test_cache_stores_the_key
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `test_cache_stores_the_key` asserts on private state: `cache._hits`.
+    Why:   An assertion on private state pins how the code works, not what it does, so a refactor
+           that keeps the behaviour still breaks the test.
+    Fix:   In `test_cache_stores_the_key`, line 11: replace `cache._hits` with the public behaviour
+           it stands for: a return value, a public attribute or method, or what a fake collaborator
+           received.
+  suite/private-state-assertion/test_bad_cache_internals.py:18: DS602 private-state-assertion [fail] in test_queue_holds_two_items
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `test_queue_holds_two_items` asserts on private state: `queue._items`.
+    Why:   An assertion on private state pins how the code works, not what it does, so a refactor
+           that keeps the behaviour still breaks the test.
+    Fix:   In `test_queue_holds_two_items`, line 18: replace `queue._items` with the public
+           behaviour it stands for: a return value, a public attribute or method, or what a fake
+           collaborator received.
+  suite/private-state-assertion/test_bad_cache_internals.py:23: DS602 private-state-assertion [fail] in test_two_private_names_in_one_assert
+    "That underscore means KEEP OUT! Test what it does, not what it hides!"
+    Found: `test_two_private_names_in_one_assert` asserts on private state: `cache._hits`,
+           `cache._misses`.
+    Why:   An assertion on private state pins how the code works, not what it does, so a refactor
+           that keeps the behaviour still breaks the test.
+    Fix:   In `test_two_private_names_in_one_assert`, line 23: replace `cache._hits`,
+           `cache._misses` with the public behaviour it stands for: a return value, a public
+           attribute or method, or what a fake collaborator received.
+  suite/private-state-assertion/test_bad_cache_internals.py:27: DS602 private-state-assertion [fail] in test_private_state_inside_a_generator
+    "Who gave you clearance to rifle through PRIVATE quarters, recruit?!"
+    Found: `test_private_state_inside_a_generator` asserts on private state: `c._store`.
+    Why:   An assertion on private state pins how the code works, not what it does, so a refactor
+           that keeps the behaviour still breaks the test.
+    Fix:   In `test_private_state_inside_a_generator`, line 27: replace `c._store` with the public
+           behaviour it stands for: a return value, a public attribute or method, or what a fake
+           collaborator received.
+
+suite/private-state-assertion/test_bad_mangled_and_calls.py
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:11: DS602 private-state-assertion [fail] in test_mangled_balance
+    "That underscore means KEEP OUT! Test what it does, not what it hides!"
+    Found: `test_mangled_balance` asserts on private state: `account._Account__balance`.
+    Why:   An assertion on private state pins how the code works, not what it does, so a refactor
+           that keeps the behaviour still breaks the test.
+    Fix:   In `test_mangled_balance`, line 11: replace `account._Account__balance` with the public
+           behaviour it stands for: a return value, a public attribute or method, or what a fake
+           collaborator received.
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:17: DS602 private-state-assertion [fail] in test_private_method_was_called
+    "Who gave you clearance to rifle through PRIVATE quarters, recruit?!"
+    Found: `test_private_method_was_called` asserts on private state: `service._client`.
+    Why:   An assertion on private state pins how the code works, not what it does, so a refactor
+           that keeps the behaviour still breaks the test.
+    Fix:   In `test_private_method_was_called`, line 17: replace `service._client` with the public
+           behaviour it stands for: a return value, a public attribute or method, or what a fake
+           collaborator received.
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:21: DS602 private-state-assertion [fail] in test_private_method_result
+    "That underscore means KEEP OUT! Test what it does, not what it hides!"
+    Found: `test_private_method_result` asserts on private state: `Service()._build_url`.
+    Why:   An assertion on private state pins how the code works, not what it does, so a refactor
+           that keeps the behaviour still breaks the test.
+    Fix:   In `test_private_method_result`, line 21: replace `Service()._build_url` with the public
+           behaviour it stands for: a return value, a public attribute or method, or what a fake
+           collaborator received.
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:27: DS602 private-state-assertion [fail] in TestAccount::test_balance
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `TestAccount::test_balance` asserts on private state: `account._balance`.
+    Why:   An assertion on private state pins how the code works, not what it does, so a refactor
+           that keeps the behaviour still breaks the test.
+    Fix:   In `TestAccount::test_balance`, line 27: replace `account._balance` with the public
+           behaviour it stands for: a return value, a public attribute or method, or what a fake
+           collaborator received.
+
+suite/private-state-assertion/test_bad_module_private.py
+  suite/private-state-assertion/test_bad_module_private.py:6: DS102 no-action-under-test [fail] in test_registry_starts_empty
+    "This test checks that Python works! Python doesn't need your help, maggot!"
+    Found: `test_registry_starts_empty` asserts but runs nothing: no call, no `await`, and no
+           fixture or parameter to bring a value in.
+    Why:   A test that runs no code under test checks only its own literals or the language, so it
+           passes whatever the code does.
+    Fix:   In `test_registry_starts_empty`, line 6: call the code under test and assert on what it
+           returns or changes; if the test only checks its own literals or Python itself, delete it.
+  suite/private-state-assertion/test_bad_module_private.py:7: DS602 private-state-assertion [fail] in test_registry_starts_empty
+    "Who gave you clearance to rifle through PRIVATE quarters, recruit?!"
+    Found: `test_registry_starts_empty` asserts on private state: `registry._registry`.
+    Why:   An assertion on private state pins how the code works, not what it does, so a refactor
+           that keeps the behaviour still breaks the test.
+    Fix:   In `test_registry_starts_empty`, line 7: replace `registry._registry` with the public
+           behaviour it stands for: a return value, a public attribute or method, or what a fake
+           collaborator received.
+  suite/private-state-assertion/test_bad_module_private.py:12: DS602 private-state-assertion [fail] in test_config_loaded
+    "Rename one private field and this test dies! A change detector is not a test, maggot!"
+    Found: `test_config_loaded` asserts on private state: `config._loaded`.
+    Why:   An assertion on private state pins how the code works, not what it does, so a refactor
+           that keeps the behaviour still breaks the test.
+    Fix:   In `test_config_loaded`, line 12: replace `config._loaded` with the public behaviour it
+           stands for: a return value, a public attribute or method, or what a fake collaborator
+           received.
+  suite/private-state-assertion/test_bad_module_private.py:18: DS602 private-state-assertion [fail] in test_private_state_in_a_nested_block
+    "That underscore means KEEP OUT! Test what it does, not what it hides!"
+    Found: `test_private_state_in_a_nested_block` asserts on private state: `item._dirty`.
+    Why:   An assertion on private state pins how the code works, not what it does, so a refactor
+           that keeps the behaviour still breaks the test.
+    Fix:   In `test_private_state_in_a_nested_block`, line 18: replace `item._dirty` with the public
+           behaviour it stands for: a return value, a public attribute or method, or what a fake
+           collaborator received.
+
+suite/sleep-in-test/test_bad_aliased_sleeps.py
+  suite/sleep-in-test/test_bad_aliased_sleeps.py:13: DS801 sleep-in-test [fail] in test_worker_finishes
+    "Napping on duty, recruit? Tests don't SLEEP on my watch!"
+    Found: `test_worker_finishes` sleeps for real time: `sleep(2)`.
+    Why:   A sleep guesses how long something takes: too short on a loaded machine and the test
+           fails at random, too long and every run pays for it.
+    Fix:   In `test_worker_finishes`, line 13: replace `sleep(2)` with a fake clock it can advance,
+           or wait on the condition itself (an event, a join, or a `while` loop that polls it under
+           a deadline).
+  suite/sleep-in-test/test_bad_aliased_sleeps.py:20: DS801 sleep-in-test [fail] in test_worker_retries
+    "You picked that number out of thin air! On a slow CI box it's too short, everywhere else it's
+     wasted!"
+    Found: `test_worker_retries` sleeps for real time: `pause(0.5)`.
+    Why:   A sleep guesses how long something takes: too short on a loaded machine and the test
+           fails at random, too long and every run pays for it.
+    Fix:   In `test_worker_retries`, line 20: replace `pause(0.5)` with a fake clock it can advance,
+           or wait on the condition itself (an event, a join, or a `while` loop that polls it under
+           a deadline).
+  suite/sleep-in-test/test_bad_aliased_sleeps.py:21: DS801 sleep-in-test [fail] in test_worker_retries
+    "You picked that number out of thin air! On a slow CI box it's too short, everywhere else it's
+     wasted!"
+    Found: `test_worker_retries` sleeps for real time: `t.sleep(0.5)`.
+    Why:   A sleep guesses how long something takes: too short on a loaded machine and the test
+           fails at random, too long and every run pays for it.
+    Fix:   In `test_worker_retries`, line 21: replace `t.sleep(0.5)` with a fake clock it can
+           advance, or wait on the condition itself (an event, a join, or a `while` loop that polls
+           it under a deadline).
+  suite/sleep-in-test/test_bad_aliased_sleeps.py:30: DS801 sleep-in-test [fail] in test_sleep_imported_inside_the_test
+    "Waiting and hoping is not a strategy, maggot! Wait for the EVENT!"
+    Found: `test_sleep_imported_inside_the_test` sleeps for real time: `time.sleep(1)`.
+    Why:   A sleep guesses how long something takes: too short on a loaded machine and the test
+           fails at random, too long and every run pays for it.
+    Fix:   In `test_sleep_imported_inside_the_test`, line 30: replace `time.sleep(1)` with a fake
+           clock it can advance, or wait on the condition itself (an event, a join, or a `while`
+           loop that polls it under a deadline).
+
+suite/sleep-in-test/test_bad_async_waits.py
+  suite/sleep-in-test/test_bad_async_waits.py:15: DS801 sleep-in-test [fail] in test_poller_picks_up_the_job
+    "Napping on duty, recruit? Tests don't SLEEP on my watch!"
+    Found: `test_poller_picks_up_the_job` sleeps for real time: `asyncio.sleep(1)`.
+    Why:   A sleep guesses how long something takes: too short on a loaded machine and the test
+           fails at random, too long and every run pays for it.
+    Fix:   In `test_poller_picks_up_the_job`, line 15: replace `asyncio.sleep(1)` with a fake clock
+           it can advance, or wait on the condition itself (an event, a join, or a `while` loop that
+           polls it under a deadline).
+  suite/sleep-in-test/test_bad_async_waits.py:23: DS801 sleep-in-test [fail] in test_poller_waits_a_named_delay
+    "Napping on duty, recruit? Tests don't SLEEP on my watch!"
+    Found: `test_poller_waits_a_named_delay` sleeps for real time: `asyncio.sleep(DELAY)`.
+    Why:   A sleep guesses how long something takes: too short on a loaded machine and the test
+           fails at random, too long and every run pays for it.
+    Fix:   In `test_poller_waits_a_named_delay`, line 23: replace `asyncio.sleep(DELAY)` with a fake
+           clock it can advance, or wait on the condition itself (an event, a join, or a `while`
+           loop that polls it under a deadline).
+
+suite/sleep-in-test/test_bad_token_expiry.py
+  suite/sleep-in-test/test_bad_token_expiry.py:13: DS801 sleep-in-test [fail] in test_token_expires_after_its_ttl
+    "Waiting and hoping is not a strategy, maggot! Wait for the EVENT!"
+    Found: `test_token_expires_after_its_ttl` sleeps for real time: `time.sleep(1.1)`.
+    Why:   A sleep guesses how long something takes: too short on a loaded machine and the test
+           fails at random, too long and every run pays for it.
+    Fix:   In `test_token_expires_after_its_ttl`, line 13: replace `time.sleep(1.1)` with a fake
+           clock it can advance, or wait on the condition itself (an event, a join, or a `while`
+           loop that polls it under a deadline).
+  suite/sleep-in-test/test_bad_token_expiry.py:20: DS801 sleep-in-test [fail] in TestCache::test_entry_is_evicted
+    "Waiting and hoping is not a strategy, maggot! Wait for the EVENT!"
+    Found: `TestCache::test_entry_is_evicted` sleeps for real time: `time.sleep(0.6)`.
+    Why:   A sleep guesses how long something takes: too short on a loaded machine and the test
+           fails at random, too long and every run pays for it.
+    Fix:   In `TestCache::test_entry_is_evicted`, line 20: replace `time.sleep(0.6)` with a fake
+           clock it can advance, or wait on the condition itself (an event, a join, or a `while`
+           loop that polls it under a deadline).
+
+suite/source-text-grep/test_bad_getsource.py
+  suite/source-text-grep/test_bad_getsource.py:11: DS603 source-text-grep [fail] in test_no_sleep_in_fetch
+    "Move one line and this test fails; break the logic and it passes! DISGRACEFUL!"
+    Found: `test_no_sleep_in_fetch` searches source text read by `inspect.getsource(Client.fetch)`
+           instead of running the code.
+    Why:   A test that searches source text proves the text is there, not that the code behaves: it
+           breaks on harmless rewrites and passes when the code is wrong.
+    Fix:   In `test_no_sleep_in_fetch`, line 11: drop `inspect.getsource(Client.fetch)` and call the
+           code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_getsource.py:16: DS603 source-text-grep [fail] in test_v2_handlers_defined
+    "You READ the code instead of RUNNING it? That's a book report, recruit!"
+    Found: `test_v2_handlers_defined` searches source text read by `getsource(jobs)` instead of
+           running the code.
+    Why:   A test that searches source text proves the text is there, not that the code behaves: it
+           breaks on harmless rewrites and passes when the code is wrong.
+    Fix:   In `test_v2_handlers_defined`, line 16: drop `getsource(jobs)` and call the code it
+           reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_getsource.py:21: DS603 source-text-grep [fail] in test_lines_mention_cache
+    "Grepping the source proves the words are there, not that they WORK!"
+    Found: `test_lines_mention_cache` searches source text read by `inspect.getsourcelines(Client)`
+           instead of running the code.
+    Why:   A test that searches source text proves the text is there, not that the code behaves: it
+           breaks on harmless rewrites and passes when the code is wrong.
+    Fix:   In `test_lines_mention_cache`, line 21: drop `inspect.getsourcelines(Client)` and call
+           the code it reads: assert on what it returns or does.
+
+suite/source-text-grep/test_bad_module_file.py
+  suite/source-text-grep/test_bad_module_file.py:12: DS603 source-text-grep [fail] in test_no_todo_left
+    "Grepping the source proves the words are there, not that they WORK!"
+    Found: `test_no_todo_left` searches source text read by `Path(client.__file__).read_text()`
+           instead of running the code.
+    Why:   A test that searches source text proves the text is there, not that the code behaves: it
+           breaks on harmless rewrites and passes when the code is wrong.
+    Fix:   In `test_no_todo_left`, line 12: drop `Path(client.__file__).read_text()` and call the
+           code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_module_file.py:17: DS603 source-text-grep [fail] in test_exactly_one_handler
+    "Grepping the source proves the words are there, not that they WORK!"
+    Found: `test_exactly_one_handler` searches source text read by
+           `Path(client.__file__).read_text()` instead of running the code.
+    Why:   A test that searches source text proves the text is there, not that the code behaves: it
+           breaks on harmless rewrites and passes when the code is wrong.
+    Fix:   In `test_exactly_one_handler`, line 17: drop `Path(client.__file__).read_text()` and call
+           the code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_module_file.py:21: DS603 source-text-grep [fail] in test_setting_present
+    "Grepping the source proves the words are there, not that they WORK!"
+    Found: `test_setting_present` searches source text read by `open(settings.__file__).read()`
+           instead of running the code.
+    Why:   A test that searches source text proves the text is there, not that the code behaves: it
+           breaks on harmless rewrites and passes when the code is wrong.
+    Fix:   In `test_setting_present`, line 21: drop `open(settings.__file__).read()` and call the
+           code it reads: assert on what it returns or does.
+
+suite/source-text-grep/test_bad_read_source.py
+  suite/source-text-grep/test_bad_read_source.py:8: DS603 source-text-grep [fail] in test_retry_enabled
+    "You READ the code instead of RUNNING it? That's a book report, recruit!"
+    Found: `test_retry_enabled` searches source text read by `Path('src/client.py').read_text()`
+           instead of running the code.
+    Why:   A test that searches source text proves the text is there, not that the code behaves: it
+           breaks on harmless rewrites and passes when the code is wrong.
+    Fix:   In `test_retry_enabled`, line 8: drop `Path('src/client.py').read_text()` and call the
+           code it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_read_source.py:13: DS603 source-text-grep [fail] in test_debug_off
+    "Move one line and this test fails; break the logic and it passes! DISGRACEFUL!"
+    Found: `test_debug_off` searches source text read by `open('src/app/config.py').read()` instead
+           of running the code.
+    Why:   A test that searches source text proves the text is there, not that the code behaves: it
+           breaks on harmless rewrites and passes when the code is wrong.
+    Fix:   In `test_debug_off`, line 13: drop `open('src/app/config.py').read()` and call the code
+           it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_read_source.py:19: DS603 source-text-grep [fail] in test_os_import_removed
+    "Move one line and this test fails; break the logic and it passes! DISGRACEFUL!"
+    Found: `test_os_import_removed` searches source text read by `open('src/app/paths.py')` instead
+           of running the code.
+    Why:   A test that searches source text proves the text is there, not that the code behaves: it
+           breaks on harmless rewrites and passes when the code is wrong.
+    Fix:   In `test_os_import_removed`, line 19: drop `open('src/app/paths.py')` and call the code
+           it reads: assert on what it returns or does.
+  suite/source-text-grep/test_bad_read_source.py:24: DS603 source-text-grep [fail] in test_source_lines_through_a_path
+    "You READ the code instead of RUNNING it? That's a book report, recruit!"
+    Found: `test_source_lines_through_a_path` searches source text read by `(root / 'src' / 'app' /
+           'jobs.py').read_text()` instead of running the code.
+    Why:   A test that searches source text proves the text is there, not that the code behaves: it
+           breaks on harmless rewrites and passes when the code is wrong.
+    Fix:   In `test_source_lines_through_a_path`, line 24: drop `(root / 'src' / 'app' /
+           'jobs.py').read_text()` and call the code it reads: assert on what it returns or does.
+
+suite/swallowed-exception/test_bad_assert_beside_it.py
+  suite/swallowed-exception/test_bad_assert_beside_it.py:12: DS702 swallowed-exception [fail] in test_load_asserts_only_on_success
+    "The code blew up and your test looked the other way! EYES FRONT!"
+    Found: `test_load_asserts_only_on_success` catches `FileNotFoundError` in a handler with no real
+           assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_load_asserts_only_on_success`, line 12: remove the `try` that catches
+           `FileNotFoundError` and let the exception fail the test; if raising is the expected
+           behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_assert_beside_it.py:23: DS702 swallowed-exception [fail] in test_load_one_handler_checks_the_other_drops
+    "You caught the failure and HID it, recruit? That's desertion!"
+    Found: `test_load_one_handler_checks_the_other_drops` catches `PermissionError` in a handler
+           with no real assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_load_one_handler_checks_the_other_drops`, line 23: remove the `try` that catches
+           `PermissionError` and let the exception fail the test; if raising is the expected
+           behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_assert_beside_it.py:30: DS702 swallowed-exception [fail] in test_load_trivial_assert_in_the_handler
+    "You caught the failure and HID it, recruit? That's desertion!"
+    Found: `test_load_trivial_assert_in_the_handler` catches `OSError` in a handler with no real
+           assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_load_trivial_assert_in_the_handler`, line 30: remove the `try` that catches
+           `OSError` and let the exception fail the test; if raising is the expected behaviour, use
+           `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_assert_beside_it.py:38: DS702 swallowed-exception [fail] in test_load_falls_back_to_a_default
+    "The code blew up and your test looked the other way! EYES FRONT!"
+    Found: `test_load_falls_back_to_a_default` catches `(FileNotFoundError, PermissionError)` in a
+           handler with no real assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_load_falls_back_to_a_default`, line 38: remove the `try` that catches
+           `(FileNotFoundError, PermissionError)` and let the exception fail the test; if raising is
+           the expected behaviour, use `pytest.raises(..., match=...)` instead.
+
+suite/swallowed-exception/test_bad_broken_old_idiom.py
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:16: DS702 swallowed-exception [fail] in test_handler_catches_the_assert_false
+    "You caught the failure and HID it, recruit? That's desertion!"
+    Found: `test_handler_catches_the_assert_false` catches `Exception` in a handler with no real
+           assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_handler_catches_the_assert_false`, line 16: remove the `try` that catches
+           `Exception` and let the exception fail the test; if raising is the expected behaviour,
+           use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:25: DS702 swallowed-exception [fail] in test_bare_handler_catches_pytest_fail
+    "The code blew up and your test looked the other way! EYES FRONT!"
+    Found: `test_bare_handler_catches_pytest_fail` catches every exception in a handler with no real
+           assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_bare_handler_catches_pytest_fail`, line 25: remove the `try` that catches every
+           exception and let the exception fail the test; if raising is the expected behaviour, use
+           `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:33: DS702 swallowed-exception [fail] in test_base_exception_handler_catches_pytest_fail
+    "`except: pass` isn't a test, maggot, it's a cover-up!"
+    Found: `test_base_exception_handler_catches_pytest_fail` catches `BaseException` in a handler
+           with no real assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_base_exception_handler_catches_pytest_fail`, line 33: remove the `try` that
+           catches `BaseException` and let the exception fail the test; if raising is the expected
+           behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:37: DS101 no-real-assertion [fail] in test_handler_catches_the_raise
+    "You call that a test, recruit? It runs the code and checks NOTHING!"
+    Found: `test_handler_catches_the_raise` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_handler_catches_the_raise`, line 37: assert on what the code under test returns
+           or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:41: DS702 swallowed-exception [fail] in test_handler_catches_the_raise
+    "`except: pass` isn't a test, maggot, it's a cover-up!"
+    Found: `test_handler_catches_the_raise` catches `RuntimeError` in a handler with no real
+           assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_handler_catches_the_raise`, line 41: remove the `try` that catches
+           `RuntimeError` and let the exception fail the test; if raising is the expected behaviour,
+           use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:45: DS101 no-real-assertion [fail] in test_skip_is_not_a_failure
+    "No assertion, no proof! Green means nothing if it can't go red, maggot!"
+    Found: `test_skip_is_not_a_failure` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_skip_is_not_a_failure`, line 45: assert on what the code under test returns or
+           changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:49: DS702 swallowed-exception [fail] in test_skip_is_not_a_failure
+    "You caught the failure and HID it, recruit? That's desertion!"
+    Found: `test_skip_is_not_a_failure` catches `ValueError` in a handler with no real assertion and
+           no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_skip_is_not_a_failure`, line 49: remove the `try` that catches `ValueError` and
+           let the exception fail the test; if raising is the expected behaviour, use
+           `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_broken_old_idiom.py:56: DS702 swallowed-exception [fail] in test_every_error_becomes_a_skip
+    "You caught the failure and HID it, recruit? That's desertion!"
+    Found: `test_every_error_becomes_a_skip` catches `Exception` in a handler with no real assertion
+           and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_every_error_becomes_a_skip`, line 56: remove the `try` that catches `Exception`
+           and let the exception fail the test; if raising is the expected behaviour, use
+           `pytest.raises(..., match=...)` instead.
+
+suite/swallowed-exception/test_bad_make_it_not_crash.py
+  suite/swallowed-exception/test_bad_make_it_not_crash.py:11: DS101 no-real-assertion [fail] in test_sync
+    "This test would pass if the code returned garbage! DROP AND GIVE ME AN ASSERT!"
+    Found: `test_sync` has no real assertion: no `assert` that can fail, no `pytest.raises`, no mock
+           verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_sync`, line 11: assert on what the code under test returns or changes, or wrap
+           the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/swallowed-exception/test_bad_make_it_not_crash.py:14: DS702 swallowed-exception [fail] in test_sync
+    "You caught the failure and HID it, recruit? That's desertion!"
+    Found: `test_sync` catches `Exception` in a handler with no real assertion and no `raise`, so
+           the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_sync`, line 14: remove the `try` that catches `Exception` and let the exception
+           fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)`
+           instead.
+  suite/swallowed-exception/test_bad_make_it_not_crash.py:23: DS201 weak-assertion [fail] in test_sync_each_source
+    "Truthy, has a length, is a string. You described a potato, maggot!"
+    Found: `test_sync_each_source` makes only weak assertions: each holds for almost any value,
+           wrong ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `test_sync_each_source`, line 23: replace the weak assertions on line 23 with exact
+           checks: assert what `source` should equal, as in `assert value == expected`.
+  suite/swallowed-exception/test_bad_make_it_not_crash.py:24: DS702 swallowed-exception [fail] in test_sync_each_source
+    "The code blew up and your test looked the other way! EYES FRONT!"
+    Found: `test_sync_each_source` catches `RuntimeError` in a handler with no real assertion and no
+           `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_sync_each_source`, line 24: remove the `try` that catches `RuntimeError` and let
+           the exception fail the test; if raising is the expected behaviour, use
+           `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_make_it_not_crash.py:31: DS702 swallowed-exception [fail] in test_sync_returns_early
+    "`except: pass` isn't a test, maggot, it's a cover-up!"
+    Found: `test_sync_returns_early` catches `RuntimeError` in a handler with no real assertion and
+           no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_sync_returns_early`, line 31: remove the `try` that catches `RuntimeError` and
+           let the exception fail the test; if raising is the expected behaviour, use
+           `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_make_it_not_crash.py:39: DS702 swallowed-exception [fail] in test_sync_logs_and_moves_on
+    "You caught the failure and HID it, recruit? That's desertion!"
+    Found: `test_sync_logs_and_moves_on` catches `Exception` in a handler with no real assertion and
+           no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_sync_logs_and_moves_on`, line 39: remove the `try` that catches `Exception` and
+           let the exception fail the test; if raising is the expected behaviour, use
+           `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_make_it_not_crash.py:45: DS101 no-real-assertion [fail] in test_sync_bare_except
+    "No assertion, no proof! Green means nothing if it can't go red, maggot!"
+    Found: `test_sync_bare_except` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_sync_bare_except`, line 45: assert on what the code under test returns or
+           changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/swallowed-exception/test_bad_make_it_not_crash.py:49: DS702 swallowed-exception [fail] in test_sync_bare_except
+    "`except: pass` isn't a test, maggot, it's a cover-up!"
+    Found: `test_sync_bare_except` catches every exception in a handler with no real assertion and
+           no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_sync_bare_except`, line 49: remove the `try` that catches every exception and
+           let the exception fail the test; if raising is the expected behaviour, use
+           `pytest.raises(..., match=...)` instead.
+
+suite/swallowed-exception/test_bad_nested_places.py
+  suite/swallowed-exception/test_bad_nested_places.py:13: DS702 swallowed-exception [fail] in TestClient::test_get_ignores_timeouts
+    "The code blew up and your test looked the other way! EYES FRONT!"
+    Found: `TestClient::test_get_ignores_timeouts` catches `TimeoutError` in a handler with no real
+           assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `TestClient::test_get_ignores_timeouts`, line 13: remove the `try` that catches
+           `TimeoutError` and let the exception fail the test; if raising is the expected behaviour,
+           use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_nested_places.py:15: DS201 weak-assertion [fail] in TestClient::test_get_ignores_timeouts
+    "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?"
+    Found: `TestClient::test_get_ignores_timeouts` makes only weak assertions: each holds for almost
+           any value, wrong ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `TestClient::test_get_ignores_timeouts`, line 15: replace the weak assertions on line
+           15 with exact checks: assert what `fetch` should equal, as in `assert value == expected`.
+  suite/swallowed-exception/test_bad_nested_places.py:21: DS702 swallowed-exception [fail] in test_fetch_ignores_connection_errors
+    "`except: pass` isn't a test, maggot, it's a cover-up!"
+    Found: `test_fetch_ignores_connection_errors` catches `ConnectionError` in a handler with no
+           real assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_fetch_ignores_connection_errors`, line 21: remove the `try` that catches
+           `ConnectionError` and let the exception fail the test; if raising is the expected
+           behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_nested_places.py:23: DS201 weak-assertion [fail] in test_fetch_ignores_connection_errors
+    "Truthy, has a length, is a string. You described a potato, maggot!"
+    Found: `test_fetch_ignores_connection_errors` makes only weak assertions: each holds for almost
+           any value, wrong ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `test_fetch_ignores_connection_errors`, line 23: replace the weak assertions on line
+           23 with exact checks: assert what `fetch` should equal, as in `assert value == expected`.
+  suite/swallowed-exception/test_bad_nested_places.py:30: DS702 swallowed-exception [fail] in test_nested_try_inner_swallowed
+    "`except: pass` isn't a test, maggot, it's a cover-up!"
+    Found: `test_nested_try_inner_swallowed` catches `ValueError` in a handler with no real
+           assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_nested_try_inner_swallowed`, line 30: remove the `try` that catches `ValueError`
+           and let the exception fail the test; if raising is the expected behaviour, use
+           `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_nested_places.py:37: DS101 no-real-assertion [fail] in test_exception_group_swallowed
+    "You call that a test, recruit? It runs the code and checks NOTHING!"
+    Found: `test_exception_group_swallowed` has no real assertion: no `assert` that can fail, no
+           `pytest.raises`, no mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_exception_group_swallowed`, line 37: assert on what the code under test returns
+           or changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+  suite/swallowed-exception/test_bad_nested_places.py:40: DS702 swallowed-exception [fail] in test_exception_group_swallowed
+    "You caught the failure and HID it, recruit? That's desertion!"
+    Found: `test_exception_group_swallowed` catches `ConnectionError` in a handler with no real
+           assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_exception_group_swallowed`, line 40: remove the `try` that catches
+           `ConnectionError` and let the exception fail the test; if raising is the expected
+           behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_nested_places.py:48: DS702 swallowed-exception [fail] in test_cleanup_swallows_every_error
+    "You caught the failure and HID it, recruit? That's desertion!"
+    Found: `test_cleanup_swallows_every_error` catches `Exception` in a handler with no real
+           assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_cleanup_swallows_every_error`, line 48: remove the `try` that catches
+           `Exception` and let the exception fail the test; if raising is the expected behaviour,
+           use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_nested_places.py:57: DS702 swallowed-exception [fail] in test_method_named_like_cleanup_swallows_an_error
+    "The code blew up and your test looked the other way! EYES FRONT!"
+    Found: `test_method_named_like_cleanup_swallows_an_error` catches `FileNotFoundError` in a
+           handler with no real assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_method_named_like_cleanup_swallows_an_error`, line 57: remove the `try` that
+           catches `FileNotFoundError` and let the exception fail the test; if raising is the
+           expected behaviour, use `pytest.raises(..., match=...)` instead.
+  suite/swallowed-exception/test_bad_nested_places.py:65: DS702 swallowed-exception [fail] in test_act_swallows_a_specific_error
+    "`except: pass` isn't a test, maggot, it's a cover-up!"
+    Found: `test_act_swallows_a_specific_error` catches `ConnectionError` in a handler with no real
+           assertion and no `raise`, so the error is lost.
+    Why:   A test that catches an exception and carries on passes when the code under test breaks,
+           so it hides exactly the failure it should report.
+    Fix:   In `test_act_swallows_a_specific_error`, line 65: remove the `try` that catches
+           `ConnectionError` and let the exception fail the test; if raising is the expected
+           behaviour, use `pytest.raises(..., match=...)` instead.
+
+suite/tautological-assertion/test_bad_multiplied_away.py
+  suite/tautological-assertion/test_bad_multiplied_away.py:8: DS202 tautological-assertion [fail] in test_price_of_846
+    "You asserted that a thing equals itself. Congratulations, you discovered math!"
+    Found: `test_price_of_846` has `assert 5 + price(846) * 0 == 5`, which can't fail: it multiplies
+           `price(846)` by zero, so its value drops out.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_price_of_846`, line 8: replace `assert 5 + price(846) * 0 == 5` with an
+           assertion on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_multiplied_away.py:13: DS202 tautological-assertion [fail] in test_price_through_a_name
+    "This assertion can't fail, recruit! An alarm that can't ring is a DOORSTOP!"
+    Found: `test_price_through_a_name` has `assert 0 * result == 0`, which can't fail: it multiplies
+           `result` by zero, so its value drops out.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_price_through_a_name`, line 13: replace `assert 0 * result == 0` with an
+           assertion on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_multiplied_away.py:18: DS202 tautological-assertion [fail] in test_async_price
+    "You asserted that a thing equals itself. Congratulations, you discovered math!"
+    Found: `test_async_price` has `assert total * 0 + 1 == 1`, which can't fail: it multiplies
+           `total` by zero, so its value drops out.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_async_price`, line 18: replace `assert total * 0 + 1 == 1` with an assertion on
+           what the code under test returns, against a value worked out by hand.
+
+suite/tautological-assertion/test_bad_self_comparison.py
+  suite/tautological-assertion/test_bad_self_comparison.py:8: DS202 tautological-assertion [fail] in test_order_equals_itself
+    "The code under test isn't even IN this assertion! What are you guarding?"
+    Found: `test_order_equals_itself` has `assert order == order`, which can't fail: it compares
+           `order` with itself.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_order_equals_itself`, line 8: replace `assert order == order` with an assertion
+           on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_self_comparison.py:12: DS202 tautological-assertion [fail] in test_total_is_itself
+    "The code under test isn't even IN this assertion! What are you guarding?"
+    Found: `test_total_is_itself` has `assert order.total is order.total`, which can't fail: it
+           compares `order.total` with itself.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_total_is_itself`, line 12: replace `assert order.total is order.total` with an
+           assertion on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_self_comparison.py:18: DS202 tautological-assertion [fail] in test_alias_equals_its_source
+    "The code under test isn't even IN this assertion! What are you guarding?"
+    Found: `test_alias_equals_its_source` has `assert same >= order`, which can't fail: it compares
+           `order` with itself.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_alias_equals_its_source`, line 18: replace `assert same >= order` with an
+           assertion on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_self_comparison.py:23: DS202 tautological-assertion [fail] in TestOrder::test_lines_match
+    "You asserted that a thing equals itself. Congratulations, you discovered math!"
+    Found: `TestOrder::test_lines_match` has `assert order.lines == order.lines`, which can't fail:
+           it compares `order.lines` with itself.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `TestOrder::test_lines_match`, line 23: replace `assert order.lines == order.lines`
+           with an assertion on what the code under test returns, against a value worked out by
+           hand.
+  suite/tautological-assertion/test_bad_self_comparison.py:28: DS202 tautological-assertion [fail] in test_private_total_equals_itself
+    "The code under test isn't even IN this assertion! What are you guarding?"
+    Found: `test_private_total_equals_itself` has `assert cart._total == cart._total`, which can't
+           fail: it compares `cart._total` with itself.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_private_total_equals_itself`, line 28: replace `assert cart._total ==
+           cart._total` with an assertion on what the code under test returns, against a value
+           worked out by hand.
+
+suite/tautological-assertion/test_bad_values_the_test_wrote.py
+  suite/tautological-assertion/test_bad_values_the_test_wrote.py:12: DS202 tautological-assertion [fail] in test_config_loads
+    "The code under test isn't even IN this assertion! What are you guarding?"
+    Found: `test_config_loads` has `assert config == expected`, which can't fail: it compares only
+           values the test wrote itself.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_config_loads`, line 12: replace `assert config == expected` with an assertion on
+           what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_values_the_test_wrote.py:18: DS202 tautological-assertion [fail] in test_a_is_one
+    "This assertion can't fail, recruit! An alarm that can't ring is a DOORSTOP!"
+    Found: `test_a_is_one` has `assert a == 1`, which can't fail: it compares only values the test
+           wrote itself.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_a_is_one`, line 18: replace `assert a == 1` with an assertion on what the code
+           under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_values_the_test_wrote.py:23: DS202 tautological-assertion [fail] in test_arithmetic_still_works
+    "You asserted that a thing equals itself. Congratulations, you discovered math!"
+    Found: `test_arithmetic_still_works` has `assert 2 + 2 == 4`, which can't fail: it compares only
+           values the test wrote itself.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_arithmetic_still_works`, line 23: replace `assert 2 + 2 == 4` with an assertion
+           on what the code under test returns, against a value worked out by hand.
+  suite/tautological-assertion/test_bad_values_the_test_wrote.py:29: DS202 tautological-assertion [fail] in test_flag_set_by_the_test
+    "You asserted that a thing equals itself. Congratulations, you discovered math!"
+    Found: `test_flag_set_by_the_test` has `assert loaded`, which can't fail: it checks only values
+           the test wrote itself.
+    Why:   A tautological assertion can't fail whatever the code does, so the test proves nothing
+           while looking like it does.
+    Fix:   In `test_flag_set_by_the_test`, line 29: replace `assert loaded` with an assertion on
+           what the code under test returns, against a value worked out by hand.
+
+suite/unseeded-random/test_bad_numpy_random.py
+  suite/unseeded-random/test_bad_numpy_random.py:17: DS803 unseeded-random [fail] in test_mean_of_random_samples
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_mean_of_random_samples` draws unseeded random values: `np.random.rand(100)`.
+    Why:   A test that draws unseeded random values checks a different case on every run, so it can
+           fail at random and nobody can replay the failing case.
+    Fix:   In `test_mean_of_random_samples`, line 17: replace `np.random.rand(100)` with fixed
+           values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_numpy_random.py:22: DS803 unseeded-random [fail] in test_mean_of_normal_samples
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_mean_of_normal_samples` draws unseeded random values: `npr.normal(size=100)`.
+    Why:   A test that draws unseeded random values checks a different case on every run, so it can
+           fail at random and nobody can replay the failing case.
+    Fix:   In `test_mean_of_normal_samples`, line 22: replace `npr.normal(size=100)` with fixed
+           values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_numpy_random.py:27: DS803 unseeded-random [fail] in test_mean_with_an_unseeded_generator
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_mean_with_an_unseeded_generator` draws unseeded random values:
+           `np.random.default_rng()`.
+    Why:   A test that draws unseeded random values checks a different case on every run, so it can
+           fail at random and nobody can replay the failing case.
+    Fix:   In `test_mean_with_an_unseeded_generator`, line 27: replace `np.random.default_rng()`
+           with fixed values or a seeded generator (`random.Random(1234)`,
+           `numpy.random.default_rng(1234)`).
+
+suite/unseeded-random/test_bad_random_inputs.py
+  suite/unseeded-random/test_bad_random_inputs.py:13: DS803 unseeded-random [fail] in test_cart_total_for_a_random_quantity
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_cart_total_for_a_random_quantity` draws unseeded random values: `random.randint(1,
+           10)`.
+    Why:   A test that draws unseeded random values checks a different case on every run, so it can
+           fail at random and nobody can replay the failing case.
+    Fix:   In `test_cart_total_for_a_random_quantity`, line 13: replace `random.randint(1, 10)` with
+           fixed values or a seeded generator (`random.Random(1234)`,
+           `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_random_inputs.py:19: DS803 unseeded-random [fail] in test_cart_order_does_not_matter
+    "Random without a seed is a coin toss with a stopwatch, maggot!"
+    Found: `test_cart_order_does_not_matter` draws unseeded random values: `shuffle(items)`.
+    Why:   A test that draws unseeded random values checks a different case on every run, so it can
+           fail at random and nobody can replay the failing case.
+    Fix:   In `test_cart_order_does_not_matter`, line 19: replace `shuffle(items)` with fixed values
+           or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_random_inputs.py:24: DS803 unseeded-random [fail] in test_cart_with_an_unseeded_generator
+    "Rolling dice in my barracks, recruit? Seed it or lose it!"
+    Found: `test_cart_with_an_unseeded_generator` draws unseeded random values: `random.Random()`.
+    Why:   A test that draws unseeded random values checks a different case on every run, so it can
+           fail at random and nobody can replay the failing case.
+    Fix:   In `test_cart_with_an_unseeded_generator`, line 24: replace `random.Random()` with fixed
+           values or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_random_inputs.py:31: DS803 unseeded-random [fail] in TestDiscounts::test_random_discount_applies
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `TestDiscounts::test_random_discount_applies` draws unseeded random values:
+           `random.uniform(0, 0.5)`.
+    Why:   A test that draws unseeded random values checks a different case on every run, so it can
+           fail at random and nobody can replay the failing case.
+    Fix:   In `TestDiscounts::test_random_discount_applies`, line 31: replace `random.uniform(0,
+           0.5)` with fixed values or a seeded generator (`random.Random(1234)`,
+           `numpy.random.default_rng(1234)`).
+
+suite/unseeded-random/test_bad_seeds_that_miss.py
+  suite/unseeded-random/test_bad_seeds_that_miss.py:20: DS803 unseeded-random [fail] in test_sample_of_items
+    "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
+    Found: `test_sample_of_items` draws unseeded random values: `random.sample(['apple', 'pear',
+           'plum'], 2)`.
+    Why:   A test that draws unseeded random values checks a different case on every run, so it can
+           fail at random and nobody can replay the failing case.
+    Fix:   In `test_sample_of_items`, line 20: replace `random.sample(['apple', 'pear', 'plum'], 2)`
+           with fixed values or a seeded generator (`random.Random(1234)`,
+           `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_seeds_that_miss.py:25: DS803 unseeded-random [fail] in test_seeds_only_after_drawing
+    "Rolling dice in my barracks, recruit? Seed it or lose it!"
+    Found: `test_seeds_only_after_drawing` draws unseeded random values: `random.choice(['apple',
+           'pear'])`.
+    Why:   A test that draws unseeded random values checks a different case on every run, so it can
+           fail at random and nobody can replay the failing case.
+    Fix:   In `test_seeds_only_after_drawing`, line 25: replace `random.choice(['apple', 'pear'])`
+           with fixed values or a seeded generator (`random.Random(1234)`,
+           `numpy.random.default_rng(1234)`).
+  suite/unseeded-random/test_bad_seeds_that_miss.py:32: DS803 unseeded-random [fail] in test_seeds_with_none
+    "Rolling dice in my barracks, recruit? Seed it or lose it!"
+    Found: `test_seeds_with_none` draws unseeded random values: `random.choice(['apple'])`.
+    Why:   A test that draws unseeded random values checks a different case on every run, so it can
+           fail at random and nobody can replay the failing case.
+    Fix:   In `test_seeds_with_none`, line 32: replace `random.choice(['apple'])` with fixed values
+           or a seeded generator (`random.Random(1234)`, `numpy.random.default_rng(1234)`).
+
+suite/wall-clock-read/test_bad_epoch_seconds.py
+  suite/wall-clock-read/test_bad_epoch_seconds.py:14: DS802 wall-clock-read [fail] in test_token_carries_the_issue_time
+    "This test passes at noon and fails at midnight! That's not a test, that's a SUNDIAL!"
+    Found: `test_token_carries_the_issue_time` reads the wall clock: `time.time()`.
+    Why:   A test that reads the real clock gives a different answer on each run, and fails at
+           midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix:   In `test_token_carries_the_issue_time`, line 14: replace `time.time()` with a fixed time
+           or an injected clock, or freeze the clock with `freezegun.freeze_time` or
+           `time_machine.travel`.
+  suite/wall-clock-read/test_bad_epoch_seconds.py:18: DS802 wall-clock-read [fail] in test_issue_is_fast
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_issue_is_fast` reads the wall clock: `time_ns()`.
+    Why:   A test that reads the real clock gives a different answer on each run, and fails at
+           midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix:   In `test_issue_is_fast`, line 18: replace `time_ns()` with a fixed time or an injected
+           clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_epoch_seconds.py:20: DS802 wall-clock-read [fail] in test_issue_is_fast
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_issue_is_fast` reads the wall clock: `time_ns()`.
+    Why:   A test that reads the real clock gives a different answer on each run, and fails at
+           midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix:   In `test_issue_is_fast`, line 20: replace `time_ns()` with a fixed time or an injected
+           clock, or freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_epoch_seconds.py:25: DS802 wall-clock-read [fail] in test_token_carries_the_local_hour
+    "The clock keeps moving, maggot! Freeze it or inject it!"
+    Found: `test_token_carries_the_local_hour` reads the wall clock: `time.localtime()`.
+    Why:   A test that reads the real clock gives a different answer on each run, and fails at
+           midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix:   In `test_token_carries_the_local_hour`, line 25: replace `time.localtime()` with a fixed
+           time or an injected clock, or freeze the clock with `freezegun.freeze_time` or
+           `time_machine.travel`.
+
+suite/wall-clock-read/test_bad_expiry_windows.py
+  suite/wall-clock-read/test_bad_expiry_windows.py:12: DS802 wall-clock-read [fail] in test_invoice_is_due_in_thirty_days
+    "This test passes at noon and fails at midnight! That's not a test, that's a SUNDIAL!"
+    Found: `test_invoice_is_due_in_thirty_days` reads the wall clock: `date.today()`.
+    Why:   A test that reads the real clock gives a different answer on each run, and fails at
+           midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix:   In `test_invoice_is_due_in_thirty_days`, line 12: replace `date.today()` with a fixed
+           time or an injected clock, or freeze the clock with `freezegun.freeze_time` or
+           `time_machine.travel`.
+  suite/wall-clock-read/test_bad_expiry_windows.py:17: DS802 wall-clock-read [fail] in test_subscription_is_active
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_subscription_is_active` reads the wall clock: `datetime.now()`.
+    Why:   A test that reads the real clock gives a different answer on each run, and fails at
+           midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix:   In `test_subscription_is_active`, line 17: replace `datetime.now()` with a fixed time or
+           an injected clock, or freeze the clock with `freezegun.freeze_time` or
+           `time_machine.travel`.
+  suite/wall-clock-read/test_bad_expiry_windows.py:23: DS802 wall-clock-read [fail] in TestAudit::test_stamp_is_recent
+    "This test passes at noon and fails at midnight! That's not a test, that's a SUNDIAL!"
+    Found: `TestAudit::test_stamp_is_recent` reads the wall clock: `datetime.utcnow()`.
+    Why:   A test that reads the real clock gives a different answer on each run, and fails at
+           midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix:   In `TestAudit::test_stamp_is_recent`, line 23: replace `datetime.utcnow()` with a fixed
+           time or an injected clock, or freeze the clock with `freezegun.freeze_time` or
+           `time_machine.travel`.
+
+suite/wall-clock-read/test_bad_module_datetime.py
+  suite/wall-clock-read/test_bad_module_datetime.py:14: DS802 wall-clock-read [fail] in test_report_is_dated_today
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_report_is_dated_today` reads the wall clock: `dt.date.today()`.
+    Why:   A test that reads the real clock gives a different answer on each run, and fails at
+           midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix:   In `test_report_is_dated_today`, line 14: replace `dt.date.today()` with a fixed time or
+           an injected clock, or freeze the clock with `freezegun.freeze_time` or
+           `time_machine.travel`.
+  suite/wall-clock-read/test_bad_module_datetime.py:18: DS802 wall-clock-read [fail] in test_report_header_has_utc_time
+    "This test passes at noon and fails at midnight! That's not a test, that's a SUNDIAL!"
+    Found: `test_report_header_has_utc_time` reads the wall clock:
+           `datetime.datetime.now(tz=datetime.UTC)`.
+    Why:   A test that reads the real clock gives a different answer on each run, and fails at
+           midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix:   In `test_report_header_has_utc_time`, line 18: replace
+           `datetime.datetime.now(tz=datetime.UTC)` with a fixed time or an injected clock, or
+           freeze the clock with `freezegun.freeze_time` or `time_machine.travel`.
+  suite/wall-clock-read/test_bad_module_datetime.py:25: DS802 wall-clock-read [fail] in test_freeze_covers_only_its_block
+    "What time is it, recruit? Time for you to stop asking the WALL CLOCK!"
+    Found: `test_freeze_covers_only_its_block` reads the wall clock: `datetime.date.today()`.
+    Why:   A test that reads the real clock gives a different answer on each run, and fails at
+           midnight, at month end, across a daylight-saving change or on a slow machine.
+    Fix:   In `test_freeze_covers_only_its_block`, line 25: replace `datetime.date.today()` with a
+           fixed time or an injected clock, or freeze the clock with `freezegun.freeze_time` or
+           `time_machine.travel`.
+
+suite/weak-assertion/test_bad_coverage_boost.py
+  suite/weak-assertion/test_bad_coverage_boost.py:16: DS201 weak-assertion [fail] in TestCoverageBoost::test_module_attributes_coverage
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `TestCoverageBoost::test_module_attributes_coverage` makes only weak assertions: each
+           holds for almost any value, wrong ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `TestCoverageBoost::test_module_attributes_coverage`, line 16: replace the weak
+           assertions on lines 16, 17 and 20 with exact checks: assert what `pytest_drill_sergeant`
+           and `version` should equal, as in `assert value == expected`.
+  suite/weak-assertion/test_bad_coverage_boost.py:26: DS201 weak-assertion [fail] in TestCoverageBoost::test_string_operations
+    "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?"
+    Found: `TestCoverageBoost::test_string_operations` makes only weak assertions: each holds for
+           almost any value, wrong ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `TestCoverageBoost::test_string_operations`, line 26: replace the weak assertions on
+           lines 26 and 30 with exact checks: assert what `version_str` and `str(docstring)` should
+           equal, as in `assert value == expected`.
+  suite/weak-assertion/test_bad_coverage_boost.py:35: DS201 weak-assertion [fail] in TestCoverageBoost::test_list_operations
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `TestCoverageBoost::test_list_operations` makes only weak assertions: each holds for
+           almost any value, wrong ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `TestCoverageBoost::test_list_operations`, line 35: replace the weak assertions on
+           lines 35, 38 and 39 with exact checks: assert what `all_items` and `item` should equal,
+           as in `assert value == expected`.
+  suite/weak-assertion/test_bad_coverage_boost.py:43: DS201 weak-assertion [fail] in TestCoverageBoost::test_boolean_operations
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `TestCoverageBoost::test_boolean_operations` makes only weak assertions: each holds for
+           almost any value, wrong ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `TestCoverageBoost::test_boolean_operations`, line 43: replace the weak assertions on
+           lines 43, 44 and 45 with exact checks: assert what `pytest_drill_sergeant`,
+           `pytest_drill_sergeant.__version__`, `pytest_drill_sergeant.run` and
+           `pytest_drill_sergeant.__all__` should equal, as in `assert value == expected`.
+
+suite/weak-assertion/test_bad_discount.py
+  suite/weak-assertion/test_bad_discount.py:9: DS201 weak-assertion [fail] in test_apply_discount
+    "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?"
+    Found: `test_apply_discount` makes only weak assertions: each holds for almost any value, wrong
+           ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `test_apply_discount`, line 9: replace the weak assertions on lines 9 and 11 with
+           exact checks: assert what `order` and `order.total` should equal, as in `assert value ==
+           expected`.
+  suite/weak-assertion/test_bad_discount.py:16: DS201 weak-assertion [fail] in test_discount_lines
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `test_discount_lines` makes only weak assertions: each holds for almost any value, wrong
+           ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `test_discount_lines`, line 16: replace the weak assertions on line 16 with exact
+           checks: assert what `lines` should equal, as in `assert value == expected`.
+
+suite/weak-assertion/test_bad_ultimate_coverage.py
+  suite/weak-assertion/test_bad_ultimate_coverage.py:13: DS102 no-action-under-test [fail] in test_scoring_models_import
+    "This test checks that Python works! Python doesn't need your help, maggot!"
+    Found: `test_scoring_models_import` asserts but runs nothing: no call, no `await`, and no
+           fixture or parameter to bring a value in.
+    Why:   A test that runs no code under test checks only its own literals or the language, so it
+           passes whatever the code does.
+    Fix:   In `test_scoring_models_import`, line 13: call the code under test and assert on what it
+           returns or changes; if the test only checks its own literals or Python itself, delete it.
+  suite/weak-assertion/test_bad_ultimate_coverage.py:15: DS201 weak-assertion [fail] in test_scoring_models_import
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `test_scoring_models_import` makes only weak assertions: each holds for almost any value,
+           wrong ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `test_scoring_models_import`, line 15: replace the weak assertions on line 15 with
+           exact checks: assert what `pytest_drill_sergeant.core.scoring_models` should equal, as in
+           `assert value == expected`.
+  suite/weak-assertion/test_bad_ultimate_coverage.py:18: DS102 no-action-under-test [fail] in test_core_init_import
+    "You're asserting on numbers you wrote yourself, recruit! WHERE IS THE CODE?"
+    Found: `test_core_init_import` asserts but runs nothing: no call, no `await`, and no fixture or
+           parameter to bring a value in.
+    Why:   A test that runs no code under test checks only its own literals or the language, so it
+           passes whatever the code does.
+    Fix:   In `test_core_init_import`, line 18: call the code under test and assert on what it
+           returns or changes; if the test only checks its own literals or Python itself, delete it.
+  suite/weak-assertion/test_bad_ultimate_coverage.py:20: DS201 weak-assertion [fail] in test_core_init_import
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `test_core_init_import` makes only weak assertions: each holds for almost any value,
+           wrong ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `test_core_init_import`, line 20: replace the weak assertions on line 20 with exact
+           checks: assert what `pytest_drill_sergeant.core` should equal, as in `assert value ==
+           expected`.
+  suite/weak-assertion/test_bad_ultimate_coverage.py:23: DS102 no-action-under-test [fail] in test_plugin_init_import
+    "This test checks that Python works! Python doesn't need your help, maggot!"
+    Found: `test_plugin_init_import` asserts but runs nothing: no call, no `await`, and no fixture
+           or parameter to bring a value in.
+    Why:   A test that runs no code under test checks only its own literals or the language, so it
+           passes whatever the code does.
+    Fix:   In `test_plugin_init_import`, line 23: call the code under test and assert on what it
+           returns or changes; if the test only checks its own literals or Python itself, delete it.
+  suite/weak-assertion/test_bad_ultimate_coverage.py:25: DS201 weak-assertion [fail] in test_plugin_init_import
+    "Truthy, has a length, is a string. You described a potato, maggot!"
+    Found: `test_plugin_init_import` makes only weak assertions: each holds for almost any value,
+           wrong ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `test_plugin_init_import`, line 25: replace the weak assertions on line 25 with exact
+           checks: assert what `pytest_drill_sergeant.plugin` should equal, as in `assert value ==
+           expected`.
+  suite/weak-assertion/test_bad_ultimate_coverage.py:30: DS201 weak-assertion [fail] in test_async_import
+    "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?"
+    Found: `test_async_import` makes only weak assertions: each holds for almost any value, wrong
+           ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `test_async_import`, line 30: replace the weak assertions on line 30 with exact
+           checks: assert what `plugin` should equal, as in `assert value == expected`.
+
+196 findings: 187 fail, 9 warn. Fix them, recruit. DISMISSED!

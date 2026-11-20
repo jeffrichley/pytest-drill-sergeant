@@ -2,35 +2,33 @@
 
 import ast
 from collections.abc import Iterable, Iterator, Mapping
-from dataclasses import dataclass, field
+from fnmatch import fnmatch
 from pathlib import Path
 
-from pytest_drill_sergeant.checks import CHECKS, TestFunction
+from pytest_drill_sergeant.checks import CHECKS, TestFile, TestFunction
+from pytest_drill_sergeant.checks.ast_tools import (
+    FIXTURE_DECORATORS,
+    imports_seen_by,
+    module_imports,
+    qualified,
+)
 from pytest_drill_sergeant.checks.base import FunctionNode
+from pytest_drill_sergeant.config import Config
 from pytest_drill_sergeant.findings import Finding, Level
 
+__all__ = ["Config", "analyze"]
 
-@dataclass(frozen=True)
-class Config:
-    """The resolved configuration the engine runs with.
 
-    Attributes:
-        levels: A level per check code, overriding the check's default.
+def _is_fixture(node: FunctionNode, names: Mapping[str, str]) -> bool:
+    """Whether a function is a pytest fixture, which pytest never collects as a test.
+
+    Its decorator is `pytest.fixture` (or `pytest_asyncio.fixture`), called or not,
+    through whatever name the imports give it.
     """
-
-    levels: Mapping[str, Level] = field(default_factory=dict)
-
-
-def _is_fixture(node: FunctionNode) -> bool:
-    """Whether a function is a pytest fixture, which pytest never collects as a test."""
-    for decorator in node.decorator_list:
-        target = decorator.func if isinstance(decorator, ast.Call) else decorator
-        name = target.attr if isinstance(target, ast.Attribute) else None
-        if isinstance(target, ast.Name):
-            name = target.id
-        if name == "fixture":
-            return True
-    return False
+    return any(
+        qualified(d.func if isinstance(d, ast.Call) else d, names) in FIXTURE_DECORATORS
+        for d in node.decorator_list
+    )
 
 
 def _is_collected_class(node: ast.ClassDef) -> bool:
@@ -57,7 +55,9 @@ def _is_collected_class(node: ast.ClassDef) -> bool:
     return True
 
 
-def _tests_in(body: list[ast.stmt], prefix: str = "") -> Iterator[TestFunction]:
+def _tests_in(
+    body: list[ast.stmt], names: Mapping[str, str], prefix: str = ""
+) -> Iterator[TestFunction]:
     """The tests pytest's default rules collect.
 
     Those are `test*` functions that aren't fixtures, at module level or in the
@@ -67,11 +67,35 @@ def _tests_in(body: list[ast.stmt], prefix: str = "") -> Iterator[TestFunction]:
         if (
             isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
             and node.name.startswith("test")
-            and not _is_fixture(node)
+            and not _is_fixture(node, names)
         ):
-            yield TestFunction(name=f"{prefix}{node.name}", node=node)
+            yield TestFunction(
+                name=f"{prefix}{node.name}",
+                node=node,
+                imports=imports_seen_by(node, names),
+            )
         elif isinstance(node, ast.ClassDef) and _is_collected_class(node):
-            yield from _tests_in(node.body, f"{prefix}{node.name}::")
+            yield from _tests_in(node.body, names, f"{prefix}{node.name}::")
+
+
+def _ignored_codes(path: Path, config: Config) -> frozenset[str]:
+    """The code prefixes the config's per-file ignores turn off for a file.
+
+    A glob matches the file's path relative to the config root, or, for a glob with
+    no `/`, the file's name.
+    """
+    resolved = path.resolve()
+    root = config.root.resolve()
+    relative = (
+        resolved.relative_to(root).as_posix()
+        if resolved.is_relative_to(root)
+        else path.as_posix()
+    )
+    ignored: set[str] = set()
+    for glob, codes in config.per_file_ignores:
+        if fnmatch(relative, glob) or ("/" not in glob and fnmatch(path.name, glob)):
+            ignored |= codes
+    return frozenset(ignored)
 
 
 def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
@@ -83,15 +107,23 @@ def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
 
     Returns:
         The findings, ordered by file, line and code. Checks configured `off`
-        report none.
+        report none, nor do checks a per-file ignore names for a file, and none run
+        in `off` mode; in `warn` mode every finding is reported as `warn`.
     """
     findings: list[Finding] = []
+    if config.mode is Level.OFF:
+        return findings
     for path in paths:
-        tests = list(_tests_in(ast.parse(path.read_bytes(), filename=str(path)).body))
+        module = ast.parse(path.read_bytes(), filename=str(path))
+        tests = tuple(_tests_in(module.body, module_imports(module)))
+        file = TestFile(path=path, module=module, tests=tests)
+        ignored = _ignored_codes(path, config)
         for check in CHECKS:
             level = config.levels.get(check.code, check.default_level)
-            if level is Level.OFF:
+            if level is Level.OFF or any(check.code.startswith(c) for c in ignored):
                 continue
+            if config.mode is Level.WARN:
+                level = Level.WARN
             findings.extend(
                 Finding(
                     code=check.code,
@@ -104,6 +136,6 @@ def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
                     why=check.why,
                     fix=hit.fix,
                 )
-                for hit in check.find(tests)
+                for hit in check.find(file)
             )
     return sorted(findings, key=lambda f: (f.file.as_posix(), f.line, f.code))

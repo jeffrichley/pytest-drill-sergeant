@@ -2,6 +2,7 @@
 Analysed, never run."""
 
 import pytest
+from pytest import fixture
 
 
 def make_user():
@@ -16,6 +17,11 @@ def test_data():
 @pytest.fixture(scope="module")
 def test_settings():
     return {}
+
+
+@fixture
+def test_imported_fixture():
+    return make_user()
 
 
 class Helper:

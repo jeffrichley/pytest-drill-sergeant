@@ -1,8 +1,15 @@
-"""What a check is, and what it is given and gives back."""
+"""What a check is, and what it is given and gives back.
+
+A test's own code, for every check, is its whole body: a helper function, class or
+lambda defined inside a test is part of it, so an assertion or a call there counts
+(`ast_tools.walk_test`). Only the act-and-assert order (DS103, DS104) reads the
+body's statements one by one, and there a nested `def` only defines its helper.
+"""
 
 import ast
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
+from pathlib import Path
 
 from pytest_drill_sergeant.findings import Level
 
@@ -16,12 +23,33 @@ class TestFunction:
     Attributes:
         name: The test's name, with its class path (`TestX::test_y`).
         node: The function's syntax tree.
+        imports: The imported names the test sees, each with what it stands for
+            in full (`pt` is `pytest` after `import pytest as pt`).
     """
 
     __test__ = False  # Not a pytest test class, despite the name.
 
     name: str
     node: FunctionNode
+    imports: Mapping[str, str]
+
+
+@dataclass(frozen=True)
+class TestFile:
+    """One parsed test file: what every check is given.
+
+    Attributes:
+        path: The file, as it was given to the engine.
+        module: The file's syntax tree, for checks that need more than the tests
+            (imports, module-level code).
+        tests: The tests pytest would collect from it, in source order.
+    """
+
+    __test__ = False  # Not a pytest test class, despite the name.
+
+    path: Path
+    module: ast.Module
+    tests: tuple[TestFunction, ...]
 
 
 @dataclass(frozen=True)
@@ -40,6 +68,20 @@ class Hit:
     found: str
     fix: str
 
+    @classmethod
+    def on(cls, test: TestFunction, line: int, *, found: str, fix: str) -> "Hit":
+        """A hit on a line of a test, in the phrasing every check shares.
+
+        `found` follows "`<test>` " and `fix` follows "In `<test>`, line <n>: ",
+        so every finding names its test first and every fix says where to look.
+        """
+        return cls(
+            line=line,
+            test=test.name,
+            found=f"`{test.name}` {found}",
+            fix=f"In `{test.name}`, line {line}: {fix}",
+        )
+
 
 @dataclass(frozen=True)
 class Check:
@@ -54,7 +96,7 @@ class Check:
         explain: What the check flags and how to fix it, for `explain`.
         bad_example: A test the check flags.
         good_example: The same test, fixed.
-        find: Reports the hits among one file's tests.
+        find: Reports the hits in one test file.
     """
 
     code: str
@@ -65,4 +107,4 @@ class Check:
     explain: str
     bad_example: str
     good_example: str
-    find: Callable[[Iterable[TestFunction]], Iterable[Hit]]
+    find: Callable[[TestFile], Iterable[Hit]]
