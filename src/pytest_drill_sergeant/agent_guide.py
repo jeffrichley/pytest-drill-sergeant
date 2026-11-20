@@ -113,16 +113,17 @@ def snippet(skill_path: str) -> str:
     )
 
 
-def _with_block(text: str, block: str, name: str) -> str:
-    """The instructions file's text with the block refreshed in place, or appended."""
+def _with_block(text: str, block: str) -> str | None:
+    """The instructions file's text with the block refreshed in place, or appended.
+
+    `None` when the text has the block's start marker but no end marker after it.
+    """
     start = _START.search(text)
     if start is None:
         return f"{text.rstrip()}\n\n{block}\n" if text.strip() else f"{block}\n"
     end = text.find(_END, start.end())
     if end == -1:
-        raise InstallError(
-            f"{name} has the agent guide's start marker but no `{_END}` after it"
-        )
+        return None
     return text[: start.start()] + block + text[end + len(_END) :]
 
 
@@ -139,10 +140,12 @@ def install(root: Path) -> list[Path]:
     skill_path = f"{SKILL_DIRS[name]}/{SKILL_NAME}/SKILL.md"
     instructions = root / name
     existing = instructions.read_text() if instructions.is_file() else ""
-    contents = {
-        instructions: _with_block(existing, snippet(skill_path), name),
-        root / skill_path: skill(),
-    }
+    refreshed = _with_block(existing, snippet(skill_path))
+    if refreshed is None:
+        raise InstallError(
+            f"{name} has the agent guide's start marker but no `{_END}` after it"
+        )
+    contents = {instructions: refreshed, root / skill_path: skill()}
     written = []
     for path, content in contents.items():
         if path.is_file() and path.read_text() == content:
