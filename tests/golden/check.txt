@@ -8,7 +8,9 @@ suite/test_cart.py
     Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
            when the behaviour breaks.
     Fix:   In `test_adding_an_item_to_the_cart`, line 10: assert on what `cart.add(...)` returns or
-           changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise. See
+           changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise. If the
+           test only proves the call doesn't raise, say so with `# drill: waive DS101 -- <reason>`
+           on its `def` line; better, assert on what the call returns or changes. See
            `drill-sergeant explain DS101`.
 
 suite/test_checkout.py
