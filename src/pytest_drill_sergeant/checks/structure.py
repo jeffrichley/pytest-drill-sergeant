@@ -289,6 +289,8 @@ class _Order:
         self.names = test.imports
         self.excinfos = excinfo_names(test)
         self.assertions = file.assertions
+        # The `with` blocks `steps` opened up, in order.
+        self.opened: list[ast.With | ast.AsyncWith] = []
 
     def asserts(self, node: ast.AST) -> bool:
         """Whether a node asserts.
@@ -357,6 +359,7 @@ class _Order:
             if isinstance(statement, ast.With | ast.AsyncWith) and not any(
                 self.asserts(item.context_expr) for item in statement.items
             ):
+                self.opened.append(statement)
                 steps.extend(self.steps(statement.body))
             else:
                 steps.append((statement, self.classify(statement)))
@@ -368,12 +371,13 @@ def _steps(test: TestFunction, file: TestFile) -> list[tuple[ast.stmt, _Step]]:
     return _Order(test, file).steps(test.node.body)
 
 
-def _runs(order: _Order, statement: ast.stmt) -> bool:
-    """Whether a statement runs anything: what an `# Act` section must hold.
+def _runs(order: _Order, statement: ast.AST) -> bool:
+    """Whether a statement or expression runs anything: what `# Act` must hold.
 
     That is a call or `await` that isn't an assertion (a bare call into a helper
     that asserts is one), known output or a pytest instrument
-    (`ast_tools.is_known_non_act`). Unlike a step's act, an assignment from a call
+    (`ast_tools.is_known_non_act`), or pytest's call form (`pytest.raises(E, func,
+    arg)`), which runs `func`. Unlike a step's act, an assignment from a call
     counts, and so does a call inside an assertion: `total = cart.total()` runs the
     code under test as surely as `cart.add(item)` does.
     """
@@ -386,16 +390,34 @@ def _runs(order: _Order, statement: ast.stmt) -> bool:
             if isinstance(node.value, ast.Await):
                 asserting.add(node.value.value)
     return any(
-        node not in asserting
-        and (
-            isinstance(node, ast.Await)
-            or (
-                isinstance(node, ast.Call)
-                and not order.asserts(node)
-                and not is_known_non_act(node, order.test)
+        _calls_through_pytest(node, order.names)
+        or (
+            node not in asserting
+            and (
+                isinstance(node, ast.Await)
+                or (
+                    isinstance(node, ast.Call)
+                    and not order.asserts(node)
+                    and not is_known_non_act(node, order.test)
+                )
             )
         )
         for node in nodes
+    )
+
+
+def _runs_by(order: _Order, steps: list[tuple[ast.stmt, _Step]], last: int) -> bool:
+    """Whether anything runs up to and including the step at `last`.
+
+    A `with` block opened up before it runs its items too, and a value it binds
+    (`with Writer(path) as writer:`) is made by a call as an assignment's is.
+    """
+    line = steps[last][0].lineno
+    return any(_runs(order, s) for s, _ in steps[: last + 1]) or any(
+        item.optional_vars is not None and _runs(order, item.context_expr)
+        for block in order.opened
+        if block.lineno < line
+        for item in block.items
     )
 
 
@@ -416,7 +438,7 @@ def _find_assert_before_act(file: TestFile) -> Iterator[Hit]:
         )
         # Code run up to the last assertion is an act it can check: a call after
         # that is #208's, not this check's.
-        if last is None or any(_runs(order, s) for s, _ in steps[: last + 1]):
+        if last is None or _runs_by(order, steps, last):
             continue
         unchecked = [s for s, step in steps[last + 1 :] if step is _Step.ACT]
         if not unchecked:
@@ -460,8 +482,10 @@ ASSERT_BEFORE_ACT = Check(
     explain=(
         "Flags a test whose assertions all run before anything else does: nothing "
         "up to its last assertion runs code (a call or `await` that isn't itself an "
-        "assertion, whether alone, in an assignment or inside an assertion), and an "
-        "act follows it, a bare call or `await` made for its effect. So the test checks "
+        "assertion, whether alone, in an assignment, in a `with` that binds its "
+        "value or inside an assertion; pytest's call form, `pytest.raises(E, func, "
+        "arg)`, runs `func`), and an act follows it, a bare call or `await` made "
+        "for its effect. So the test checks "
         "only the values it was handed, fixtures and parameters, and never what "
         "the act did. Not an act: output known from the code (the builtin "
         "`print()`, `logging` or a logger from `logging.getLogger()`); a method of a "

@@ -1,7 +1,9 @@
 """Near-misses: code runs before the last assertion, so the assertions check an act:
-a value made by a call, an `await` kept, a call inside an assertion. A call after
-them is a trailing call, a separate check's (#208), not DS103's. Modelled on
-stagehand's `reply = await client.post(...)` then `await house.close()`.
+a value made by a call (assigned, or bound by a `with`), an `await` kept, a call
+inside an assertion, pytest's call form. A call after them is a trailing call, a
+separate check's (#208), not DS103's. Modelled on stagehand's `reply = await
+client.post(...)` then `await house.close()`, networkx's `pytest.raises(E,
+nx.watts_strogatz_graph, ...)` and pandas' `with ExcelWriter(...) as writer:`.
 Analysed, never run."""
 
 import pytest
@@ -38,3 +40,14 @@ def test_count_checked_then_loaded(importer, rows):
     assert importer.count() == 0
     for row in rows:
         importer.load(row)
+
+
+def test_call_form_raises_then_called_again(graph_maker):
+    pytest.raises(ValueError, graph_maker.make, 10, 11)
+    graph_maker.make(10, 9)
+
+
+def test_writer_made_by_the_with_then_written(tmp_path, writer_class):
+    with writer_class(tmp_path, engine="fast") as writer:
+        assert writer.book.write_only is False
+        writer.write([])
