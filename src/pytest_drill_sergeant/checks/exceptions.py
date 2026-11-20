@@ -281,34 +281,45 @@ def _tolerates_cleanup(
     )
 
 
+def _swallowing_handlers(test: TestFunction) -> Iterator[ast.ExceptHandler]:
+    """The `except` handlers in a test that lose the error they catch."""
+    for node, following in _tries(test):
+        if _expects_the_exception(node, following, test.imports):
+            continue
+        for handler in node.handlers:
+            if not (
+                _handles(handler, test.imports)
+                or _tolerates_cleanup(node, handler, test.imports)
+            ):
+                yield handler
+
+
+def swallows_an_exception(test: TestFunction) -> bool:
+    """Whether a test catches an exception and loses it (DS702's to report)."""
+    return next(_swallowing_handlers(test), None) is not None
+
+
 def _find_swallowed_exception(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        for node, following in _tries(test):
-            if _expects_the_exception(node, following, test.imports):
-                continue
-            for handler in node.handlers:
-                if _handles(handler, test.imports) or _tolerates_cleanup(
-                    node, handler, test.imports
-                ):
-                    continue
-                caught = (
-                    f"`{ast.unparse(handler.type)}`"
-                    if handler.type is not None
-                    else "every exception"
-                )
-                yield Hit.on(
-                    test,
-                    handler.lineno,
-                    found=(
-                        f"catches {caught} in a handler with no real assertion and "
-                        "no `raise`, so the error is lost."
-                    ),
-                    fix=(
-                        f"remove the `try` that catches {caught} and let the "
-                        "exception fail the test; if raising is the expected "
-                        "behaviour, use `pytest.raises(..., match=...)` instead."
-                    ),
-                )
+        for handler in _swallowing_handlers(test):
+            caught = (
+                f"`{ast.unparse(handler.type)}`"
+                if handler.type is not None
+                else "every exception"
+            )
+            yield Hit.on(
+                test,
+                handler.lineno,
+                found=(
+                    f"catches {caught} in a handler with no real assertion and "
+                    "no `raise`, so the error is lost."
+                ),
+                fix=(
+                    f"remove the `try` that catches {caught} and let the "
+                    "exception fail the test; if raising is the expected "
+                    "behaviour, use `pytest.raises(..., match=...)` instead."
+                ),
+            )
 
 
 SWALLOWED_EXCEPTION = Check(

@@ -11,7 +11,7 @@ def test_create_record_assigns_an_id():
     assert create_record("ada").id == 1
 
 
-@pytest.mark.skip  # expect: DS401, DS402
+@pytest.mark.skip  # expect: DS402
 def test_delete_record_removes_it():
     record = create_record("ada")
     delete_record(record)

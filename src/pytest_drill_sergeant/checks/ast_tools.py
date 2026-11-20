@@ -400,15 +400,39 @@ def top_level_skips(body: list[ast.stmt], names: Mapping[str, str]) -> list[ast.
     ]
 
 
-def skips_unconditionally(test: TestFunction, module_names: Mapping[str, str]) -> bool:
-    """Whether a test skips whatever the run, by its own mark or its own body.
+def _pytestmark(body: list[ast.stmt]) -> Iterator[ast.expr]:
+    """The marks a module's or class's own `pytestmark` statements apply."""
+    for statement in body:
+        yield from pytestmark_entries(statement)
 
-    Its decorator is `pytest.mark.skip` (or `skipif` on a truthy constant), or one
-    of its body's own statements is `pytest.skip(...)`.
+
+def marks_on(test: TestFunction, module: ast.Module) -> Iterator[ast.expr]:
+    """Every mark pytest applies to a test, as written.
+
+    Those are its own decorators, its classes' decorators and `pytestmark` entries,
+    and the module's `pytestmark`. Each is read through the module's imports
+    (`mark_name`, `skip_mark`).
     """
-    return any(
-        is_always_skipped_by(d, module_names) for d in test.node.decorator_list
-    ) or bool(top_level_skips(test.node.body, test.imports))
+    yield from test.node.decorator_list
+    for cls in test.classes:
+        yield from cls.decorator_list
+        yield from _pytestmark(cls.body)
+    yield from _pytestmark(module.body)
+
+
+def skips_unconditionally(test: TestFunction, module: ast.Module) -> bool:
+    """Whether a test skips whatever the run, by a mark or its own body.
+
+    A mark pytest applies to it (`marks_on`) is `pytest.mark.skip` (or `skipif` on
+    a truthy constant), or one of its own body's statements, or of the module's, is
+    `pytest.skip(...)`.
+    """
+    names = module_imports(module)
+    return (
+        any(is_always_skipped_by(mark, names) for mark in marks_on(test, module))
+        or bool(top_level_skips(test.node.body, test.imports))
+        or bool(top_level_skips(module.body, names))
+    )
 
 
 def scoped_walk(

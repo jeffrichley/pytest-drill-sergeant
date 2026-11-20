@@ -99,14 +99,36 @@ def _marks(module: ast.Module) -> Iterator[tuple[str, ast.expr, Mapping[str, str
                 yield where, entry, names
 
 
+def _unconditional_skip_calls(file: TestFile) -> list[tuple[str, ast.Call]]:
+    """The `pytest.skip(...)` calls that skip on every run, each with where it is.
+
+    Those are the statements of a test's own body, or of the module's, under no
+    condition.
+    """
+    calls = [
+        (test.name, call)
+        for test in file.tests
+        for call in top_level_skips(test.node.body, test.imports)
+    ]
+    return calls + [
+        (MODULE, call)
+        for call in top_level_skips(file.module.body, module_imports(file.module))
+    ]
+
+
 def _find_skip_without_reason(file: TestFile) -> Iterator[Hit]:
+    # A skip that happens on every run is DS402's to report, reason or not.
     fix = (
         'give it `reason="..."` saying what is wrong and when the test can run '
         "again, such as a ticket link."
     )
     for where, expr, names in _marks(file.module):
         mark = skip_mark(expr, names)
-        if mark is not None and _mark_has_no_reason(mark, expr):
+        if (
+            mark is not None
+            and _mark_has_no_reason(mark, expr)
+            and not is_always_skipped_by(expr, names)
+        ):
             what = "is marked an expected failure" if mark == XFAIL else "is skipped"
             yield Hit.at(
                 where,
@@ -114,9 +136,11 @@ def _find_skip_without_reason(file: TestFile) -> Iterator[Hit]:
                 found=f"{what} with no reason: `@{ast.unparse(expr)}`.",
                 fix=fix,
             )
+    unconditional = {id(call) for _, call in _unconditional_skip_calls(file)}
     for where, node, names in scoped_walk(file.module, _TEST_PATH):
         if (
             isinstance(node, ast.Call)
+            and id(node) not in unconditional
             and calls_to(node, _SKIP_CALLS, names)
             and _call_has_no_reason(node)
         ):
@@ -149,7 +173,9 @@ SKIP_WITHOUT_REASON = Check(
         "as `reason=`, since their positional arguments are conditions. A reason in "
         "a variable counts. Import aliases are followed; a local function named "
         "`skip` is not pytest's, and `pytest.importorskip` names its module itself. "
-        "Say what is wrong and when the test can run again."
+        "Say what is wrong and when the test can run again. A skip on every run "
+        "(`pytest.mark.skip`, `skipif` on a truthy constant, `pytest.skip()` "
+        "under no condition) is left to DS402 unconditional-skip."
     ),
     bad_example=(
         "import sys\n"
@@ -186,16 +212,7 @@ def _find_unconditional_skip(file: TestFile) -> Iterator[Hit]:
                     "reason."
                 ),
             )
-    calls = [
-        (test.name, call)
-        for test in file.tests
-        for call in top_level_skips(test.node.body, test.imports)
-    ]
-    calls += [
-        (MODULE, call)
-        for call in top_level_skips(file.module.body, module_imports(file.module))
-    ]
-    for where, call in calls:
+    for where, call in _unconditional_skip_calls(file):
         written = ast.unparse(call)
         yield Hit.at(
             where,

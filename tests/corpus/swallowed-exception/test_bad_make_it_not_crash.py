@@ -12,7 +12,7 @@ def sync_all():
     raise RuntimeError("sync broke")
 
 
-def test_sync():  # expect: DS101
+def test_sync():
     try:
         sync_all()
     except Exception:  # expect: DS702
@@ -46,7 +46,7 @@ def test_sync_logs_and_moves_on():
     assert result is None
 
 
-def test_sync_bare_except():  # expect: DS101
+def test_sync_bare_except():
     try:
         sync_all()
     # The bare `except` is the case under test.

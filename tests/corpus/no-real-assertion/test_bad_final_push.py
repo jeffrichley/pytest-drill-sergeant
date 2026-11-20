@@ -28,7 +28,7 @@ def test_attributes_exist(name):  # expect: DS101
     getattr(pytest_drill_sergeant, name)
 
 
-def test_smoke_with_a_try():  # expect: DS101
+def test_smoke_with_a_try():
     try:
         pytest_drill_sergeant.run()
     except Exception:  # expect: DS702

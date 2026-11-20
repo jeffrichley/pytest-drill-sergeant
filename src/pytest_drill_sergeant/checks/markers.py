@@ -7,13 +7,12 @@ conftest hook adds at collection time are not in the file, so this check can't s
 them.
 """
 
-import ast
 from collections.abc import Iterator, Mapping
 
 from pytest_drill_sergeant.checks.ast_tools import (
     mark_name,
+    marks_on,
     module_imports,
-    pytestmark_entries,
 )
 from pytest_drill_sergeant.checks.base import (
     Check,
@@ -28,24 +27,9 @@ from pytest_drill_sergeant.findings import Level
 _MARK = "pytest.mark."
 
 
-def _pytestmark(body: list[ast.stmt]) -> Iterator[ast.expr]:
-    """The marks a module's or class's own `pytestmark` statements apply."""
-    for statement in body:
-        yield from pytestmark_entries(statement)
-
-
-def _marks_on(test: TestFunction, module: ast.Module) -> Iterator[ast.expr]:
-    """Every mark pytest applies to a test: its own, its classes' and the module's."""
-    yield from test.node.decorator_list
-    for cls in test.classes:
-        yield from cls.decorator_list
-        yield from _pytestmark(cls.body)
-    yield from _pytestmark(module.body)
-
-
 def _is_marked(test: TestFunction, file: TestFile, names: Mapping[str, str]) -> bool:
     wanted = {f"{_MARK}{marker}" for marker in file.category_markers}
-    return any(mark_name(m, names) in wanted for m in _marks_on(test, file.module))
+    return any(mark_name(m, names) in wanted for m in marks_on(test, file.module))
 
 
 def _fix(file: TestFile) -> str:

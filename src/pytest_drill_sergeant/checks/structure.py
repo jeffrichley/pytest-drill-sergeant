@@ -12,7 +12,6 @@ from pytest_drill_sergeant.checks.ast_tools import (
     excinfo_names,
     is_known_non_act,
     is_real_assertion,
-    module_imports,
     skips_unconditionally,
     value_params,
     walk_test,
@@ -26,6 +25,7 @@ from pytest_drill_sergeant.checks.base import (
     TestFunction,
     and_list,
 )
+from pytest_drill_sergeant.checks.exceptions import swallows_an_exception
 from pytest_drill_sergeant.findings import Level
 
 # pytest's helpers with a call form, by where the function to call sits: after the
@@ -50,10 +50,14 @@ def _last_call(test: TestFunction) -> ast.Call | None:
 
 
 def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
-    names = module_imports(file.module)
     for test in file.tests:
-        # A test that skips on every run is DS402's to report, not this check's.
-        if _has_real_assertion(test) or skips_unconditionally(test, names):
+        # A test that skips on every run is DS402's to report, and one that loses
+        # an exception it catches is DS702's: not this check's.
+        if (
+            _has_real_assertion(test)
+            or skips_unconditionally(test, file.module)
+            or swallows_an_exception(test)
+        ):
             continue
         call = _last_call(test)
         target = (
@@ -95,8 +99,10 @@ NO_REAL_ASSERTION = Check(
         "no `assert*` call such as a mock's `assert_called_once_with` "
         "or `self.assertEqual`, and no `raise AssertionError`. Such a test only proves "
         "the code didn't crash. Assert on what the code returns or changes. A test "
-        "that skips on every run, by its own `pytest.mark.skip` or a `pytest.skip()` "
-        "in its own body, is left to DS402 unconditional-skip."
+        "that skips on every run, by a `pytest.mark.skip` on it, its class or the "
+        "module's `pytestmark`, or a `pytest.skip()` in its own body or the module's, is "
+        "left to DS402 unconditional-skip; one with an `except` that loses the error, "
+        "to DS702 swallowed-exception."
     ),
     bad_example=(
         "def test_process_payment():\n"

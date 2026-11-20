@@ -16,3 +16,10 @@ pytestmark = [mark.skip(reason="search is being rewritten"), mark.unit]  # expec
 class TestIndex:
     def test_index_finds_an_exact_match(self):
         assert Index(["ada"]).find("ada") == ["ada"]
+
+    def test_index_builds_from_a_list(self):
+        Index(["ada", "bob"]).rebuild()
+
+
+def test_index_loads_from_disk(tmp_path):
+    Index.load(tmp_path)

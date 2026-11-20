@@ -22,3 +22,7 @@ def test_report_exports_csv():
 
 async def test_report_streams_rows():
     pytest.skip(reason="times out on CI")  # expect: DS402
+
+
+def test_report_prints_a_title():
+    pytest.skip()  # expect: DS402
