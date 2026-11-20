@@ -1,5 +1,47 @@
 drill-sergeant: skipped DS403 test-special-casing: no src/ and no drill_sergeant_source_dirs.
-DRILL SERGEANT INSPECTION: 311 findings in 87 files. FALL IN!
+DRILL SERGEANT INSPECTION: 315 findings in 89 files. FALL IN!
+
+suite/aaa-comments/test_bad_out_of_order.py
+  suite/aaa-comments/test_bad_out_of_order.py:23: DS104 interleaved-act-assert [warn] in test_discount_code
+    "When this goes red, which act failed? NOBODY KNOWS! Split it up!"
+    Found: `test_discount_code` acts and asserts 2 times: after the assertions on the act at line
+           17, `basket.remove_code()` on line 23 acts again.
+    Why:   A test that acts and asserts more than once checks several behaviours: when it fails, its
+           name doesn't say which one broke, and a failing early step hides every later one.
+    Fix:   In `test_discount_code`, line 23: split the test into one test per act (lines 17, 23),
+           each named for its behaviour, with any shared setup in a fixture.
+
+suite/aaa-comments/test_bad_unchecked_acts.py
+  suite/aaa-comments/test_bad_unchecked_acts.py:10: DS103 assert-before-act [fail] in test_close_after_checking
+    "Asserting before the action is inspecting your rifle after the battle!"
+    Found: `test_close_after_checking` runs `conn.close()` on line 10 after its last assertion (line
+           9), so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_close_after_checking`, line 10: assert on what the act on line 10 returns or
+           changes, after it runs; keep an assertion before it only as a guard on the starting
+           state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a
+           `finally`.
+  suite/aaa-comments/test_bad_unchecked_acts.py:28: DS103 assert-before-act [fail] in test_refund_then_cancel
+    "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
+    Found: `test_refund_then_cancel` runs `order.cancel()` on line 28 after its last assertion (line
+           23), so nothing checks what it did.
+    Why:   When the act runs after the last assertion, the test checks only the starting state, so
+           it stays green when the act does the wrong thing; and cleanup there never runs when an
+           assertion fails.
+    Fix:   In `test_refund_then_cancel`, line 28: assert on what the act on line 28 returns or
+           changes, after it runs; keep an assertion before it only as a guard on the starting
+           state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a
+           `finally`.
+  suite/aaa-comments/test_bad_unchecked_acts.py:40: DS101 no-real-assertion [fail] in test_archive
+    "You call that a test, recruit? It runs the code and checks NOTHING!"
+    Found: `test_archive` has no real assertion: no `assert` that can fail, no `pytest.raises`, no
+           mock verification.
+    Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
+           when the behaviour breaks.
+    Fix:   In `test_archive`, line 40: assert on what `store.archive(...)` returns or changes, or
+           wrap the call in `pytest.raises(..., match=...)` if it should raise.
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -2896,4 +2938,4 @@ Waived findings
   suite/malformed-waiver/test_good_waived_on_flagged_line.py:13: DS201 weak-assertion [fail] in test_reads_a_flag
     Reason: a truthy flag is the whole contract
 
-311 findings: 262 fail, 49 warn; 5 waived. Fix them, recruit. DISMISSED!
+315 findings: 265 fail, 50 warn; 5 waived. Fix them, recruit. DISMISSED!

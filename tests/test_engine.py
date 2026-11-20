@@ -57,6 +57,19 @@ def test_configured_level_overrides_the_default(assertion_free_test):
     assert finding.level == Level.WARN
 
 
+@pytest.mark.parametrize(
+    ("raw", "codes"),
+    [({}, set()), ({"drill_sergeant_levels": "DS108=warn"}, {"DS108"})],
+    ids=["default", "enabled"],
+)
+def test_aaa_comment_check_is_off_until_enabled_through_levels(raw, codes):
+    path = Path(__file__).parent / "corpus" / "aaa-comments" / "test_bad_no_comments.py"
+
+    findings = analyze([path], resolve(raw))
+
+    assert {f.code for f in findings} == codes
+
+
 def test_check_configured_off_reports_nothing(assertion_free_test):
     assert analyze([assertion_free_test], Config(levels={"DS101": Level.OFF})) == []
 

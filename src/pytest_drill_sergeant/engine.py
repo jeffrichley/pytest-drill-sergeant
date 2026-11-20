@@ -4,6 +4,8 @@ No pytest in sight.
 """
 
 import ast
+import io
+import tokenize
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from fnmatch import fnmatch
@@ -23,7 +25,12 @@ from pytest_drill_sergeant.checks.ast_tools import (
     module_imports,
     qualified,
 )
-from pytest_drill_sergeant.checks.base import FileSummary, FunctionNode, Thresholds
+from pytest_drill_sergeant.checks.base import (
+    Comment,
+    FileSummary,
+    FunctionNode,
+    Thresholds,
+)
 from pytest_drill_sergeant.checks.summary import summarize
 from pytest_drill_sergeant.config import Config
 from pytest_drill_sergeant.findings import Finding, Level
@@ -161,6 +168,18 @@ def _finding(check: Check, path: Path, hit: Hit, level: Level) -> Finding:
     )
 
 
+def _own_line_comments(source: bytes) -> tuple[Comment, ...]:
+    """The comments that stand alone on their lines, read with `tokenize`.
+
+    Text in a string is never a comment, and one after code on its line isn't alone.
+    """
+    return tuple(
+        Comment(line=token.start[0], text=token.string)
+        for token in tokenize.tokenize(io.BytesIO(source).readline)
+        if token.type == tokenize.COMMENT and not token.line[: token.start[1]].strip()
+    )
+
+
 def _analyze_file(
     path: Path, config: Config
 ) -> tuple[list[Finding], FileSummary, FileWaivers]:
@@ -176,6 +195,7 @@ def _analyze_file(
         lines=len(source.splitlines()),
         waivers=waivers,
         thresholds=_thresholds(config),
+        comments=_own_line_comments(source),
     )
     ignored = _ignored_codes(path, config)
     findings = [

@@ -6,7 +6,8 @@ behaviour, skips added to go green, sleeps, and test files too long to follow. I
 reports them as findings that fail the run, in the drill-sergeant voice.
 
 **Status:** v1 is being rebuilt from scratch. So far the malformed-waiver check (DS001),
-the structure checks (DS101-DS107), the assertion checks (DS201-DS203), the mocking
+the structure checks (DS101-DS108; DS108, AAA comments, is off until
+`drill_sergeant_levels` turns it on), the assertion checks (DS201-DS203), the mocking
 checks (DS301-DS303), the cheating checks (DS401-DS403), copy-pasted setup (DS501),
 near-duplicate tests (DS502), the brittleness checks (DS601-DS603), the exception
 checks (DS701, DS702) and the flakiness checks (DS801-DS803) are reported both by the

@@ -6,7 +6,7 @@ cross-file step never needs a file's syntax tree.
 
 A test's own code, for every check, is its whole body: a helper function, class or
 lambda defined inside a test is part of it, so an assertion or a call there counts
-(`ast_tools.walk_test`). Only the act-and-assert order (DS103, DS104) reads the
+(`ast_tools.walk_test`). Only the act-and-assert order (DS103, DS104, DS108) reads the
 body's statements one by one, and there a nested `def` only defines its helper.
 """
 
@@ -60,6 +60,19 @@ class Thresholds:
 
 
 @dataclass(frozen=True)
+class Comment:
+    """A comment alone on its line, as `tokenize` reads it, so never text in a string.
+
+    Attributes:
+        line: The line it is on.
+        text: The comment, `#` included.
+    """
+
+    line: int
+    text: str
+
+
+@dataclass(frozen=True)
 class TestFile:
     """One parsed test file: what every check is given.
 
@@ -72,6 +85,7 @@ class TestFile:
         waivers: Its `# drill: waive` comments, complete or not; none when inline
             waivers are off.
         thresholds: The configured thresholds, for checks that measure.
+        comments: Its comments that stand alone on their lines, in line order.
     """
 
     __test__ = False  # Not a pytest test class, despite the name.
@@ -82,6 +96,7 @@ class TestFile:
     lines: int
     waivers: tuple[Waiver, ...] = ()
     thresholds: Thresholds = Thresholds()
+    comments: tuple[Comment, ...] = ()
 
 
 @dataclass(frozen=True)

@@ -19,10 +19,12 @@ from pytest_drill_sergeant.checks.ast_tools import (
 )
 from pytest_drill_sergeant.checks.base import (
     Check,
+    Comment,
     FunctionNode,
     Hit,
     TestFile,
     TestFunction,
+    and_list,
 )
 from pytest_drill_sergeant.findings import Level
 
@@ -913,4 +915,382 @@ CONDITIONAL_LOGIC = Check(
         "    assert parse_quantity(raw) == expected\n"
     ),
     find=_find_conditional_logic,
+)
+
+
+class _Section(Enum):
+    """A section an AAA comment heads, by the name the comment gives it."""
+
+    ARRANGE = "Arrange"
+    ACT = "Act"
+    ASSERT = "Assert"
+    ACT_AND_ASSERT = "Act and assert"
+
+
+# Where each section stands in a test, first to last, as (first, last): `Act and
+# assert` stands for both of its sections.
+_SECTION_SPAN = {
+    _Section.ARRANGE: (0, 0),
+    _Section.ACT: (1, 1),
+    _Section.ASSERT: (2, 2),
+    _Section.ACT_AND_ASSERT: (1, 2),
+}
+
+# An AAA comment: the section's name alone, or followed by `:` or a dash and any
+# text, in any case. `# Assert the total` is prose, not an AAA comment.
+_AAA_COMMENT = re.compile(
+    r"#\s*(?P<name>act(?P<both>\s+and\s+assert|\s*&\s*assert)?|arrange|assert)"
+    r"\s*(?:[:\-\u2013\u2014].*)?",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _section_of(comment: Comment) -> _Section | None:
+    """The section a comment alone on its line heads, if it is an AAA comment."""
+    match = _AAA_COMMENT.fullmatch(comment.text.strip())
+    if match is None:
+        return None
+    if match["both"]:
+        return _Section.ACT_AND_ASSERT
+    return _Section(match["name"].capitalize())
+
+
+def _labels(file: TestFile, test: TestFunction) -> list[tuple[int, _Section]]:
+    """The AAA comments inside a test, each with the section it heads, in order."""
+    first, last = test.node.lineno, test.node.end_lineno or test.node.lineno
+    return [
+        (comment.line, section)
+        for comment in file.comments
+        if first < comment.line <= last
+        and (section := _section_of(comment)) is not None
+    ]
+
+
+def _runs(order: _Order, statement: ast.stmt) -> bool:
+    """Whether a statement runs anything: what an `# Act` section must hold.
+
+    That is a call or `await` that isn't an assertion, known output or a pytest
+    instrument (`ast_tools.is_known_non_act`). Unlike DS103's act, an assignment from a call counts: `total = cart.total()`
+    runs the code under test as surely as `cart.add(item)` does.
+    """
+    return any(
+        isinstance(node, ast.Await)
+        or (
+            isinstance(node, ast.Call)
+            and not order.asserts(node)
+            and not is_known_non_act(node, order.test)
+        )
+        for node in _walk_own(statement)
+    )
+
+
+def _own_steps(order: _Order) -> list[tuple[ast.stmt, _Step]]:
+    """A test's statements in order, each with what it does, its docstring aside."""
+    body = order.test.node.body
+    if ast.get_docstring(order.test.node) is not None:
+        body = body[1:]
+    return order.steps(body)
+
+
+def _plan(order: _Order, steps: list[tuple[ast.stmt, _Step]]) -> dict[_Section, int]:
+    """Where each AAA comment belongs, by the line of the statement it heads.
+
+    Assert heads the first assertion after the last act; Act, the last statement
+    before that one that runs anything, or, with none, the assertion itself as `Act
+    and assert`; Arrange, the first statement, when anything comes before the act.
+    Empty when no assertion follows the last act (DS103's to report).
+    """
+    acts = [i for i, (_, step) in enumerate(steps) if step is _Step.ACT]
+    after = acts[-1] if acts else -1
+    assert_at = next(
+        (i for i, (_, s) in enumerate(steps) if i > after and s is _Step.ASSERT),
+        None,
+    )
+    if assert_at is None:
+        return {}
+    act_at = max(
+        (i for i in range(assert_at) if _runs(order, steps[i][0])), default=None
+    )
+    plan: dict[_Section, int] = {}
+    if (assert_at if act_at is None else act_at) > 0:
+        plan[_Section.ARRANGE] = steps[0][0].lineno
+    if act_at is None:
+        plan[_Section.ACT_AND_ASSERT] = steps[assert_at][0].lineno
+    else:
+        plan[_Section.ACT] = steps[act_at][0].lineno
+        plan[_Section.ASSERT] = steps[assert_at][0].lineno
+    return plan
+
+
+def _comment(section: _Section) -> str:
+    return f"`# {section.value}`"
+
+
+def _placement(section: _Section, plan: Mapping[_Section, int]) -> str:
+    return f"{_comment(section)} above line {plan[section]}"
+
+
+def _missing_fix(
+    missing: list[_Section],
+    labels: list[tuple[int, _Section]],
+    plan: Mapping[_Section, int],
+) -> str:
+    """How to add the AAA comments a test lacks, where its structure puts them."""
+    if not plan:
+        return (
+            "assert on what the test's last act did, after it, then head its "
+            "sections with `# Arrange`, `# Act` and `# Assert`."
+        )
+    steps: list[str] = []
+    if _Section.ACT_AND_ASSERT in plan and {_Section.ACT, _Section.ASSERT} & set(
+        missing
+    ):
+        missing = [s for s in missing if s not in {_Section.ACT, _Section.ASSERT}]
+        held = [(line, s) for line, s in labels if s in {_Section.ACT, _Section.ASSERT}]
+        if held:
+            line, section = held[0]
+            steps.append(
+                f"make {_comment(section)} on line {line} `# Act and assert`, as "
+                "the act is inside the assertion"
+            )
+        else:
+            missing.append(_Section.ACT_AND_ASSERT)
+    if missing:
+        steps.insert(0, f"add {and_list([_placement(s, plan) for s in missing])}")
+    return f"{'; '.join(steps)}."
+
+
+def _find_missing(
+    test: TestFunction,
+    labels: list[tuple[int, _Section]],
+    steps: list[tuple[ast.stmt, _Step]],
+    plan: Mapping[_Section, int],
+) -> Iterator[Hit]:
+    """A hit naming the AAA comments a test lacks, if it lacks any.
+
+    Arrange is lacking when statements come before the first AAA comment and it
+    isn't `# Arrange` (or, with none, when the plan has setup); Act and Assert
+    always, unless `# Act and assert` heads both.
+    """
+    present = {section for _, section in labels}
+    missing: list[_Section] = []
+    if labels:
+        if steps[0][0].lineno < labels[0][0] and labels[0][1] is not _Section.ARRANGE:
+            missing.append(_Section.ARRANGE)
+    elif _Section.ARRANGE in plan:
+        missing.append(_Section.ARRANGE)
+    if not present & {_Section.ACT, _Section.ACT_AND_ASSERT}:
+        missing.append(_Section.ACT)
+    if not present & {_Section.ASSERT, _Section.ACT_AND_ASSERT}:
+        missing.append(_Section.ASSERT)
+    if not missing:
+        return
+    if not labels:
+        found = "has no Arrange/Act/Assert comments."
+    else:
+        names = and_list([_comment(s) for s in missing])
+        found = f"lacks its {names} comment{'s' if len(missing) > 1 else ''}."
+    if _Section.ARRANGE in missing:
+        plan = {**plan, _Section.ARRANGE: steps[0][0].lineno}
+    yield Hit.on(
+        test, test.node.lineno, found=found, fix=_missing_fix(missing, labels, plan)
+    )
+
+
+def _under(
+    test: TestFunction,
+    labels: list[tuple[int, _Section]],
+    steps: list[tuple[ast.stmt, _Step]],
+) -> list[list[tuple[ast.stmt, _Step]] | None]:
+    """The statements each AAA comment heads: those after it, up to the next one.
+
+    `None` for a comment that heads no statement at all; a `with` line it heads
+    counts, though the statements inside are read one by one.
+    """
+    bounds = [line for line, _ in labels[1:]] + [sys.maxsize]
+    starts = [n.lineno for n in walk_test(test) if isinstance(n, ast.stmt)]
+    return [
+        [(s, step) for s, step in steps if line < s.lineno < bound]
+        if any(line < start < bound for start in starts)
+        else None
+        for (line, _), bound in zip(labels, bounds, strict=False)
+    ]
+
+
+def _contradiction(
+    order: _Order,
+    label: tuple[int, _Section],
+    held: list[tuple[ast.stmt, _Step]] | None,
+    plan: Mapping[_Section, int],
+    present: set[_Section],
+) -> tuple[str, str] | None:
+    """What an AAA comment says that the statements under it contradict, if anything.
+
+    Arrange may hold anything, a guard assertion included; Act must run something
+    and assert nothing; Assert must assert and not act; Act and assert must assert.
+    An assertion under `# Act` with no `# Assert` in the test, or an act under
+    `# Assert` with no `# Act`, is the missing comment's to report.
+    """
+    line, section = label
+    comment = _comment(section)
+    if held is None:
+        return (
+            f"has {comment} on line {line} heading no statements.",
+            "remove it, or move it above the statements it names.",
+        )
+    asserts = [s for s, step in held if step is _Step.ASSERT]
+    acts = [s for s, step in held if step is _Step.ACT]
+    if section is _Section.ACT and asserts and _Section.ASSERT in present:
+        return (
+            f"asserts on line {asserts[0].lineno}, under {comment} on line {line}.",
+            f"move the assertion under `# Assert`; if the act is inside it "
+            f"(`pytest.raises`, `assert f() == ...`), make the comment on line "
+            f"{line} `# Act and assert`.",
+        )
+    if section is _Section.ACT and not any(_runs(order, s) for s, _ in held):
+        if _Section.ACT in plan:
+            fix = (
+                f"move `# Act` above line {plan[_Section.ACT]}, the last call "
+                "before the assertions."
+            )
+        elif _Section.ACT_AND_ASSERT in plan:
+            fix = (
+                f"the act is inside the assertion on line "
+                f"{plan[_Section.ACT_AND_ASSERT]}: remove `# Act` and head the "
+                "assertion with `# Act and assert`."
+            )
+        else:
+            fix = "move `# Act` above the call to the code under test."
+        return (
+            f"runs nothing under {comment} on line {line}: no call, no `await`.",
+            fix,
+        )
+    if section is _Section.ASSERT and acts and _Section.ACT in present:
+        return (
+            f"runs {_describe(acts[0])} on line {acts[0].lineno}, under {comment} "
+            f"on line {line}.",
+            f"move it above line {line}, under `# Act`, and assert on what it did.",
+        )
+    if section in {_Section.ASSERT, _Section.ACT_AND_ASSERT} and not asserts:
+        return (
+            f"asserts nothing under {comment} on line {line}.",
+            f"move {comment} above the assertions, or assert on what the act did.",
+        )
+    return None
+
+
+def _find_contradictions(
+    order: _Order,
+    labels: list[tuple[int, _Section]],
+    steps: list[tuple[ast.stmt, _Step]],
+    plan: Mapping[_Section, int],
+) -> Iterator[Hit]:
+    """A hit for each AAA comment that the test's structure contradicts."""
+    test = order.test
+    present = {section for _, section in labels}
+    if (
+        labels
+        and labels[0][1] is _Section.ARRANGE
+        and steps[0][0].lineno < labels[0][0]
+    ):
+        yield Hit.on(
+            test,
+            labels[0][0],
+            found=(
+                f"has `# Arrange` on line {labels[0][0]}, after the code on line "
+                f"{steps[0][0].lineno}."
+            ),
+            fix=f"move `# Arrange` above line {steps[0][0].lineno}.",
+        )
+    reached: tuple[int, _Section] | None = None
+    for (line, section), held in zip(labels, _under(test, labels, steps), strict=True):
+        if (
+            reached is not None
+            and _SECTION_SPAN[section][0] <= _SECTION_SPAN[reached[1]][1]
+        ):
+            yield Hit.on(
+                test,
+                line,
+                found=(
+                    f"has {_comment(section)} on line {line} after "
+                    f"{_comment(reached[1])} on line {reached[0]}: the sections "
+                    "are out of order."
+                ),
+                fix=(
+                    "keep one each of `# Arrange`, `# Act` and `# Assert`, in that "
+                    "order; a test that acts again after asserting checks two "
+                    "behaviours: split it."
+                ),
+            )
+            continue
+        reached = (line, section)
+        problem = _contradiction(order, (line, section), held, plan, present)
+        if problem is not None:
+            found, fix = problem
+            yield Hit.on(test, line, found=found, fix=fix)
+
+
+def _find_aaa_comments(file: TestFile) -> Iterator[Hit]:
+    for test in file.tests:
+        order = _Order(test)
+        steps = _own_steps(order)
+        # A test with no assertion is DS101's to report, not this check's.
+        if not any(step is _Step.ASSERT for _, step in steps):
+            continue
+        labels = _labels(file, test)
+        plan = _plan(order, steps)
+        yield from _find_missing(test, labels, steps, plan)
+        yield from _find_contradictions(order, labels, steps, plan)
+
+
+AAA_COMMENTS = Check(
+    code="DS108",
+    name="aaa-comments",
+    default_level=Level.OFF,
+    voice=(
+        "Arrange! Act! Assert! Sound off by the numbers, recruit!",
+        "Your comment says ASSERT and your code says otherwise! Who's lying, maggot?",
+        "No section markers? This test is a march with no cadence!",
+    ),
+    why=(
+        "Arrange/Act/Assert comments let a reader find a test's setup, its act and "
+        "its checks at a glance; a comment that doesn't match the code misleads "
+        "worse than none."
+    ),
+    explain=(
+        "Off by default; turn it on with `drill_sergeant_levels` (`DS108=fail`). "
+        "Flags a test with an assertion that lacks its Arrange/Act/Assert comments, "
+        "or has one the code contradicts. An AAA comment stands alone on its line "
+        "and is `# Arrange`, `# Act`, `# Assert` or `# Act and assert` (also `# Act "
+        "& assert`), in any case, alone or followed by `:` or a dash and any text "
+        "(`# Arrange - a cart with one item`); `# Assert the total` is prose. "
+        "Comments are read with `tokenize`, so text in a string never counts. Each "
+        "heads the statements below it, up to the next. `# Act` and `# Assert` are "
+        "required, or `# Act and assert` for both, as when the act is inside the "
+        "assertion (`pytest.raises`, `assert total(cart) == 3`). `# Arrange` is "
+        "required only when statements come before the act; it may hold anything, a "
+        "guard assertion included. Contradictions: `# Act` that runs nothing (no "
+        "call or `await`; an assignment from a call counts) or that asserts, "
+        "`# Assert` that asserts nothing or runs an act (a bare call, as DS103 counts "
+        "it), a comment heading no statements, and sections out of order or "
+        "repeated. A test with no assertion is left to DS101."
+    ),
+    bad_example=(
+        "def test_add_item(cart):\n"
+        "    # Arrange\n"
+        "    item = 'apple'\n"
+        "    # Assert\n"
+        "    cart.add(item)\n"
+        "    assert cart.items == [item]\n"
+    ),
+    good_example=(
+        "def test_add_item(cart):\n"
+        "    # Arrange\n"
+        "    item = 'apple'\n"
+        "    # Act\n"
+        "    cart.add(item)\n"
+        "    # Assert\n"
+        "    assert cart.items == [item]\n"
+    ),
+    find=_find_aaa_comments,
 )

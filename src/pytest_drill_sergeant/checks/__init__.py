@@ -38,6 +38,7 @@ from pytest_drill_sergeant.checks.mocking import (
     OVERGROWN_MOCK_SETUP,
 )
 from pytest_drill_sergeant.checks.structure import (
+    AAA_COMMENTS,
     ASSERT_BEFORE_ACT,
     CONDITIONAL_LOGIC,
     INTERLEAVED_ACT_ASSERT,
@@ -57,6 +58,7 @@ CHECKS: tuple[Check, ...] = (
     LONG_TEST,
     LONG_FILE,
     CONDITIONAL_LOGIC,
+    AAA_COMMENTS,
     WEAK_ASSERTION,
     TAUTOLOGICAL_ASSERTION,
     MIRROR_ASSERTION,
