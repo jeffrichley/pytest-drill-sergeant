@@ -13,6 +13,7 @@ body's statements one by one, and there a nested `def` only defines its helper.
 import ast
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 
 from pytest_drill_sergeant.findings import MODULE, Level
@@ -20,6 +21,20 @@ from pytest_drill_sergeant.tokens import Comment
 from pytest_drill_sergeant.waivers import Waiver
 
 FunctionNode = ast.FunctionDef | ast.AsyncFunctionDef
+
+
+class Kind(StrEnum):
+    """What a check's failure mode costs; it sets the check's highest default level.
+
+    A defect is a test that can't catch a bug, cheats, or fails at random: at most
+    `fail`. A smell is a test that works but costs later: at most `warn`. A
+    convention is a house rule some projects follow: off unless a project opts in.
+    Decided in `docs/adr/0001-check-kinds-cap-the-default-level.md`.
+    """
+
+    DEFECT = "defect"
+    SMELL = "smell"
+    CONVENTION = "convention"
 
 
 @dataclass(frozen=True)
@@ -277,7 +292,10 @@ class Check:
     Attributes:
         code: The permanent `DS###` code, numbered by family; never reused.
         name: The kebab-case name.
-        default_level: The level its findings have unless configured otherwise.
+        kind: Whether its failure mode is a defect, a smell or a convention; it sets
+            the highest default level the check can have.
+        default_level: The level its findings have unless configured otherwise: on
+            only once the check is proven, and never above its kind's highest.
         voice: About three lines in the drill-sergeant voice, one picked per finding.
         why: Why the failure mode matters, the same for every finding.
         explain: What the check flags and how to fix it, for `explain`.
@@ -298,6 +316,7 @@ class Check:
 
     code: str
     name: str
+    kind: Kind
     default_level: Level
     voice: tuple[str, ...]
     why: str

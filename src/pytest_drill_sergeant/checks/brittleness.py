@@ -12,7 +12,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
     value_params,
     walk_test,
 )
-from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
+from pytest_drill_sergeant.checks.base import Check, Hit, Kind, TestFile, TestFunction
 from pytest_drill_sergeant.findings import Level
 
 # Calls whose result is rendered text.
@@ -105,6 +105,7 @@ def _find_brittle_string_match(file: TestFile) -> Iterator[Hit]:
 BRITTLE_STRING_MATCH = Check(
     code="DS601",
     name="brittle-string-match",
+    kind=Kind.SMELL,
     default_level=Level.OFF,
     voice=(
         "Fix one typo in a message and this test goes down! That's not a test, it's "
@@ -343,6 +344,7 @@ def _find_private_state_assertion(file: TestFile) -> Iterator[Hit]:
 PRIVATE_STATE_ASSERTION = Check(
     code="DS602",
     name="private-state-assertion",
+    kind=Kind.SMELL,
     default_level=Level.OFF,
     voice=(
         "Who gave you clearance to rifle through PRIVATE quarters, recruit?!",
@@ -534,6 +536,7 @@ def _find_source_text_grep(file: TestFile) -> Iterator[Hit]:
 SOURCE_TEXT_GREP = Check(
     code="DS603",
     name="source-text-grep",
+    kind=Kind.DEFECT,
     default_level=Level.FAIL,
     voice=(
         "You READ the code instead of RUNNING it? That's a book report, recruit!",

@@ -19,7 +19,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
     value_params,
     walk_test,
 )
-from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
+from pytest_drill_sergeant.checks.base import Check, Hit, Kind, TestFile, TestFunction
 from pytest_drill_sergeant.findings import Level
 
 # Where the mock library lives, by the prefix its names resolve to.
@@ -302,6 +302,7 @@ def _find_mock_only_assertion(file: TestFile) -> Iterator[Hit]:
 MOCK_ONLY_ASSERTION = Check(
     code="DS301",
     name="mock-only-assertion",
+    kind=Kind.DEFECT,
     default_level=Level.FAIL,
     voice=(
         "You checked the mock got called! Did the MISSION succeed, recruit?!",
@@ -388,6 +389,7 @@ def _find_mock_without_spec(file: TestFile) -> Iterator[Hit]:
 MOCK_WITHOUT_SPEC = Check(
     code="DS302",
     name="mock-without-spec",
+    kind=Kind.SMELL,
     default_level=Level.OFF,
     voice=(
         "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!",
@@ -503,6 +505,7 @@ def _find_overgrown_mock_setup(file: TestFile) -> Iterator[Hit]:
 OVERGROWN_MOCK_SETUP = Check(
     code="DS303",
     name="overgrown-mock-setup",
+    kind=Kind.SMELL,
     default_level=Level.OFF,
     voice=(
         "More mock setup than test! You're writing a SCREENPLAY, recruit!",

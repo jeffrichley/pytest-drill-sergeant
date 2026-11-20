@@ -23,6 +23,7 @@ from pytest_drill_sergeant.checks.base import (
     Check,
     FunctionNode,
     Hit,
+    Kind,
     TestFile,
     TestFunction,
     and_list,
@@ -88,6 +89,7 @@ def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
 NO_REAL_ASSERTION = Check(
     code="DS101",
     name="no-real-assertion",
+    kind=Kind.DEFECT,
     default_level=Level.OFF,
     voice=(
         "You call that a test, recruit? It runs the code and checks NOTHING!",
@@ -195,6 +197,7 @@ def _find_no_action_under_test(file: TestFile) -> Iterator[Hit]:
 NO_ACTION_UNDER_TEST = Check(
     code="DS102",
     name="no-action-under-test",
+    kind=Kind.DEFECT,
     default_level=Level.OFF,
     voice=(
         "You're asserting on numbers you wrote yourself, recruit! WHERE IS THE CODE?",
@@ -361,6 +364,7 @@ def _find_assert_before_act(file: TestFile) -> Iterator[Hit]:
 ASSERT_BEFORE_ACT = Check(
     code="DS103",
     name="assert-before-act",
+    kind=Kind.DEFECT,
     default_level=Level.OFF,
     voice=(
         "You checked the ground, then fired blind! Assert AFTER you act, recruit!",
@@ -444,6 +448,7 @@ def _find_interleaved_act_assert(file: TestFile) -> Iterator[Hit]:
 INTERLEAVED_ACT_ASSERT = Check(
     code="DS104",
     name="interleaved-act-assert",
+    kind=Kind.SMELL,
     default_level=Level.OFF,
     voice=(
         "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!",
@@ -523,6 +528,7 @@ def _find_long_test(file: TestFile) -> Iterator[Hit]:
 LONG_TEST = Check(
     code="DS105",
     name="long-test",
+    kind=Kind.SMELL,
     default_level=Level.OFF,
     voice=(
         "This test is longer than my last deployment! CUT IT DOWN, recruit!",
@@ -702,7 +708,8 @@ def _find_long_file(file: TestFile) -> Iterator[Hit]:
 LONG_FILE = Check(
     code="DS106",
     name="long-file",
-    default_level=Level.FAIL,
+    kind=Kind.SMELL,
+    default_level=Level.WARN,
     voice=(
         "This file is a WAREHOUSE, recruit! Nobody can find anything in here!",
         "Five hundred lines and still growing? Split this barracks up, maggot!",
@@ -935,6 +942,7 @@ def _find_conditional_logic(file: TestFile) -> Iterator[Hit]:
 CONDITIONAL_LOGIC = Check(
     code="DS107",
     name="conditional-logic",
+    kind=Kind.SMELL,
     default_level=Level.OFF,
     voice=(
         "IF? There is no IF in a test, recruit! You know the outcome or you don't!",
@@ -1307,6 +1315,7 @@ def _find_aaa_comments(file: TestFile) -> Iterator[Hit]:
 AAA_COMMENTS = Check(
     code="DS108",
     name="aaa-comments",
+    kind=Kind.CONVENTION,
     default_level=Level.OFF,
     voice=(
         "Arrange! Act! Assert! Sound off by the numbers, recruit!",
