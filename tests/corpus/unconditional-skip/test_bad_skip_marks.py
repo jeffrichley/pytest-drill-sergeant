@@ -11,7 +11,7 @@ def test_create_record_assigns_an_id():
     assert create_record("ada").id == 1
 
 
-@pytest.mark.skip  # expect: DS402
+@pytest.mark.skip(reason="deletes are soft now")  # expect: DS402
 def test_delete_record_removes_it():
     record = create_record("ada")
     delete_record(record)
@@ -28,3 +28,11 @@ def test_create_record_rejects_duplicates():
 @pytest.mark.skip("waiting on the new schema")  # expect: DS402
 def test_create_record_stores_the_email():
     assert create_record("ada", email="a@b.c").email == "a@b.c"
+
+
+@pytest.mark.skipif(reason="double delete raises")  # expect: DS402
+def test_delete_record_twice_is_a_no_op():
+    record = create_record("ada")
+    delete_record(record)
+    delete_record(record)
+    assert record.deleted

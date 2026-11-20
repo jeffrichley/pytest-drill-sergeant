@@ -111,8 +111,9 @@ NO_REAL_ASSERTION = Check(
         "`assert_that` are `assert*` calls), and no `raise AssertionError`. A local "
         "`expect` or `check` no such import gives counts for nothing. Such a test only proves "
         "the code didn't crash. Assert on what the code returns or changes. A test "
-        "that skips on every run, by a `pytest.mark.skip` on it, its class or the "
-        "module's `pytestmark`, or a `pytest.skip()` in its own body or the module's, is "
+        "that skips on every run, by a `pytest.mark.skip` (or `skipif()`, or "
+        "`skipif` on a truthy constant) on it, its class or the module's "
+        "`pytestmark`, or a `pytest.skip()` in its own body or the module's, is "
         "left to DS402 unconditional-skip; one with an `except` that loses the error, "
         "to DS702 swallowed-exception, while DS702 reports in that file."
     ),

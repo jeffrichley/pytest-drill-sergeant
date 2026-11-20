@@ -71,11 +71,11 @@ A check's default level is the lower of two answers
   ([#171](https://github.com/jeffrichley/pytest-drill-sergeant/issues/171) tracks
   them).
 
-On by default, at `fail`: DS001 malformed-waiver, DS301 mock-only-assertion, DS603
-source-text-grep, DS802 wall-clock-read and DS803 unseeded-random. At `warn`: DS106
-long-file and DS502 near-duplicate-tests. Every other check is off: DS101-DS105,
-DS107, DS201-DS203, DS302, DS303, DS401-DS403, DS501, DS601, DS602, DS701, DS702 and
-DS801 until each is proven, and the two conventions: DS108 (AAA comments) and DS901
+On by default, at `fail`: DS001 malformed-waiver, DS301 mock-only-assertion, DS401
+skip-without-reason, DS603 source-text-grep, DS802 wall-clock-read and DS803
+unseeded-random. At `warn`: DS106 long-file and DS502 near-duplicate-tests. Every
+other check is off: DS101-DS105, DS107, DS201-DS203, DS302, DS303, DS402, DS403,
+DS501, DS601, DS602, DS701, DS702 and DS801 until each is proven, and the two conventions: DS108 (AAA comments) and DS901
 (category markers).
 
 Turn an off check on with `drill_sergeant_levels`, at `fail` or `warn`:

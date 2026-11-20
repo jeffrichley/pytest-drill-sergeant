@@ -17,6 +17,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
     calls_to,
     inside,
     is_always_skipped_by,
+    mark_conditions,
     module_imports,
     pytestmark_entries,
     qualified,
@@ -54,14 +55,25 @@ def _mark_has_no_reason(mark: str, expr: ast.expr) -> bool:
     """Whether a skip mark gives no reason.
 
     `skip` takes one by keyword or first by position; `skipif` and `xfail` take
-    their conditions by position, so only `reason=` counts.
+    their conditions by position, so only `reason=` counts, but for one whose
+    conditions are all strings: pytest shows the string as its reason. A
+    `**kwargs` may hold one, so it doesn't say there is none.
     """
     if not isinstance(expr, ast.Call):
         return True
+    if any(k.arg is None for k in expr.keywords):
+        return False
     reason = _keyword(expr, "reason")
     if reason is None and mark == SKIP and expr.args:
         reason = expr.args[0]
+    conditions = (mark_conditions(expr) if mark != SKIP else None) or []
+    if reason is None and conditions:
+        return any(_blank(c) or not _is_string(c) for c in conditions)
     return _blank(reason)
+
+
+def _is_string(expr: ast.expr) -> bool:
+    return isinstance(expr, ast.Constant) and isinstance(expr.value, str)
 
 
 def _call_has_no_reason(call: ast.Call) -> bool:
@@ -151,7 +163,7 @@ SKIP_WITHOUT_REASON = Check(
     code="DS401",
     name="skip-without-reason",
     kind=Kind.DEFECT,
-    default_level=Level.OFF,
+    default_level=Level.FAIL,
     voice=(
         "You benched a soldier and didn't write down WHY, recruit?",
         "A skip with no reason is a deserter with no paperwork! FILL IT OUT!",
@@ -166,12 +178,14 @@ SKIP_WITHOUT_REASON = Check(
         "test, a class or the module's `pytestmark`, and calls to `pytest.skip` and "
         "`pytest.xfail`, that give no reason or a blank one. `skip` and the calls "
         "take a reason first by position or as `reason=`; `skipif` and `xfail` only "
-        "as `reason=`, since their positional arguments are conditions. A reason in "
-        "a variable counts. Import aliases are followed; a local function named "
+        "as `reason=`, since their positional arguments are conditions, but a "
+        "`skipif` or `xfail` whose conditions are all strings has one: pytest shows "
+        "the string as its reason. `xfail(raises=...)` says what fails, not why, so it needs a "
+        "reason too. A reason in a variable counts. Import aliases are followed; a local function named "
         "`skip` is not pytest's, and `pytest.importorskip` names its module itself. "
         "Say what is wrong and when the test can run again. A skip on every run "
-        "(`pytest.mark.skip`, `skipif` on a truthy constant, `pytest.skip()` "
-        "under no condition) is left to DS402 unconditional-skip."
+        "(`pytest.mark.skip`, `skipif()` with no condition or on a truthy "
+        "constant, `pytest.skip()` under no condition) is left to DS402 unconditional-skip."
     ),
     bad_example=(
         "import sys\n"
@@ -238,8 +252,8 @@ UNCONDITIONAL_SKIP = Check(
     ),
     explain=(
         "Flags a test skipped on every run: `pytest.mark.skip` on the test, its "
-        "class or the module's `pytestmark`, `pytest.mark.skipif` on a truthy "
-        "constant (`skipif(True)`), or `pytest.skip(...)` as a statement of the "
+        "class or the module's `pytestmark`, `pytest.mark.skipif` with no condition "
+        "(`skipif()`) or on a truthy constant (`skipif(True)`), or `pytest.skip(...)` as a statement of the "
         "test's own body, or of the module's, under no `if`, loop, `try` or `with`. "
         "A skip under a condition, `skipif` on a real condition and "
         "`pytest.importorskip` run only sometimes, and are not flagged. Fix what "
