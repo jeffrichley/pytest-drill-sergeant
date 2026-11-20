@@ -121,10 +121,10 @@ convention = "google"
 python_version = "3.11"
 strict = true
 warn_unused_ignores = true
-files = ["src/pytest_drill_sergeant"]
+files = ["src/pytest_drill_sergeant", "scripts"]
 
 [tool.vulture]
-paths = ["src"]
+paths = ["src", "scripts"]
 min_confidence = 80
 
 [tool.coverage.run]

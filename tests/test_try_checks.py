@@ -1,0 +1,100 @@
+import pytest
+
+pytestmark = pytest.mark.integration
+
+
+# A test with no real assertion: DS101 on line 1, a check off by default (#171).
+ASSERTION_FREE = "def test_it():\n    run()\n"
+
+
+def outside_cache(paths):
+    """The paths not under pytest's cache directory, which a check run writes to."""
+    return [p for p in paths if ".pytest_cache" not in p.parts]
+
+
+def test_try_with_no_checks_named_runs_check_as_it_stands(
+    try_checks, write_test_file, unseeded_random_test
+):
+    write_test_file(ASSERTION_FREE)
+
+    code, output = try_checks(".")
+
+    assert code == 1, output
+    assert "DS803" in output
+    assert "DS101" not in output
+
+
+def test_try_turns_the_named_checks_on_at_fail(try_checks, write_test_file):
+    write_test_file(ASSERTION_FREE)
+
+    code, output = try_checks("test_it.py", "DS101")
+
+    assert code == 1, output
+    assert "DS101" in output
+
+
+def test_try_keeps_the_projects_levels(
+    try_checks, tmp_path, write_test_file, unseeded_random_test
+):
+    write_test_file(ASSERTION_FREE)
+    (tmp_path / "pyproject.toml").write_text(
+        '[tool.pytest.ini_options]\ndrill_sergeant_levels = ["DS803=off"]\n'
+    )
+
+    _, output = try_checks(".", "DS101")
+
+    assert "DS101" in output
+    assert "DS803" not in output
+
+
+def test_try_keeps_the_projects_ini_settings(try_checks, tmp_path, write_test_file):
+    write_test_file(ASSERTION_FREE)
+    (tmp_path / "pytest.ini").write_text("[pytest]\ndrill_sergeant_mode = warn\n")
+
+    code, output = try_checks("test_it.py", "DS101")
+
+    assert code == 0, output
+    assert "DS101" in output
+
+
+def test_try_reads_paths_in_the_config_from_the_projects_root(
+    try_checks, tmp_path, write_test_file
+):
+    (tmp_path / "proj" / "tests" / "legacy").mkdir(parents=True)
+    write_test_file(ASSERTION_FREE, "proj/tests/test_new.py")
+    write_test_file(ASSERTION_FREE, "proj/tests/legacy/test_old.py")
+    (tmp_path / "proj" / "pyproject.toml").write_text(
+        "[tool.pytest.ini_options]\n"
+        'drill_sergeant_per_file_ignores = ["tests/legacy/**: DS101"]\n'
+    )
+
+    _, output = try_checks("proj/tests", "DS101")
+
+    assert "test_new.py" in output
+    assert "test_old.py" not in output
+
+
+def test_try_leaves_the_projects_files_as_they_were(
+    try_checks, tmp_path, write_test_file, watch
+):
+    write_test_file(ASSERTION_FREE)
+    (tmp_path / "pyproject.toml").write_text(
+        '[tool.pytest.ini_options]\ndrill_sergeant_mode = "warn"\n'
+    )
+    written = watch(tmp_path)
+
+    try_checks(".", "DS101")
+
+    assert outside_cache(written()) == []
+
+
+def test_try_removes_its_config_when_the_run_refuses(
+    try_checks, tmp_path, write_test_file, watch
+):
+    write_test_file(ASSERTION_FREE)
+    written = watch(tmp_path)
+
+    code, _ = try_checks(".", "DS999")
+
+    assert code == 2
+    assert outside_cache(written()) == []

@@ -1,3 +1,4 @@
+import importlib.util
 import os
 from pathlib import Path
 
@@ -287,3 +288,21 @@ def golden_suite():
 def cache_dir(tmp_path):
     """A cache directory in `tmp_path`, `cache/`, not yet made."""
     return tmp_path / "cache"
+
+
+@pytest.fixture
+def try_checks(tmp_path, monkeypatch, capsys):
+    """Run `scripts/try_checks.py <args>`, what `just try` runs, from `tmp_path`, and
+    return its exit code and everything it printed."""
+    script = Path(__file__).parent.parent / "scripts" / "try_checks.py"
+    spec = importlib.util.spec_from_file_location("try_checks", script)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.chdir(tmp_path)
+
+    def run(*args: str):
+        code = module.main(list(args))
+        printed = capsys.readouterr()
+        return code, printed.out + printed.err
+
+    return run

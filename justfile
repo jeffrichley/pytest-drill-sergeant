@@ -52,6 +52,13 @@ stress count="5":
 perf:
     uv run pytest -q -p no:randomly -m perf tests/perf
 
+# How a #171 check is tried on a real suite. The project's own config holds; codes
+# after the path also turn those checks on at `fail` for this run only, through a
+# temporary config file beside the project's, deleted afterwards.
+# This checkout's drill-sergeant on another project's tests: `just try <path> [DS###...]`
+try path *codes:
+    uv run python scripts/try_checks.py {{quote(path)}} {{codes}}
+
 # Rewrite tests/golden/check.txt as the golden test runs it; review `git diff tests/golden`.
 golden:
     uv run python tests/golden/regenerate.py
