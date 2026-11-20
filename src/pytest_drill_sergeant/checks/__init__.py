@@ -20,6 +20,7 @@ from pytest_drill_sergeant.checks.flakiness import (
 from pytest_drill_sergeant.checks.structure import (
     ASSERT_BEFORE_ACT,
     INTERLEAVED_ACT_ASSERT,
+    LONG_TEST,
     NO_ACTION_UNDER_TEST,
     NO_REAL_ASSERTION,
 )
@@ -29,6 +30,7 @@ CHECKS: tuple[Check, ...] = (
     NO_ACTION_UNDER_TEST,
     ASSERT_BEFORE_ACT,
     INTERLEAVED_ACT_ASSERT,
+    LONG_TEST,
     WEAK_ASSERTION,
     TAUTOLOGICAL_ASSERTION,
     MIRROR_ASSERTION,

@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 196 findings in 50 files. FALL IN!
+DRILL SERGEANT INSPECTION: 199 findings in 53 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -485,6 +485,39 @@ suite/interleaved-act-assert/test_bad_two_behaviours.py
            name doesn't say which one broke, and a failing early step hides every later one.
     Fix:   In `test_log_cleared_then_add_again`, line 28: split the test into one test per act
            (lines 25, 28), each named for its behaviour, with any shared setup in a fixture.
+
+suite/long-test/test_bad_decorated_and_long.py
+  suite/long-test/test_bad_decorated_and_long.py:8: DS105 long-test [fail] in test_invoice_rendering
+    "One test, one mission! This is a whole CAMPAIGN!"
+    Found: `test_invoice_rendering` is 52 lines long (lines 8-59), more than the 50 a test may have.
+    Why:   A long test checks many things at once and buries what it is about: when it fails,
+           finding the cause means reading all of it, and nobody reviews it closely.
+    Fix:   In `test_invoice_rendering`, line 8: cut it to 50 lines or fewer: split it into one test
+           per behaviour it checks, each named for that behaviour, and move shared setup into
+           fixtures. Lines 10-35 run before its first assertion: what is setup there belongs in a
+           fixture.
+
+suite/long-test/test_bad_end_to_end_script.py
+  suite/long-test/test_bad_end_to_end_script.py:5: DS105 long-test [fail] in test_checkout_flow
+    "Nobody can read a test this long, maggot, and nobody will!"
+    Found: `test_checkout_flow` is 52 lines long (lines 5-56), more than the 50 a test may have.
+    Why:   A long test checks many things at once and buries what it is about: when it fails,
+           finding the cause means reading all of it, and nobody reviews it closely.
+    Fix:   In `test_checkout_flow`, line 5: cut it to 50 lines or fewer: split it into one test per
+           behaviour it checks, each named for that behaviour, and move shared setup into fixtures.
+           Lines 6-39 run before its first assertion: what is setup there belongs in a fixture.
+
+suite/long-test/test_bad_inline_payload.py
+  suite/long-test/test_bad_inline_payload.py:6: DS105 long-test [fail] in TestImportApi::test_import_accepts_a_full_batch
+    "This test is longer than my last deployment! CUT IT DOWN, recruit!"
+    Found: `TestImportApi::test_import_accepts_a_full_batch` is 51 lines long (lines 6-56), more
+           than the 50 a test may have.
+    Why:   A long test checks many things at once and buries what it is about: when it fails,
+           finding the cause means reading all of it, and nobody reviews it closely.
+    Fix:   In `TestImportApi::test_import_accepts_a_full_batch`, line 6: cut it to 50 lines or
+           fewer: split it into one test per behaviour it checks, each named for that behaviour, and
+           move shared setup into fixtures. Lines 7-47 run before its first assertion: what is setup
+           there belongs in a fixture.
 
 suite/mirror-assertion/test_bad_beside_strong.py
   suite/mirror-assertion/test_bad_beside_strong.py:9: DS203 mirror-assertion [fail] in test_prices
@@ -1758,4 +1791,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Fix:   In `test_async_import`, line 30: replace the weak assertions on line 30 with exact
            checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-196 findings: 187 fail, 9 warn. Fix them, recruit. DISMISSED!
+199 findings: 190 fail, 9 warn. Fix them, recruit. DISMISSED!

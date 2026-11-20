@@ -451,3 +451,71 @@ INTERLEAVED_ACT_ASSERT = Check(
     ),
     find=_find_interleaved_act_assert,
 )
+
+
+def _find_long_test(file: TestFile) -> Iterator[Hit]:
+    limit = file.thresholds.max_test_lines
+    for test in file.tests:
+        first, last = test.node.lineno, test.node.end_lineno or test.node.lineno
+        length = last - first + 1
+        if length <= limit:
+            continue
+        asserts = [
+            node.lineno
+            for node in walk_test(test)
+            if isinstance(node, ast.stmt | ast.expr)
+            and is_real_assertion(node, test.imports)
+        ]
+        setup = (
+            f" Lines {test.node.body[0].lineno}-{min(asserts) - 1} run before its "
+            "first assertion: what is setup there belongs in a fixture."
+            if asserts and min(asserts) > test.node.body[0].lineno
+            else ""
+        )
+        yield Hit.on(
+            test,
+            first,
+            found=(
+                f"is {length} lines long (lines {first}-{last}), more than the "
+                f"{limit} a test may have."
+            ),
+            fix=(
+                f"cut it to {limit} lines or fewer: split it into one test per "
+                "behaviour it checks, each named for that behaviour, and move "
+                f"shared setup into fixtures.{setup}"
+            ),
+        )
+
+
+LONG_TEST = Check(
+    code="DS105",
+    name="long-test",
+    default_level=Level.FAIL,
+    voice=(
+        "This test is longer than my last deployment! CUT IT DOWN, recruit!",
+        "Nobody can read a test this long, maggot, and nobody will!",
+        "One test, one mission! This is a whole CAMPAIGN!",
+    ),
+    why=(
+        "A long test checks many things at once and buries what it is about: when "
+        "it fails, finding the cause means reading all of it, and nobody reviews "
+        "it closely."
+    ),
+    explain=(
+        "Flags a test function longer than `drill_sergeant_max_test_lines` (50 by "
+        "default), counted from its `def` line to its last line, blank lines, "
+        "comments and docstring included. Its decorators don't count, so a long "
+        "`parametrize` table is fine. Move setup into fixtures and split the test "
+        "into one test per behaviour."
+    ),
+    bad_example=(
+        "def test_checkout(shop):\n"
+        + "".join(f"    shop.add_item('sku-{n}')\n" for n in range(50))
+        + "    assert shop.checkout().total == 5000\n"
+    ),
+    good_example=(
+        "def test_checkout_totals_the_cart(shop_with_fifty_items):\n"
+        "    assert shop_with_fifty_items.checkout().total == 5000\n"
+    ),
+    find=_find_long_test,
+)
