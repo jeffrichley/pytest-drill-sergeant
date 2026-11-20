@@ -160,7 +160,7 @@ def _find_skip_without_reason(file: TestFile) -> Iterator[Hit]:
 SKIP_WITHOUT_REASON = Check(
     code="DS401",
     name="skip-without-reason",
-    default_level=Level.OFF,
+    default_level=Level.FAIL,
     voice=(
         "You benched a soldier and didn't write down WHY, recruit?",
         "A skip with no reason is a deserter with no paperwork! FILL IT OUT!",

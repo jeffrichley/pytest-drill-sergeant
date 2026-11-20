@@ -74,7 +74,16 @@ def test_check_has_at_least_three_bad_and_three_good_corpus_files(check):
 
 
 # Proven: zero false positives in a hand-judged sample of real suites (#171).
-ON_BY_DEFAULT = {"DS001", "DS106", "DS301", "DS502", "DS603", "DS802", "DS803"}
+ON_BY_DEFAULT = {
+    "DS001",
+    "DS106",
+    "DS301",
+    "DS401",
+    "DS502",
+    "DS603",
+    "DS802",
+    "DS803",
+}
 
 
 @pytest.mark.parametrize("check", CHECKS, ids=lambda c: c.code)

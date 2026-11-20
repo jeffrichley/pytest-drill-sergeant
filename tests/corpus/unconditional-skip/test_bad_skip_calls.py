@@ -25,4 +25,4 @@ async def test_report_streams_rows():
 
 
 def test_report_prints_a_title():
-    pytest.skip()  # expect: DS402
+    pytest.skip(msg="title font missing")  # expect: DS402

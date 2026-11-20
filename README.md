@@ -61,11 +61,11 @@ the change that proves it ([#171](https://github.com/jeffrichley/pytest-drill-se
 tracks them).
 
 On by default, at `fail`: DS001 malformed-waiver, DS106 long-file, DS301
-mock-only-assertion, DS502 near-duplicate-tests, DS603 source-text-grep, DS802
-wall-clock-read and DS803 unseeded-random. Every other check is off: DS101-DS105,
-DS107, DS201-DS203, DS302, DS303, DS401-DS403, DS501, DS601, DS602, DS701, DS702 and
-DS801 until each is proven, and two conventions a project opts into: DS108 (AAA
-comments) and DS901 (category markers).
+mock-only-assertion, DS401 skip-without-reason, DS502 near-duplicate-tests, DS603
+source-text-grep, DS802 wall-clock-read and DS803 unseeded-random. Every other check
+is off: DS101-DS105, DS107, DS201-DS203, DS302, DS303, DS402, DS403, DS501, DS601,
+DS602, DS701, DS702 and DS801 until each is proven, and two conventions a project opts
+into: DS108 (AAA comments) and DS901 (category markers).
 
 Turn an off check on with `drill_sergeant_levels`, at `fail` or `warn`:
 

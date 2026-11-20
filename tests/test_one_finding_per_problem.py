@@ -73,12 +73,12 @@ def test_no_real_assertion_yields_to_a_swallowed_exception_only_while_it_is_repo
         ),
         (
             "@pytest.mark.skip\ndef test_sync():\n    sync()\n",
-            ["DS101=fail"],
+            ["DS101=fail", "DS401=off"],
             {("DS101", 4)},
         ),
         (
             "pytestmark = pytest.mark.skip\n\ndef test_sync():\n    sync()\n",
-            ["DS101=fail"],
+            ["DS101=fail", "DS401=off"],
             {("DS101", 5)},
         ),
         (
