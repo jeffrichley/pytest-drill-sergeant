@@ -2,7 +2,8 @@
 Analysed, never run."""
 
 import pytest
-from shop import serializer, slugify
+import serializer
+from shop import slugify
 
 pytestmark = pytest.mark.unit
 

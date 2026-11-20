@@ -31,16 +31,23 @@ rootdir-style `sys.path` finds it, then in the production source dirs; the first
 file found is the module, followed only when it is in the test tree. In a flat
 layout, production modules beside the tests are in the tree.
 
+What a call is, a function or a class (`Assertions.definition`), is read from its
+definition the same way, with one difference: the definition may be in production
+code too, anywhere under the project. A builtin name nothing rebinds is Python's
+own; a call the files don't show the definition of is not known.
+
 Each function's answer is worked out once per run and kept with the modules it
 relied on, so a test file's result can name every module it followed (`followed`)
 for the cache to check.
 """
 
 import ast
+import builtins
 import os
 import sys
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from pathlib import Path
 
 from pytest_drill_sergeant.cache import content_hash
@@ -182,6 +189,30 @@ class _Answer:
     calls_params: frozenset[str] = frozenset()
 
 
+class CallKind(Enum):
+    """What a call is, by its definition."""
+
+    FUNCTION = auto()
+    CLASS = auto()  # A constructor: a class's call makes an instance.
+    UNKNOWN = auto()  # The files don't show its definition.
+
+
+@dataclass(frozen=True)
+class Definition:
+    """What a call is, and the function it runs when the files show one.
+
+    Attributes:
+        kind: Function, class or not known.
+        node: The function's `def` or lambda; `None` for a builtin or anything
+            not a function.
+    """
+
+    kind: CallKind
+    node: FunctionNode | ast.Lambda | None = None
+
+
+_UNKNOWN = Definition(CallKind.UNKNOWN)
+
 _NO = _Answer(asserts=False)
 _YES = _Answer(asserts=True)
 _NO_CYCLE = 1 << 30
@@ -269,6 +300,19 @@ def _body(node: FunctionNode | ast.Lambda) -> Iterator[ast.AST]:
         yield from ast.walk(statement)
 
 
+def _is_builtin(name: str, scope: _Scope) -> bool:
+    """Whether a name is Python's builtin: one nothing in the scope or module binds."""
+    return (
+        hasattr(builtins, name)
+        and name not in scope.params
+        and name not in scope.values
+        and name not in scope.functions
+        and name not in scope.imports
+        and name not in scope.names
+        and name not in scope.module.bindings
+    )
+
+
 def _final_name(expr: ast.expr) -> str | None:
     if isinstance(expr, ast.Attribute):
         return expr.attr
@@ -319,8 +363,11 @@ class TestTree:
         self._files: dict[str, bool] = {}
         self._digests: dict[str, str] = {}
         self._resolved: dict[
-            tuple[str, str, int], tuple[_Module | None, tuple[str, ...]]
+            tuple[str, str, int, bool], tuple[_Module | None, tuple[str, ...]]
         ] = {}
+        # Whether an import may resolve into production code: only while reading
+        # what a call is (`definition`), never while following it for assertions.
+        self._anywhere = False
         self._answers: dict[_Function, tuple[_Answer, frozenset[str]]] = {}
         # The functions being worked out, each at its depth in the call chain, and
         # the shallowest of them the answer now being worked out met again.
@@ -355,21 +402,23 @@ class TestTree:
         return known
 
     def digest(self, key: str) -> str:
-        """A module's content hash; empty when it is missing, `outside` when it isn't in the tree.
+        """A module's content hash, marked `outside` when it isn't in the tree; empty when it is missing.
 
         A cached result followed each module under its digest; any change means
-        the result is stale.
+        the result is stale. A module outside the tree is hashed too, as a
+        definition read there (`definition`) is part of the result.
         """
         known = self._digests.get(key)
         if known is None:
             known = _MISSING
             if self._is_file(key):
-                known = _OUTSIDE
-                if self.contains(key):
-                    try:
-                        known = content_hash(Path(key).read_bytes())
-                    except OSError:
-                        known = _MISSING
+                try:
+                    known = content_hash(Path(key).read_bytes())
+                except OSError:
+                    known = _MISSING
+                else:
+                    if not self.contains(key):
+                        known = f"{_OUTSIDE}:{known}"
             self._digests[key] = known
         return known
 
@@ -408,9 +457,12 @@ class TestTree:
         return found
 
     def _resolve(self, dotted: str, level: int, origin: _Module) -> _Module | None:
-        """The module an import names, when it is a file of the test tree."""
+        """The module an import names, when it is a file of the test tree.
+
+        While reading what a call is, a file of production code too.
+        """
         start = os.path.dirname(origin.key)
-        memo_key = (start, dotted, level)
+        memo_key = (start, dotted, level, self._anywhere)
         if memo_key not in self._resolved:
             self._resolved[memo_key] = self._look_up(dotted, level, start)
         module, noted = self._resolved[memo_key]
@@ -440,7 +492,8 @@ class TestTree:
             for candidate in candidates:
                 noted.append(candidate)
                 if self._is_file(candidate):
-                    found = self.module(candidate) if self.contains(candidate) else None
+                    seen = self._anywhere or self.contains(candidate)
+                    found = self.module(candidate) if seen else None
                     return found, tuple(noted)
         return None, tuple(noted)
 
@@ -845,11 +898,7 @@ class TestTree:
         Returns:
             The answer, and every module it relied on.
         """
-        cls = _Class(test.classes[-1], module) if test.classes else None
-        scope = self._scope(test.node, module, cls, cls, dict(test.imports))
-        if instance_param(test) is None:
-            scope.instance = None
-            scope.self_cls = None
+        scope = self._test_scope(test, module)
         keys: set[str] = set()
         self._deps.append(keys)
         try:
@@ -858,9 +907,48 @@ class TestTree:
             self._deps.pop()
         return found, keys
 
+    def definition(
+        self, test: TestFunction, module: _Module, call: ast.Call
+    ) -> tuple[Definition, set[str]]:
+        """What a call in a test is, read from its definition.
+
+        The definition may be in the test tree or in production code. A builtin
+        name the test and its module don't rebind is Python's own: a class when
+        it is a type (`str`), else a function (`len`).
+
+        Returns:
+            The definition, and every module it relied on.
+        """
+        scope = self._test_scope(test, module)
+        keys: set[str] = set()
+        self._deps.append(keys)
+        self._anywhere = True
+        try:
+            target = self._target(call.func, scope, frozenset())
+        finally:
+            self._anywhere = False
+            self._deps.pop()
+        if isinstance(target, _Callee):
+            return Definition(CallKind.FUNCTION, target.function.node), keys
+        if isinstance(target, _Class):
+            return Definition(CallKind.CLASS), keys
+        func = call.func
+        if isinstance(func, ast.Name) and _is_builtin(func.id, scope):
+            is_type = isinstance(getattr(builtins, func.id), type)
+            return Definition(CallKind.CLASS if is_type else CallKind.FUNCTION), keys
+        return _UNKNOWN, keys
+
+    def _test_scope(self, test: TestFunction, module: _Module) -> _Scope:
+        cls = _Class(test.classes[-1], module) if test.classes else None
+        scope = self._scope(test.node, module, cls, cls, dict(test.imports))
+        if instance_param(test) is None:
+            scope.instance = None
+            scope.self_cls = None
+        return scope
+
 
 class Assertions:
-    """Whether a test file's tests hold real assertions, following their calls.
+    """Whether a test file's tests hold real assertions, and what their calls are.
 
     Made by `TestTree.assertions`, one per test file; checks reach it on
     `TestFile.assertions`.
@@ -890,6 +978,16 @@ class Assertions:
         if not calls:
             return False
         found, keys = self._tree.test_calls_assert(test, self._module, calls)
+        self._followed |= keys
+        return found
+
+    def definition(self, test: TestFunction, call: ast.Call) -> Definition:
+        """What a call in a test is: a function, a class, or not known.
+
+        Read from its definition in the test tree or production code, or as a
+        builtin; never from its name.
+        """
+        found, keys = self._tree.definition(test, self._module, call)
         self._followed |= keys
         return found
 

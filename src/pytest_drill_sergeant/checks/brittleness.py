@@ -320,7 +320,7 @@ class _PrivateReads:
 def _find_private_state_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         # An `assert` that can't fail is tautological-assertion's to report.
-        tautologies = tautological_asserts(test)
+        tautologies = tautological_asserts(test, file.assertions)
         private = _PrivateReads(test)
         for assertion, checked in _asserted(test):
             if any(assertion is t for t in tautologies):

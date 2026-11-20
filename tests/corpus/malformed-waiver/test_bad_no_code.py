@@ -15,5 +15,5 @@ def test_subtracts():  # drill: waive  # expect: DS001
 
 
 def test_multiplies():
-    result = multiply(2, 3)
-    assert result  # drill: waive DS2 -- the family, not a code  # expect: DS001, DS201
+    n = multiply(2, 3)
+    assert n >= 0  # drill: waive DS2 -- the family, not a code  # expect: DS001, DS201
