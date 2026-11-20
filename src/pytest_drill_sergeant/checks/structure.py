@@ -476,10 +476,13 @@ def _find_long_test(file: TestFile) -> Iterator[Hit]:
             if isinstance(node, ast.stmt | ast.expr)
             and is_real_assertion(node, test.imports)
         ]
+        body = test.node.body
+        if ast.get_docstring(test.node) is not None and len(body) > 1:
+            body = body[1:]
         setup = (
-            f" Lines {test.node.body[0].lineno}-{min(asserts) - 1} run before its "
-            "first assertion: what is setup there belongs in a fixture."
-            if asserts and min(asserts) > test.node.body[0].lineno
+            f" Lines {body[0].lineno}-{min(asserts) - 1} run before its first "
+            "assertion: what is setup there belongs in a fixture."
+            if asserts and min(asserts) > body[0].lineno
             else ""
         )
         yield Hit.on(
@@ -537,7 +540,7 @@ def _test_file_for(name: str) -> str:
     `TestLoanLimits` and `loan_limits` both give `test_loan_limits.py`.
     """
     words = re.findall(r"[A-Z]+(?![a-z])|[A-Z]?[a-z0-9]+", name.removeprefix("Test"))
-    return f"test_{'_'.join(w.lower() for w in words)}.py"
+    return f"test_{'_'.join(w.lower() for w in words) or name.lower()}.py"
 
 
 def _span(node: ast.ClassDef | FunctionNode) -> tuple[int, int]:
