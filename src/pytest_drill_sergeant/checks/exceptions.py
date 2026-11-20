@@ -294,11 +294,6 @@ def _swallowing_handlers(test: TestFunction) -> Iterator[ast.ExceptHandler]:
                 yield handler
 
 
-def swallows_an_exception(test: TestFunction) -> bool:
-    """Whether a test catches an exception and loses it (DS702's to report)."""
-    return next(_swallowing_handlers(test), None) is not None
-
-
 def _find_swallowed_exception(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         for handler in _swallowing_handlers(test):

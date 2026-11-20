@@ -299,6 +299,26 @@ def test_copy_paste_setup_folds_near_duplicates_only_while_they_are_reported(
     assert {(f.code, f.line) for f in findings} == codes
 
 
+@pytest.mark.parametrize(
+    ("raw", "codes"),
+    [
+        ({}, {("DS702", 18)}),
+        ({"drill_sergeant_levels": "DS702=off"}, {("DS101", 15)}),
+        ({"drill_sergeant_per_file_ignores": "*.py: DS702"}, {("DS101", 15)}),
+    ],
+    ids=["both-on", "swallowed-exception-off", "swallowed-exception-ignored"],
+)
+def test_no_real_assertion_yields_to_a_swallowed_exception_only_while_it_is_reported(
+    raw, codes
+):
+    corpus = Path(__file__).parent / "corpus" / "swallowed-exception"
+    config = resolve(raw, corpus)
+
+    findings = analyze([corpus / "test_bad_make_it_not_crash.py"], config)
+
+    assert {(f.code, f.line) for f in findings if f.test == "test_sync"} == codes
+
+
 def test_configured_level_applies_to_cross_file_findings(pasted_across_files):
     findings = analyze(pasted_across_files, Config(levels={"DS501": Level.WARN}))
 

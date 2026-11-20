@@ -270,6 +270,9 @@ class Check:
             up, each with the file it is in; `None` for a check that doesn't
             compare files. It is told which checks report in which files, so it
             can leave a problem to a more specific check.
+        yields_to: The code of a more specific check, or `None`: a hit of this
+            check on a test is left out of a file where that check reports a hit
+            on the same test, and kept where it is off.
     """
 
     code: str
@@ -283,3 +286,4 @@ class Check:
     find: Callable[[TestFile], Iterable[Hit]] = _finds_nothing
     find_in_source: Callable[[SourceFile], Iterable[Hit]] | None = None
     find_across: FindAcross | None = None
+    yields_to: str | None = None

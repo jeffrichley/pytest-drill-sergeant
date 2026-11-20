@@ -286,12 +286,25 @@ def _levels_by_file(paths: list[Path], config: Config) -> dict[Path, Levels]:
 
 
 def _file_findings(path: Path, result: _FileResult, levels: Levels) -> list[Finding]:
-    """A file's findings: its hits, at the level each check reports at there."""
+    """A file's findings: its hits, at the level each check reports at there.
+
+    A check that yields to a more specific one drops its hits on the tests that
+    check reports on here.
+    """
+
+    def taken(check: Check) -> set[str]:
+        other = check.yields_to
+        if other is None or levels[other] is Level.OFF:
+            return set()
+        return {hit.test for hit in result.hits.get(other, ())}
+
     return [
         _finding(check, path, hit, levels[check.code])
         for check in CHECKS
         if levels[check.code] is not Level.OFF
+        for yielded in [taken(check)]
         for hit in result.hits.get(check.code, ())
+        if hit.test not in yielded
     ]
 
 

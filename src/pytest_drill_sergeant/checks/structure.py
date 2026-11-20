@@ -26,7 +26,7 @@ from pytest_drill_sergeant.checks.base import (
     TestFunction,
     and_list,
 )
-from pytest_drill_sergeant.checks.exceptions import swallows_an_exception
+from pytest_drill_sergeant.checks.exceptions import SWALLOWED_EXCEPTION
 from pytest_drill_sergeant.findings import Level
 from pytest_drill_sergeant.tokens import Comment
 
@@ -53,13 +53,10 @@ def _last_call(test: TestFunction) -> ast.Call | None:
 
 def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        # A test that skips on every run is DS402's to report, and one that loses
-        # an exception it catches is DS702's: not this check's.
-        if (
-            _has_real_assertion(test)
-            or skips_unconditionally(test, file.module)
-            or swallows_an_exception(test)
-        ):
+        # A test that skips on every run is DS402's to report, not this check's.
+        # One that loses an exception it catches is left to DS702 by `yields_to`,
+        # only where DS702 reports.
+        if _has_real_assertion(test) or skips_unconditionally(test, file.module):
             continue
         call = _last_call(test)
         target = (
@@ -104,7 +101,7 @@ NO_REAL_ASSERTION = Check(
         "that skips on every run, by a `pytest.mark.skip` on it, its class or the "
         "module's `pytestmark`, or a `pytest.skip()` in its own body or the module's, is "
         "left to DS402 unconditional-skip; one with an `except` that loses the error, "
-        "to DS702 swallowed-exception."
+        "to DS702 swallowed-exception, while DS702 reports in that file."
     ),
     bad_example=(
         "def test_process_payment():\n"
@@ -118,6 +115,7 @@ NO_REAL_ASSERTION = Check(
         "    assert gateway.charges == [100]\n"
     ),
     find=_find_no_real_assertion,
+    yields_to=SWALLOWED_EXCEPTION.code,
 )
 
 
