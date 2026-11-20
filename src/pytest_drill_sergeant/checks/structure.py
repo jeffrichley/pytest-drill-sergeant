@@ -579,7 +579,7 @@ LONG_TEST = Check(
     code="DS105",
     name="long-test",
     kind=Kind.SMELL,
-    default_level=Level.OFF,
+    default_level=Level.WARN,
     voice=(
         "This test is longer than my last deployment! CUT IT DOWN, recruit!",
         "Nobody can read a test this long, maggot, and nobody will!",
@@ -599,7 +599,8 @@ LONG_TEST = Check(
         "holding no call, lambda, comprehension or `await` is data and counts as "
         "one line; one holding any of them counts line by line. Its decorators "
         "don't count, so a long `parametrize` table is fine. Move setup into "
-        "fixtures and split the test into one test per behaviour."
+        "fixtures and split the test into one test per behaviour. It warns rather "
+        "than fails: a long test still works, it only costs later."
     ),
     bad_example=(
         "def test_checkout(shop):\n"
