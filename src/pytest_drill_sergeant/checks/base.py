@@ -213,3 +213,8 @@ class Check:
     find_across: Callable[[Summaries, Thresholds], Iterable[tuple[Path, Hit]]] = (
         _compares_nothing
     )
+
+    @property
+    def compares_files(self) -> bool:
+        """Whether the check compares files' summaries, not only reads files."""
+        return self.find_across is not _compares_nothing

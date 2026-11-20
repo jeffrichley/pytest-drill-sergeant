@@ -14,7 +14,9 @@ reads half a file; the later writer's entries win.
 Results are stored as plain JSON, never pickled, so reading a cache that came with
 a checkout can't run code. Any dataclass of plain fields round-trips: it is written
 as the list of its fields' values and read back by its type hints, so a field added
-to a cached dataclass needs nothing here.
+to a cached dataclass needs nothing here. An entry whose key matches was written by
+this code, so reading it back checks its structure (lists where lists go, the right
+number of fields), not the type of every string and number.
 """
 
 import dataclasses
@@ -62,23 +64,64 @@ def encode(value: object) -> object:
     raise TypeError(f"cannot cache a {type(value).__name__}")
 
 
-def _exactly(kind: type) -> Callable[[object], object]:
-    def read(data: object) -> object:
-        if type(data) is not kind:
-            raise TypeError(f"expected {kind.__name__}, got {type(data).__name__}")
-        return data
-
-    return read
-
-
 def _items(data: object) -> list[Any]:
     if not isinstance(data, list):
         raise TypeError(f"expected a list, got {type(data).__name__}")
     return data
 
 
+# A reader that reads a value back from its JSON data; `None` means the data is
+# the value as it stands (a string, number, bool or `None`), with nothing to call.
+_Reader = Callable[[Any], Any] | None
+
+# The plain JSON types, read back as they stand.
+_PLAIN = frozenset({str, int, float, bool, type(None)})
+
+
+def _each(read: _Reader) -> Callable[[Any], list[Any]]:
+    """A reader of a JSON list whose items `read` reads back."""
+    if read is None:
+        return _items
+    return lambda data: [read(v) for v in _items(data)]
+
+
+def _dataclass_reader(cls: type) -> Callable[[Any], Any]:
+    """A reader of a dataclass written as the list of its fields' values.
+
+    A dataclass with nothing to run on init is filled in directly, skipping its
+    `__init__`, which for a frozen dataclass costs most of a warm run's reading.
+    """
+    hints = typing.get_type_hints(cls)
+    fields = dataclasses.fields(cls)
+    names = [f.name for f in fields]
+    reads = [_decoder(hints[f.name]) for f in fields]
+    count = len(names)
+
+    def values(data: object) -> list[Any]:
+        items = _items(data)
+        if len(items) != count:
+            raise TypeError(f"expected {count} fields, got {len(items)}")
+        return [v if r is None else r(v) for r, v in zip(reads, items, strict=True)]
+
+    direct = (
+        all(f.init for f in fields)
+        and not hasattr(cls, "__post_init__")
+        and not hasattr(cls, "__slots__")
+    )
+    if not direct:
+        return lambda data: cls(*values(data))
+    new = object.__new__
+
+    def read(data: object) -> object:
+        instance: Any = new(cls)
+        instance.__dict__.update(zip(names, values(data), strict=True))
+        return instance
+
+    return read
+
+
 @functools.cache
-def _decoder(kind: object) -> Callable[[Any], Any]:  # noqa: PLR0911  # One branch per kind of type, each a line or two.
+def _decoder(kind: object) -> _Reader:  # noqa: C901, PLR0911  # One branch per kind of type, each a line or two.
     """How to read back a value of a type from what `encode` wrote.
 
     Raises:
@@ -86,36 +129,36 @@ def _decoder(kind: object) -> Callable[[Any], Any]:  # noqa: PLR0911  # One bran
     """
     origin, args = typing.get_origin(kind), typing.get_args(kind)
     if dataclasses.is_dataclass(kind) and isinstance(kind, type):
-        hints = typing.get_type_hints(kind)
-        fields = [_decoder(hints[f.name]) for f in dataclasses.fields(kind) if f.init]
-        cls = kind
-        return lambda data: cls(
-            *[read(v) for read, v in zip(fields, _items(data), strict=True)]
-        )
-    if origin in {types.UnionType, typing.Union} and type(None) in args:
+        return _dataclass_reader(kind)
+    if origin in {types.UnionType, typing.Union}:
+        if all(a in _PLAIN for a in args):
+            return None
         [other] = [a for a in args if a is not type(None)]
         read = _decoder(other)
-        return lambda data: None if data is None else read(data)
+        return lambda data: None if data is None else read(data)  # type: ignore[misc]  # `read` is a reader here: `other` isn't plain.
     if origin is tuple and len(args) == 2 and args[1] is Ellipsis:  # noqa: PLR2004  # tuple[X, ...]
-        item = _decoder(args[0])
-        return lambda data: tuple(item(v) for v in _items(data))
+        each = _each(_decoder(args[0]))
+        return lambda data: tuple(each(data))
     if origin is tuple:
         reads = [_decoder(a) for a in args]
         return lambda data: tuple(
-            r(v) for r, v in zip(reads, _items(data), strict=True)
+            v if r is None else r(v) for r, v in zip(reads, _items(data), strict=True)
         )
     if origin in {list, frozenset, set}:
-        item, collection = _decoder(args[0]), origin
-        return lambda data: collection(item(v) for v in _items(data))
+        each, collection = _each(_decoder(args[0])), origin
+        return lambda data: collection(each(data))
     if origin in {dict, Mapping}:
         key, value = _decoder(args[0]), _decoder(args[1])
-        return lambda data: {key(k): value(v) for k, v in _items(data)}
+        return lambda data: {
+            k if key is None else key(k): v if value is None else value(v)
+            for k, v in _items(data)
+        }
     if isinstance(kind, type) and issubclass(kind, enum.Enum):
         return kind
     if kind is Path:
         return Path
-    if kind in {str, int, float, bool}:
-        return _exactly(kind)
+    if kind in _PLAIN:
+        return None
     raise TypeError(f"cannot read back a cached {kind!r}")
 
 
@@ -127,7 +170,8 @@ def decode(kind: type[_T], data: object) -> _T:
         ValueError: When the data isn't one of that type.
     """
     # A type is hashable, though `type[_T]` doesn't say so.
-    value: _T = _decoder(typing.cast(Hashable, kind))(data)
+    read = _decoder(typing.cast(Hashable, kind))
+    value: _T = data if read is None else read(data)  # type: ignore[assignment]  # Plain data is the value as it stands.
     return value
 
 
@@ -186,7 +230,7 @@ class Cache:
 
         An entry that doesn't read back as `kind` is a miss, as a stale one is.
         """
-        entry = self._entries.get(str(path.resolve()))
+        entry = self._entries.get(os.path.abspath(path))
         if not isinstance(entry, list) or len(entry) != 2 or entry[0] != key:  # noqa: PLR2004  # An entry is [key, result].
             return None
         try:
@@ -196,7 +240,7 @@ class Cache:
 
     def put(self, path: Path, key: str, result: object) -> None:
         """Keep a file's result under its key, replacing its old entry."""
-        self._entries[str(path.resolve())] = [key, encode(result)]
+        self._entries[os.path.abspath(path)] = [key, encode(result)]
         self._changed = True
 
     def save(self) -> None:

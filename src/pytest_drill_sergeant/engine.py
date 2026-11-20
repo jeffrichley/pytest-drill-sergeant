@@ -88,18 +88,24 @@ def _tests_in(
             yield from _tests_in(node.body, names, f"{prefix}{node.name}::")
 
 
-def _ignored_codes(path: Path, config: Config) -> frozenset[str]:
+def _ignored_codes(path: Path, config: Config, root: str) -> frozenset[str]:
     """The code prefixes the config's per-file ignores turn off for a file.
 
     A glob matches the file's path relative to the config root, or, for a glob with
     no `/`, the file's name.
+
+    Args:
+        path: The file.
+        config: The resolved configuration.
+        root: The config root, resolved, as a posix path ending in `/`.
     """
-    resolved = path.resolve()
-    root = config.root.resolve()
+    if not config.per_file_ignores:
+        return frozenset()
+    # Plain string work: pathlib's own relative-path test costs more than the rest
+    # of a warm run.
+    resolved = path.resolve().as_posix()
     relative = (
-        resolved.relative_to(root).as_posix()
-        if resolved.is_relative_to(root)
-        else path.as_posix()
+        resolved.removeprefix(root) if resolved.startswith(root) else path.as_posix()
     )
     ignored: set[str] = set()
     for glob, codes in config.per_file_ignores:
@@ -224,19 +230,40 @@ def _file_result(
     return result
 
 
-def _file_findings(path: Path, result: _FileResult, config: Config) -> list[Finding]:
+# The level each check reports at in a file, by the check's code.
+Levels = Mapping[str, Level]
+
+
+def _levels_by_file(paths: list[Path], config: Config) -> dict[Path, Levels]:
+    """The level each check reports at in each file.
+
+    Files that the same per-file ignores match share one mapping.
+    """
+    shared: dict[frozenset[str], Levels] = {}
+    by_file: dict[Path, Levels] = {}
+    root = config.root.resolve().as_posix().rstrip("/") + "/"
+    for path in paths:
+        ignored = _ignored_codes(path, config, root)
+        if ignored not in shared:
+            shared[ignored] = {c.code: _level(c, ignored, config) for c in CHECKS}
+        by_file[path] = shared[ignored]
+    return by_file
+
+
+def _file_findings(path: Path, result: _FileResult, levels: Levels) -> list[Finding]:
     """A file's findings: its hits, at the level each check reports at there."""
-    ignored = _ignored_codes(path, config)
     return [
-        _finding(check, path, hit, level)
+        _finding(check, path, hit, levels[check.code])
         for check in CHECKS
-        if (level := _level(check, ignored, config)) is not Level.OFF
+        if levels[check.code] is not Level.OFF
         for hit in result.hits.get(check.code, ())
     ]
 
 
 def _compare_files(
-    summaries: list[tuple[Path, FileSummary]], config: Config
+    summaries: list[tuple[Path, FileSummary]],
+    levels: Mapping[Path, Levels],
+    config: Config,
 ) -> list[Finding]:
     """Cross-file analysis: the findings comparing every file's summary turns up.
 
@@ -244,12 +271,13 @@ def _compare_files(
     comparison.
     """
     findings: list[Finding] = []
-    ignored = {path: _ignored_codes(path, config) for path, _ in summaries}
     for check in CHECKS:
-        levels = {path: _level(check, ignored[path], config) for path in ignored}
-        seen = [(p, s) for p, s in summaries if levels[p] is not Level.OFF]
+        if not check.compares_files:
+            continue
+        code = check.code
+        seen = [(p, s) for p, s in summaries if levels[p][code] is not Level.OFF]
         findings.extend(
-            _finding(check, path, hit, levels[path])
+            _finding(check, path, hit, levels[path][code])
             for path, hit in check.find_across(seen, _thresholds(config))
         )
     return findings
@@ -296,14 +324,16 @@ def inspect(
     cache = Cache(cache_dir) if cache_dir is not None and config.cache else None
     shared = context(_per_file_settings(config)) if cache is not None else ""
     summaries: list[tuple[Path, FileSummary]] = []
-    for path in sorted(paths, key=lambda p: p.as_posix()):
+    ordered = sorted(paths, key=lambda p: p.as_posix())
+    levels = _levels_by_file(ordered, config)
+    for path in ordered:
         result = _file_result(path, config, cache, shared)
-        findings.extend(_file_findings(path, result, config))
+        findings.extend(_file_findings(path, result, levels[path]))
         files[path] = result.waivers
         summaries.append((path, result.summary))
     if cache is not None:
         cache.save()
-    findings.extend(_compare_files(summaries, config))
+    findings.extend(_compare_files(summaries, levels, config))
     findings.sort(key=lambda f: (f.file.as_posix(), f.line, f.code))
     kept, waived = apply(findings, files)
     return Inspection(findings=kept, waived=waived)
