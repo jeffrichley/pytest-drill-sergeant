@@ -346,6 +346,10 @@ def _compare_files(
     A file a per-file ignore keeps a check off is left out of that check's
     comparison.
     """
+
+    def reports(code: str, path: Path) -> bool:
+        return levels[path][code] is not Level.OFF
+
     findings: list[Finding] = []
     for check in CHECKS:
         if not check.compares_files:
@@ -354,7 +358,7 @@ def _compare_files(
         seen = [(p, s) for p, s in summaries if levels[p][code] is not Level.OFF]
         findings.extend(
             _finding(check, path, hit, levels[path][code])
-            for path, hit in check.find_across(seen, _thresholds(config))
+            for path, hit in check.find_across(seen, _thresholds(config), reports)
         )
     return findings
 

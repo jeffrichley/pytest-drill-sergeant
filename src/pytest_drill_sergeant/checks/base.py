@@ -245,13 +245,21 @@ def and_list(items: Sequence[str]) -> str:
 # summary, ordered by path.
 Summaries = Sequence[tuple[Path, FileSummary]]
 
+# Whether a check reports in a file, as `reports(code, path)`: the check is not
+# `off` there, by its level or a per-file ignore.
+Reports = Callable[[str, Path], bool]
+
+# What a cross-file check is given: every file's summary, the thresholds, and
+# whether another check reports in a file, for a check that defers to it.
+FindAcross = Callable[[Summaries, Thresholds, Reports], Iterable[tuple[Path, Hit]]]
+
 
 def _finds_nothing(_file: TestFile) -> Iterable[Hit]:
     return ()
 
 
 def _compares_nothing(
-    _summaries: Summaries, _thresholds: Thresholds
+    _summaries: Summaries, _thresholds: Thresholds, _reports: Reports
 ) -> Iterable[tuple[Path, Hit]]:
     return ()
 
@@ -274,7 +282,8 @@ class Check:
             for a check that reads only test files. Which files a check reads is
             which of the two it gives: DS403 gives only this one.
         find_across: Reports the hits that comparing every file's summary turns
-            up, each with the file it is in.
+            up, each with the file it is in; it is told which checks report in
+            which files, so it can leave a problem to a more specific check.
     """
 
     code: str
@@ -287,9 +296,7 @@ class Check:
     good_example: str
     find: Callable[[TestFile], Iterable[Hit]] = _finds_nothing
     find_in_source: Callable[[SourceFile], Iterable[Hit]] | None = None
-    find_across: Callable[[Summaries, Thresholds], Iterable[tuple[Path, Hit]]] = (
-        _compares_nothing
-    )
+    find_across: FindAcross = _compares_nothing
 
     @property
     def compares_files(self) -> bool:

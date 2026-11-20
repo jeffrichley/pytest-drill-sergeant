@@ -279,6 +279,26 @@ def test_per_file_ignore_leaves_a_file_out_of_cross_file_comparison(
     assert analyze(pasted_across_files, config) == []
 
 
+@pytest.mark.parametrize(
+    ("raw", "codes"),
+    [
+        ({}, {("DS502", 11)}),
+        ({"drill_sergeant_levels": "DS502=off"}, {("DS501", 12)}),
+        ({"drill_sergeant_per_file_ignores": "*.py: DS502"}, {("DS501", 12)}),
+    ],
+    ids=["both-on", "near-duplicates-off", "near-duplicates-ignored"],
+)
+def test_copy_paste_setup_folds_near_duplicates_only_while_they_are_reported(
+    raw, codes
+):
+    corpus = Path(__file__).parent / "corpus" / "near-duplicate-tests"
+    config = resolve(raw, corpus)
+
+    findings = analyze([corpus / "test_bad_with_pasted_setup.py"], config)
+
+    assert {(f.code, f.line) for f in findings} == codes
+
+
 def test_configured_level_applies_to_cross_file_findings(pasted_across_files):
     findings = analyze(pasted_across_files, Config(levels={"DS501": Level.WARN}))
 

@@ -8,7 +8,7 @@ Near-duplicate tests (DS502) are tests of one file and one class, alike in their
 `def` line, decorators and every name, and differing at most in their body's
 literals: one parametrized test holds them all. Parametrizing them takes their
 shared setup with them, so copy-pasted setup (DS501) counts each such group as one
-test, its first.
+test, its first, in a file where DS502 reports.
 """
 
 from collections.abc import Iterator, Sequence
@@ -18,6 +18,7 @@ from pathlib import Path
 from pytest_drill_sergeant.checks.base import (
     Check,
     Hit,
+    Reports,
     Statement,
     Summaries,
     TestSummary,
@@ -25,6 +26,9 @@ from pytest_drill_sergeant.checks.base import (
     and_list,
 )
 from pytest_drill_sergeant.findings import Level
+
+# The near-duplicate check's code: copy-pasted setup leaves its groups to it.
+_NEAR_DUPLICATE_TESTS = "DS502"
 
 
 @dataclass(frozen=True)
@@ -69,11 +73,15 @@ def _near_duplicates(
                 yield path, tests
 
 
-def _setups(summaries: Summaries) -> list[_Setup]:
-    """Every test's setup, a group of near-duplicate tests counted as its first."""
+def _setups(summaries: Summaries, reports: Reports) -> list[_Setup]:
+    """Every test's setup, a group of near-duplicate tests counted as its first.
+
+    A group is folded only in a file where the near-duplicate check reports it.
+    """
     folded = {
         (path, test.name)
         for path, tests in _near_duplicates(summaries)
+        if reports(_NEAR_DUPLICATE_TESTS, path)
         for test in tests[1:]
     }
     return [
@@ -131,7 +139,7 @@ def _fixture_name(block: list[Statement]) -> str:
 
 
 def _find_copy_paste_setup(
-    summaries: Summaries, thresholds: Thresholds
+    summaries: Summaries, thresholds: Thresholds, reports: Reports
 ) -> Iterator[tuple[Path, Hit]]:
     # A block is at least one statement, and is pasted only if two tests hold it.
     size = max(thresholds.duplicate_setup_min_statements, 1)
@@ -139,7 +147,7 @@ def _find_copy_paste_setup(
     # A statement is reported in one block at most: a block that overlaps one
     # already reported, in any test, waits for that one's fixture.
     reported: set[tuple[int, int]] = set()  # (setup id, statement index)
-    for copies in _windows(_setups(summaries), size).values():
+    for copies in _windows(_setups(summaries, reports), size).values():
         if len(copies) < min_tests:
             continue
         length = _block_length(copies, size)
@@ -282,7 +290,7 @@ def _parametrize(rows: list[tuple[str, ...]]) -> str:
 
 
 def _find_near_duplicate_tests(
-    summaries: Summaries, _thresholds: Thresholds
+    summaries: Summaries, _thresholds: Thresholds, _reports: Reports
 ) -> Iterator[tuple[Path, Hit]]:
     for path, tests in _near_duplicates(summaries):
         first, others = tests[0], tests[1:]
@@ -305,7 +313,7 @@ def _find_near_duplicate_tests(
 
 
 NEAR_DUPLICATE_TESTS = Check(
-    code="DS502",
+    code=_NEAR_DUPLICATE_TESTS,
     name="near-duplicate-tests",
     default_level=Level.FAIL,
     voice=(
@@ -333,7 +341,8 @@ NEAR_DUPLICATE_TESTS = Check(
         "tests already parametrized are flagged only under the very same "
         "`parametrize`. Copy-pasted setup "
         "(DS501) counts a group of near-duplicate tests as one test, since "
-        "parametrizing them removes their shared setup too."
+        "parametrizing them removes their shared setup too; with this check off "
+        "for a file, DS501 counts each of them."
     ),
     bad_example=(
         "def test_one_apple_costs_three():\n"
