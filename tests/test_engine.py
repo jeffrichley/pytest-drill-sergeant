@@ -462,3 +462,20 @@ def test_skip_call_finding_names_the_test_it_is_in(write_test_file, source, wher
     [finding] = analyze([path], Config(levels={"DS401": Level.FAIL}))
 
     assert (finding.code, finding.test) == ("DS401", where)
+
+
+@pytest.mark.parametrize(
+    ("body", "waiver_offered"),
+    [("    ship(order)\n", True), ("    receipt = ship(order)\n", False)],
+    ids=["result-discarded", "result-kept"],
+)
+def test_no_assertion_fix_offers_a_waiver_only_when_the_last_call_is_discarded(
+    write_test_file, body, waiver_offered
+):
+    """A test that only proves a call doesn't raise gets no exemption: its fix says
+    to waive it with that reason."""
+    path = write_test_file("def test_ship(order):\n" + body)
+
+    [finding] = analyze([path], Config(levels={"DS101": Level.FAIL}))
+
+    assert ("# drill: waive DS101" in finding.fix) is waiver_offered

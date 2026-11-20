@@ -320,10 +320,12 @@ def _is_expect_matcher(call: ast.Call, names: Mapping[str, str]) -> bool:
 
 
 def is_real_assertion(node: ast.AST, names: Mapping[str, str]) -> bool:
-    """Whether a node is a real assertion, as GLOSSARY.md's entry defines it.
+    """Whether a node is itself a real assertion, as GLOSSARY.md's entry defines it.
 
     pytest's helpers and assertion libraries are known through whatever names the
-    file's imports give them.
+    file's imports give them. A call into a function of the test tree that holds
+    one is a real assertion too, which takes more than the node to know:
+    `checks.helpers.Assertions` follows those.
 
     Args:
         node: The node.

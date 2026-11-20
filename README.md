@@ -130,7 +130,9 @@ milliseconds, and an edit costs only the files it touched.
   is the only file a run writes.
 - A file is analysed again when its bytes change, when drill-sergeant changes, or
   when an option that shapes per-file analysis does (thresholds, category markers,
-  source dirs, inline waivers). Changing levels, mode or per-file ignores reuses it.
+  source dirs, inline waivers), or when a test helper module it follows changes (a
+  test's real assertion may be in a helper it imports). Changing levels, mode or
+  per-file ignores reuses it.
 - A corrupt or unreadable cache is rebuilt without a word.
 - `drill_sergeant_cache = false` turns it off; so does `-p no:cacheprovider`, which
   turns off pytest's own cache. `pytest --cache-clear` empties it.
