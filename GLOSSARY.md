@@ -65,7 +65,7 @@ A configured number a check measures against, such as the most lines a test may 
 _Avoid_: Limit, setting
 
 **Findings section**:
-The part of a pytest run's output, after the test results, where the plugin reports the run's findings: at most `drill_sergeant_max_findings` of them, then a count of the rest. The CLI shows every finding.
+The part of a pytest run's output, after the test results, where the plugin reports the run's findings: at most `drill_sergeant_max_findings` of them, then a count of the rest, then a tally by level and of waived findings. The CLI shows every finding.
 _Avoid_: Report summary, findings item
 
 **Voice**:
@@ -73,7 +73,7 @@ The drill-sergeant persona in which findings are delivered: snarky in tone, prec
 _Avoid_: Persona, personality
 
 **Waiver**:
-A recorded, reasoned exemption that silences one finding (or one check for a scope), made deliberately and visible to reviewers.
+A `# drill: waive DS### -- <reason>` comment that silences the named check's findings on its line, or anywhere in a test when it sits on the test's `def` line: a reasoned exemption, made deliberately and visible to reviewers. It must name the code and give a reason, or it waives nothing and is itself a finding. Every run tallies the findings waived.
 _Avoid_: Suppression, ignore, noqa
 
 **Agent guide**:

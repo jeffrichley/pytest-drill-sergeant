@@ -112,3 +112,26 @@ def wrapped():
         return lines[start + 1 : end], lines[end] if end < len(lines) else ""
 
     return split
+
+
+@pytest.fixture
+def write_test_file(tmp_path):
+    """Write source to `test_it.py` in `tmp_path` and return its path."""
+
+    def write(source: str):
+        path = tmp_path / "test_it.py"
+        path.write_text(source)
+        return path
+
+    return write
+
+
+@pytest.fixture
+def waived_test(tmp_path):
+    """A test file in `tmp_path`, `test_waived.py`, holding one test whose only
+    finding (DS101 on line 1) is waived with the reason `smoke test`."""
+    path = tmp_path / "test_waived.py"
+    path.write_text(
+        "def test_waived():  # drill: waive DS101 -- smoke test\n    run()\n"
+    )
+    return path

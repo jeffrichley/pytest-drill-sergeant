@@ -278,13 +278,53 @@ def test_forced_colour_styles_the_report_and_links_the_location_to_its_file(
     assert f";{assertion_free_test.resolve().as_uri()}\x1b\\test_it.py:1" in output
 
 
-# A change to the report changes golden/check.txt: rerun `drill-sergeant check suite`
-# over a copy of the corpus with NO_COLOR=1 COLUMNS=100, and review the diff.
+# A change to the report changes golden/check.txt: rerun
+# `drill-sergeant check --show-waived suite` over a copy of the corpus with
+# NO_COLOR=1 COLUMNS=100, and review the diff.
 def test_check_output_matches_the_golden_report(cli, tmp_path):
     golden = Path(__file__).parent / "golden" / "check.txt"
     suite = tmp_path / "suite"
     shutil.copytree(CORPUS, suite)
 
-    result = cli("check", "suite")
+    result = cli("check", "--show-waived", "suite")
 
     assert result.output == golden.read_text()
+
+
+def test_waived_findings_leave_the_exit_code_and_are_tallied(cli, waived_test):
+    result = cli("check", "test_waived.py")
+
+    assert result.exit_code == 0, result.output
+    assert "1 waived" in result.output
+    assert "smoke test" not in result.output
+
+
+def test_tally_counts_waived_findings_beside_the_findings_that_stand(
+    cli, waived_test, assertion_free_test
+):
+    result = cli("check", "test_waived.py", "test_it.py")
+
+    assert result.exit_code == 1, result.output
+    assert "1 waived" in result.output.splitlines()[-1]
+
+
+def test_show_waived_lists_each_waived_finding_with_its_reason(cli, waived_test):
+    result = cli("check", "--show-waived", "test_waived.py")
+
+    assert result.exit_code == 0, result.output
+    [listed] = [line for line in result.output.splitlines() if "DS101" in line]
+    assert "test_waived.py:1" in listed
+    assert "smoke test" in result.output
+
+
+def test_with_inline_waivers_off_the_cli_reports_the_waived_finding(
+    cli, tmp_path, waived_test
+):
+    (tmp_path / "pytest.ini").write_text(
+        "[pytest]\ndrill_sergeant_inline_waivers = false\n"
+    )
+
+    result = cli("check", "test_waived.py")
+
+    assert result.exit_code == 1, result.output
+    assert "0 waived" in result.output
