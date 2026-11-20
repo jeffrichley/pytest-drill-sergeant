@@ -24,6 +24,11 @@ def test_private_method_result():
     assert Service()._build_url("x") == "https://example.com/x"  # expect: DS602
 
 
+def test_raises_a_private_error():
+    with pytest.raises(Service._Timeout):  # expect: DS602
+        Service().run()
+
+
 class TestAccount(unittest.TestCase):
     def test_balance(self):
         account = Account(10)
