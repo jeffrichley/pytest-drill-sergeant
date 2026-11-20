@@ -214,9 +214,19 @@ class _PrivateReads:
         self.params = set(value_params(test))
         if (instance := instance_param(test)) is not None:
             self.params.add(instance)
+        # A bare annotation (`opts: dict`) binds nothing.
+        declared = {
+            id(node.target)
+            for node in walk_test(test)
+            if isinstance(node, ast.AnnAssign) and node.value is None
+        }
         self.stores: dict[str, set[int]] = {}
         for node in walk_test(test):
-            if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            if (
+                isinstance(node, ast.Name)
+                and isinstance(node.ctx, ast.Store)
+                and id(node) not in declared
+            ):
                 self.stores.setdefault(node.id, set()).add(id(node))
         self.held: dict[str, list[str]] = {}
         self.traced: dict[str, dict[int, list[str]]] = {}
@@ -229,7 +239,11 @@ class _PrivateReads:
                     if not reads:
                         continue
                     for name in ast.walk(target):
-                        if isinstance(name, ast.Name) and self._trace(name, reads):
+                        if (
+                            isinstance(name, ast.Name)
+                            and isinstance(name.ctx, ast.Store)
+                            and self._trace(name, reads)
+                        ):
                             changed = True
 
     def _trace(self, name: ast.Name, reads: list[str]) -> bool:

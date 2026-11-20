@@ -39,3 +39,11 @@ def test_a_private_read_held_by_an_annotated_name():
     driver.start()
     opts: dict = driver._options()
     assert opts["model"] is None  # expect: DS602
+
+
+def test_a_private_read_held_by_a_name_declared_first():
+    driver = Driver("dee")
+    driver.start()
+    opts: dict
+    opts = driver._options()
+    assert opts["model"] is None  # expect: DS602
