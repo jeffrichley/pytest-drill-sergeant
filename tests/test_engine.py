@@ -152,7 +152,10 @@ def test_unset_options_take_the_spec_defaults():
     assert (config.voice, config.inline_waivers, config.cache) == (True, True, True)
 
 
-def test_every_spec_option_is_known_and_typed():
+def test_every_spec_option_is_known_and_typed(tmp_path):
+    (tmp_path / "lib").mkdir()
+    (tmp_path / "app").mkdir()
+
     config = resolve(
         {
             "drill_sergeant_mode": "warn",
@@ -169,7 +172,8 @@ def test_every_spec_option_is_known_and_typed():
             "drill_sergeant_max_findings": "0",
             "drill_sergeant_inline_waivers": "no",
             "drill_sergeant_cache": "0",
-        }
+        },
+        root=tmp_path,
     )
 
     assert (

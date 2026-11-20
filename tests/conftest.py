@@ -112,3 +112,17 @@ def wrapped():
         return lines[start + 1 : end], lines[end] if end < len(lines) else ""
 
     return split
+
+
+@pytest.fixture
+def special_casing_module():
+    """Write `app.py`, production code that checks whether pytest is running (DS403
+    on line 4), into a directory, and return its path."""
+
+    def write(directory):
+        directory.mkdir(parents=True, exist_ok=True)
+        path = directory / "app.py"
+        path.write_text("import os\nimport sys\n\nTESTING = 'pytest' in sys.modules\n")
+        return path
+
+    return write

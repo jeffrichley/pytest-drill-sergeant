@@ -154,7 +154,11 @@ def _tally(findings: list[Finding], *, voice: bool) -> Text:
 
 
 def render(
-    findings: list[Finding], *, voice: bool = True, max_findings: int = 0
+    findings: list[Finding],
+    *,
+    voice: bool = True,
+    max_findings: int = 0,
+    note: str | None = None,
 ) -> RenderableType:
     """Render findings as the report.
 
@@ -163,7 +167,8 @@ def render(
     a flourish. With `max_findings`, only the first that many findings are shown, then a
     line counting the rest; the banner and tally still count every finding. With
     the voice off there is no banner, voice line or flourish; the
-    Found/Why/Fix lines are unchanged.
+    Found/Why/Fix lines are unchanged. A note, such as checks skipped for want of
+    production code, is the report's last line, never wrapped.
 
     A finding's location line is never wrapped; its Found/Why/Fix wrap to the
     console's width, each wrapped line under the text it continues. Print the report
@@ -174,15 +179,18 @@ def render(
             code), which keeps each file's findings together.
         voice: Whether to deliver the report in the voice.
         max_findings: The most findings to show; 0 shows them all.
+        note: One line to end the report with, or `None`.
 
     Returns:
         The report, ready for `Console.print`.
     """
+    notes = [_Unwrapped(Text(note))] if note else []
     if not findings:
-        return (
+        return Group(
             Text("DRILL SERGEANT INSPECTION: no findings. As you were!", _BANNER)
             if voice
-            else Text("No findings.")
+            else Text("No findings."),
+            *notes,
         )
     files = len({f.file for f in findings})
     out: list[RenderableType] = []
@@ -207,4 +215,4 @@ def render(
         cap.append(" for all", "bold")
         out += [cap, Text()]
     out.append(_tally(findings, voice=voice))
-    return Group(*out)
+    return Group(*out, *notes)

@@ -1937,3 +1937,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
            checks: assert what `plugin` should equal, as in `assert value == expected`.
 
 217 findings: 208 fail, 9 warn. Fix them, recruit. DISMISSED!
+drill-sergeant: skipped DS403 test-special-casing: no src/ and no drill_sergeant_source_dirs.

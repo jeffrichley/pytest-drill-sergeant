@@ -2,8 +2,8 @@
 
 Installing the package turns it on; `-p no:drill_sergeant` or
 `drill_sergeant_mode = off` turns it off. After collection it analyses the files that
-contributed collected test functions, once, on the xdist controller only; the tests
-then run as always. The findings section after the test results shows them, and a
+contributed collected test functions, and the production code, once, on the xdist
+controller only; the tests then run as always. The findings section after the test results shows them, and a
 run whose tests ran and passed exits 1 when any finding is at the `fail` level.
 """
 
@@ -24,6 +24,7 @@ from pytest_drill_sergeant.config import (
 )
 from pytest_drill_sergeant.engine import analyze
 from pytest_drill_sergeant.findings import Finding, Level
+from pytest_drill_sergeant.production import production_code
 from pytest_drill_sergeant.render import render
 
 # The name the run's state is registered under with pytest's plugin manager.
@@ -116,6 +117,7 @@ class _Run:
         self.config = config
         self.resolved = resolved
         self.findings: list[Finding] | None = None
+        self.production = production_code(resolved, config.invocation_params.dir)
 
     def _analyze(self, paths: set[Path]) -> None:
         if self.findings is not None:
@@ -124,6 +126,7 @@ class _Run:
         self.findings = analyze(
             sorted(p.relative_to(here) if p.is_relative_to(here) else p for p in paths),
             self.resolved,
+            self.production.files,
         )
 
     def pytest_collection_finish(self, session: pytest.Session) -> None:
@@ -167,6 +170,7 @@ class _Run:
                 self.findings,
                 voice=self.resolved.voice,
                 max_findings=self.resolved.max_findings,
+                note=self.production.note,
             ),
             crop=False,
         )

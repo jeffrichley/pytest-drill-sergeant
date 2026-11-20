@@ -10,6 +10,7 @@ from pytest_drill_sergeant.config import ConfigError, refusal, resolve
 from pytest_drill_sergeant.discovery import discover, load, test_files
 from pytest_drill_sergeant.engine import analyze
 from pytest_drill_sergeant.findings import Level
+from pytest_drill_sergeant.production import production_code
 from pytest_drill_sergeant.render import render
 
 app = typer.Typer(
@@ -55,8 +56,9 @@ def check(
     except ConfigError as error:
         _refuse(refusal(error))
     files = test_files(paths, source)
+    production = production_code(config, Path.cwd())
     try:
-        findings = analyze(files, config)
+        findings = analyze(files, config, production.files)
     except SyntaxError as error:
         _refuse(
             f"drill-sergeant: cannot parse {error.filename}, line {error.lineno}: "
@@ -64,6 +66,8 @@ def check(
         )
     # The console reads the terminal as it is now: its width (or COLUMNS), and
     # whether it takes colour (not when piped, or under NO_COLOR).
-    Console(highlight=False).print(render(findings, voice=config.voice), crop=False)
+    Console(highlight=False).print(
+        render(findings, voice=config.voice, note=production.note), crop=False
+    )
     if any(f.level is Level.FAIL for f in findings):
         raise typer.Exit(1)

@@ -47,8 +47,8 @@ class Config:
         per_file_ignores: Per-file ignores, as (glob, code prefixes) pairs. A file
             whose path relative to `root` matches the glob (or whose name does, for
             a glob with no `/`) is not checked by the checks the prefixes name.
-        root: The directory per-file ignore globs are relative to: the config
-            file's.
+        root: The directory per-file ignore globs and source dirs are relative
+            to: the config file's.
         max_file_lines: The most lines a test file may have.
         max_test_lines: The most lines a test function may have.
         max_mock_setup: The most mock-setup statements a test may have.
@@ -56,8 +56,8 @@ class Config:
             block has.
         duplicate_setup_min_tests: The fewest tests a copy-pasted setup block is in.
         category_markers: The category markers a test may carry.
-        source_dirs: The production source directories; empty means `src/` if it
-            exists.
+        source_dirs: The production source directories, relative to `root`; empty
+            means `src/` if it exists.
         voice: Whether findings are delivered in the voice.
         max_findings: The most findings the plugin shows; 0 means all.
         inline_waivers: Whether inline waivers are honoured.
@@ -301,6 +301,15 @@ def _per_file_ignores(
     return tuple(ignores)
 
 
+def _source_dirs(name: str, value: RawValue, root: Path) -> tuple[str, ...]:
+    """The production source directories, each of which must exist under `root`."""
+    dirs = tuple(_line_list(name, value))
+    for directory in dirs:
+        if not (root / directory).is_dir():
+            raise ConfigError(f"{name}: no such directory: {directory}")
+    return dirs
+
+
 def resolve(
     raw: Mapping[str, RawValue], root: Path = Path(), source: Path | None = None
 ) -> Config:
@@ -310,8 +319,8 @@ def resolve(
         raw: Ini values by key. Keys without the `drill_sergeant_` prefix are
             ignored, so a whole ini section can be passed; unset options take their
             defaults.
-        root: The directory per-file ignore globs are relative to: the config
-            file's.
+        root: The directory per-file ignore globs and source dirs are relative
+            to: the config file's.
         source: The config file the values came from, named in any refusal.
 
     Returns:
@@ -319,7 +328,8 @@ def resolve(
 
     Raises:
         ConfigError: On an unknown `drill_sergeant_*` key, an unknown check code, a
-            bad level or a malformed value, such as a non-numeric threshold. Its
+            bad level, a source dir that doesn't exist under `root`, or a malformed
+            value, such as a non-numeric threshold. Its
             message starts with `source`, when there is one.
     """
     try:
@@ -350,7 +360,7 @@ def _resolve(raw: Mapping[str, RawValue], root: Path) -> Config:
         duplicate_setup_min_statements=get(_int, "duplicate_setup_min_statements"),
         duplicate_setup_min_tests=get(_int, "duplicate_setup_min_tests"),
         category_markers=tuple(get(_args, "category_markers")),
-        source_dirs=tuple(get(_line_list, "source_dirs")),
+        source_dirs=get(lambda n, v: _source_dirs(n, v, root), "source_dirs"),
         voice=get(_bool, "voice"),
         max_findings=get(_int, "max_findings"),
         inline_waivers=get(_bool, "inline_waivers"),
