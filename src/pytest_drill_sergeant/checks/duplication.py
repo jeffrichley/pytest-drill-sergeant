@@ -97,13 +97,15 @@ def _find_copy_paste_setup(
     # A block is at least one statement, and is pasted only if two tests hold it.
     size = max(thresholds.duplicate_setup_min_statements, 1)
     least = max(thresholds.duplicate_setup_min_tests, 2)
+    # A statement is reported in one block at most: a block that overlaps one
+    # already reported, in any test, waits for that one's fixture.
     reported: set[tuple[int, int]] = set()  # (setup id, statement index)
     for copies in _windows(_setups(summaries), size).values():
         if len(copies) < least:
             continue
         length = _length(copies, size)
         spans = [{(id(c.setup), c.start + i) for i in range(length)} for c in copies]
-        if all(span & reported for span in spans):
+        if any(span & reported for span in spans):
             continue
         reported.update(*spans)
         first, others = copies[0], copies[1:]
@@ -117,7 +119,7 @@ def _find_copy_paste_setup(
                 block[0].line,
                 found=(
                     f"shares {length} setup statements ({lines}) with "
-                    f"{len(others)} other tests: {tests}."
+                    f"{len(others)} other tests, alike in every name and literal."
                 ),
                 fix=(
                     f"move {lines} into {_fixture_name(block)} and request it "
@@ -149,7 +151,8 @@ COPY_PASTE_SETUP = Check(
         "least `drill_sergeant_duplicate_setup_min_tests` tests (3 by default). A "
         "test's setup is its statements before the first one that holds a real "
         "assertion. One finding per block, on its first occurrence, names the other "
-        "tests that hold it. Setup that differs in a value is not a copy: if the "
+        "tests that hold it; a statement is reported in one block at most, so a "
+        "block overlapping one already reported shows up once that one is fixed. Setup that differs in a value is not a copy: if the "
         "tests differ only in their values, parametrize them instead. Move the block "
         "into a fixture and have each test request it."
     ),

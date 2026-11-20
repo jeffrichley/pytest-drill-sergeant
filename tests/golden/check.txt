@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 201 findings in 54 files. FALL IN!
+DRILL SERGEANT INSPECTION: 202 findings in 55 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -410,10 +410,7 @@ suite/copy-paste-setup/cross-file/test_bad_billing_charges.py
   suite/copy-paste-setup/cross-file/test_bad_billing_charges.py:9: DS501 copy-paste-setup [fail] in test_charge_debits_the_account
     "One fixture, recruit! Not the same orders barked in every tent!"
     Found: `test_charge_debits_the_account` shares 3 setup statements (lines 9-11) with 2 other
-           tests: `test_charge_over_the_limit_is_refused`
-           (suite/copy-paste-setup/cross-file/test_bad_billing_limits.py, line 8),
-           `test_refund_credits_the_account`
-           (suite/copy-paste-setup/cross-file/test_bad_billing_refunds.py, line 8).
+           tests, alike in every name and literal.
     Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
            and it buries what makes each test different.
     Fix:   In `test_charge_debits_the_account`, line 9: move lines 9-11 into a fixture, e.g.
@@ -426,8 +423,7 @@ suite/copy-paste-setup/test_bad_after_a_different_start.py
   suite/copy-paste-setup/test_bad_after_a_different_start.py:10: DS501 copy-paste-setup [fail] in TestRestock::test_restock_fills_the_shelf
     "LISTEN UP, RECRUIT! You wrote the same setup over and over like a broken record!"
     Found: `TestRestock::test_restock_fills_the_shelf` shares 4 setup statements (lines 10-13) with
-           3 other tests: `TestRestock::test_restock_draws_down_the_stock` (line 19),
-           `test_empty_shelf_reports_zero` (line 28), `test_shelf_refuses_past_capacity` (line 37).
+           3 other tests, alike in every name and literal.
     Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
            and it buries what makes each test different.
     Fix:   In `TestRestock::test_restock_fills_the_shelf`, line 10: move lines 10-13 into a fixture,
@@ -435,13 +431,22 @@ suite/copy-paste-setup/test_bad_after_a_different_start.py
            (line 19), `test_empty_shelf_reports_zero` (line 28), `test_shelf_refuses_past_capacity`
            (line 37).
 
+suite/copy-paste-setup/test_bad_overlapping_blocks.py
+  suite/copy-paste-setup/test_bad_overlapping_blocks.py:11: DS501 copy-paste-setup [fail] in test_provider_reads_the_issue_title
+    "Copy, paste, copy, paste! That's not engineering, that's a PHOTOCOPIER, maggot!"
+    Found: `test_provider_reads_the_issue_title` shares 5 setup statements (lines 11-15) with 2
+           other tests, alike in every name and literal.
+    Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
+           and it buries what makes each test different.
+    Fix:   In `test_provider_reads_the_issue_title`, line 11: move lines 11-15 into a fixture, e.g.
+           `provider`, and request it here and in `test_provider_reads_the_issue_number` (line 20),
+           `test_provider_asks_the_repo_once` (line 29).
+
 suite/copy-paste-setup/test_bad_same_file.py
   suite/copy-paste-setup/test_bad_same_file.py:8: DS501 copy-paste-setup [fail] in test_order_total_sums_the_lines
     "LISTEN UP, RECRUIT! You wrote the same setup over and over like a broken record!"
     Found: `test_order_total_sums_the_lines` shares 4 setup statements (lines 8-11) with 3 other
-           tests: `test_order_ships_once_paid` (line 17), `test_order_cancel_empties_the_cart` (line
-           26), `test_apple_order_total` (suite/copy-paste-setup/test_good_different_values.py, line
-           9).
+           tests, alike in every name and literal.
     Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
            and it buries what makes each test different.
     Fix:   In `test_order_total_sums_the_lines`, line 8: move lines 8-11 into a fixture, e.g.
@@ -453,7 +458,7 @@ suite/copy-paste-setup/test_bad_two_blocks.py
   suite/copy-paste-setup/test_bad_two_blocks.py:10: DS501 copy-paste-setup [fail] in test_report_renders_its_title
     "Copy, paste, copy, paste! That's not engineering, that's a PHOTOCOPIER, maggot!"
     Found: `test_report_renders_its_title` shares 3 setup statements (lines 10-12) with 2 other
-           tests: `test_report_renders_no_rows` (line 17), `test_report_has_no_footer` (line 24).
+           tests, alike in every name and literal.
     Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
            and it buries what makes each test different.
     Fix:   In `test_report_renders_its_title`, line 10: move lines 10-12 into a fixture, e.g.
@@ -462,8 +467,7 @@ suite/copy-paste-setup/test_bad_two_blocks.py
   suite/copy-paste-setup/test_bad_two_blocks.py:31: DS501 copy-paste-setup [fail] in test_html_renderer_escapes_markup
     "Copy, paste, copy, paste! That's not engineering, that's a PHOTOCOPIER, maggot!"
     Found: `test_html_renderer_escapes_markup` shares 3 setup statements (lines 31-33) with 2 other
-           tests: `test_html_renderer_keeps_text` (line 38), `test_html_renderer_wraps_lines` (line
-           45).
+           tests, alike in every name and literal.
     Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
            and it buries what makes each test different.
     Fix:   In `test_html_renderer_escapes_markup`, line 31: move lines 31-33 into a fixture, e.g.
@@ -1822,4 +1826,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Fix:   In `test_async_import`, line 30: replace the weak assertions on line 30 with exact
            checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-201 findings: 192 fail, 9 warn. Fix them, recruit. DISMISSED!
+202 findings: 193 fail, 9 warn. Fix them, recruit. DISMISSED!
