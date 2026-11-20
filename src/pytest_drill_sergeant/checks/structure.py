@@ -600,8 +600,20 @@ def _code_called(test: TestFunction) -> str | None:
     return None
 
 
-def _module_level_plan(tests: list[TestFunction]) -> str:
-    """How to split the module-level tests: grouped by the imported code they call."""
+def _calls_phrase(code: str, count: int) -> str:
+    if count == 1:
+        return f"the one that calls `{code}`"
+    return f"the {count} that call `{code}`"
+
+
+def _module_level_plan(
+    tests: list[TestFunction], own: str
+) -> tuple[str | None, str | None]:
+    """How to split the module-level tests: grouped by the imported code they call.
+
+    Returns where to move them, and which of them stay: a group whose file would be
+    the file itself (`own`) stays. Either is `None` when there is none.
+    """
     spans = [_span(t.node) for t in tests]
     what = (
         f"its {_plural(len(tests), 'module-level test')} "
@@ -613,35 +625,50 @@ def _module_level_plan(tests: list[TestFunction]) -> str:
         key=lambda item: (-item[1], item[0]),
     )
     if not named:
-        return f"{what} into files of one behaviour each"
-    moves = [
-        f"the {n} that call `{code}` to `{_test_file_for(code.split('.')[-1])}`"
-        if n > 1
-        else f"the one that calls `{code}` to `{_test_file_for(code.split('.')[-1])}`"
-        for code, n in named
-    ]
+        return f"{what} into files of one behaviour each", None
+    moves: list[str] = []
+    stays: list[str] = []
+    for code, n in named:
+        target = _test_file_for(code.split(".")[-1])
+        if target == own:
+            stays.append(_calls_phrase(code, n))
+        else:
+            moves.append(f"{_calls_phrase(code, n)} to `{target}`")
     if None in groups:
         moves.append(f"the other {groups[None]} by the behaviour they check")
-    return f"{what} by the code they call: {', '.join(moves)}"
+    move = f"{what} by the code they call: {', '.join(moves)}" if moves else None
+    return move, and_list(stays) if stays else None
 
 
 def _split_plan(file: TestFile) -> str:
-    """How to split a file: each test class to a file of its own, then the rest."""
-    parts: list[str] = []
+    """How to split a file: each test class to a file of its own, then the rest.
+
+    Nothing is moved to a file of the file's own name: what would go there stays.
+    """
+    own = file.path.name
+    moves: list[str] = []
+    stays: list[str] = []
     for node in file.module.body:
         if not isinstance(node, ast.ClassDef):
             continue
-        count = sum(t.name.startswith(f"{node.name}::") for t in file.tests)
+        count = sum(bool(t.classes) and t.classes[0] is node for t in file.tests)
         if count:
             first, last = _span(node)
-            parts.append(
-                f"`{node.name}` (lines {first}-{last}, {_plural(count, 'test')}) to "
-                f"`{_test_file_for(node.name)}`"
-            )
-    loose = [t for t in file.tests if "::" not in t.name]
+            what = f"`{node.name}` (lines {first}-{last}, {_plural(count, 'test')})"
+            target = _test_file_for(node.name)
+            if target == own:
+                stays.append(what)
+            else:
+                moves.append(f"{what} to `{target}`")
+    loose = [t for t in file.tests if not t.classes]
     if loose:
-        parts.append(_module_level_plan(loose))
-    return "; ".join(parts)
+        move, stay = _module_level_plan(loose, own)
+        moves += [move] if move else []
+        stays += [stay] if stay else []
+    if not moves:
+        return f"split {and_list(stays)} into files of one behaviour each"
+    plan = f"move {'; '.join(moves)}"
+    return f"{plan}; keep {and_list(stays)} here" if stays else plan
 
 
 def _plural(count: int, noun: str) -> str:
@@ -659,7 +686,7 @@ def _find_long_file(file: TestFile) -> Iterator[Hit]:
             f"have; it holds {_plural(len(file.tests), 'test')}."
         ),
         fix=(
-            f"split it into files of at most {limit} lines: move "
+            f"split it into files of at most {limit} lines: "
             f"{_split_plan(file)}. Move fixtures the new files share into "
             "`conftest.py`."
         ),

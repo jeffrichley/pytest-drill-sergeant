@@ -30,9 +30,8 @@ suite/test_inventory.py
     Why:   A test file this long can't be held in mind: tests in it get duplicated or contradict
            each other because nobody, agent or person, can see what is already there.
     Fix:   In `test_inventory.py`: split it into files of at most 40 lines: move its 5 module-level
-           tests (lines 20-48) by the code they call: the 2 that call `Inventory` to
-           `test_inventory.py`, the other 3 by the behaviour they check. Move fixtures the new files
-           share into `conftest.py`.
+           tests (lines 20-48) by the code they call: the other 3 by the behaviour they check; keep
+           the 2 that call `Inventory` here. Move fixtures the new files share into `conftest.py`.
 
 Waived findings
   suite/test_cart.py:23: DS101 no-real-assertion [fail] in test_empty_cart_smoke

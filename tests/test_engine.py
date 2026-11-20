@@ -330,6 +330,25 @@ def test_thresholds_set_how_long_a_test_and_a_file_may_be(
 
 
 @pytest.mark.parametrize(
+    "source",
+    [
+        "class TestLoans:\n    def test_lend(self, library):\n"
+        "        assert library.lend(1).days == 21\n",
+        "from shop import loans\n\ndef test_lend():\n    assert loans(1) == 21\n\n"
+        "def test_renew():\n    assert loans(2, renewed=True) == 42\n",
+    ],
+    ids=["class", "module-level-tests"],
+)
+def test_long_file_split_never_moves_tests_to_the_file_itself(write_test_file, source):
+    path = write_test_file(source, "test_loans.py")
+
+    [finding] = analyze([path], Config(max_file_lines=2))
+
+    assert finding.code == "DS106"
+    assert "to `test_loans.py`" not in finding.fix
+
+
+@pytest.mark.parametrize(
     ("markers", "codes"), [(("e2e",), {"DS901"}), (("smoke",), set())]
 )
 def test_category_markers_come_from_the_config(write_test_file, markers, codes):

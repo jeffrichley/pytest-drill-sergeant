@@ -163,11 +163,11 @@ def pasted_across_files():
 
 @pytest.fixture
 def write_test_file(tmp_path):
-    """Write source to `test_it.py` in `tmp_path`, ended by `UNIT_MARK`, and return
-    its path."""
+    """Write source to a file in `tmp_path`, `test_it.py` unless named, ended by
+    `UNIT_MARK`, and return its path."""
 
-    def write(source: str):
-        path = tmp_path / "test_it.py"
+    def write(source: str, name: str = "test_it.py"):
+        path = tmp_path / name
         path.write_text(source + UNIT_MARK)
         return path
 
