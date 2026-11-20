@@ -3,7 +3,7 @@ import pytest
 pytestmark = pytest.mark.integration
 
 
-# A test with no real assertion: DS101 on line 1, a check off by default (#171).
+# A test with no real assertion: DS101 on line 1, a check at `warn` by default.
 ASSERTION_FREE = "def test_it():\n    run()\n"
 
 
@@ -12,16 +12,13 @@ def outside_cache(paths):
     return [p for p in paths if ".pytest_cache" not in p.parts]
 
 
-def test_try_with_no_checks_named_runs_check_as_it_stands(
-    try_checks, write_test_file, unseeded_random_test
-):
+def test_try_with_no_checks_named_runs_check_as_it_stands(try_checks, write_test_file):
     write_test_file(ASSERTION_FREE)
 
     code, output = try_checks(".")
 
-    assert code == 1, output
-    assert "DS803" in output
-    assert "DS101" not in output
+    assert code == 0, output
+    assert "DS101" in output
 
 
 def test_try_turns_the_named_checks_on_at_fail(try_checks, write_test_file):
@@ -74,17 +71,40 @@ def test_try_reads_paths_in_the_config_from_the_projects_root(
     assert "test_old.py" not in output
 
 
-def test_try_leaves_the_projects_files_as_they_were(
+def test_try_leaves_the_projects_files_as_they_were_after_a_failing_run(
     try_checks, tmp_path, write_test_file, watch
 ):
     write_test_file(ASSERTION_FREE)
     (tmp_path / "pyproject.toml").write_text(
-        '[tool.pytest.ini_options]\ndrill_sergeant_mode = "warn"\n'
+        "[tool.pytest.ini_options]\ndrill_sergeant_voice = false\n"
     )
     written = watch(tmp_path)
 
-    try_checks(".", "DS101")
+    code, _ = try_checks(".", "DS101")
 
+    assert code == 1
+    assert outside_cache(written()) == []
+
+
+def test_try_removes_its_config_when_the_run_is_interrupted(
+    try_checks, try_checks_script, tmp_path, write_test_file, watch, monkeypatch
+):
+    write_test_file(ASSERTION_FREE)
+    (tmp_path / "pyproject.toml").write_text("[tool.pytest.ini_options]\n")
+    seen = []
+
+    def interrupted(args, prog_name):
+        seen.append(tmp_path / args[args.index("--config") + 1])
+        assert seen[0].is_file()
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(try_checks_script, "app", interrupted)
+    written = watch(tmp_path)
+
+    with pytest.raises(KeyboardInterrupt):
+        try_checks(".", "DS101")
+
+    assert seen and not seen[0].exists()
     assert outside_cache(written()) == []
 
 

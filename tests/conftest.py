@@ -302,17 +302,23 @@ def cache_dir(tmp_path):
 
 
 @pytest.fixture
-def try_checks(tmp_path, monkeypatch, capsys):
-    """Run `scripts/try_checks.py <args>`, what `just try` runs, from `tmp_path`, and
-    return its exit code and everything it printed."""
+def try_checks_script():
+    """`scripts/try_checks.py`, what `just try` runs, loaded as a module."""
     script = Path(__file__).parent.parent / "scripts" / "try_checks.py"
     spec = importlib.util.spec_from_file_location("try_checks", script)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    return module
+
+
+@pytest.fixture
+def try_checks(try_checks_script, tmp_path, monkeypatch, capsys):
+    """Run `scripts/try_checks.py <args>`, what `just try` runs, from `tmp_path`, and
+    return its exit code and everything it printed."""
     monkeypatch.chdir(tmp_path)
 
     def run(*args: str):
-        code = module.main(list(args))
+        code = try_checks_script.main(list(args))
         printed = capsys.readouterr()
         return code, printed.out + printed.err
 
