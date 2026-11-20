@@ -24,3 +24,23 @@ def test_worker_runs_after_yielding():
     worker.start()
     time.sleep(0)
     assert worker.started
+
+
+def test_worker_finishes_within_a_bounded_number_of_polls():
+    worker = Worker()
+    worker.start()
+    for _ in range(500):
+        if worker.done:
+            break
+        time.sleep(0.01)
+    assert worker.done
+
+
+def test_worker_finishes_polled_by_a_loop_that_returns():
+    worker = Worker()
+    worker.start()
+    for _ in range(500):
+        if worker.done:
+            return
+        time.sleep(0.01)
+    pytest.fail("worker never finished")
