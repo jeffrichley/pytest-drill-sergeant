@@ -793,18 +793,11 @@ class TestTree:
                 params.add(node.func.id)
         return _Answer(asserts=False, calls_params=frozenset(params))
 
-    def call_asserts(
-        self, call: ast.Call, scope: _Scope, *, unseen: bool = True
-    ) -> bool:
-        """Whether a call reaches a function that asserts, given what it passes.
-
-        A call straight into a third-party package may assert, so it counts unless
-        `unseen` is false; a function the call reaches counts its own calls into
-        one either way.
-        """
+    def call_asserts(self, call: ast.Call, scope: _Scope) -> bool:
+        """Whether a call reaches a function that asserts, given what it passes."""
         callee = self._target(call.func, scope, frozenset())
         if not isinstance(callee, _Callee):
-            return unseen and self._calls_unseen_code(call.func, scope)
+            return self._calls_unseen_code(call.func, scope)
         found = self.answer(callee.function)
         if found.asserts:
             return True
@@ -845,16 +838,9 @@ class TestTree:
         return Assertions(self, module)
 
     def test_calls_assert(
-        self,
-        test: TestFunction,
-        module: _Module,
-        calls: list[ast.Call],
-        *,
-        unseen: bool = True,
+        self, test: TestFunction, module: _Module, calls: list[ast.Call]
     ) -> tuple[bool, set[str]]:
         """Whether any of a test's calls reaches a function that asserts.
-
-        A call straight into a third-party package counts unless `unseen` is false.
 
         Returns:
             The answer, and every module it relied on.
@@ -867,7 +853,7 @@ class TestTree:
         keys: set[str] = set()
         self._deps.append(keys)
         try:
-            found = any(self.call_asserts(call, scope, unseen=unseen) for call in calls)
+            found = any(self.call_asserts(call, scope) for call in calls)
         finally:
             self._deps.pop()
         return found, keys
@@ -886,25 +872,16 @@ class Assertions:
         self._module = module
         self._followed: set[str] = set()
 
-    def holds(
-        self,
-        test: TestFunction,
-        nodes: Iterable[ast.AST] | None = None,
-        *,
-        unseen: bool = True,
-    ) -> bool:
+    def holds(self, test: TestFunction, nodes: Iterable[ast.AST] | None = None) -> bool:
         """Whether a test, or the given nodes of it, hold a real assertion.
 
         A real assertion is one `is_real_assertion` sees, or a call into a function
-        of the test tree that makes one. A call straight into a third-party package
-        may make one, so it counts too, unless `unseen` is false.
+        of the test tree that makes one.
 
         Args:
             test: The test.
             nodes: Some of the test's nodes, such as one statement's; by default
                 its whole body (`walk_test`).
-            unseen: Whether a call the nodes make straight into a third-party
-                package counts.
         """
         seen = list(walk_test(test) if nodes is None else nodes)
         if any(is_real_assertion(node, test.imports) for node in seen):
@@ -912,9 +889,7 @@ class Assertions:
         calls = [node for node in seen if isinstance(node, ast.Call)]
         if not calls:
             return False
-        found, keys = self._tree.test_calls_assert(
-            test, self._module, calls, unseen=unseen
-        )
+        found, keys = self._tree.test_calls_assert(test, self._module, calls)
         self._followed |= keys
         return found
 
