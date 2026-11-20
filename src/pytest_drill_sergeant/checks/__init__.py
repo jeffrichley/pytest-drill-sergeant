@@ -23,8 +23,10 @@ from pytest_drill_sergeant.checks.structure import (
     NO_ACTION_UNDER_TEST,
     NO_REAL_ASSERTION,
 )
+from pytest_drill_sergeant.checks.waivers import MALFORMED_WAIVER
 
 CHECKS: tuple[Check, ...] = (
+    MALFORMED_WAIVER,
     NO_REAL_ASSERTION,
     NO_ACTION_UNDER_TEST,
     ASSERT_BEFORE_ACT,

@@ -112,3 +112,15 @@ def wrapped():
         return lines[start + 1 : end], lines[end] if end < len(lines) else ""
 
     return split
+
+
+@pytest.fixture
+def write_test_file(tmp_path):
+    """Write source to `test_it.py` in `tmp_path` and return its path."""
+
+    def write(source: str):
+        path = tmp_path / "test_it.py"
+        path.write_text(source)
+        return path
+
+    return write

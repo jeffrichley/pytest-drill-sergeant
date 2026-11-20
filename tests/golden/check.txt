@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 196 findings in 50 files. FALL IN!
+DRILL SERGEANT INSPECTION: 206 findings in 53 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -485,6 +485,85 @@ suite/interleaved-act-assert/test_bad_two_behaviours.py
            name doesn't say which one broke, and a failing early step hides every later one.
     Fix:   In `test_log_cleared_then_add_again`, line 28: split the test into one test per act
            (lines 25, 28), each named for its behaviour, with any shared setup in a fixture.
+
+suite/malformed-waiver/test_bad_no_code.py
+  suite/malformed-waiver/test_bad_no_code.py:6: DS001 malformed-waiver [fail] in test_adds
+    "You want out of an inspection? Name the check and SAY WHY, maggot!"
+    Found: The waiver on line 6 gives no check code, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   In `test_adds`, line 6: write it as `# drill: waive DS### -- <reason>` once a human has
+           agreed to waive this finding, or remove it and fix the finding.
+  suite/malformed-waiver/test_bad_no_code.py:10: DS001 malformed-waiver [fail] in test_subtracts
+    "A waiver with no code and no reason is just a shrug in a comment, recruit!"
+    Found: The waiver on line 10 gives no check code and no reason, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   In `test_subtracts`, line 10: write it as `# drill: waive DS### -- <reason>` once a human
+           has agreed to waive this finding, or remove it and fix the finding.
+  suite/malformed-waiver/test_bad_no_code.py:16: DS001 malformed-waiver [fail] in test_multiplies
+    "Nobody silences my findings with a mumble! Code and reason, or fix it!"
+    Found: The waiver on line 16 gives no check code, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   In `test_multiplies`, line 16: write it as `# drill: waive DS### -- <reason>` once a
+           human has agreed to waive this finding, or remove it and fix the finding.
+  suite/malformed-waiver/test_bad_no_code.py:16: DS201 weak-assertion [fail] in test_multiplies
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `test_multiplies` makes only weak assertions: each holds for almost any value, wrong ones
+           included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `test_multiplies`, line 16: replace the weak assertions on line 16 with exact checks:
+           assert what `result` should equal, as in `assert value == expected`.
+
+suite/malformed-waiver/test_bad_no_reason.py
+  suite/malformed-waiver/test_bad_no_reason.py:6: DS001 malformed-waiver [fail] in test_parses_numbers
+    "You want out of an inspection? Name the check and SAY WHY, maggot!"
+    Found: The waiver on line 6 gives no reason after `--`, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   In `test_parses_numbers`, line 6: write it as `# drill: waive DS201 -- <reason>` once a
+           human has agreed to waive this finding, or remove it and fix the finding.
+  suite/malformed-waiver/test_bad_no_reason.py:12: DS001 malformed-waiver [fail] in test_parses_floats
+    "A waiver with no code and no reason is just a shrug in a comment, recruit!"
+    Found: The waiver on line 12 gives no reason after `--`, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   In `test_parses_floats`, line 12: write it as `# drill: waive DS201 -- <reason>` once a
+           human has agreed to waive this finding, or remove it and fix the finding.
+  suite/malformed-waiver/test_bad_no_reason.py:12: DS201 weak-assertion [fail] in test_parses_floats
+    "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
+    Found: `test_parses_floats` makes only weak assertions: each holds for almost any value, wrong
+           ones included.
+    Why:   A weak assertion holds for almost any value, so the test stays green when the code
+           returns the wrong one.
+    Fix:   In `test_parses_floats`, line 12: replace the weak assertions on line 12 with exact
+           checks: assert what `value` should equal, as in `assert value == expected`.
+  suite/malformed-waiver/test_bad_no_reason.py:16: DS001 malformed-waiver [fail] in TestParser::test_parses_negatives
+    "A waiver with no code and no reason is just a shrug in a comment, recruit!"
+    Found: The waiver on line 16 gives no reason after `--`, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   In `TestParser::test_parses_negatives`, line 16: write it as `# drill: waive DS101 --
+           <reason>` once a human has agreed to waive this finding, or remove it and fix the
+           finding.
+
+suite/malformed-waiver/test_bad_outside_tests.py
+  suite/malformed-waiver/test_bad_outside_tests.py:3: DS001 malformed-waiver [fail] in <module>
+    "A waiver with no code and no reason is just a shrug in a comment, recruit!"
+    Found: The waiver on line 3 gives no check code and no reason, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   Line 3: write it as `# drill: waive DS### -- <reason>` once a human has agreed to waive
+           this finding, or remove it and fix the finding.
+  suite/malformed-waiver/test_bad_outside_tests.py:7: DS001 malformed-waiver [fail] in <module>
+    "A waiver with no code and no reason is just a shrug in a comment, recruit!"
+    Found: The waiver on line 7 gives no reason after `--`, so it waives nothing.
+    Why:   A waiver must name the check it silences and say why, so a reviewer can judge it; without
+           both it waives nothing and hides what was meant.
+    Fix:   Line 7: write it as `# drill: waive DS101 -- <reason>` once a human has agreed to waive
+           this finding, or remove it and fix the finding.
 
 suite/mirror-assertion/test_bad_beside_strong.py
   suite/mirror-assertion/test_bad_beside_strong.py:9: DS203 mirror-assertion [fail] in test_prices
@@ -1758,4 +1837,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Fix:   In `test_async_import`, line 30: replace the weak assertions on line 30 with exact
            checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-196 findings: 187 fail, 9 warn. Fix them, recruit. DISMISSED!
+206 findings: 197 fail, 9 warn. Fix them, recruit. DISMISSED!
