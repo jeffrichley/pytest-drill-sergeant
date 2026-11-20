@@ -1,6 +1,6 @@
 [project]
 name = "pytest-drill-sergeant"
-version = "1.0.0-alpha.1"
+version = "1.0.1-alpha.1"
 description = "A pytest plugin and CLI that catch the ways AI coding agents write bad tests"
 readme = "README.md"
 license = "MIT"

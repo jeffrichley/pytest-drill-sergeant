@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1-alpha.1](https://github.com/jeffrichley/pytest-drill-sergeant/compare/pytest-drill-sergeant-v1.0.0-alpha.1...pytest-drill-sergeant-v1.0.1-alpha.1) (2026-11-20)
+
+
+### Bug Fixes
+
+* compare release versions as PEP 440 in the publish check ([#154](https://github.com/jeffrichley/pytest-drill-sergeant/issues/154)) ([3bcfab5](https://github.com/jeffrichley/pytest-drill-sergeant/commit/3bcfab56e52d8408e76c782c2ca94d8ab97151ce))
+
 ## [1.0.0-alpha.1](https://github.com/jeffrichley/pytest-drill-sergeant/compare/pytest-drill-sergeant-v0.4.0...pytest-drill-sergeant-v1.0.0-alpha.1) (2026-11-20)
 
 
