@@ -110,30 +110,31 @@ def _unconditional_skip_calls(file: TestFile) -> list[tuple[str, ast.Call]]:
 
 
 def _find_skip_without_reason(file: TestFile) -> Iterator[Hit]:
-    # A skip that happens on every run is DS402's to report, reason or not.
+    # A skip that happens on every run is left to DS402, reason or not, only where
+    # DS402 reports.
     fix = (
         'give it `reason="..."` saying what is wrong and when the test can run '
         "again, such as a ticket link."
     )
     for where, expr, names in _marks(file.module):
         mark = skip_mark(expr, names)
-        if (
-            mark is not None
-            and _mark_has_no_reason(mark, expr)
-            and not is_always_skipped_by(expr, names)
-        ):
+        if mark is not None and _mark_has_no_reason(mark, expr):
             what = "is marked an expected failure" if mark == XFAIL else "is skipped"
             yield Hit.at(
                 where,
                 expr.lineno,
                 found=f"{what} with no reason: `@{ast.unparse(expr)}`.",
                 fix=fix,
+                left_to=(
+                    UNCONDITIONAL_SKIP.code
+                    if is_always_skipped_by(expr, names)
+                    else None
+                ),
             )
     unconditional = {id(call) for _, call in _unconditional_skip_calls(file)}
     for where, node, names in scoped_walk(file.module, TEST_PATH):
         if (
             isinstance(node, ast.Call)
-            and id(node) not in unconditional
             and calls_to(node, _SKIP_CALLS, names)
             and _call_has_no_reason(node)
         ):
@@ -142,6 +143,7 @@ def _find_skip_without_reason(file: TestFile) -> Iterator[Hit]:
                 node.lineno,
                 found=f"skips with no reason: `{ast.unparse(node)}`.",
                 fix=fix,
+                left_to=UNCONDITIONAL_SKIP.code if id(node) in unconditional else None,
             )
 
 

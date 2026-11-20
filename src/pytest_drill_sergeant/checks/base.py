@@ -181,24 +181,44 @@ class Hit:
         test: Where it is, as `Finding.test` names it.
         found: What the check found, in plain words.
         fix: How to fix it, naming the specifics where the check knows them.
+        left_to: The code of a more specific check that reports the same problem
+            here, or `None`: the hit is left out while that check reports in the
+            file, and kept while it is off.
     """
 
     line: int
     test: str
     found: str
     fix: str
+    left_to: str | None = None
 
     @classmethod
-    def on(cls, test: TestFunction, line: int, *, found: str, fix: str) -> "Hit":
+    def on(
+        cls,
+        test: TestFunction,
+        line: int,
+        *,
+        found: str,
+        fix: str,
+        left_to: str | None = None,
+    ) -> "Hit":
         """A hit on a line of a test, in the phrasing every check shares.
 
         `found` follows "`<test>` " and `fix` follows "In `<test>`, line <n>: ",
         so every finding names its test first and every fix says where to look.
         """
-        return cls.at(test.name, line, found=found, fix=fix)
+        return cls.at(test.name, line, found=found, fix=fix, left_to=left_to)
 
     @classmethod
-    def at(cls, where: str, line: int, *, found: str, fix: str) -> "Hit":
+    def at(
+        cls,
+        where: str,
+        line: int,
+        *,
+        found: str,
+        fix: str,
+        left_to: str | None = None,
+    ) -> "Hit":
         """A hit on a line of a named place: a test, a class, a function or `<module>`.
 
         The phrasing is `on`'s, with the place's name where the test's would be.
@@ -208,6 +228,7 @@ class Hit:
             test=where,
             found=f"`{where}` {found}",
             fix=f"In `{where}`, line {line}: {fix}",
+            left_to=left_to,
         )
 
     @classmethod

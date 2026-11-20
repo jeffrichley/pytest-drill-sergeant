@@ -312,7 +312,8 @@ def _file_findings(path: Path, result: _FileResult, levels: Levels) -> list[Find
     """A file's findings: its hits, at the level each check reports at there.
 
     A check that yields to a more specific one drops its hits on the tests that
-    check reports on here.
+    check reports on here, and a hit left to a more specific check is dropped
+    while that check reports here.
     """
 
     def taken(check: Check) -> set[str]:
@@ -328,6 +329,7 @@ def _file_findings(path: Path, result: _FileResult, levels: Levels) -> list[Find
         for yielded in [taken(check)]
         for hit in result.hits.get(check.code, ())
         if hit.test not in yielded
+        and (hit.left_to is None or levels[hit.left_to] is Level.OFF)
     ]
 
 
