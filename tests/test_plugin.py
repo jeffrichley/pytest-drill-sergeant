@@ -327,3 +327,16 @@ def test_cache_follows_pytests_cache_dir(drill, pytester, lazy_test):
     drill()
 
     assert (pytester.path / "elsewhere" / "d" / "drill-sergeant").is_dir()
+
+
+def test_plugin_and_cli_share_one_cache(cli, drill, pytester, lazy_test, snapshot):
+    # `cli` comes first so pytester's directory, not its, is where pytest runs.
+    pytester.makeini("[pytest]\n")
+    drill()
+    before = snapshot(pytester.path)
+
+    result = cli("check", str(pytester.path))
+
+    assert any(DRILL_CACHE.as_posix() in p.as_posix() for p in before)
+    assert result.exit_code == 1
+    assert snapshot(pytester.path) == before

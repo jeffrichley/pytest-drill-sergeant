@@ -6,8 +6,9 @@ from typing import Annotated, NoReturn
 import typer
 from rich.console import Console
 
+from pytest_drill_sergeant.cache import CACHE_NAME
 from pytest_drill_sergeant.config import ConfigError, refusal, resolve
-from pytest_drill_sergeant.discovery import discover, load, test_files
+from pytest_drill_sergeant.discovery import cache_dir, discover, load, test_files
 from pytest_drill_sergeant.engine import inspect
 from pytest_drill_sergeant.findings import Level
 from pytest_drill_sergeant.render import render
@@ -64,7 +65,12 @@ def check(
         _refuse(refusal(error))
     files = test_files(paths, source)
     try:
-        result = inspect(files, config)
+        result = inspect(
+            files,
+            config,
+            # pytest's `cache.mkdir` puts the plugin's cache here; the CLI shares it.
+            cache_dir=cache_dir(source) / "d" / CACHE_NAME if config.cache else None,
+        )
     except SyntaxError as error:
         _refuse(
             f"drill-sergeant: cannot parse {error.filename}, line {error.lineno}: "
