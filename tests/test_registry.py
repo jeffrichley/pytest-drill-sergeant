@@ -82,6 +82,7 @@ ON_BY_DEFAULT = {
     "DS401": Level.FAIL,
     "DS502": Level.WARN,
     "DS603": Level.FAIL,
+    "DS801": Level.FAIL,
     "DS802": Level.FAIL,
     "DS803": Level.FAIL,
 }

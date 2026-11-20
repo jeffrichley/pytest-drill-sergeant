@@ -537,7 +537,7 @@ SLEEP_IN_TEST = Check(
     code="DS801",
     name="sleep-in-test",
     kind=Kind.DEFECT,
-    default_level=Level.OFF,
+    default_level=Level.FAIL,
     voice=(
         "Napping on duty, recruit? Tests don't SLEEP on my watch!",
         "You picked that number out of thin air! On a slow CI box it's too short, "
