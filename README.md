@@ -6,13 +6,13 @@ behaviour, skips added to go green, sleeps, and test files too long to follow. I
 reports them as findings that fail the run, in the drill-sergeant voice.
 
 **Status:** v1 is being rebuilt from scratch. So far the malformed-waiver check (DS001),
-the structure checks (DS101-DS108; DS108, AAA comments, is off until
-`drill_sergeant_levels` turns it on), the assertion checks (DS201-DS203), the mocking
+the structure checks (DS101-DS108), the assertion checks (DS201-DS203), the mocking
 checks (DS301-DS303), the cheating checks (DS401-DS403), copy-pasted setup (DS501),
 near-duplicate tests (DS502), the brittleness checks (DS601-DS603), the exception
 checks (DS701, DS702), the flakiness checks (DS801-DS803) and the missing category
 marker (DS901) are reported both by the pytest plugin and by
-`drill-sergeant check <paths>`. The plan is
+`drill-sergeant check <paths>`; most are off by default until they are proven (see
+[Which checks are on](#which-checks-are-on)). The plan is
 the [v1 spec](https://github.com/jeffrichley/pytest-drill-sergeant/issues/118). Version
 0.4 is archived under the tag `archive/2026-11-19/v0.4/main`.
 
@@ -51,6 +51,30 @@ Installing the package turns the plugin on: every `pytest` run is a drill-sergea
   accepts them.
 - `-p no:drill_sergeant` or `drill_sergeant_mode = "off"` turns it off. Bad config
   is a pytest usage error (exit 4).
+
+## Which checks are on
+
+A check is on by default only once it is **proven**: a hand-judged sample of real
+suites shows it with zero false positives. A check that cries wolf teaches people to
+ignore every finding, so the rest are off by default and come on one by one, each in
+the change that proves it ([#171](https://github.com/jeffrichley/pytest-drill-sergeant/issues/171)
+tracks them).
+
+On by default, at `fail`: DS001 malformed-waiver, DS106 long-file, DS301
+mock-only-assertion, DS502 near-duplicate-tests, DS603 source-text-grep, DS802
+wall-clock-read, DS803 unseeded-random, and DS901 missing-category-marker, a project
+convention. Every other check is off: DS101-DS105, DS107, DS201-DS203, DS302, DS303,
+DS401-DS403, DS501, DS601, DS602, DS701, DS702 and DS801 until each is proven, and
+DS108 (AAA comments), a style a project opts into.
+
+Turn an off check on with `drill_sergeant_levels`, at `fail` or `warn`:
+
+```toml
+[tool.pytest.ini_options]
+drill_sergeant_levels = ["DS101=fail", "DS104=warn"]
+```
+
+`drill-sergeant explain` lists every check with its default level.
 
 ## Learning a check
 
@@ -152,7 +176,7 @@ drill_sergeant_voice = false
 | `drill_sergeant_duplicate_setup_min_statements` | whole number | 3 |
 | `drill_sergeant_duplicate_setup_min_tests` | whole number | 3 |
 | `drill_sergeant_category_markers` | marker names; every test must carry one (DS901), and the plugin registers them | `unit integration e2e` |
-| `drill_sergeant_source_dirs` | directory lines, relative to the config file; each must exist. The production code DS403 reads in full; with none and no `src/`, DS403 is skipped and the output says so | `src/` if it exists |
+| `drill_sergeant_source_dirs` | directory lines, relative to the config file; each must exist. The production code DS403 reads in full; with none and no `src/`, DS403, when on, is skipped and the output says so | `src/` if it exists |
 | `drill_sergeant_voice` | `true` or `false`; off prints Found/Why/Fix without the voice | `true` |
 | `drill_sergeant_max_findings` | whole number, 0 for all | 25 |
 | `drill_sergeant_inline_waivers` | `true` or `false` | `true` |
