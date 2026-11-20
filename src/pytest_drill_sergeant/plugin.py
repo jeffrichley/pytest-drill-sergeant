@@ -3,9 +3,12 @@
 Installing the package turns it on; `-p no:drill_sergeant` or
 `drill_sergeant_mode = off` turns it off. After collection it analyses the files that
 contributed collected test functions, once, on the xdist controller only; the tests
-then run as always. Per-file results are cached under pytest's cache directory,
-unless `drill_sergeant_cache = false` or `-p no:cacheprovider`. The findings section after the test results shows them, and a
+then run as always. The findings section after the test results shows them, and a
 run whose tests ran and passed exits 1 when any finding is at the `fail` level.
+
+Per-file results are cached under pytest's cache directory, shared with the CLI,
+unless `drill_sergeant_cache = false` or `-p no:cacheprovider`; the cache is the
+only file the plugin writes.
 """
 
 from collections.abc import Generator

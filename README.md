@@ -33,6 +33,21 @@ Installing the package turns the plugin on: every `pytest` run is a drill-sergea
 - `-p no:drill_sergeant` or `drill_sergeant_mode = "off"` turns it off. Bad config
   is a pytest usage error (exit 4).
 
+## The cache
+
+Each file's analysis is cached, so a run with nothing changed adds only tens of
+milliseconds, and an edit costs only the files it touched.
+
+- The cache lives under pytest's cache directory (`.pytest_cache/d/drill-sergeant/`,
+  or under your `cache_dir`), and the plugin and `drill-sergeant check` share it. It
+  is the only file a run writes.
+- A file is analysed again when its bytes change, when drill-sergeant changes, or
+  when an option that shapes per-file analysis does (thresholds, category markers,
+  source dirs, inline waivers). Changing levels, mode or per-file ignores reuses it.
+- A corrupt or unreadable cache is rebuilt without a word.
+- `drill_sergeant_cache = false` turns it off; so does `-p no:cacheprovider`, which
+  turns off pytest's own cache. `pytest --cache-clear` empties it.
+
 ## Waivers
 
 When a human agrees that a finding is a false positive, a waiver silences it:
@@ -87,10 +102,10 @@ drill_sergeant_voice = false
 | `drill_sergeant_voice` | `true` or `false`; off prints Found/Why/Fix without the voice | `true` |
 | `drill_sergeant_max_findings` | whole number, 0 for all | 25 |
 | `drill_sergeant_inline_waivers` | `true` or `false` | `true` |
-| `drill_sergeant_cache` | `true` or `false` | `true` |
+| `drill_sergeant_cache` | `true` or `false`; off analyses every file on every run | `true` |
 
-The thresholds, markers, source dirs and cache are accepted now and take
-effect as the checks that use them land.
+The thresholds, markers and source dirs are accepted now and take effect as the
+checks that use them land.
 
 ## Development
 
@@ -98,6 +113,7 @@ effect as the checks that use them land.
 just sync           # create .venv with the dev tools
 just install-hooks  # pre-commit and commit-msg hooks
 just check          # the gate: lint, format, types, dead code, tests
+just perf           # the speed budget: a warm run over 300 test files (not in the gate)
 ```
 
 ## License
