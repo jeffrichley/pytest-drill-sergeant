@@ -245,9 +245,7 @@ LONG_LOCATION = (
 )
 
 
-def test_a_narrow_terminal_wraps_each_fact_under_its_text_and_keeps_the_location_whole(
-    cli, long_named_test, monkeypatch, wrapped
-):
+def test_a_narrow_terminal_keeps_the_location_whole(cli, long_named_test, monkeypatch):
     monkeypatch.setenv("COLUMNS", "60")
 
     output = cli("check", "test_long.py").output
@@ -255,11 +253,21 @@ def test_a_narrow_terminal_wraps_each_fact_under_its_text_and_keeps_the_location
     location, *rest = [line for line in output.splitlines() if "DS101" in line]
     assert LONG_LOCATION in location
     assert not rest
-    for label, after in [("Found:", "Why:"), ("Why:", "Fix:"), ("Fix:", "")]:
-        continuations, following = wrapped(output, label)
-        assert continuations, label
-        assert following.lstrip().startswith(after), label
     assert max(len(line) for line in output.splitlines() if line != location) <= 60
+
+
+@pytest.mark.parametrize(
+    ("label", "after"), [("Found:", "Why:"), ("Why:", "Fix:"), ("Fix:", "")]
+)
+def test_a_narrow_terminal_wraps_each_fact_under_its_text(
+    cli, long_named_test, monkeypatch, wrapped, label, after
+):
+    monkeypatch.setenv("COLUMNS", "60")
+
+    continuations, following = wrapped(cli("check", "test_long.py").output, label)
+
+    assert continuations
+    assert following.lstrip().startswith(after)
 
 
 def test_check_writes_no_escape_codes_when_colour_is_off(cli, assertion_free_test):
