@@ -13,19 +13,20 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 from pytest_drill_sergeant.checks.ast_tools import (
-    call_name,
     is_always_true,
     is_real_assertion,
     walk_test,
 )
 from pytest_drill_sergeant.checks.base import (
     Check,
+    FunctionNode,
     Hit,
     Kind,
     TestFile,
     TestFunction,
     and_list,
 )
+from pytest_drill_sergeant.checks.helpers import Assertions, CallKind
 from pytest_drill_sergeant.findings import Level
 
 # Comparisons that hold whenever both sides are the same value.
@@ -33,9 +34,6 @@ _TRUE_ON_IDENTITY = (ast.Eq, ast.Is, ast.LtE, ast.GtE)
 
 # Builtins whose result is only a truthiness or type fact about their argument.
 _WEAK_CALLS = frozenset({"bool", "isinstance", "hasattr", "callable"})
-
-# Name prefixes of functions that answer a yes-or-no question exactly.
-_PREDICATE_PREFIXES = ("is_", "has_", "can_", "should_")
 
 # Node types a literal is built from: values, containers and operators, no names.
 _LITERAL_NODES = (
@@ -108,22 +106,104 @@ def _is_constant(node: ast.AST, *values: object) -> bool:
     )
 
 
-def _is_predicate_call(node: ast.AST) -> bool:
-    """Whether the expression calls a predicate (`is_valid(...)`), an exact check."""
+def _is_yes_or_no(node: ast.expr) -> bool:
+    """Whether an expression is a comparison or a boolean: `x < y`, `True`, `not x`."""
+    if isinstance(node, ast.Compare):
+        return True
+    if isinstance(node, ast.Constant):
+        return type(node.value) is bool
+    if isinstance(node, ast.UnaryOp):
+        return isinstance(node.op, ast.Not)
+    if isinstance(node, ast.BoolOp):
+        return all(_is_yes_or_no(value) for value in node.values)
+    return False
+
+
+# Builtins that answer yes or no exactly about what they are given.
+_EXACT_BUILTINS = frozenset({"any", "all"})
+
+
+def _own_nodes(node: FunctionNode) -> Iterator[ast.AST]:
+    """A function's own nodes, none of a function or class nested in it."""
+    stack: list[ast.AST] = list(node.body)
+    while stack:
+        child = stack.pop()
+        yield child
+        if not isinstance(child, FunctionNode | ast.Lambda | ast.ClassDef):
+            stack.extend(ast.iter_child_nodes(child))
+
+
+def _is_bool(annotation: ast.expr | None) -> bool:
+    """Whether a return annotation is `bool`, written as a name or a string."""
+    if isinstance(annotation, ast.Constant):
+        return annotation.value == "bool"
+    return isinstance(annotation, ast.Name) and annotation.id == "bool"
+
+
+def _answers_yes_or_no(node: FunctionNode | ast.Lambda, *, awaited: bool) -> bool:
+    """Whether a call to a function answers yes or no exactly, by its definition.
+
+    It does when the function is annotated `-> bool`, or returns, every time, a
+    comparison or a boolean. A generator never does, nor an `async def` not
+    awaited: what the call gives is a generator or a coroutine, always truthy.
+    """
+    if isinstance(node, ast.Lambda):
+        return _is_yes_or_no(node.body)
+    own = list(_own_nodes(node))
+    if any(isinstance(n, ast.Yield | ast.YieldFrom) for n in own):
+        return False
+    if isinstance(node, ast.AsyncFunctionDef) and not awaited:
+        return False
+    if _is_bool(node.returns):
+        return True
+    returns = [n for n in own if isinstance(n, ast.Return)]
+    return bool(returns) and all(
+        r.value is not None and _is_yes_or_no(r.value) for r in returns
+    )
+
+
+def _is_exact_answer(node: ast.expr, test: TestFunction, calls: Assertions) -> bool:
+    """Whether an expression is a call, awaited or not, whose truthiness is not weak.
+
+    That is a call to a function that answers yes or no exactly
+    (`_answers_yes_or_no`), to `any` or `all`, or to code whose definition the
+    files don't show, which may. Any other builtin's or a class's result is a
+    value like any other.
+    """
+    awaited = isinstance(node, ast.Await)
+    if isinstance(node, ast.Await):
+        node = node.value
     if not isinstance(node, ast.Call):
         return False
-    return (call_name(node) or "").startswith(_PREDICATE_PREFIXES)
+    found = calls.definition(test, node)
+    if found.kind is CallKind.UNKNOWN:
+        return True
+    if found.builtin is not None:
+        return found.builtin in _EXACT_BUILTINS
+    return isinstance(found.node, FunctionNode | ast.Lambda) and _answers_yes_or_no(
+        found.node, awaited=awaited
+    )
 
 
 def _is_constant_none(node: ast.AST) -> bool:
     return isinstance(node, ast.Constant) and node.value is None
 
 
-def _calls_a_class(node: ast.AST) -> bool:
-    """Whether the expression calls a CapWords name: a constructor, by convention."""
-    return any(
-        isinstance(n, ast.Call) and (call_name(n) or "")[:1].isupper()
-        for n in ast.walk(node)
+def _calls_code_under_test(
+    node: ast.expr, test: TestFunction, calls: Assertions
+) -> bool:
+    """Whether an expression calls a function, and constructs no class of the project.
+
+    What each call is comes from its definition (`Assertions.definition`). A
+    class's call is a constructor, whose `__eq__` is what `==` then tests; a
+    builtin type's (`list(f(x))`) is neither that nor the code under test, and
+    neither is a call the files don't show.
+    """
+    found = [
+        calls.definition(test, n) for n in ast.walk(node) if isinstance(n, ast.Call)
+    ]
+    return any(d.kind is CallKind.FUNCTION for d in found) and not any(
+        d.kind is CallKind.CLASS and d.builtin is None for d in found
     )
 
 
@@ -249,12 +329,16 @@ def _tautology(raw: ast.expr, aliased: ast.expr, resolved: ast.expr) -> str | No
     return None
 
 
-def _mirrored_call(resolved: ast.expr) -> str | None:
+def _mirrored_call(
+    resolved: ast.expr, test: TestFunction, calls: Assertions
+) -> str | None:
     """The call an `==` puts on both sides, if it does.
 
-    A constructor on both sides (`Point(1, 2) == Point(1, 2)`) is a test of `__eq__`,
-    not a mirror. Names never matter: `first == second`, each bound to the same call,
-    is a mirror just as `result == expected` is.
+    It must call a function (`_calls_code_under_test`): a constructor on both sides
+    (`Point(1, 2) == Point(1, 2)`) is a test of `__eq__`, not a mirror, and a call
+    whose definition the files don't show isn't known to be the code under test.
+    Names never matter: `first == second`, each bound to the same call, is a mirror
+    just as `result == expected` is.
     """
     if not (
         isinstance(resolved, ast.Compare)
@@ -263,10 +347,8 @@ def _mirrored_call(resolved: ast.expr) -> str | None:
     ):
         return None
     left = resolved.left
-    if (
-        _same(left, resolved.comparators[0])
-        and _has_call(left)
-        and not _calls_a_class(left)
+    if _same(left, resolved.comparators[0]) and _calls_code_under_test(
+        left, test, calls
     ):
         return ast.unparse(left)
     return None
@@ -366,8 +448,11 @@ def _state_changes(test: TestFunction, known: list[ast.stmt]) -> list[ast.stmt]:
     ]
 
 
-def _verdicts(test: TestFunction) -> list[_Verdict]:
-    """Every `assert` in the test, in source order, with its kind."""
+def _verdicts(test: TestFunction, calls: Assertions) -> list[_Verdict]:
+    """Every `assert` in the test, in source order, with its kind.
+
+    `calls` tells what a call is, from its definition.
+    """
     bindings = _aliases(test)
     values = {name: s.value for name, s in bindings.items() if s.value is not None}
     aliases = {
@@ -403,12 +488,12 @@ def _verdicts(test: TestFunction) -> list[_Verdict]:
         if why is not None:
             verdicts.append(_Verdict(node, _Kind.TAUTOLOGICAL, why))
             continue
-        call = _mirrored_call(resolved)
+        call = _mirrored_call(resolved, test, calls)
         if call is not None:
             verdicts.append(_Verdict(node, _Kind.MIRROR, call))
             continue
         subjects = _weak_subjects(test_expr)
-        if subjects is not None and not _is_predicate_call(resolved):
+        if subjects is not None and not _is_exact_answer(resolved, test, calls):
             names = tuple(f"`{ast.unparse(s)}`" for s in subjects)
             verdicts.append(_Verdict(node, _Kind.WEAK, subjects=names))
             continue
@@ -433,7 +518,7 @@ def _line_numbers(verdicts: list[_Verdict]) -> str:
 
 def _find_weak_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        verdicts = _verdicts(test)
+        verdicts = _verdicts(test, file.assertions)
         weak = [v for v in verdicts if v.kind is _Kind.WEAK]
         if (
             not weak
@@ -457,17 +542,17 @@ def _find_weak_assertion(file: TestFile) -> Iterator[Hit]:
         )
 
 
-def tautological_asserts(test: TestFunction) -> list[ast.Assert]:
+def tautological_asserts(test: TestFunction, calls: Assertions) -> list[ast.Assert]:
     """The test's tautological assertions: the ones tautological-assertion reports.
 
     Another check that would report the same `assert` leaves it to that one.
     """
-    return [v.node for v in _verdicts(test) if v.kind is _Kind.TAUTOLOGICAL]
+    return [v.node for v in _verdicts(test, calls) if v.kind is _Kind.TAUTOLOGICAL]
 
 
 def _find_tautological_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        for verdict in _verdicts(test):
+        for verdict in _verdicts(test, file.assertions):
             if verdict.kind is not _Kind.TAUTOLOGICAL:
                 continue
             source = ast.unparse(verdict.node.test)
@@ -484,7 +569,7 @@ def _find_tautological_assertion(file: TestFile) -> Iterator[Hit]:
 
 def _find_mirror_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        for verdict in _verdicts(test):
+        for verdict in _verdicts(test, file.assertions):
             if verdict.kind is not _Kind.MIRROR:
                 continue
             yield Hit.on(
@@ -522,9 +607,15 @@ WEAK_ASSERTION = Check(
         "exact assertion beside them, `pytest.raises` or a mock verification makes the "
         "test fine. An attribute's truthiness (`assert worker.done`) is usually a flag "
         "the code sets: it neither makes a test weak nor excuses weak assertions "
-        "beside it. Membership (`x in y`), `> 0` on anything but a length, and a "
-        "predicate's result (`ok = is_valid(...)`, then `assert ok`) are left alone. "
-        "Assert the exact value the code should produce."
+        "beside it. Membership (`x in y`) and `> 0` on anything but a length are left "
+        "alone, and so is a name bound to a call that answers yes or no exactly "
+        "(`ok = in_stock(...)`, then `assert ok`): one whose definition is annotated "
+        "`-> bool` or returns only comparisons and booleans, or `any` or `all`. An "
+        "`async def` called without `await`, or a generator, gives a value that is "
+        "always truthy, so it is weak whatever it is annotated. A call whose definition "
+        "the files don't show, such as a third-party library's, may be one, so it is "
+        "left alone too; a function's name never decides. Assert the exact value the "
+        "code should produce."
     ),
     bad_example=(
         "def test_apply_discount():\n"
@@ -598,8 +689,11 @@ MIRROR_ASSERTION = Check(
         "the test bound to it (`expected = gross_price(100, 20)`) with nothing in "
         "between that calls or assigns anything. A value read, changed by a call or "
         "an assignment, then read again is a test that it changed or stayed, not a "
-        "mirror. A constructor on "
-        "both sides (`Point(1, 2) == Point(1, 2)`) tests `__eq__` and is fine, and so "
+        "mirror. What a call is comes from its definition, in the test tree or "
+        "production code, never from its name: a class or a builtin type on both "
+        "sides (`Point(1, 2) == Point(1, 2)`) tests `__eq__` and is fine, a call "
+        "whose definition the files don't show (a fixture's method, a third-party "
+        "library) isn't known to be the code under test and is left alone, and so "
         "is the same function called with different arguments. Names don't matter: "
         "two bindings of the same call compared (`first == second`) are flagged just "
         "as `result == expected` is; a genuine determinism test takes a waiver. A "
@@ -607,6 +701,10 @@ MIRROR_ASSERTION = Check(
         "should return, worked out by hand, on one side."
     ),
     bad_example=(
+        "def slugify(text):\n"
+        '    return "-".join(text.lower().split())\n'
+        "\n"
+        "\n"
         "def test_slugify():\n"
         '    assert slugify("Hello World") == slugify("Hello World")\n'
     ),

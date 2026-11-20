@@ -89,7 +89,7 @@ What per-file analysis records of each test in a file for cross-file analysis: i
 _Avoid_: File index, digest
 
 **Cache**:
-Each test file's per-file analysis result, kept between runs in `d/drill-sergeant/` under pytest's cache directory and shared by the plugin and the CLI. A file is analysed again only when its key changes: the hash of its bytes, drill-sergeant's own code, or a config option per-file analysis reads (thresholds, category markers, source dirs, inline waivers); or when a module of the test tree its analysis followed, or looked for there, has changed, appeared, gone or left the test tree since. Levels, mode and per-file ignores apply after it, so changing them reuses every entry. Cross-file analysis always reruns, from the cached summaries.
+Each test file's per-file analysis result, kept between runs in `d/drill-sergeant/` under pytest's cache directory and shared by the plugin and the CLI. A file is analysed again only when its key changes: the hash of its bytes, drill-sergeant's own code, or a config option per-file analysis reads (thresholds, category markers, source dirs, inline waivers); or when a module of the test tree its analysis followed, or looked for there, or a production module it read a definition in, has changed, appeared, gone or left the test tree since. Levels, mode and per-file ignores apply after it, so changing them reuses every entry. Cross-file analysis always reruns, from the cached summaries.
 _Avoid_: Memo, store
 
 **Cross-file analysis**:
