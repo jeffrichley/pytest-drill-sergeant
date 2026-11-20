@@ -183,8 +183,13 @@ def test_check_refuses_bad_config(cli, tmp_path, assertion_free_test, ini):
     assert cli("check", "test_it.py").exit_code == 2
 
 
-def test_check_refuses_a_missing_config_file(cli, assertion_free_test):
-    assert cli("check", "--config", "nowhere.ini", "test_it.py").exit_code == 2
+@pytest.mark.parametrize(
+    "option",
+    [("--config", "nowhere.ini"), ("--mode", "off")],
+    ids=["missing-config-file", "no-flag-configures-drill-sergeant"],
+)
+def test_check_refuses_a_bad_option(cli, assertion_free_test, option):
+    assert cli("check", *option, "test_it.py").exit_code == 2
 
 
 @pytest.mark.parametrize(
@@ -214,10 +219,6 @@ def test_no_environment_variable_configures_drill_sergeant(
     monkeypatch.setenv("drill_sergeant_mode", "off")
 
     assert cli("check", "test_it.py").exit_code == 1
-
-
-def test_no_command_line_flag_configures_drill_sergeant(cli, assertion_free_test):
-    assert cli("check", "--mode", "off", "test_it.py").exit_code == 2
 
 
 def test_voice_off_keeps_found_why_fix_and_drops_the_voice(

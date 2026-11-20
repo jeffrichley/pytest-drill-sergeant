@@ -61,12 +61,15 @@ def drill(pytester, monkeypatch):
 @pytest.fixture
 def lazy_file(pytester):
     """Write a test file at a path in `pytester`'s temp dir holding one passing test
-    with no real assertion per name given (one DS101 each, the first on line 1)."""
+    with no real assertion per name given (one DS101 each, the first on line 1).
+    Each test prints its own name, so no two are near-duplicates (DS502)."""
 
     def write(path: str, *names: str):
         file = pytester.path / path
         file.parent.mkdir(parents=True, exist_ok=True)
-        file.write_text("".join(f"def {name}():\n    print('hi')\n" for name in names))
+        file.write_text(
+            "".join(f"def {name}():\n    print({name}.__name__)\n" for name in names)
+        )
         return file
 
     return write

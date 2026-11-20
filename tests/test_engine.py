@@ -15,20 +15,20 @@ def test_finding_carries_the_checks_default_level(assertion_free_test):
     assert (finding.code, finding.level) == ("DS101", Level.FAIL)
 
 
-def test_interleaved_act_assert_warns_by_default():
-    corpus = Path(__file__).parent / "corpus" / "interleaved-act-assert"
+@pytest.mark.parametrize(
+    ("corpus_file", "code"),
+    [
+        ("interleaved-act-assert/test_bad_two_behaviours.py", "DS104"),
+        ("mock-without-spec/test_bad_mocker_doubles.py", "DS302"),
+    ],
+    ids=["interleaved-act-assert", "mock-without-spec"],
+)
+def test_check_warns_by_default(corpus_file, code):
+    path = Path(__file__).parent / "corpus" / corpus_file
 
-    findings = analyze([corpus / "test_bad_two_behaviours.py"], Config())
+    findings = analyze([path], Config())
 
-    assert {(f.code, f.level) for f in findings} == {("DS104", Level.WARN)}
-
-
-def test_mock_without_spec_warns_by_default():
-    corpus = Path(__file__).parent / "corpus" / "mock-without-spec"
-
-    findings = analyze([corpus / "test_bad_mocker_doubles.py"], Config())
-
-    assert {(f.code, f.level) for f in findings} == {("DS302", Level.WARN)}
+    assert {(f.code, f.level) for f in findings} == {(code, Level.WARN)}
 
 
 @pytest.mark.parametrize(("limit", "codes"), [(2, {"DS303"}), (3, set())])
