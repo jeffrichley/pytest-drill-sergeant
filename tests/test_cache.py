@@ -117,3 +117,15 @@ def test_changed_threshold_analyses_files_again(write_test_file, cache_dir):
     findings = inspect([path], Config(max_mock_setup=2), cache_dir=cache_dir).findings
 
     assert [f.code for f in findings] == ["DS303"]
+
+
+def test_moved_config_root_analyses_files_again(tmp_path, unmarked_test_at, cache_dir):
+    """DS901's fix names a directory below the config root."""
+    path = unmarked_test_at("integration/test_total.py")
+    inspect([path], Config(root=tmp_path), cache_dir=cache_dir)
+
+    findings = inspect(
+        [path], Config(root=tmp_path / "integration"), cache_dir=cache_dir
+    ).findings
+
+    assert "`@pytest.mark.e2e`" in findings[0].fix

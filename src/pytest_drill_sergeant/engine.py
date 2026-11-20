@@ -212,8 +212,9 @@ class _FileResult:
 # The config fields per-file analysis never reads: changing one of them keeps every
 # cached result. Every other field is part of the cache key, so a field added to
 # the config invalidates the cache until it is listed here.
+# The root stays in: DS901's fix names a directory of the file's path below it.
 _NOT_PER_FILE = frozenset(
-    {"mode", "levels", "per_file_ignores", "root", "voice", "max_findings", "cache"}
+    {"mode", "levels", "per_file_ignores", "voice", "max_findings", "cache"}
 )
 
 
