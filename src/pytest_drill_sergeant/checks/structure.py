@@ -540,10 +540,26 @@ def _lines_of_code(test: TestFunction, code_lines: frozenset[int]) -> int:
         and isinstance(body[0].value.value, str)
     ):
         lines -= set(range(body[0].lineno, (body[0].end_lineno or 0) + 1))
-    for inner in ast.walk(node):
-        if isinstance(inner, ast.expr) and _is_data_literal(inner):
-            lines -= set(range(inner.lineno + 1, (inner.end_lineno or 0) + 1))
+    for literal in _data_literals(node):
+        lines -= set(range(literal.lineno + 1, (literal.end_lineno or 0) + 1))
     return len(lines)
+
+
+def _data_literals(node: ast.AST) -> Iterator[ast.expr]:
+    """The outermost data literals (`_is_data_literal`) under a node.
+
+    The text of an f-string that holds code is part of that f-string, never a
+    literal of its own: only the expressions in its braces are searched.
+    """
+    for child in ast.iter_child_nodes(node):
+        if isinstance(child, ast.expr) and _is_data_literal(child):
+            yield child
+        elif isinstance(child, ast.JoinedStr):
+            for part in child.values:
+                if isinstance(part, ast.FormattedValue):
+                    yield from _data_literals(part)
+        else:
+            yield from _data_literals(child)
 
 
 def _find_long_test(file: TestFile) -> Iterator[Hit]:
