@@ -35,6 +35,21 @@ class TestFunction:
 
 
 @dataclass(frozen=True)
+class Thresholds:
+    """The configured thresholds a check may measure one file against.
+
+    Attributes:
+        max_file_lines: The most lines a test file may have.
+        max_test_lines: The most lines a test function may have.
+        max_mock_setup: The most mock-setup statements a test may have.
+    """
+
+    max_file_lines: int = 500
+    max_test_lines: int = 50
+    max_mock_setup: int = 10
+
+
+@dataclass(frozen=True)
 class TestFile:
     """One parsed test file: what every check is given.
 
@@ -43,6 +58,7 @@ class TestFile:
         module: The file's syntax tree, for checks that need more than the tests
             (imports, module-level code).
         tests: The tests pytest would collect from it, in source order.
+        thresholds: The configured thresholds, for checks that measure.
     """
 
     __test__ = False  # Not a pytest test class, despite the name.
@@ -50,6 +66,7 @@ class TestFile:
     path: Path
     module: ast.Module
     tests: tuple[TestFunction, ...]
+    thresholds: Thresholds = Thresholds()
 
 
 @dataclass(frozen=True)

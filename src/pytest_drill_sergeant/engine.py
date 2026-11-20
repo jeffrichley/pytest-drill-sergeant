@@ -12,7 +12,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
     module_imports,
     qualified,
 )
-from pytest_drill_sergeant.checks.base import FunctionNode
+from pytest_drill_sergeant.checks.base import FunctionNode, Thresholds
 from pytest_drill_sergeant.config import Config
 from pytest_drill_sergeant.findings import Finding, Level
 
@@ -110,13 +110,18 @@ def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
         report none, nor do checks a per-file ignore names for a file, and none run
         in `off` mode; in `warn` mode every finding is reported as `warn`.
     """
+    thresholds = Thresholds(
+        max_file_lines=config.max_file_lines,
+        max_test_lines=config.max_test_lines,
+        max_mock_setup=config.max_mock_setup,
+    )
     findings: list[Finding] = []
     if config.mode is Level.OFF:
         return findings
     for path in paths:
         module = ast.parse(path.read_bytes(), filename=str(path))
         tests = tuple(_tests_in(module.body, module_imports(module)))
-        file = TestFile(path=path, module=module, tests=tests)
+        file = TestFile(path=path, module=module, tests=tests, thresholds=thresholds)
         ignored = _ignored_codes(path, config)
         for check in CHECKS:
             level = config.levels.get(check.code, check.default_level)
