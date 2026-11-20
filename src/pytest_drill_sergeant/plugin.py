@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 from rich.console import Console
 
-from pytest_drill_sergeant.cache import CACHE_NAME
+from pytest_drill_sergeant.cache import location
 from pytest_drill_sergeant.config import (
     OPTIONS,
     PREFIX,
@@ -146,11 +146,9 @@ class _Run:
 
         Under `-p no:cacheprovider` pytest has none, and the run is uncached.
         """
-        cache = getattr(self.config, "cache", None)
-        if cache is None or not self.resolved.cache:
+        if getattr(self.config, "cache", None) is None or not self.resolved.cache:
             return None
-        directory: Path = cache.mkdir(CACHE_NAME)
-        return directory
+        return location(self.config.rootpath, self.config.getini("cache_dir"))
 
     def pytest_collection_finish(self, session: pytest.Session) -> None:
         """Analyse the files that contributed collected tests."""
@@ -188,15 +186,13 @@ class _Run:
             color_system="standard" if writer.hasmarkup else None,
             highlight=False,
         )
-        if self.production.note:
-            # One line, as it stands, however narrow the terminal.
-            console.print(self.production.note, soft_wrap=True, markup=False)
         console.print(
             render(
                 self.inspection.findings,
                 waived=self.inspection.waived,
                 voice=self.resolved.voice,
                 max_findings=self.resolved.max_findings,
+                note=self.production.note,
             ),
             crop=False,
         )

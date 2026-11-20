@@ -36,9 +36,17 @@ from pytest_drill_sergeant.paths import absolute
 
 _T = TypeVar("_T")
 
-# The cache's directory name under pytest's cache directory, where pytest's
-# `cache.mkdir` puts it: `<cache_dir>/d/drill-sergeant`. The CLI finds it there too.
-CACHE_NAME = "drill-sergeant"
+# Where the cache lives under pytest's cache directory, as pytest's own
+# `cache.mkdir("drill-sergeant")` would put it.
+_UNDER_PYTEST_CACHE = Path("d", "drill-sergeant")
+
+# What pytest writes into a cache directory it makes, so git and backup tools pass
+# over it; drill-sergeant writes the same when it makes one first.
+_CACHE_SUPPORT = {
+    ".gitignore": "# Created by pytest-drill-sergeant automatically.\n*\n",
+    "CACHEDIR.TAG": "Signature: 8a477f597d28d172789f06886806bc55\n"
+    "# This file is a cache directory tag created by pytest-drill-sergeant.\n",
+}
 
 # The file under the cache directory that holds every entry.
 _STORE = "results.json"
@@ -200,6 +208,29 @@ def _code_fingerprint() -> str:
         digest.update(path.relative_to(package).as_posix().encode())
         digest.update(path.read_bytes())
     return digest.hexdigest()
+
+
+def location(root: Path, cache_dir: str) -> Path:
+    """The cache's directory, for the plugin and the CLI alike.
+
+    It is `d/drill-sergeant` under pytest's cache directory: `cache_dir`, with `~`
+    and environment variables expanded, relative to `root`, as pytest resolves it.
+    pytest's cache directory is made as pytest makes it, when it doesn't exist; one
+    that can't be made is left for the cache to pass over.
+
+    Args:
+        root: The directory a relative `cache_dir` is under.
+        cache_dir: pytest's `cache_dir` ini value.
+    """
+    pytest_cache = root / os.path.expandvars(Path(cache_dir).expanduser())
+    if not pytest_cache.exists():
+        try:
+            pytest_cache.mkdir(parents=True)
+            for name, text in _CACHE_SUPPORT.items():
+                (pytest_cache / name).write_text(text, encoding="utf-8")
+        except OSError:
+            pass
+    return pytest_cache / _UNDER_PYTEST_CACHE
 
 
 def content_hash(source: bytes) -> str:

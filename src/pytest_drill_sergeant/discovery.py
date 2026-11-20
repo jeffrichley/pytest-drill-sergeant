@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from fnmatch import fnmatch
 from pathlib import Path
 
+from pytest_drill_sergeant.cache import location
 from pytest_drill_sergeant.config import ConfigError, RawValue
 
 # pytest's defaults for the ini options that pick test files.
@@ -156,32 +157,13 @@ def discover(paths: Iterable[Path]) -> IniSource:
     return IniSource(root=ancestor)
 
 
-# What pytest writes into a cache directory it makes, so git and backup tools pass
-# over it; the CLI writes the same when it makes one first.
-_CACHE_SUPPORT = {
-    ".gitignore": "# Created by pytest-drill-sergeant automatically.\n*\n",
-    "CACHEDIR.TAG": "Signature: 8a477f597d28d172789f06886806bc55\n"
-    "# This file is a cache directory tag created by pytest-drill-sergeant.\n",
-}
-
-
 def cache_dir(source: IniSource) -> Path:
-    """The cache directory pytest uses under this config, made as pytest would.
+    """drill-sergeant's cache directory under this config (`cache.location`).
 
-    It is the config's `cache_dir`, with `~` and environment variables expanded and
-    relative to the config root, or `.pytest_cache` there, as pytest resolves it.
-    A directory that can't be made is left for the cache to pass over.
+    pytest's cache directory is the config's `cache_dir`, or `.pytest_cache`,
+    relative to the config root.
     """
-    value = source.values.get("cache_dir", ".pytest_cache")
-    directory = source.root / os.path.expandvars(Path(str(value)).expanduser())
-    if not directory.exists():
-        try:
-            directory.mkdir(parents=True)
-            for name, text in _CACHE_SUPPORT.items():
-                (directory / name).write_text(text, encoding="utf-8")
-        except OSError:
-            pass
-    return directory
+    return location(source.root, str(source.values.get("cache_dir", ".pytest_cache")))
 
 
 def _patterns(source: IniSource, name: str, default: tuple[str, ...]) -> list[str]:

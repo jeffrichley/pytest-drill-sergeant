@@ -6,7 +6,6 @@ from typing import Annotated, NoReturn
 import typer
 from rich.console import Console
 
-from pytest_drill_sergeant.cache import CACHE_NAME
 from pytest_drill_sergeant.config import ConfigError, refusal, resolve
 from pytest_drill_sergeant.discovery import cache_dir, discover, load, test_files
 from pytest_drill_sergeant.engine import inspect
@@ -71,8 +70,7 @@ def check(
             files,
             config,
             production.files,
-            # pytest's `cache.mkdir` puts the plugin's cache here; the CLI shares it.
-            cache_dir=cache_dir(source) / "d" / CACHE_NAME if config.cache else None,
+            cache_dir=cache_dir(source) if config.cache else None,
         )
     except SyntaxError as error:
         _refuse(
@@ -82,15 +80,13 @@ def check(
     # The console reads the terminal as it is now: its width (or COLUMNS), and
     # whether it takes colour (not when piped, or under NO_COLOR).
     console = Console(highlight=False)
-    if production.note:
-        # One line, as it stands, however narrow the terminal.
-        console.print(production.note, soft_wrap=True, markup=False)
     console.print(
         render(
             result.findings,
             waived=result.waived,
             show_waived=show_waived,
             voice=config.voice,
+            note=production.note,
         ),
         crop=False,
     )

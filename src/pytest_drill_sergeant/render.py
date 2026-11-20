@@ -177,17 +177,19 @@ def _all_clear(waived: int, *, voice: bool) -> Text:
     return Text(f"No findings, {waived} waived.")
 
 
-def render(
+def render(  # noqa: PLR0913  # One report's options, keyword-only, each with a default.
     findings: list[Finding],
     *,
     waived: Sequence[WaivedFinding] = (),
     show_waived: bool = False,
     voice: bool = True,
     max_findings: int = 0,
+    note: str | None = None,
 ) -> RenderableType:
     """Render findings as the report.
 
-    The report is a banner, the findings grouped by file and findings by line, each
+    The report is the note, when there is one, as one line however narrow the
+    terminal, then a banner, the findings grouped by file and findings by line, each
     with one voice line and plain Found/Why/Fix, and a closing tally by level, with
     the number of waived findings, and a flourish. With `max_findings`, only the
     first that many findings are shown, then a line counting the rest; the banner
@@ -206,11 +208,13 @@ def render(
         show_waived: Whether to list the waived findings, not only count them.
         voice: Whether to deliver the report in the voice.
         max_findings: The most findings to show; 0 shows them all.
+        note: A line saying which checks were skipped and why
+            (`ProductionCode.note`), or `None`.
 
     Returns:
         The report, ready for `Console.print`.
     """
-    out: list[RenderableType] = []
+    out: list[RenderableType] = [_Unwrapped(Text(note))] if note else []
     if findings:
         files = len({f.file for f in findings})
         if voice:
