@@ -107,3 +107,35 @@ def test_a_lambda_called_where_it_is_written():
     worker.start()
     (lambda: time.sleep(0.5))()  # expect: DS801
     assert worker.done
+
+
+def test_a_class_body_and_a_comprehension_do_not_rebind_the_helper():
+    worker = Worker()
+
+    def settle():
+        time.sleep(0.5)  # expect: DS801
+
+    class Config:
+        settle = 0.5
+
+    names = [settle for settle in ("a", "b")]
+    worker.start()
+    settle()
+    assert worker.done
+    assert Config.settle == 0.5
+    assert names == ["a", "b"]
+
+
+def test_a_test_name_used_twice():
+    worker = Worker()
+    worker.start()
+    time.sleep(0.5)  # expect: DS801
+    assert worker.done
+
+
+def test_a_test_name_used_twice():  # noqa: F811 -- the reused name is the case
+    worker = Worker(retries=3)
+    worker.start()
+    worker.retry()
+    time.sleep(1.5)  # expect: DS801
+    assert worker.attempts == 3
