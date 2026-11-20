@@ -19,3 +19,9 @@ def test_status_codes():  # expect: DS102
     expected = {"ok": 200, "missing": 404}
     assert expected["ok"] == 200
     assert expected["missing"] != 200
+
+
+class TestArithmetic:
+    # The instance, whatever it is called, brings no value in.
+    def test_sum(this):  # expect: DS102
+        assert 1 + 1 == 2  # expect: DS202

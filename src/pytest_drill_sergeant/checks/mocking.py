@@ -14,6 +14,7 @@ from collections.abc import Iterator
 from pytest_drill_sergeant.checks.ast_tools import (
     is_assert_call,
     is_real_assertion,
+    positional_params,
     qualified,
     value_params,
     walk_test,
@@ -68,7 +69,7 @@ def _mock_api(expr: ast.expr, test: TestFunction) -> str | None:
         parts
         and isinstance(expr, ast.Name)
         and expr.id in _MOCKER_FIXTURES
-        and expr.id in value_params(test.node)
+        and expr.id in value_params(test)
     ):
         return ".".join(reversed(parts))
     return None
@@ -108,16 +109,6 @@ def _patch_decorators(test: TestFunction) -> list[ast.Call]:
     ]
 
 
-def _positional_params(test: TestFunction) -> list[str]:
-    """The test's positional parameters in order, without its instance.
-
-    A test in a class takes its instance first, whatever the parameter is called.
-    """
-    args = test.node.args
-    params = [a.arg for a in args.posonlyargs + args.args]
-    return params[1:] if test.classes else params
-
-
 def _bindings(node: ast.AST) -> Iterator[tuple[str, ast.expr]]:
     """The names a node binds to a value, each with the value."""
     if isinstance(node, ast.Assign):
@@ -139,8 +130,8 @@ class _Mocks:
     def __init__(self, test: TestFunction) -> None:
         self.test = test
         injected = len(_patch_decorators(test))
-        self.names = set(_positional_params(test)[:injected])
-        self.bound = value_params(test.node) | {
+        self.names = set(positional_params(test)[:injected])
+        self.bound = value_params(test) | {
             n.id
             for n in walk_test(test)
             if isinstance(n, ast.Name) and not isinstance(n.ctx, ast.Load)

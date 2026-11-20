@@ -10,6 +10,7 @@ from enum import Enum
 from pytest_drill_sergeant.checks.ast_tools import (
     calls_to,
     excinfo_names,
+    instance_param,
     is_known_non_act,
     is_real_assertion,
     own_statements,
@@ -120,14 +121,15 @@ NO_REAL_ASSERTION = Check(
 
 
 def _takes_values_in(test: TestFunction) -> bool:
-    """Whether the test is handed values: a fixture or parameter, or `self` it uses.
+    """Whether the test is handed values: a fixture or parameter, or an instance it uses.
 
     A value handed in may be the outcome under test, made where the test can't see.
     """
-    if value_params(test.node):
+    if value_params(test):
         return True
-    return any(
-        isinstance(node, ast.Name) and node.id == "self" for node in walk_test(test)
+    instance = instance_param(test)
+    return instance is not None and any(
+        isinstance(node, ast.Name) and node.id == instance for node in walk_test(test)
     )
 
 
@@ -196,7 +198,7 @@ NO_ACTION_UNDER_TEST = Check(
     explain=(
         "Flags a test that has a real assertion but runs nothing: no call outside its "
         "assertions (pytest's call form, `pytest.raises(E, func, arg)`, counts as one), "
-        "no `await`, and no fixture or parameter (or `self` it uses) that "
+        "no `await`, and no fixture or parameter (or a class's instance it uses) that "
         "could bring in the value under test. Such a test checks only values it wrote "
         "itself, or Python. Call the code under test and assert on its outcome."
     ),
@@ -814,7 +816,7 @@ def _module_literals(module: ast.Module) -> dict[str, ast.expr]:
 
 def _binds_in_test(name: str, test: TestFunction) -> bool:
     """Whether the test takes or assigns a name itself."""
-    return name in value_params(test.node) or any(
+    return name in value_params(test) or any(
         isinstance(node, ast.Name)
         and node.id == name
         and isinstance(node.ctx, ast.Store)

@@ -138,15 +138,38 @@ def module_imports(module: ast.Module) -> dict[str, str]:
     return names
 
 
-def value_params(node: FunctionNode) -> set[str]:
+def _param_names(node: FunctionNode) -> list[str]:
+    """Every parameter a function takes, in order, positional ones first."""
+    args = node.args
+    starred = [a for a in (args.vararg, args.kwarg) if a is not None]
+    return [a.arg for a in args.posonlyargs + args.args + args.kwonlyargs + starred]
+
+
+def instance_param(test: TestFunction) -> str | None:
+    """The parameter a test in a class takes its instance by; `None` at module level.
+
+    It is the first positional parameter, whatever it is called.
+    """
+    args = test.node.args
+    positional = args.posonlyargs + args.args
+    return positional[0].arg if test.classes and positional else None
+
+
+def positional_params(test: TestFunction) -> list[str]:
+    """The test's positional parameters in order, without its instance."""
+    args = test.node.args
+    params = [a.arg for a in args.posonlyargs + args.args]
+    return params[1:] if instance_param(test) is not None else params
+
+
+def value_params(test: TestFunction) -> set[str]:
     """A test's value parameters: the fixtures and parameters it takes.
 
-    `self` and `cls` are the test's own class, not values handed in.
+    A test in a class takes its instance first, whatever the parameter is
+    called; that is the test's own object, not a value handed in. At module
+    level every parameter is one, `self` and `cls` included.
     """
-    return {arg.arg for arg in ast.walk(node.args) if isinstance(arg, ast.arg)} - {
-        "self",
-        "cls",
-    }
+    return set(_param_names(test.node)) - {instance_param(test)}
 
 
 def imports_seen_by(
@@ -158,7 +181,7 @@ def imports_seen_by(
     `def sleep`, hides the module's import of the same name.
     """
     names = dict(module_names)
-    shadows = value_params(node)
+    shadows = set(_param_names(node))
     for child in ast.walk(node):
         if child is node:
             continue
@@ -308,7 +331,7 @@ def _uses_a_pytest_instrument(call: ast.Call, test: TestFunction) -> bool:
     return (
         isinstance(receiver, ast.Name)
         and receiver.id in _PYTEST_INSTRUMENTS
-        and receiver.id in value_params(test.node)
+        and receiver.id in value_params(test)
     )
 
 

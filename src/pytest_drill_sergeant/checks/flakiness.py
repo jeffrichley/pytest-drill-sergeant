@@ -183,7 +183,7 @@ def _frozen_calls(
     scopes: list[ast.AST] = []
     if (
         any(_freezes(d, names) for d in decorators)
-        or value_params(test.node) & _FREEZER_FIXTURES
+        or value_params(test) & _FREEZER_FIXTURES
         or _module_frozen(file.module, names)
         or _starts_freezer(test, names)
     ):
@@ -334,7 +334,7 @@ def _find_unseeded_random(file: TestFile) -> Iterator[Hit]:
         module, function = _generator_module(call.target)
         if function in _DRAWS.get(module, ()):
             requested = [
-                defs[name] for name in value_params(call.test.node) if name in fixtures
+                defs[name] for name in value_params(call.test) if name in fixtures
             ]
             seeded = (
                 seeded_by_file
