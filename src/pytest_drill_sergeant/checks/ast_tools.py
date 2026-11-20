@@ -24,6 +24,13 @@ _PYTEST_ASSERTING = frozenset(
 )
 PYTEST_RAISES = frozenset({"pytest.raises"})
 
+# The keyword that names the class `pytest.raises` or `pytest.warns` expects, when
+# the first positional argument doesn't.
+_EXPECTED_CLASS_KEYWORD = {
+    "pytest.raises": "expected_exception",
+    "pytest.warns": "expected_warning",
+}
+
 # pytest-check's helpers, each of which fails the test when its check doesn't hold,
 # reached through the module or its `check` object.
 _PYTEST_CHECK_HELPERS = (
@@ -256,6 +263,25 @@ def calls_to(node: ast.AST, targets: frozenset[str], names: Mapping[str, str]) -
     return isinstance(node, ast.Call) and qualified(node.func, names) in targets
 
 
+def expected_class(call: ast.Call, names: Mapping[str, str]) -> ast.expr | None:
+    """The exception or warning class a `pytest.raises` or `pytest.warns` call expects.
+
+    It is the call's first positional argument, or its `expected_exception` (for
+    `pytest.raises`) or `expected_warning` (for `pytest.warns`) keyword; `None` for
+    any other call, or one that names no class.
+
+    Args:
+        call: The call.
+        names: The imported names in scope, as `imports_seen_by` gives them.
+    """
+    keyword = _EXPECTED_CLASS_KEYWORD.get(qualified(call.func, names) or "")
+    if keyword is None:
+        return None
+    if call.args:
+        return call.args[0]
+    return next((k.value for k in call.keywords if k.arg == keyword), None)
+
+
 def walk_test(test: TestFunction) -> Iterator[ast.AST]:
     """Every node of a test's own code: its body, at any depth.
 
@@ -294,14 +320,10 @@ def _is_expect_matcher(call: ast.Call, names: Mapping[str, str]) -> bool:
 
 
 def is_real_assertion(node: ast.AST, names: Mapping[str, str]) -> bool:
-    """Whether a node can fail the test on the outcome it checks.
+    """Whether a node is a real assertion, as GLOSSARY.md's entry defines it.
 
-    An `assert` of anything but a truthy constant or non-empty tuple counts, and so
-    does a call to `pytest.raises`, `pytest.warns`, `pytest.deprecated_call` or
-    `pytest.fail` (through whatever name the imports give it), any `assert*` call,
-    a call made through an assertion library the imports reach (a pytest-check
-    helper such as `check.equal`, a matcher on Playwright's `expect(...)`), and
-    raising `AssertionError`.
+    pytest's helpers and assertion libraries are known through whatever names the
+    file's imports give them.
 
     Args:
         node: The node.

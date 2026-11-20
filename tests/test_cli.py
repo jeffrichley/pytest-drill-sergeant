@@ -3,6 +3,8 @@ from pathlib import Path
 
 import pytest
 
+from pytest_drill_sergeant.checks import CHECKS
+
 pytestmark = pytest.mark.integration
 
 GOLDEN = Path(__file__).parent / "golden"
@@ -70,6 +72,13 @@ def test_check_skips_the_configs_norecursedirs(cli, tmp_path):
 
 def test_check_refuses_a_missing_path(cli):
     assert cli("check", "nowhere").exit_code == 2
+
+
+def test_explain_refuses_an_unknown_code_naming_it(cli):
+    result = cli("explain", "DS999")
+
+    assert result.exit_code == 2
+    assert "DS999" in result.stderr
 
 
 def test_check_refuses_a_file_that_does_not_parse(cli, tmp_path):
@@ -258,14 +267,16 @@ def test_a_narrow_terminal_keeps_the_location_whole(cli, long_named_test, monkey
 
     output = cli("check", "test_long.py").output
 
-    location, *rest = [line for line in output.splitlines() if "DS101" in line]
+    location, *rest = [
+        line for line in output.splitlines() if "no-real-assertion" in line
+    ]
     assert LONG_LOCATION in location
     assert not rest
     # The note that DS403 was skipped, for want of production code, is never wrapped.
     facts = [
-        ln
-        for ln in output.splitlines()
-        if ln != location and not ln.startswith("drill-sergeant: ")
+        line
+        for line in output.splitlines()
+        if line != location and not line.startswith("drill-sergeant: ")
     ]
     assert max(len(line) for line in facts) <= 60
 
@@ -454,3 +465,33 @@ def test_warm_check_with_nothing_changed_writes_nothing(
     assert result.exit_code == 1
     assert (tmp_path / ".pytest_cache" / "d" / "drill-sergeant").is_dir()
     assert written() == []
+
+
+@pytest.mark.parametrize("check", CHECKS, ids=lambda c: c.code)
+def test_explain_prints_the_registrys_rationale_explanation_and_both_examples(
+    cli, check
+):
+    result = cli("explain", check.code)
+
+    assert result.exit_code == 0, result.output
+    assert check.why in result.output
+    assert check.explain in result.output
+    assert check.bad_example in result.output
+    assert check.good_example in result.output
+
+
+def test_explain_with_no_code_lists_every_check(cli):
+    result = cli("explain")
+
+    assert result.exit_code == 0, result.output
+    listed = [line.split()[:2] for line in result.output.splitlines()]
+    assert all([c.code, c.name] in listed for c in CHECKS)
+
+
+def test_fix_line_ends_with_a_pointer_to_explain(cli, assertion_free_test, monkeypatch):
+    monkeypatch.setenv("COLUMNS", "1000")
+
+    output = cli("check", "test_it.py").output
+
+    fix = next(line for line in output.splitlines() if line.lstrip().startswith("Fix:"))
+    assert fix.endswith("`drill-sergeant explain DS101`.")

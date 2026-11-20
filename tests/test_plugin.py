@@ -287,6 +287,17 @@ def test_findings_section_wraps_to_pytests_terminal_width(
     assert following.lstrip().startswith("Why:")
 
 
+def test_fix_line_ends_with_a_pointer_to_explain(drill, lazy_test, monkeypatch):
+    monkeypatch.setenv("COLUMNS", "1000")
+
+    section = _section(drill().stdout.str())
+
+    fix = next(
+        line for line in section.splitlines() if line.lstrip().startswith("Fix:")
+    )
+    assert fix.endswith("`drill-sergeant explain DS101`.")
+
+
 def test_waived_finding_leaves_the_run_passing_and_is_tallied(
     drill, pytester, unit_mark
 ):

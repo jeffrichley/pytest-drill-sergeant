@@ -9,7 +9,8 @@ suite/test_cart.py
     Why:   A test with no real assertion passes whenever the code doesn't crash, so it stays green
            when the behaviour breaks.
     Fix:   In `test_adding_an_item_to_the_cart`, line 10: assert on what `cart.add(...)` returns or
-           changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise.
+           changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise. See
+           `drill-sergeant explain DS101`.
 
 suite/test_checkout.py
   suite/test_checkout.py:15: DS104 interleaved-act-assert [warn] in test_checkout_applies_and_removes_a_discount_code
@@ -20,7 +21,7 @@ suite/test_checkout.py
            name doesn't say which one broke, and a failing early step hides every later one.
     Fix:   In `test_checkout_applies_and_removes_a_discount_code`, line 15: split the test into one
            test per act (lines 13, 15), each named for its behaviour, with any shared setup in a
-           fixture.
+           fixture. See `drill-sergeant explain DS104`.
 
 suite/test_inventory.py
   suite/test_inventory.py:1: DS106 long-file [fail] in <module>
@@ -32,6 +33,7 @@ suite/test_inventory.py
     Fix:   In `test_inventory.py`: split it into files of at most 40 lines: move its 5 module-level
            tests (lines 20-48) by the code they call: the other 3 by the behaviour they check; keep
            the 2 that call `Inventory` here. Move fixtures the new files share into `conftest.py`.
+           See `drill-sergeant explain DS106`.
 
 Waived findings
   suite/test_cart.py:23: DS101 no-real-assertion [fail] in test_empty_cart_smoke

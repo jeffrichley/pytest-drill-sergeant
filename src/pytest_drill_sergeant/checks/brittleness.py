@@ -6,8 +6,9 @@ from collections.abc import Iterator
 from pytest_drill_sergeant.checks.assertions import tautological_asserts
 from pytest_drill_sergeant.checks.ast_tools import (
     call_name,
+    expected_class,
     instance_param,
-    is_assert_call,
+    is_real_assertion,
     walk_test,
 )
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
@@ -146,18 +147,21 @@ BRITTLE_STRING_MATCH = Check(
 def _asserted(
     test: TestFunction,
 ) -> Iterator[tuple[ast.Assert | ast.Call, list[ast.expr]]]:
-    """Each assertion in a test, with the expressions it checks.
+    """Each real assertion (see GLOSSARY.md) in a test, with the expressions it checks.
 
-    An `assert` checks its test. An `assert*` call (`self.assertEqual`, a mock's
-    `assert_called_once`) checks its arguments and the object it is called on.
+    An `assert` checks its test. An asserting call checks its arguments, keywords
+    included, and the object it is called on, but not the exception or warning class
+    `pytest.raises` or `pytest.warns` expects: that names the outcome, not state.
     """
     for node in walk_test(test):
         if isinstance(node, ast.Assert):
             yield node, [node.test]
-        elif isinstance(node, ast.Call) and is_assert_call(node):
+        elif isinstance(node, ast.Call) and is_real_assertion(node, test.imports):
             func = node.func
             receiver = [func.value] if isinstance(func, ast.Attribute) else []
-            yield node, [*receiver, *node.args]
+            expected = expected_class(node, test.imports)
+            arguments = [*node.args, *(k.value for k in node.keywords)]
+            yield node, [*receiver, *(a for a in arguments if a is not expected)]
 
 
 # Underscored names that are public API: namedtuple's methods and fields.
@@ -233,15 +237,21 @@ PRIVATE_STATE_ASSERTION = Check(
         "so a refactor that keeps the behaviour still breaks the test."
     ),
     explain=(
-        "Flags an assertion (an `assert`, or an `assert*` call such as "
-        "`self.assertEqual` or a mock's `assert_called_once`) that reads a private "
+        "Flags an assertion (an `assert`, an `assert*` call such as "
+        "`self.assertEqual` or a mock's `assert_called_once`, `pytest.raises` and "
+        "kin, a pytest-check helper such as `check.equal`, a matcher on "
+        "Playwright's `expect(...)`, or `raise AssertionError`) that reads a private "
         "attribute: one starting with `_`, such as `cache._store` or a "
         "name-mangled `obj._Class__x`. Dunders such as `__dict__` or `__name__`, "
         "namedtuple's `_asdict`, `_replace`, `_fields`, `_field_defaults` and "
         "`_make`, and the test's own instance (`self._x`, by whatever name the "
-        "instance goes) are exempt, as is private access outside an assertion (injecting a fake in setup) and an `assert` that "
-        "can't fail, which tautological-assertion reports. Assert on the public "
-        "behaviour instead."
+        "instance goes) are exempt, as is the exception or warning class "
+        "`pytest.raises` or `pytest.warns` expects (its first argument, or "
+        "`expected_exception` or `expected_warning`), though another private read "
+        "in the call, such as `match=obj._msg`, counts. So is private access outside "
+        "an assertion (injecting a fake in setup) and an `assert` that can't fail, "
+        "which tautological-assertion reports. Assert on the public behaviour "
+        "instead."
     ),
     bad_example=(
         "def test_cache_miss():\n"

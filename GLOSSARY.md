@@ -119,3 +119,7 @@ _Avoid_: Suppression, ignore, noqa
 **Agent guide**:
 The instructions that teach a coding agent the checks before it writes tests, so it avoids failure modes instead of learning them from findings.
 _Avoid_: Agent docs, prompt, instructions file
+
+**Agent Skill**:
+The `SKILL.md` that `drill-sergeant agent-guide --install` writes, holding the full agent guide where a repo's agents look for skills: `.agents/skills/drill-sergeant/` beside AGENTS.md, `.claude/skills/drill-sergeant/` beside CLAUDE.md. The install also adds a block to the AGENTS.md or CLAUDE.md, marked with drill-sergeant's version, that points at the skill; a rerun replaces only that block.
+_Avoid_: Skill file, snippet (for the block)
