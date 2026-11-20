@@ -265,7 +265,7 @@ def test_a_narrow_terminal_keeps_the_location_whole(cli, long_named_test, monkey
 
     output = cli("check", "test_long.py").output
 
-    location, *rest = [line for line in output.splitlines() if "DS101" in line]
+    location, *rest = [ln for ln in output.splitlines() if "no-real-assertion" in ln]
     assert LONG_LOCATION in location
     assert not rest
     # The note that DS403 was skipped, for want of production code, is never wrapped.
@@ -479,3 +479,12 @@ def test_explain_with_no_code_lists_every_check(cli):
     assert result.exit_code == 0, result.output
     listed = [line.split()[:2] for line in result.output.splitlines()]
     assert all([c.code, c.name] in listed for c in CHECKS)
+
+
+def test_fix_line_ends_with_a_pointer_to_explain(cli, assertion_free_test, monkeypatch):
+    monkeypatch.setenv("COLUMNS", "1000")
+
+    output = cli("check", "test_it.py").output
+
+    fix = next(ln for ln in output.splitlines() if ln.lstrip().startswith("Fix:"))
+    assert fix.endswith("`drill-sergeant explain DS101`.")
