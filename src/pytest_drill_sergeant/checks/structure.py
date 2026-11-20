@@ -27,6 +27,7 @@ from pytest_drill_sergeant.checks.base import (
     TestFunction,
     and_list,
 )
+from pytest_drill_sergeant.checks.cheating import UNCONDITIONAL_SKIP
 from pytest_drill_sergeant.checks.exceptions import SWALLOWED_EXCEPTION
 from pytest_drill_sergeant.findings import Level
 from pytest_drill_sergeant.tokens import Comment
@@ -54,11 +55,15 @@ def _last_call(test: TestFunction) -> ast.Call | None:
 
 def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        # A test that skips on every run is DS402's to report, not this check's.
-        # One that loses an exception it catches is left to DS702 by `yields_to`,
-        # only where DS702 reports.
-        if _has_real_assertion(test) or skips_unconditionally(test, file.module):
+        # A test that skips on every run is left to DS402, and one that loses an
+        # exception it catches to DS702 by `yields_to`: each only where it reports.
+        if _has_real_assertion(test):
             continue
+        left_to = (
+            UNCONDITIONAL_SKIP.code
+            if skips_unconditionally(test, file.module)
+            else None
+        )
         call = _last_call(test)
         target = (
             f"what `{ast.unparse(call.func)}(...)` returns or changes"
@@ -76,13 +81,14 @@ def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
                 f"assert on {target}, or wrap the call in "
                 "`pytest.raises(..., match=...)` if it should raise."
             ),
+            left_to=left_to,
         )
 
 
 NO_REAL_ASSERTION = Check(
     code="DS101",
     name="no-real-assertion",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "You call that a test, recruit? It runs the code and checks NOTHING!",
         "No assertion, no proof! Green means nothing if it can't go red, maggot!",
@@ -189,7 +195,7 @@ def _find_no_action_under_test(file: TestFile) -> Iterator[Hit]:
 NO_ACTION_UNDER_TEST = Check(
     code="DS102",
     name="no-action-under-test",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "You're asserting on numbers you wrote yourself, recruit! WHERE IS THE CODE?",
         "This test checks that Python works! Python doesn't need your help, maggot!",
@@ -355,7 +361,7 @@ def _find_assert_before_act(file: TestFile) -> Iterator[Hit]:
 ASSERT_BEFORE_ACT = Check(
     code="DS103",
     name="assert-before-act",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "You checked the ground, then fired blind! Assert AFTER you act, recruit!",
         "Asserting before the action is inspecting your rifle after the battle!",
@@ -438,7 +444,7 @@ def _find_interleaved_act_assert(file: TestFile) -> Iterator[Hit]:
 INTERLEAVED_ACT_ASSERT = Check(
     code="DS104",
     name="interleaved-act-assert",
-    default_level=Level.WARN,
+    default_level=Level.OFF,
     voice=(
         "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!",
         "One test, one mission! You're running three operations in one, maggot!",
@@ -458,7 +464,9 @@ INTERLEAVED_ACT_ASSERT = Check(
         "act. An assignment that reads "
         "a result between assertions isn't one, and a guard assertion before the "
         "only act is fine. Split the test into one test per act, with shared setup "
-        "in a fixture. It warns by default rather than failing: a workflow or state "
+        "in a fixture. Off by default until it is proven; turn it on with "
+        "`drill_sergeant_levels` (`DS104=warn`). It warns rather than fails: a "
+        "workflow or state "
         "test that steps through a sequence is sometimes rightly shaped this way, and "
         "a waiver records that it is."
     ),
@@ -515,7 +523,7 @@ def _find_long_test(file: TestFile) -> Iterator[Hit]:
 LONG_TEST = Check(
     code="DS105",
     name="long-test",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "This test is longer than my last deployment! CUT IT DOWN, recruit!",
         "Nobody can read a test this long, maggot, and nobody will!",
@@ -927,7 +935,7 @@ def _find_conditional_logic(file: TestFile) -> Iterator[Hit]:
 CONDITIONAL_LOGIC = Check(
     code="DS107",
     name="conditional-logic",
-    default_level=Level.WARN,
+    default_level=Level.OFF,
     voice=(
         "IF? There is no IF in a test, recruit! You know the outcome or you don't!",
         "A test that takes whichever path is open passes on every path, maggot!",
@@ -951,7 +959,9 @@ CONDITIONAL_LOGIC = Check(
         "times, so its finding says what it costs instead: the first value to fail "
         "stops the test and hides the rest. "
         "Any other loop: assert on the whole collection at once, which fails when "
-        "it's empty. It warns by default rather than failing: asserting on each item "
+        "it's empty. Off by default until it is proven; turn it on with "
+        "`drill_sergeant_levels` (`DS107=warn`). It warns rather than fails: "
+        "asserting on each item "
         "of a collection the code returns is sometimes the clearest test, and a "
         "waiver records that it is."
     ),

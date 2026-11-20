@@ -31,7 +31,10 @@ def test_check_exits_nonzero_and_locates_the_finding(cli, assertion_free_test):
     assert "DS101" in result.output
 
 
-def test_check_finds_test_files_in_a_directory_and_skips_the_rest(cli, tmp_path):
+def test_check_finds_test_files_in_a_directory_and_skips_the_rest(
+    cli, cli_ini, tmp_path
+):
+    cli_ini()
     for name in ("test_a.py", "b_test.py", "helpers.py", ".venv/test_vendored.py"):
         (tmp_path / "suite" / name).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / "suite" / name).write_text("def test_x():\n    run()\n")
@@ -44,11 +47,11 @@ def test_check_finds_test_files_in_a_directory_and_skips_the_rest(cli, tmp_path)
     assert "test_vendored.py" not in result.output
 
 
-def test_check_takes_test_files_by_the_configs_python_files(cli, tmp_path):
+def test_check_takes_test_files_by_the_configs_python_files(cli, cli_ini, tmp_path):
     for name in ("check_a.py", "test_b.py"):
         (tmp_path / "suite" / name).parent.mkdir(exist_ok=True)
         (tmp_path / "suite" / name).write_text("def test_x():\n    run()\n")
-    (tmp_path / "pytest.ini").write_text("[pytest]\npython_files = check_*.py\n")
+    cli_ini("python_files = check_*.py")
 
     result = cli("check", "suite")
 
@@ -61,7 +64,9 @@ def test_check_skips_the_configs_norecursedirs(cli, tmp_path):
         (tmp_path / "suite" / name).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / "suite" / name).write_text("def test_x():\n    run()\n")
     (tmp_path / "pyproject.toml").write_text(
-        '[tool.pytest.ini_options]\nnorecursedirs = ["legacy"]\n'
+        "[tool.pytest.ini_options]\n"
+        'norecursedirs = ["legacy"]\n'
+        'drill_sergeant_levels = ["DS101=fail"]\n'
     )
 
     result = cli("check", "suite")
@@ -104,10 +109,10 @@ def test_check_refuses_a_test_file_it_cannot_read_naming_it(cli, tmp_path, targe
 
 
 def test_voice_off_keeps_found_why_fix_and_drops_the_voice(
-    cli, tmp_path, assertion_free_test
+    cli, cli_ini, assertion_free_test
 ):
     voiced = cli("check", "test_it.py").output
-    (tmp_path / "pytest.ini").write_text("[pytest]\ndrill_sergeant_voice = false\n")
+    cli_ini("drill_sergeant_voice = false")
 
     plain = cli("check", "test_it.py").output
 
@@ -138,12 +143,7 @@ def test_a_narrow_terminal_keeps_the_location_whole(cli, long_named_test, monkey
     ]
     assert LONG_LOCATION in location
     assert not rest
-    # The note that DS403 was skipped, for want of production code, is never wrapped.
-    facts = [
-        line
-        for line in output.splitlines()
-        if line != location and not line.startswith("drill-sergeant: ")
-    ]
+    facts = [line for line in output.splitlines() if line != location]
     assert max(len(line) for line in facts) <= 60
 
 
@@ -178,19 +178,20 @@ def test_forced_colour_styles_the_report_and_links_the_location_to_its_file(
 
 
 def test_check_reads_production_code_under_src(
-    cli, tmp_path, assertion_free_test, special_casing_module
+    cli, cli_ini, tmp_path, assertion_free_test, special_casing_module
 ):
     special_casing_module(tmp_path / "src")
+    cli_ini(on=("DS403=fail",))
 
     assert "src/app.py:4: DS403" in cli("check", "test_it.py").output
 
 
 def test_check_reads_the_configured_source_dirs_instead_of_src(
-    cli, tmp_path, assertion_free_test, special_casing_module
+    cli, cli_ini, tmp_path, assertion_free_test, special_casing_module
 ):
     special_casing_module(tmp_path / "lib")
     special_casing_module(tmp_path / "src")
-    (tmp_path / "pytest.ini").write_text("[pytest]\ndrill_sergeant_source_dirs = lib\n")
+    cli_ini("drill_sergeant_source_dirs = lib", on=("DS403=fail",))
 
     output = cli("check", "test_it.py").output
 
@@ -199,8 +200,10 @@ def test_check_reads_the_configured_source_dirs_instead_of_src(
 
 
 def test_without_production_code_the_special_casing_check_is_skipped_with_a_note(
-    cli, clean_test
+    cli, cli_ini, clean_test
 ):
+    cli_ini(on=("DS403=fail",))
+
     result = cli("check", "test_ok.py")
 
     assert result.exit_code == 0, result.output
@@ -209,22 +212,23 @@ def test_without_production_code_the_special_casing_check_is_skipped_with_a_note
 
 
 @pytest.mark.parametrize(
-    "ini",
-    ["drill_sergeant_levels = DS403=off", "drill_sergeant_mode = off"],
-    ids=["check-off", "mode-off"],
+    ("lines", "on"),
+    [((), ()), (("drill_sergeant_mode = off",), ("DS403=fail",))],
+    ids=["check-off-by-default", "mode-off"],
 )
 def test_no_note_when_the_special_casing_check_does_not_run(
-    cli, tmp_path, assertion_free_test, ini
+    cli, cli_ini, assertion_free_test, lines, on
 ):
-    (tmp_path / "pytest.ini").write_text(f"[pytest]\n{ini}\n")
+    cli_ini(*lines, on=on)
 
     assert "drill_sergeant_source_dirs" not in cli("check", "test_it.py").output
 
 
 def test_production_code_is_read_in_full_on_every_run(
-    cli, tmp_path, assertion_free_test, special_casing_module
+    cli, cli_ini, tmp_path, assertion_free_test, special_casing_module
 ):
     app = special_casing_module(tmp_path / "src")
+    cli_ini(on=("DS403=fail",))
     cli("check", "test_it.py")
     with app.open("a") as source:
         source.write("LATE = os.environ.get('PYTEST_CURRENT_TEST')\n")
@@ -273,11 +277,9 @@ def test_show_waived_lists_each_waived_finding_with_its_reason(cli, waived_test)
 
 
 def test_with_inline_waivers_off_the_cli_reports_the_waived_finding(
-    cli, tmp_path, waived_test
+    cli, cli_ini, waived_test
 ):
-    (tmp_path / "pytest.ini").write_text(
-        "[pytest]\ndrill_sergeant_inline_waivers = false\n"
-    )
+    cli_ini("drill_sergeant_inline_waivers = false")
 
     result = cli("check", "test_waived.py")
 
@@ -288,15 +290,15 @@ def test_with_inline_waivers_off_the_cli_reports_the_waived_finding(
 def test_check_caches_under_pytests_cache_dir_at_the_config_root(
     cli, tmp_path, assertion_free_test
 ):
-    (tmp_path / "pytest.ini").write_text("[pytest]\n")
-
     cli("check", str(assertion_free_test))
 
     assert (tmp_path / ".pytest_cache" / "d" / "drill-sergeant").is_dir()
 
 
-def test_check_follows_the_configs_cache_dir(cli, tmp_path, assertion_free_test):
-    (tmp_path / "pytest.ini").write_text("[pytest]\ncache_dir = build/cache\n")
+def test_check_follows_the_configs_cache_dir(
+    cli, cli_ini, tmp_path, assertion_free_test
+):
+    cli_ini("cache_dir = build/cache")
 
     cli("check", str(assertion_free_test))
 
@@ -311,8 +313,10 @@ def test_cache_dir_the_check_makes_is_ignored_by_git(
     assert (tmp_path / ".pytest_cache" / ".gitignore").read_text().strip().endswith("*")
 
 
-def test_check_with_cache_off_writes_no_cache(cli, tmp_path, assertion_free_test):
-    (tmp_path / "pytest.ini").write_text("[pytest]\ndrill_sergeant_cache = false\n")
+def test_check_with_cache_off_writes_no_cache(
+    cli, cli_ini, tmp_path, assertion_free_test
+):
+    cli_ini("drill_sergeant_cache = false")
 
     result = cli("check", str(assertion_free_test))
 

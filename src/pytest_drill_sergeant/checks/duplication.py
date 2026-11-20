@@ -181,7 +181,7 @@ def _find_copy_paste_setup(
 COPY_PASTE_SETUP = Check(
     code="DS501",
     name="copy-paste-setup",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "LISTEN UP, RECRUIT! You wrote the same setup over and over like a broken "
         "record!",

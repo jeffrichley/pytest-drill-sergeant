@@ -105,7 +105,7 @@ def _find_brittle_string_match(file: TestFile) -> Iterator[Hit]:
 BRITTLE_STRING_MATCH = Check(
     code="DS601",
     name="brittle-string-match",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "Fix one typo in a message and this test goes down! That's not a test, it's "
         "a spell checker!",
@@ -343,7 +343,7 @@ def _find_private_state_assertion(file: TestFile) -> Iterator[Hit]:
 PRIVATE_STATE_ASSERTION = Check(
     code="DS602",
     name="private-state-assertion",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "Who gave you clearance to rifle through PRIVATE quarters, recruit?!",
         "That underscore means KEEP OUT! Test what it does, not what it hides!",

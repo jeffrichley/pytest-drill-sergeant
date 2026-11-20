@@ -70,7 +70,7 @@ def _find_missing_category_marker(file: TestFile) -> Iterator[Hit]:
 MISSING_CATEGORY_MARKER = Check(
     code="DS901",
     name="missing-category-marker",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "Which unit are you with, recruit? NO MARKINGS, NO DEPLOYMENT!",
         "A soldier without insignia is a soldier nobody can find! MARK IT!",
@@ -93,8 +93,9 @@ MISSING_CATEGORY_MARKER = Check(
         "directory, is named for, in any case (`tests/Integration/` suggests "
         "`@pytest.mark.integration`), else lists the configured markers. Marks a "
         "conftest hook adds at collection time are invisible to this static "
-        "check; such projects turn it off. With no category markers configured, "
-        "it flags nothing."
+        "check. Off by default, a convention a project opts into; turn it on with "
+        "`drill_sergeant_levels` (`DS901=fail`). With no category markers "
+        "configured, it flags nothing."
     ),
     bad_example=(
         "def test_order_total_adds_line_items():\n    assert order_total([2, 3]) == 5\n"

@@ -110,30 +110,31 @@ def _unconditional_skip_calls(file: TestFile) -> list[tuple[str, ast.Call]]:
 
 
 def _find_skip_without_reason(file: TestFile) -> Iterator[Hit]:
-    # A skip that happens on every run is DS402's to report, reason or not.
+    # A skip that happens on every run is left to DS402, reason or not, only where
+    # DS402 reports.
     fix = (
         'give it `reason="..."` saying what is wrong and when the test can run '
         "again, such as a ticket link."
     )
     for where, expr, names in _marks(file.module):
         mark = skip_mark(expr, names)
-        if (
-            mark is not None
-            and _mark_has_no_reason(mark, expr)
-            and not is_always_skipped_by(expr, names)
-        ):
+        if mark is not None and _mark_has_no_reason(mark, expr):
             what = "is marked an expected failure" if mark == XFAIL else "is skipped"
             yield Hit.at(
                 where,
                 expr.lineno,
                 found=f"{what} with no reason: `@{ast.unparse(expr)}`.",
                 fix=fix,
+                left_to=(
+                    UNCONDITIONAL_SKIP.code
+                    if is_always_skipped_by(expr, names)
+                    else None
+                ),
             )
     unconditional = {id(call) for _, call in _unconditional_skip_calls(file)}
     for where, node, names in scoped_walk(file.module, TEST_PATH):
         if (
             isinstance(node, ast.Call)
-            and id(node) not in unconditional
             and calls_to(node, _SKIP_CALLS, names)
             and _call_has_no_reason(node)
         ):
@@ -142,13 +143,14 @@ def _find_skip_without_reason(file: TestFile) -> Iterator[Hit]:
                 node.lineno,
                 found=f"skips with no reason: `{ast.unparse(node)}`.",
                 fix=fix,
+                left_to=UNCONDITIONAL_SKIP.code if id(node) in unconditional else None,
             )
 
 
 SKIP_WITHOUT_REASON = Check(
     code="DS401",
     name="skip-without-reason",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "You benched a soldier and didn't write down WHY, recruit?",
         "A skip with no reason is a deserter with no paperwork! FILL IT OUT!",
@@ -222,7 +224,7 @@ def _find_unconditional_skip(file: TestFile) -> Iterator[Hit]:
 UNCONDITIONAL_SKIP = Check(
     code="DS402",
     name="unconditional-skip",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "Skipping the test doesn't fix the code, recruit! It hides the body!",
         "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!",
@@ -331,7 +333,7 @@ def _find_test_special_casing(file: SourceFile) -> Iterator[Hit]:
 TEST_SPECIAL_CASING = Check(
     code="DS403",
     name="test-special-casing",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "Your code salutes when the inspector walks in and slacks off when he leaves!",
         "Rigging the range so you can't miss is CHEATING, recruit!",

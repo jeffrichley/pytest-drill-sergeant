@@ -7,9 +7,13 @@ how waivers apply to findings, and the `drill_sergeant_inline_waivers` switch.
 import pytest
 
 from pytest_drill_sergeant.config import resolve
-from pytest_drill_sergeant.engine import Config, inspect
+from pytest_drill_sergeant.engine import inspect
 
 pytestmark = pytest.mark.unit
+
+# The checks these waivers name, on: each is off by default until it is proven.
+WAIVED_CHECKS_ON = ["DS101=fail", "DS201=fail", "DS403=fail"]
+ON = resolve({"drill_sergeant_levels": WAIVED_CHECKS_ON})
 
 # A test with no real assertion (DS101 on line 1), waived on its `def` line.
 WAIVED_ON_DEF = "def test_it():  # drill: waive DS101 -- smoke test\n    run()\n"
@@ -22,7 +26,7 @@ def flagged(findings):
 def test_waiver_on_the_def_line_waives_the_finding_with_its_reason(write_test_file):
     path = write_test_file(WAIVED_ON_DEF)
 
-    result = inspect([path], Config())
+    result = inspect([path], ON)
 
     assert result.findings == []
     assert [(w.finding.code, w.finding.line, w.reason) for w in result.waived] == [
@@ -37,7 +41,7 @@ def test_waiver_on_the_flagged_line_waives_the_finding(write_test_file):
         "    assert value is not None  # drill: waive DS201 -- any value will do\n"
     )
 
-    result = inspect([path], Config())
+    result = inspect([path], ON)
 
     assert result.findings == []
     assert [(w.finding.code, w.finding.line, w.reason) for w in result.waived] == [
@@ -70,7 +74,7 @@ def test_def_line_waiver_covers_a_finding_anywhere_in_its_test(
 ):
     path = write_test_file(source)
 
-    result = inspect([path], Config())
+    result = inspect([path], ON)
 
     assert flagged(result.findings) == []
     assert flagged(w.finding for w in result.waived) == [("DS201", line)]
@@ -84,7 +88,7 @@ def test_def_line_waiver_leaves_other_tests_findings_standing(write_test_file):
         "    stop()\n"
     )
 
-    result = inspect([path], Config())
+    result = inspect([path], ON)
 
     assert flagged(result.findings) == [("DS101", 3)]
 
@@ -106,7 +110,7 @@ def test_waiver_off_the_def_and_flagged_lines_waives_nothing(
 ):
     path = write_test_file(source)
 
-    result = inspect([path], Config())
+    result = inspect([path], ON)
 
     assert (flagged(result.findings), result.waived) == ([("DS101", line)], [])
 
@@ -138,7 +142,7 @@ def test_waiver_off_the_def_and_flagged_lines_waives_nothing(
 def test_waiver_that_does_not_apply_waives_nothing(write_test_file, source, standing):
     path = write_test_file(source)
 
-    result = inspect([path], Config())
+    result = inspect([path], ON)
 
     assert (flagged(result.findings), result.waived) == (standing, [])
 
@@ -156,7 +160,7 @@ def test_waiver_that_does_not_apply_waives_nothing(write_test_file, source, stan
 def test_malformed_waiver_waives_nothing_and_is_reported(write_test_file, comment):
     path = write_test_file(f"def test_it():  {comment}\n    run()\n")
 
-    result = inspect([path], Config())
+    result = inspect([path], ON)
 
     assert (flagged(result.findings), result.waived) == (
         [("DS001", 1), ("DS101", 1)],
@@ -170,7 +174,7 @@ def test_waiver_that_matches_no_finding_is_not_reported(write_test_file):
         "    assert sorted([2, 1]) == [1, 2]\n"
     )
 
-    result = inspect([path], Config())
+    result = inspect([path], ON)
 
     assert (result.findings, result.waived) == ([], [])
 
@@ -178,7 +182,12 @@ def test_waiver_that_matches_no_finding_is_not_reported(write_test_file):
 def test_waived_finding_keeps_its_level(write_test_file):
     path = write_test_file(WAIVED_ON_DEF)
 
-    result = inspect([path], resolve({"drill_sergeant_mode": "warn"}))
+    result = inspect(
+        [path],
+        resolve(
+            {"drill_sergeant_mode": "warn", "drill_sergeant_levels": WAIVED_CHECKS_ON}
+        ),
+    )
 
     assert [w.finding.level for w in result.waived] == ["warn"]
 
@@ -186,7 +195,15 @@ def test_waived_finding_keeps_its_level(write_test_file):
 def test_with_inline_waivers_off_waived_findings_stand(write_test_file):
     path = write_test_file(WAIVED_ON_DEF)
 
-    result = inspect([path], resolve({"drill_sergeant_inline_waivers": "false"}))
+    result = inspect(
+        [path],
+        resolve(
+            {
+                "drill_sergeant_inline_waivers": "false",
+                "drill_sergeant_levels": WAIVED_CHECKS_ON,
+            }
+        ),
+    )
 
     assert (flagged(result.findings), result.waived) == ([("DS101", 1)], [])
 
@@ -196,7 +213,15 @@ def test_with_inline_waivers_off_malformed_waivers_are_not_reported(write_test_f
         "def test_it():  # drill: waive\n    assert sorted([2, 1]) == [1, 2]\n"
     )
 
-    result = inspect([path], resolve({"drill_sergeant_inline_waivers": "false"}))
+    result = inspect(
+        [path],
+        resolve(
+            {
+                "drill_sergeant_inline_waivers": "false",
+                "drill_sergeant_levels": WAIVED_CHECKS_ON,
+            }
+        ),
+    )
 
     assert (result.findings, result.waived) == ([], [])
 
@@ -208,7 +233,7 @@ def test_waiver_on_the_flagged_line_of_production_code_waives_the_finding(tmp_pa
         "QUIET = 'pytest' in sys.modules  # drill: waive DS403 -- quiet test logs\n"
     )
 
-    result = inspect([], Config(), sources=[path])
+    result = inspect([], ON, sources=[path])
 
     assert result.findings == []
     assert [(w.finding.code, w.finding.line) for w in result.waived] == [("DS403", 2)]

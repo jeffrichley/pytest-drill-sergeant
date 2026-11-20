@@ -503,7 +503,7 @@ def _find_mirror_assertion(file: TestFile) -> Iterator[Hit]:
 WEAK_ASSERTION = Check(
     code="DS201",
     name="weak-assertion",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?",
         "Truthy, has a length, is a string. You described a potato, maggot!",
@@ -541,7 +541,7 @@ WEAK_ASSERTION = Check(
 TAUTOLOGICAL_ASSERTION = Check(
     code="DS202",
     name="tautological-assertion",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "You asserted that a thing equals itself. Congratulations, you discovered math!",
         "This assertion can't fail, recruit! An alarm that can't ring is a DOORSTOP!",
@@ -578,7 +578,7 @@ TAUTOLOGICAL_ASSERTION = Check(
 MIRROR_ASSERTION = Check(
     code="DS203",
     name="mirror-assertion",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "You checked the code against ITSELF! Of course it agrees, recruit!",
         "Asking the suspect for his own alibi? That's not a test, that's a MIRROR!",

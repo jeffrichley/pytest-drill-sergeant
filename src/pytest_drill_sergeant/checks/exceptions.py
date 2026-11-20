@@ -134,7 +134,7 @@ def _find_broad_raises(file: TestFile) -> Iterator[Hit]:
 BROAD_RAISES = Check(
     code="DS701",
     name="broad-raises",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "Expecting `Exception`? That's not a target, recruit, that's the whole range!",
         "A typo in your own test raises too, maggot! NAME THE EXCEPTION!",
@@ -314,7 +314,7 @@ def _find_swallowed_exception(file: TestFile) -> Iterator[Hit]:
 SWALLOWED_EXCEPTION = Check(
     code="DS702",
     name="swallowed-exception",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "You caught the failure and HID it, recruit? That's desertion!",
         "`except: pass` isn't a test, maggot, it's a cover-up!",

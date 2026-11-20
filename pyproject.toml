@@ -167,6 +167,10 @@ markers = [
 # tests on purpose, and so are the golden and perf suites, so no check reports on them (`DS` is
 # every family).
 drill_sergeant_per_file_ignores = ["tests/corpus/**: DS", "tests/golden/suite/**: DS", "tests/perf/suite/**: DS"]
+# Checks off by default until they are proven (#171) still hold our own suite, at the
+# levels they had: every check on, three at `warn`, DS108 (AAA comments) off. DS901 is
+# a convention we opt into, at `fail`.
+drill_sergeant_levels = ["DS=fail", "DS104=warn", "DS107=warn", "DS302=warn", "DS108=off"]
 # Every test carries a category marker (DS901): `unit` for the engine seam,
 # `integration` for the CLI and plugin, `perf` for the speed budget.
 drill_sergeant_category_markers = ["unit", "integration", "e2e", "perf"]

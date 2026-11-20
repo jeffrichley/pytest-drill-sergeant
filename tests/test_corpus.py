@@ -5,9 +5,10 @@ subfolder alone, as production code. A file in another subfolder of a check's fo
 is analysed with the files beside it, as one run, for checks that compare tests
 across files; its expected findings are still its own.
 
-A check that is off by default is on for the files in its own folder, and only
-there: the whole-corpus run, with every check at its default level, expects none of
-its findings.
+A check that is off by default until it is proven is on for every corpus file, as
+its markers were written with it on. DS108, a style a project opts into, is on for
+the files in its own folder only. The whole-corpus run, with every check at its
+default level, expects no finding of a check that is off by default.
 """
 
 import re
@@ -16,6 +17,7 @@ from pathlib import Path
 import pytest
 
 from pytest_drill_sergeant.checks import CHECKS
+from pytest_drill_sergeant.checks.structure import AAA_COMMENTS
 from pytest_drill_sergeant.engine import Config, analyze
 from pytest_drill_sergeant.findings import Level
 
@@ -26,7 +28,7 @@ CORPUS_FILES = sorted(CORPUS.rglob("*.py"))
 SOURCE_FILES = [p for p in CORPUS_FILES if p.parent.name == "source"]
 TEST_FILES = [p for p in CORPUS_FILES if p.parent.name != "source"]
 EXPECT = re.compile(r"#\s*expect:\s*(.+)$")
-OFF_BY_DEFAULT = {c.name: c.code for c in CHECKS if c.default_level is Level.OFF}
+OFF_BY_DEFAULT = {c.code for c in CHECKS if c.default_level is Level.OFF}
 
 
 def expected_findings(path):
@@ -47,10 +49,12 @@ def analysed_with(path):
 
 
 def config_for(path):
-    """The default config, with the check whose folder a corpus file is in turned on
-    when it is off by default."""
-    code = OFF_BY_DEFAULT.get(path.relative_to(CORPUS).parts[0])
-    return Config() if code is None else Config(levels={code: Level.FAIL})
+    """The default config, with every check that is off by default turned on, but
+    DS108 only in its own folder."""
+    on = set(OFF_BY_DEFAULT)
+    if path.relative_to(CORPUS).parts[0] != AAA_COMMENTS.name:
+        on.discard(AAA_COMMENTS.code)
+    return Config(levels=dict.fromkeys(on, Level.FAIL))
 
 
 def analyze_corpus_file(path):
@@ -81,7 +85,7 @@ def test_whole_corpus_as_one_run_yields_exactly_the_expected_findings():
         (path, code, line)
         for path in CORPUS_FILES
         for code, line in expected_findings(path)
-        if code not in OFF_BY_DEFAULT.values()
+        if code not in OFF_BY_DEFAULT
     }
 
 

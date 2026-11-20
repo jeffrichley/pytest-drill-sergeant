@@ -57,8 +57,8 @@ def test_collecting_only_leaves_the_exit_code(drill, lazy_test):
     assert drill("--collect-only").ret == pytest.ExitCode.OK
 
 
-def test_warn_mode_shows_findings_and_leaves_the_exit_code(drill, pytester, lazy_test):
-    pytester.makeini("[pytest]\ndrill_sergeant_mode = warn\n")
+def test_warn_mode_shows_findings_and_leaves_the_exit_code(drill, drill_ini, lazy_test):
+    drill_ini("drill_sergeant_mode = warn")
 
     result = drill()
 
@@ -66,10 +66,10 @@ def test_warn_mode_shows_findings_and_leaves_the_exit_code(drill, pytester, lazy
     assert "test_lazy.py:1: DS101" in result.stdout.str()
 
 
-def test_off_mode_turns_the_plugin_off(drill, pytester, lazy_test):
+def test_off_mode_turns_the_plugin_off(drill, drill_ini, lazy_test):
     """Nothing of drill-sergeant's is printed: no findings section, and no note
     that the checks reading production code were skipped."""
-    pytester.makeini("[pytest]\ndrill_sergeant_mode = off\n")
+    drill_ini("drill_sergeant_mode = off", on=("DS403=fail",))
 
     result = drill()
 
@@ -153,8 +153,8 @@ def test_each_finding_is_reported_once(drill, lazy_test):
     assert result.stdout.str().count("test_lazy.py:1: DS101") == 1
 
 
-def test_per_file_ignores_are_relative_to_the_config_file(drill, pytester, lazy_file):
-    pytester.makeini("[pytest]\ndrill_sergeant_per_file_ignores = legacy/*: DS1\n")
+def test_per_file_ignores_are_relative_to_the_config_file(drill, drill_ini, lazy_file):
+    drill_ini("drill_sergeant_per_file_ignores = legacy/*: DS1")
     lazy_file("legacy/test_old.py", "test_old")
 
     result = drill()
@@ -175,8 +175,8 @@ def test_shows_the_first_25_findings_then_counts_the_rest(drill, lazy_file):
     assert "and 2 more" in out
 
 
-def test_max_findings_sets_the_cap(drill, pytester, lazy_file):
-    pytester.makeini("[pytest]\ndrill_sergeant_max_findings = 1\n")
+def test_max_findings_sets_the_cap(drill, drill_ini, lazy_file):
+    drill_ini("drill_sergeant_max_findings = 1")
     lazy_file("test_many.py", *(f"test_{n}" for n in range(3)))
 
     out = drill().stdout.str()
@@ -185,8 +185,8 @@ def test_max_findings_sets_the_cap(drill, pytester, lazy_file):
     assert "and 2 more" in out
 
 
-def test_max_findings_0_shows_every_finding(drill, pytester, lazy_file):
-    pytester.makeini("[pytest]\ndrill_sergeant_max_findings = 0\n")
+def test_max_findings_0_shows_every_finding(drill, drill_ini, lazy_file):
+    drill_ini("drill_sergeant_max_findings = 0")
     lazy_file("test_many.py", *(f"test_{n}" for n in range(27)))
 
     out = drill().stdout.str()
@@ -253,9 +253,12 @@ def test_cli_and_plugin_refuse_bad_config_in_the_same_line(
     assert cli_line in drill().stderr.str()
 
 
-def test_production_code_under_src_is_analysed(drill, pytester, special_casing_module):
+def test_production_code_under_src_is_analysed(
+    drill, drill_ini, pytester, special_casing_module
+):
     pytester.makepyfile("def test_ok():\n    assert sorted([2, 1]) == [1, 2]\n")
     special_casing_module(pytester.path / "src")
+    drill_ini(on=("DS403=fail",))
 
     result = drill()
 
@@ -264,8 +267,9 @@ def test_production_code_under_src_is_analysed(drill, pytester, special_casing_m
 
 
 def test_cli_and_plugin_note_the_skipped_special_casing_check_in_the_same_line(
-    cli, drill, lazy_test
+    cli, drill, drill_ini, lazy_test
 ):
+    drill_ini(on=("DS403=fail",))
     output = cli("check", str(lazy_test)).output
     [note] = [ln for ln in output.splitlines() if ln.startswith("drill-sergeant: ")]
 
@@ -314,8 +318,9 @@ def test_fix_line_ends_with_a_pointer_to_explain(drill, lazy_test, monkeypatch):
 
 
 def test_waived_finding_leaves_the_run_passing_and_is_tallied(
-    drill, pytester, unit_mark
+    drill, drill_ini, pytester, unit_mark
 ):
+    drill_ini()
     pytester.makepyfile(
         test_waived="def test_waived():  # drill: waive DS101 -- smoke test\n"
         "    print('hi')\n" + unit_mark
@@ -327,7 +332,8 @@ def test_waived_finding_leaves_the_run_passing_and_is_tallied(
     assert "1 waived" in result.stdout.str()
 
 
-def test_reasonless_waiver_fails_the_run_and_waives_nothing(drill, pytester):
+def test_reasonless_waiver_fails_the_run_and_waives_nothing(drill, drill_ini, pytester):
+    drill_ini()
     pytester.makepyfile(
         test_waived="def test_waived():  # drill: waive DS101\n    print('hi')\n"
     )
@@ -395,8 +401,8 @@ def test_file_changed_since_the_last_run_is_analysed_again(
     assert "DS101" not in result.stdout.str()
 
 
-def test_cache_off_runs_uncached(drill, pytester, lazy_test):
-    pytester.makeini("[pytest]\ndrill_sergeant_cache = false\n")
+def test_cache_off_runs_uncached(drill, drill_ini, pytester, lazy_test):
+    drill_ini("drill_sergeant_cache = false")
 
     result = drill()
 
@@ -411,8 +417,8 @@ def test_without_pytests_cache_runs_uncached(drill, pytester, lazy_test):
     assert not (pytester.path / ".pytest_cache").exists()
 
 
-def test_cache_follows_pytests_cache_dir(drill, pytester, lazy_test):
-    pytester.makeini("[pytest]\ncache_dir = elsewhere\n")
+def test_cache_follows_pytests_cache_dir(drill, drill_ini, pytester, lazy_test):
+    drill_ini("cache_dir = elsewhere")
 
     drill()
 
@@ -421,7 +427,6 @@ def test_cache_follows_pytests_cache_dir(drill, pytester, lazy_test):
 
 def test_plugin_and_cli_share_one_cache(cli, drill, pytester, lazy_test, watch):
     # `cli` comes first so pytester's directory, not its, is where pytest runs.
-    pytester.makeini("[pytest]\n")
     drill()
     written = watch(pytester.path)
 
