@@ -211,26 +211,207 @@ def _is_zero(call: ast.Call) -> bool:
     )
 
 
-def _polled(test: TestFunction) -> set[ast.Call]:
-    """The calls inside a `while` loop in a test: a poll waiting on its condition."""
+# A function or lambda: code with its own scope, run only when something calls it.
+_SCOPES = (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)
+_Scope = ast.FunctionDef | ast.AsyncFunctionDef | ast.Lambda
+_LOOPS = (ast.For, ast.AsyncFor, ast.While)
+
+# Where in the file something happens: line, then column.
+_Position = tuple[int, int]
+
+
+def _own_nodes(scope: _Scope) -> Iterator[ast.AST]:
+    """Every node of a function's or lambda's own code, at any depth.
+
+    Classes defined in it are walked, since their bodies run where they are
+    defined; the functions and lambdas defined in it are yielded but not entered.
+    """
+    stack: list[ast.AST] = (
+        [scope.body] if isinstance(scope, ast.Lambda) else list(reversed(scope.body))
+    )
+    while stack:
+        node = stack.pop()
+        yield node
+        if not isinstance(node, _SCOPES):
+            stack.extend(reversed(list(ast.iter_child_nodes(node))))
+
+
+@dataclass(frozen=True)
+class _Binding:
+    """A name bound in a scope.
+
+    Attributes:
+        at: Where the binding takes effect.
+        value: What the name is bound to: a def, class or lambda, a name it is an
+            alias of, or `None` when the file doesn't show what it is.
+    """
+
+    at: _Position
+    value: ast.AST | None
+
+
+def _bindings(scope: _Scope) -> dict[str, list[_Binding]]:
+    """The names a function or lambda binds in its own code, each binding in order.
+
+    Its parameters are bound where it starts; a method binds nothing in it, since
+    it is bound on its class.
+    """
+    start = (scope.lineno, scope.col_offset)
+    found: dict[str, list[_Binding]] = {}
+    for arg in ast.walk(scope.args):
+        if isinstance(arg, ast.arg):
+            found.setdefault(arg.arg, []).append(_Binding(start, None))
+    nodes = list(_own_nodes(scope))
+    methods = {
+        id(statement)
+        for node in nodes
+        if isinstance(node, ast.ClassDef)
+        for statement in node.body
+    }
+    traced: set[int] = set()
+    for node in nodes:
+        name = ""
+        value: ast.AST | None = None
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
+            if id(node) in methods:
+                continue
+            name, value = node.name, node
+        elif (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+        ):
+            traced.add(id(node.targets[0]))
+            name, value = node.targets[0].id, node.value
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            if id(node) in traced:
+                continue
+            name = node.id
+        elif isinstance(node, ast.alias):
+            name = node.asname or node.name.partition(".")[0]
+        else:
+            continue
+        end = (node.end_lineno or node.lineno, node.end_col_offset or 0)
+        found.setdefault(name, []).append(_Binding(end, value))
+    return found
+
+
+class _Calls:
+    """Which of a test's own defs, classes and lambdas the test runs, by binding.
+
+    A function or lambda the test defines runs when code that runs calls the
+    binding that holds it: `helper()`, `await helper()`, or as an argument such as
+    `create_task(helper())`. A plain alias (`f = helper`) is followed, and the
+    latest binding before the call is the one called, so `helper = other` hides
+    the def. What the file doesn't show counts as not called: module-level
+    helpers, methods, a stand-in handed over or set as an attribute.
+    """
+
+    def __init__(self, test: TestFunction) -> None:
+        self._parents: dict[int, _Scope] = {}
+        self._bindings: dict[int, dict[str, list[_Binding]]] = {}
+        self.running: list[_Scope] = [test.node]
+        queue: list[_Scope] = [test.node]
+        while queue:
+            scope = queue.pop()
+            for node in _own_nodes(scope):
+                if isinstance(node, _SCOPES):
+                    self._parents[id(node)] = scope
+                if isinstance(node, ast.Call):
+                    called = self._called(node, scope)
+                    if called is not None and all(
+                        called is not r for r in self.running
+                    ):
+                        self.running.append(called)
+                        queue.append(called)
+
+    def _called(self, call: ast.Call, scope: _Scope) -> _Scope | None:
+        """The function or lambda of the test's own that a call runs, if any."""
+        if isinstance(call.func, ast.Lambda):
+            return call.func
+        if not isinstance(call.func, ast.Name):
+            return None
+        target = self._resolve(call.func.id, (call.lineno, call.col_offset), scope)
+        return target if isinstance(target, _SCOPES) else None
+
+    def _resolve(self, name: str, at: _Position, scope: _Scope) -> ast.AST | None:
+        """What a name holds at a position, by its latest binding before it.
+
+        An alias is resolved where it was bound, always earlier, so it ends.
+        """
+        current: _Scope | None = scope
+        while current is not None:
+            key = id(current)
+            if key not in self._bindings:
+                self._bindings[key] = _bindings(current)
+            earlier = [b for b in self._bindings[key].get(name, []) if b.at < at]
+            if earlier:
+                latest = max(earlier, key=lambda b: b.at)
+                if isinstance(latest.value, ast.Name):
+                    # An alias holds what its name held where it was bound.
+                    return self._resolve(latest.value.id, latest.at, current)
+                return latest.value
+            current = self._parents.get(key)
+        return None
+
+
+def _leaves_early(loop: ast.For | ast.AsyncFor) -> bool:
+    """Whether a `for` loop's body leaves it (`break` or `return`) under a condition."""
+
+    def walk(statements: list[ast.stmt]) -> Iterator[ast.AST]:
+        stack: list[ast.AST] = list(statements)
+        while stack:
+            node = stack.pop()
+            yield node
+            if not isinstance(node, (*_LOOPS, *_SCOPES, ast.ClassDef)):
+                stack.extend(ast.iter_child_nodes(node))
+
+    return any(
+        isinstance(exit_, ast.Break | ast.Return)
+        for branch in walk(loop.body)
+        if isinstance(branch, ast.If)
+        for exit_ in walk([*branch.body, *branch.orelse])
+    )
+
+
+def _polled(scope: _Scope) -> set[ast.Call]:
+    """The calls inside a poll waiting on its condition.
+
+    That is a `while` loop, or a `for` loop that leaves early under a condition.
+    """
     return {
         node
-        for loop in walk_test(test)
+        for loop in _own_nodes(scope)
         if isinstance(loop, ast.While)
+        or (isinstance(loop, ast.For | ast.AsyncFor) and _leaves_early(loop))
         for node in ast.walk(loop)
+        if isinstance(node, ast.Call)
+    }
+
+
+def _waits(test: TestFunction) -> set[ast.Call]:
+    """The calls the test itself runs that could wait: those outside any poll.
+
+    A call in a stand-in (a def, class or lambda the test hands over without
+    calling it) is the stand-in's behaviour, so it isn't counted.
+    """
+    return {
+        node
+        for scope in _Calls(test).running
+        for node in set(_own_nodes(scope)) - _polled(scope)
         if isinstance(node, ast.Call)
     }
 
 
 def _find_sleep_in_test(file: TestFile) -> Iterator[Hit]:
     # A frozen clock doesn't stop a sleep: freezegun and time-machine leave it real.
-    polled: dict[str, set[ast.Call]] = {}
+    waits: dict[str, set[ast.Call]] = {}
     for call in _calls(file):
         if call.target not in _SLEEPS or _is_zero(call.node):
             continue
-        if call.test.name not in polled:
-            polled[call.test.name] = _polled(call.test)
-        if call.node in polled[call.test.name]:
+        if call.test.name not in waits:
+            waits[call.test.name] = _waits(call.test)
+        if call.node not in waits[call.test.name]:
             continue
         yield call.hit(
             "sleeps for real time",
@@ -370,10 +551,18 @@ SLEEP_IN_TEST = Check(
     explain=(
         "Flags a test that calls `time.sleep`, `asyncio.sleep`, `trio.sleep` or "
         "`anyio.sleep` with a delay other than a literal zero (a zero sleep only "
-        "yields). A sleep inside a `while` loop is a poll waiting on its condition "
-        "and is not flagged. Import aliases are followed; a local function, fixture "
-        "or object method named `sleep` is not flagged. Use a fake clock the test "
-        "advances, or wait on the condition itself."
+        "yields). A sleep inside a `while` loop, or a `for` loop that leaves early "
+        "(`break` or `return`) under a condition, is a poll waiting on its condition "
+        "and is not flagged. A sleep inside a stand-in, a function, class or lambda "
+        "the test defines and hands to the code under test without calling it "
+        "itself, is the stand-in's behaviour and is not flagged; a never-set "
+        "`asyncio.Event` (`await release.wait()`) is the cleaner way for one to "
+        "stall. A helper the test defines and calls (`helper()`, `await helper()`, "
+        "`create_task(helper())`, or through a plain alias) is the test sleeping and "
+        "is flagged; helpers defined outside the test are not followed. Import "
+        "aliases are followed; a local function, fixture or object method named "
+        "`sleep` is not flagged. Use a fake clock the test advances, or wait on the "
+        "condition itself."
     ),
     bad_example=(
         "import time\n"
