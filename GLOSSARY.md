@@ -32,6 +32,26 @@ _Avoid_: Trivial assertion, always-true assertion
 An `==` whose expected side is taken from the code under test: the same call on both sides, directly or through names the test bound to it. Names never matter: `first == second`, each bound to the same call, is one just as `result == expected` is.
 _Avoid_: Self-check, circular assertion
 
+**Setup**:
+A test's statements before the first one that holds a real assertion, its docstring aside.
+_Avoid_: Arrange block, preamble
+
+**Fingerprint**:
+A short, stable digest of what one or more statements say: the same for statements that read alike wherever they stand, different for any change of name, literal or structure. Comments and layout don't change it.
+_Avoid_: Hash (of a file), signature
+
+**Per-file analysis**:
+The step that reads one test file on its own and gives that file's findings and its per-file summary; the same file bytes and config give the same result.
+_Avoid_: Local pass, file scan
+
+**Per-file summary**:
+What per-file analysis records of each test in a file for cross-file analysis: its name and line, the fingerprint and lines of each setup statement, and the fingerprint of its whole body. Plain data, never the syntax tree.
+_Avoid_: File index, digest
+
+**Cross-file analysis**:
+The step, after per-file analysis of every file in the run, that compares the per-file summaries, never the files, to find what is repeated across tests, in one file or many.
+_Avoid_: Global pass, project analysis
+
 **Category marker**:
 A pytest marker that classifies a test by kind (e.g. unit, integration, e2e) so whole categories can be selected or skipped.
 _Avoid_: Test type, tag

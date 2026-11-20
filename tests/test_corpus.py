@@ -1,4 +1,9 @@
-"""The corpus: every check proven through the engine, file by file."""
+"""The corpus: every check proven through the engine, file by file.
+
+A file in a check's folder is analysed alone. A file in a subfolder of a check's
+folder is analysed with the files beside it, as one run, for checks that compare
+tests across files; its expected findings are still its own.
+"""
 
 import re
 from pathlib import Path
@@ -22,13 +27,35 @@ def expected_findings(path):
     return expected
 
 
+def analysed_with(path):
+    """The files analysed in one run with a corpus file, itself included."""
+    if path.parent.parent == CORPUS:
+        return [path]
+    return sorted(path.parent.glob("*.py"))
+
+
 @pytest.mark.parametrize(
     "path", CORPUS_FILES, ids=[str(p.relative_to(CORPUS)) for p in CORPUS_FILES]
 )
 def test_corpus_file_yields_exactly_its_expected_findings(path):
-    findings = analyze([path], Config())
+    findings = analyze(analysed_with(path), Config())
 
-    assert {(f.code, f.line) for f in findings} == expected_findings(path)
+    assert {(f.code, f.line) for f in findings if f.file == path} == expected_findings(
+        path
+    )
+
+
+def test_whole_corpus_as_one_run_yields_exactly_the_expected_findings():
+    """No corpus file's tests duplicate another's, so a cross-file check finds in
+    one run over the whole corpus (the golden report's run) only what each file
+    expects."""
+    findings = analyze(CORPUS_FILES, Config())
+
+    assert {(f.file, f.code, f.line) for f in findings} == {
+        (path, code, line)
+        for path in CORPUS_FILES
+        for code, line in expected_findings(path)
+    }
 
 
 @pytest.mark.parametrize(
