@@ -41,6 +41,17 @@ def _readers(config: Config) -> list[str]:
     ]
 
 
+def source_directories(config: Config) -> list[Path]:
+    """The directories production code is in: the configured source dirs, or `src/`.
+
+    `src/` beside the config counts only when no source dirs are configured, and
+    only when it exists.
+    """
+    return [config.root / d for d in config.source_dirs] or [
+        d for d in [config.root / "src"] if d.is_dir()
+    ]
+
+
 def production_code(config: Config, here: Path) -> ProductionCode:
     """The production files to read for a run, or the note saying there are none.
 
@@ -56,9 +67,7 @@ def production_code(config: Config, here: Path) -> ProductionCode:
     readers = _readers(config)
     if not readers:
         return ProductionCode()
-    dirs = [config.root / d for d in config.source_dirs] or [
-        d for d in [config.root / "src"] if d.is_dir()
-    ]
+    dirs = source_directories(config)
     if not dirs:
         return ProductionCode(
             note=f"drill-sergeant: skipped {', '.join(readers)}: no src/ and no "

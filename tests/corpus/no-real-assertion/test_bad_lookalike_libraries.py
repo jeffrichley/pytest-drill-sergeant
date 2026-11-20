@@ -2,8 +2,9 @@
 Analysed, never run."""
 
 import pytest
-from helpers import check
 from playwright.async_api import expect as pw_expect
+
+from .helpers import check
 
 pytestmark = pytest.mark.unit
 
