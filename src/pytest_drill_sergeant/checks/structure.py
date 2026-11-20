@@ -8,12 +8,16 @@ from collections.abc import Iterator, Mapping
 from enum import Enum
 
 from pytest_drill_sergeant.checks.ast_tools import (
+    KNOWN_PACKAGES,
     calls_to,
     excinfo_names,
+    imports_seen_by,
     instance_param,
     is_known_non_act,
     is_real_assertion,
+    module_imports,
     own_statements,
+    qualified,
     setup,
     skips_unconditionally,
     value_params,
@@ -38,6 +42,8 @@ from pytest_drill_sergeant.tokens import Comment
 _CALL_FORM_AFTER_TYPE = frozenset({"pytest.raises", "pytest.warns"})
 _DEPRECATED_CALL = frozenset({"pytest.deprecated_call"})
 _PYTEST_FAIL = frozenset({"pytest.fail"})
+# pytest's call that imports the module it names, as an `import` statement would.
+_IMPORTORSKIP = frozenset({"pytest.importorskip"})
 
 
 def _last_call(test: TestFunction) -> ast.Call | None:
@@ -173,46 +179,88 @@ def _takes_values_in(test: TestFunction) -> bool:
     )
 
 
-def _calls_through_pytest(node: ast.AST, names: Mapping[str, str]) -> bool:
+def _calls_through_pytest(node: ast.Call, names: Mapping[str, str]) -> bool:
     """Whether a node is pytest's call form, which calls the function it is given.
 
     That is `pytest.raises(E, func, *args)`, `pytest.warns(W, func, *args)` or
     `pytest.deprecated_call(func, *args)`.
     """
-    if not isinstance(node, ast.Call):
-        return False
     if calls_to(node, _CALL_FORM_AFTER_TYPE, names):
         return len(node.args) > 1
     return calls_to(node, _DEPRECATED_CALL, names) and bool(node.args)
 
 
-def _runs_anything(test: TestFunction) -> bool:
-    """Whether the test calls or awaits anything but its assertions.
+def _top_module(dotted: str) -> str:
+    """The top-level module of what an import names; empty for a relative one."""
+    return dotted.split(".", maxsplit=1)[0]
 
-    pytest's call form (`pytest.raises(E, func, arg)`) runs `func`, so it counts.
+
+def _is_known_package(called: str | None) -> bool:
+    """Whether a call, named in full, goes to pytest's or pytest-check's."""
+    return called is not None and _top_module(called) in KNOWN_PACKAGES
+
+
+def _is_code_under_test(dotted: str) -> bool:
+    """Whether an imported name comes from outside the standard library and pytest.
+
+    A relative import (`.contract`) is the project's own, so it is.
     """
-    return any(
-        isinstance(node, ast.Await)
-        or (isinstance(node, ast.Call) and not is_real_assertion(node, test.imports))
-        or _calls_through_pytest(node, test.imports)
-        for node in walk_test(test)
-    )
+    top = _top_module(dotted)
+    return not (top in sys.stdlib_module_names or top in KNOWN_PACKAGES)
+
+
+def _runs_code_under_test(test: TestFunction, module_names: Mapping[str, str]) -> bool:
+    """Whether the test runs code beyond its own literals, Python and pytest.
+
+    That is any call but a direct one to pytest's (`pytest.raises(E)`,
+    `pytest.approx`): an `assert*`-named one is the code under test as much as any
+    other, and pytest's call form (`pytest.raises(E, func, arg)`) runs `func`. So
+    does an `await`, an `import` in the body (or `pytest.importorskip`), and a
+    read of a name imported from
+    outside the standard library: an attribute, subscript, operator or iteration
+    on it runs that module's code.
+
+    Args:
+        test: The test.
+        module_names: The module's imports, relative ones included
+            (`module_imports(..., relative=True)`).
+    """
+    names = imports_seen_by(test.node, module_names)
+    for node in walk_test(test):
+        if isinstance(node, ast.Await | ast.Import | ast.ImportFrom):
+            return True
+        if isinstance(node, ast.Call) and (
+            not _is_known_package(qualified(node.func, test.imports))
+            or _calls_through_pytest(node, test.imports)
+            or calls_to(node, _IMPORTORSKIP, test.imports)
+        ):
+            return True
+        if (
+            isinstance(node, ast.Name)
+            and isinstance(node.ctx, ast.Load)
+            and (dotted := names.get(node.id)) is not None
+            and _is_code_under_test(dotted)
+        ):
+            return True
+    return False
 
 
 def _find_no_action_under_test(file: TestFile) -> Iterator[Hit]:
+    module_names = module_imports(file.module, relative=True)
     for test in file.tests:
         if (
             not file.assertions.holds(test)
             or _takes_values_in(test)
-            or _runs_anything(test)
+            or _runs_code_under_test(test, module_names)
         ):
             continue
         yield Hit.on(
             test,
             test.node.lineno,
             found=(
-                "asserts but runs nothing: no call, no `await`, and no fixture or "
-                "parameter to bring a value in."
+                "asserts but runs no code under test: no call, no `await`, no "
+                "import, no name read from a module outside the standard library, "
+                "and no fixture or parameter to bring a value in."
             ),
             fix=(
                 "call the code under test and assert on what it returns or "
@@ -226,22 +274,28 @@ NO_ACTION_UNDER_TEST = Check(
     code="DS102",
     name="no-action-under-test",
     kind=Kind.DEFECT,
-    default_level=Level.OFF,
+    default_level=Level.FAIL,
     voice=(
         "You're asserting on numbers you wrote yourself, recruit! WHERE IS THE CODE?",
         "This test checks that Python works! Python doesn't need your help, maggot!",
-        "No action, no test! Run the thing you claim to be testing!",
+        "No code run, no test! Run the thing you claim to be testing!",
     ),
     why=(
         "A test that runs no code under test checks only its own literals or the "
         "language, so it passes whatever the code does."
     ),
     explain=(
-        "Flags a test that has a real assertion but runs nothing: no call outside its "
-        "assertions (pytest's call form, `pytest.raises(E, func, arg)`, counts as one), "
-        "no `await`, and no fixture or parameter (or a class's instance it uses) that "
-        "could bring in the value under test. Such a test checks only values it wrote "
-        "itself, or Python. Call the code under test and assert on its outcome."
+        "Flags a test that has a real assertion but runs no code under test: no "
+        "call (an `assert*`-named one counts, being code too, and so does pytest's "
+        "call form, `pytest.raises(E, func, arg)`, and `pytest.importorskip`; a direct call to pytest's own, "
+        "such as `pytest.raises(E)` or `pytest.approx`, doesn't), no `await`, no "
+        "`import` in its body, no read of a name imported from outside the standard "
+        "library (an attribute, subscript, operator or iteration on it runs that "
+        "module's code, the project's or a third-party package's), and no fixture or "
+        "parameter (or a class's instance it uses) that could bring in the value "
+        "under test. Such a test checks only values it wrote itself, the standard "
+        'library or Python, so `assert os.sep == "/"` is flagged. Call the code '
+        "under test and assert on its outcome."
     ),
     bad_example=(
         "def test_discount():\n    discount = 0.1\n    assert discount == 0.1\n"

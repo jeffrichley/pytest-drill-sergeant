@@ -64,6 +64,10 @@ _Avoid_: Disabled test
 A test's statements before the first one that holds a real assertion, its docstring aside.
 _Avoid_: Arrange block, preamble
 
+**Act**:
+A statement of a test that is a bare call or `await` made for its effect, not an assertion, output known from the code (`print()`, `logging`) or a method of a pytest built-in fixture the test takes (`caplog.clear()`); cleanup is one. An assignment from a call sets up or reads a result, so it isn't one. The act-and-assert order checks (DS103, DS104) count acts; DS102 asks a wider question, whether a test runs code under test at all, and never calls what it counts an act.
+_Avoid_: Exercise step, when step
+
 **AAA comment**:
 A comment alone on its line that heads a section of a test: `# Arrange`, `# Act`, `# Assert`, or `# Act and assert` for both, alone or followed by `:` or a dash and any text. It heads the statements below it, up to the next one. Only the opt-in AAA comment check (DS108) reads them.
 _Avoid_: Section marker, given/when/then
