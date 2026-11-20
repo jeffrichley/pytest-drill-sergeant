@@ -26,5 +26,10 @@ def test_two_private_names_in_one_assert():
     assert cache._hits + cache._misses == 0  # expect: DS602
 
 
+# A module-level test's `cls` is a fixture like any other, not the test's class.
+def test_private_state_of_a_fixture_named_cls(cls):
+    assert cls._hits == 0  # expect: DS602
+
+
 def test_private_state_inside_a_generator(caches):
     assert all(c._store == {} for c in caches)  # expect: DS602

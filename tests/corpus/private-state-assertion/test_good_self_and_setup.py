@@ -16,6 +16,16 @@ class TestCache:
         assert self._cache.hits == 1
 
 
+class TestCacheUnderAnyName:
+    # The instance is the first parameter, whatever it is called.
+    def setup_method(this):
+        this._cache = Cache()
+
+    def test_miss_then_hit(this):
+        this._cache.get("k")
+        assert this._cache.hits == 1
+
+
 def test_fake_clock_injected_in_setup(fake_clock):
     cache = Cache()
     cache._clock = fake_clock
