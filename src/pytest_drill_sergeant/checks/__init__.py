@@ -11,6 +11,7 @@ from pytest_drill_sergeant.checks.brittleness import (
     PRIVATE_STATE_ASSERTION,
     SOURCE_TEXT_GREP,
 )
+from pytest_drill_sergeant.checks.duplication import COPY_PASTE_SETUP
 from pytest_drill_sergeant.checks.exceptions import BROAD_RAISES, SWALLOWED_EXCEPTION
 from pytest_drill_sergeant.checks.flakiness import (
     SLEEP_IN_TEST,
@@ -32,6 +33,7 @@ CHECKS: tuple[Check, ...] = (
     WEAK_ASSERTION,
     TAUTOLOGICAL_ASSERTION,
     MIRROR_ASSERTION,
+    COPY_PASTE_SETUP,
     BRITTLE_STRING_MATCH,
     PRIVATE_STATE_ASSERTION,
     SOURCE_TEXT_GREP,
