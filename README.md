@@ -54,18 +54,26 @@ Installing the package turns the plugin on: every `pytest` run is a drill-sergea
 
 ## Which checks are on
 
-A check is on by default only once it is **proven**: a hand-judged sample of real
-suites shows it with zero false positives. A check that cries wolf teaches people to
-ignore every finding, so the rest are off by default and come on one by one, each in
-the change that proves it ([#171](https://github.com/jeffrichley/pytest-drill-sergeant/issues/171)
-tracks them).
+A check's default level is the lower of two answers
+([ADR 0001](docs/adr/0001-check-kinds-cap-the-default-level.md)):
 
-On by default, at `fail`: DS001 malformed-waiver, DS106 long-file, DS301
-mock-only-assertion, DS502 near-duplicate-tests, DS603 source-text-grep, DS802
-wall-clock-read and DS803 unseeded-random. Every other check is off: DS101-DS105,
+- **Its kind sets the highest level it can have.** A **defect** (the test can't catch
+  a bug, cheats, or fails at random) can be at `fail`. A **smell** (the test works but
+  costs later: hard to read, breaks on harmless refactors, duplicated) is at most
+  `warn`. A **convention** (a house rule some projects follow) is off unless the
+  project opts in.
+- **It is on only once it is proven**: a hand-judged sample of real suites shows it
+  with zero false positives. A check that cries wolf teaches people to ignore every
+  finding, so the rest are off by default and come on one by one, each in the change
+  that proves it ([#171](https://github.com/jeffrichley/pytest-drill-sergeant/issues/171)
+  tracks them).
+
+On by default, at `fail`: DS001 malformed-waiver, DS301 mock-only-assertion, DS603
+source-text-grep, DS802 wall-clock-read and DS803 unseeded-random. At `warn`: DS106
+long-file and DS502 near-duplicate-tests. Every other check is off: DS101-DS105,
 DS107, DS201-DS203, DS302, DS303, DS401-DS403, DS501, DS601, DS602, DS701, DS702 and
-DS801 until each is proven, and two conventions a project opts into: DS108 (AAA
-comments) and DS901 (category markers).
+DS801 until each is proven, and the two conventions: DS108 (AAA comments) and DS901
+(category markers).
 
 Turn an off check on with `drill_sergeant_levels`, at `fail` or `warn`:
 
@@ -76,7 +84,7 @@ drill_sergeant_levels = ["DS101=fail", "DS104=warn"]
 
 A family prefix turns on DS108 too: `DS1=fail` asks for AAA comments in every test
 unless `DS108=off` follows it. `drill-sergeant explain` lists every check with its
-default level.
+default level and kind.
 
 ## Learning a check
 
@@ -85,8 +93,8 @@ offline:
 
 - `drill-sergeant explain DS101` prints why the check matters, what it flags and how
   to fix it, then a test it flags and the same test fixed.
-- `drill-sergeant explain` lists every check with its default level and why it
-  matters.
+- `drill-sergeant explain` lists every check with its default level and kind, as in
+  `DS106 long-file [warn, smell]`, and why it matters.
 - An unknown code is a usage error (exit 2).
 
 ## The agent guide

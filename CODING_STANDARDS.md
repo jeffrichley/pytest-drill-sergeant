@@ -30,6 +30,9 @@ these rules started.
   its position (a method's first parameter). A name (`mock_db`, `log`, `self`,
   `expected`, a method called `close`) is never evidence. A pattern that is sometimes
   legitimate defaults to `warn` instead of gaining an exception list.
+- **A check's kind is argued, not assumed.** A new check, or one whose kind changes,
+  says in its PR why it is that kind. Defect means a test it flags can't catch the bug
+  or cheats; anything that only costs later is a Smell.
 - **One finding per problem.** When two checks report the same problem in a test, the
   more specific one wins, and only while it is enabled.
 - **A helper whose job is to refuse is `require_*`.** A new function named for what it
