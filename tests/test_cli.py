@@ -262,6 +262,22 @@ def test_a_narrow_terminal_wraps_each_fact_under_its_text_and_keeps_the_location
     assert max(len(line) for line in output.splitlines() if line != location) <= 60
 
 
+def test_check_writes_no_escape_codes_when_colour_is_off(cli, assertion_free_test):
+    assert "\x1b" not in cli("check", "test_it.py").output
+
+
+def test_forced_colour_styles_the_report_and_links_the_location_to_its_file(
+    cli, assertion_free_test, monkeypatch
+):
+    monkeypatch.delenv("NO_COLOR")
+    monkeypatch.setenv("FORCE_COLOR", "1")
+
+    output = cli("check", "test_it.py").output
+
+    assert "\x1b[" in output
+    assert f";{assertion_free_test.resolve().as_uri()}\x1b\\test_it.py:1" in output
+
+
 # A change to the report changes golden/check.txt: rerun `drill-sergeant check suite`
 # over a copy of the corpus with NO_COLOR=1 COLUMNS=100, and review the diff.
 def test_check_output_matches_the_golden_report(cli, tmp_path):

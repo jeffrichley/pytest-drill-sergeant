@@ -219,3 +219,33 @@ def test_cli_and_plugin_refuse_bad_config_in_the_same_line(
 
     assert cli_line.startswith("drill-sergeant: ")
     assert cli_line in drill().stderr.str()
+
+
+def _section(out: str) -> str:
+    return out[out.index("drill sergeant") :].split("\n", 1)[1]
+
+
+def test_colour_follows_pytests_own_setting(drill, lazy_test):
+    coloured = _section(drill("--color=yes").stdout.str())
+    plain = _section(drill("--color=no").stdout.str())
+
+    assert "\x1b[" in coloured
+    assert "\x1b" not in plain
+
+
+def test_findings_section_wraps_to_pytests_terminal_width(
+    drill, lazy_file, monkeypatch, wrapped
+):
+    monkeypatch.setenv("COLUMNS", "60")
+    lazy_file("test_long.py", f"test_{'very_' * 10}long")
+
+    section = _section(drill().stdout.str())
+
+    location = next(line for line in section.splitlines() if "DS101" in line)
+    assert (
+        f"test_long.py:1: DS101 no-real-assertion [fail] in test_{'very_' * 10}long"
+        in location
+    )
+    continuations, following = wrapped(section, "Found:")
+    assert continuations
+    assert following.lstrip().startswith("Why:")
