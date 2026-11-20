@@ -3,6 +3,8 @@ from pathlib import Path
 
 import pytest
 
+from pytest_drill_sergeant.checks import CHECKS
+
 pytestmark = pytest.mark.integration
 
 GOLDEN = Path(__file__).parent / "golden"
@@ -68,8 +70,13 @@ def test_check_skips_the_configs_norecursedirs(cli, tmp_path):
     assert "test_old.py" not in result.output
 
 
-def test_check_refuses_a_missing_path(cli):
-    assert cli("check", "nowhere").exit_code == 2
+@pytest.mark.parametrize(
+    "args",
+    [("check", "nowhere"), ("explain", "DS999")],
+    ids=["check a missing path", "explain an unknown code"],
+)
+def test_refuses_what_it_cannot_find(cli, args):
+    assert cli(*args).exit_code == 2
 
 
 def test_check_refuses_a_file_that_does_not_parse(cli, tmp_path):
@@ -454,3 +461,21 @@ def test_warm_check_with_nothing_changed_writes_nothing(
     assert result.exit_code == 1
     assert (tmp_path / ".pytest_cache" / "d" / "drill-sergeant").is_dir()
     assert written() == []
+
+
+@pytest.mark.parametrize("check", CHECKS, ids=lambda c: c.code)
+def test_explain_prints_the_registrys_rationale_and_both_examples(cli, check):
+    result = cli("explain", check.code)
+
+    assert result.exit_code == 0, result.output
+    assert check.why in result.output
+    assert check.bad_example in result.output
+    assert check.good_example in result.output
+
+
+def test_explain_with_no_code_lists_every_check(cli):
+    result = cli("explain")
+
+    assert result.exit_code == 0, result.output
+    listed = [line.split()[:2] for line in result.output.splitlines()]
+    assert all([c.code, c.name] in listed for c in CHECKS)
