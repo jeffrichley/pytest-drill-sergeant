@@ -499,7 +499,9 @@ INTERLEAVED_ACT_ASSERT = Check(
 
 # Literals that are data when they hold no code: a multi-line one counts as one line.
 _DATA_LITERALS = (ast.List, ast.Tuple, ast.Dict, ast.Set, ast.JoinedStr)
-# What makes a literal code rather than data.
+# What makes a literal code rather than data: a call, lambda, comprehension or
+# `await`, and the logic an assertion is made of (a comparison, `and`, `or`,
+# `x if y else z`, `:=`, `yield`).
 _CODE_IN_LITERAL = (
     ast.Call,
     ast.Lambda,
@@ -508,14 +510,20 @@ _CODE_IN_LITERAL = (
     ast.DictComp,
     ast.GeneratorExp,
     ast.Await,
+    ast.Compare,
+    ast.BoolOp,
+    ast.IfExp,
+    ast.NamedExpr,
+    ast.Yield,
+    ast.YieldFrom,
 )
 
 
 def _is_data_literal(node: ast.AST) -> bool:
     """Whether a node is data: a literal holding no code.
 
-    That is a list, tuple, dict, set, str or f-string literal holding no call,
-    lambda, comprehension or `await`.
+    That is a list, tuple, dict, set, str or f-string literal holding none of
+    `_CODE_IN_LITERAL`.
     """
     is_literal = isinstance(node, _DATA_LITERALS) or (
         isinstance(node, ast.Constant) and isinstance(node.value, str)
@@ -548,17 +556,19 @@ def _lines_of_code(test: TestFunction, code_lines: frozenset[int]) -> int:
 def _data_literals(node: ast.AST) -> Iterator[ast.expr]:
     """The outermost data literals (`_is_data_literal`) under a node.
 
-    The text of an f-string that holds code is part of that f-string, never a
-    literal of its own: only the expressions in its braces are searched.
+    The text and format specs of an f-string that holds code are part of that
+    f-string, never literals of their own: only the expressions in its braces are
+    searched. (Before Python 3.12 a format spec is given the whole f-string's
+    lines.)
     """
-    for child in ast.iter_child_nodes(node):
-        if isinstance(child, ast.expr) and _is_data_literal(child):
-            yield child
-        elif isinstance(child, ast.JoinedStr):
-            for part in child.values:
-                if isinstance(part, ast.FormattedValue):
-                    yield from _data_literals(part)
-        else:
+    if isinstance(node, ast.expr) and _is_data_literal(node):
+        yield node
+    elif isinstance(node, ast.JoinedStr):
+        for part in node.values:
+            if isinstance(part, ast.FormattedValue):
+                yield from _data_literals(part.value)
+    else:
+        for child in ast.iter_child_nodes(node):
             yield from _data_literals(child)
 
 
@@ -612,8 +622,9 @@ LONG_TEST = Check(
         "line to its last line. Blank lines, comment-only lines and its docstring "
         "don't count, so AAA comments and space between sections never lengthen a "
         "test. A multi-line list, tuple, dict, set, string or f-string literal "
-        "holding no call, lambda, comprehension or `await` is data and counts as "
-        "one line; one holding any of them counts line by line. Its decorators "
+        "holding no call, lambda, comprehension, `await`, comparison, `and`, "
+        "`or`, `x if y else z`, `:=` or `yield` is data and counts as one line; "
+        "one holding any of them counts line by line. Its decorators "
         "don't count, so a long `parametrize` table is fine. Move setup into "
         "fixtures and split the test into one test per behaviour. It warns rather "
         "than fails: a long test still works, it only costs later."
