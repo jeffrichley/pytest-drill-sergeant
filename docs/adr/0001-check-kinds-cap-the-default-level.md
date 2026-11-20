@@ -34,11 +34,16 @@ to any level in its own config.
 
 ## Each check's kind
 
-- **Defect:** DS001, DS101, DS102, DS103, DS202, DS301, DS401, DS402, DS403, DS603,
-  DS701, DS702, DS801, DS802, DS803
-- **Smell:** DS104, DS105, DS106, DS107, DS201, DS203, DS302, DS303, DS501, DS502,
-  DS601, DS602
+- **Defect:** DS001, DS101, DS102, DS202, DS301, DS401, DS402, DS403, DS603, DS701,
+  DS702, DS801, DS802, DS803
+- **Smell:** DS103, DS104, DS105, DS106, DS107, DS201, DS203, DS302, DS303, DS501,
+  DS502, DS601, DS602
 - **Convention:** DS108, DS901
+
+2026-11-20: DS103 assert-before-act moved from Defect to Smell (#182). It now flags
+any act after a test's last assertion, which is either an act nothing checks or
+cleanup, and the two can't be told apart structurally, so it is sometimes
+legitimate. The split-out check proposed in #208 was folded into it.
 
 ## Consequences
 
