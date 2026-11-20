@@ -5,10 +5,12 @@ copy-pasted setup, assertions that prove nothing, mocks asserted on instead of
 behaviour, skips added to go green, sleeps, and test files too long to follow. It
 reports them as findings that fail the run, in the drill-sergeant voice.
 
-**Status:** v1 is being rebuilt from scratch. So far the structure checks (DS101-DS107),
-the assertion checks (DS201-DS203), the brittleness checks (DS601-DS603), the exception
-checks (DS701, DS702) and the flakiness checks (DS801-DS803) are
-reported both by the pytest plugin and by `drill-sergeant check <paths>`. The plan is
+**Status:** v1 is being rebuilt from scratch. So far the malformed-waiver check (DS001),
+the structure checks (DS101-DS107), the assertion checks (DS201-DS203), the mocking
+checks (DS301-DS303), the cheating checks (DS401-DS403), copy-pasted setup (DS501),
+the brittleness checks (DS601-DS603), the exception checks (DS701, DS702) and the
+flakiness checks (DS801-DS803) are reported both by the pytest plugin and by
+`drill-sergeant check <paths>`. The plan is
 the [v1 spec](https://github.com/jeffrichley/pytest-drill-sergeant/issues/118). Version
 0.4 is archived under the tag `archive/2026-11-19/v0.4/main`.
 
@@ -26,9 +28,32 @@ Installing the package turns the plugin on: every `pytest` run is a drill-sergea
 - The section shows the first `drill_sergeant_max_findings` findings (25 by default,
   0 for all), then `…and N more, run drill-sergeant check for all`. The exit code
   counts every finding.
+- The section closes with a tally of the findings by level and the number of waived
+  findings.
 - Under pytest-xdist the controller analyses; the workers only run tests.
 - `-p no:drill_sergeant` or `drill_sergeant_mode = "off"` turns it off. Bad config
   is a pytest usage error (exit 4).
+
+## Waivers
+
+When a human agrees that a finding is a false positive, a waiver silences it:
+
+```python
+def test_cli_smoke():  # drill: waive DS101 -- the exit code is checked by CI
+    main(["--help"])
+```
+
+- A waiver is a `# drill: waive DS### -- <reason>` comment on the test's `def` line,
+  where it covers that check anywhere in the test, or on the line the finding is
+  reported on. It silences only the check it names.
+- The code and the reason are both required. A waiver missing either waives nothing
+  and is itself a finding (DS001, `fail`), which no waiver can silence.
+- Every run's closing tally counts the waived findings; `drill-sergeant check
+  --show-waived` lists each one with its reason. A waiver that matches no finding is
+  not reported.
+- `drill_sergeant_inline_waivers = false` turns waivers off: their findings stand,
+  and DS001 reports nothing. Silencing then goes only through config (levels and
+  per-file ignores).
 
 ## Configuration
 
@@ -59,13 +84,13 @@ drill_sergeant_voice = false
 | `drill_sergeant_duplicate_setup_min_statements` | whole number | 3 |
 | `drill_sergeant_duplicate_setup_min_tests` | whole number | 3 |
 | `drill_sergeant_category_markers` | marker names | `unit integration e2e` |
-| `drill_sergeant_source_dirs` | directory lines | `src/` if it exists |
+| `drill_sergeant_source_dirs` | directory lines, relative to the config file; each must exist. The production code DS403 reads in full; with none and no `src/`, DS403 is skipped and the output says so | `src/` if it exists |
 | `drill_sergeant_voice` | `true` or `false`; off prints Found/Why/Fix without the voice | `true` |
 | `drill_sergeant_max_findings` | whole number, 0 for all | 25 |
 | `drill_sergeant_inline_waivers` | `true` or `false` | `true` |
 | `drill_sergeant_cache` | `true` or `false` | `true` |
 
-The thresholds, markers, source dirs, waivers and cache are accepted now and take
+The thresholds, markers and cache are accepted now and take
 effect as the checks that use them land.
 
 ## Development

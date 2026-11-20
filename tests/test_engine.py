@@ -23,6 +23,34 @@ def test_interleaved_act_assert_warns_by_default():
     assert {(f.code, f.level) for f in findings} == {("DS104", Level.WARN)}
 
 
+def test_mock_without_spec_warns_by_default():
+    corpus = Path(__file__).parent / "corpus" / "mock-without-spec"
+
+    findings = analyze([corpus / "test_bad_mocker_doubles.py"], Config())
+
+    assert {(f.code, f.level) for f in findings} == {("DS302", Level.WARN)}
+
+
+@pytest.mark.parametrize(("limit", "codes"), [(2, {"DS303"}), (3, set())])
+def test_max_mock_setup_sets_how_much_mock_setup_a_test_may_have(
+    tmp_path, limit, codes
+):
+    path = tmp_path / "test_setup.py"
+    path.write_text(
+        "from unittest import mock\n"
+        "\n"
+        "def test_total():\n"
+        "    repo = mock.create_autospec(Repo, instance=True)\n"
+        "    repo.find.return_value = [1, 2]\n"
+        "    repo.count.return_value = 2\n"
+        "    assert total(repo) == 3\n"
+    )
+
+    findings = analyze([path], Config(max_mock_setup=limit))
+
+    assert {f.code for f in findings} == codes
+
+
 def test_configured_level_overrides_the_default(assertion_free_test):
     [finding] = analyze([assertion_free_test], Config(levels={"DS101": Level.WARN}))
 
@@ -152,7 +180,10 @@ def test_unset_options_take_the_spec_defaults():
     assert (config.voice, config.inline_waivers, config.cache) == (True, True, True)
 
 
-def test_every_spec_option_is_known_and_typed():
+def test_every_spec_option_is_known_and_typed(tmp_path):
+    (tmp_path / "lib").mkdir()
+    (tmp_path / "app").mkdir()
+
     config = resolve(
         {
             "drill_sergeant_mode": "warn",
@@ -169,7 +200,8 @@ def test_every_spec_option_is_known_and_typed():
             "drill_sergeant_max_findings": "0",
             "drill_sergeant_inline_waivers": "no",
             "drill_sergeant_cache": "0",
-        }
+        },
+        root=tmp_path,
     )
 
     assert (
@@ -196,6 +228,42 @@ def test_typed_values_from_toml_or_pytest_resolve_too():
 
     assert (config.max_file_lines, config.voice) == (900, False)
     assert config.category_markers == ("unit", "smoke")
+
+
+@pytest.mark.parametrize(
+    "config",
+    [Config(duplicate_setup_min_tests=2), Config(duplicate_setup_min_statements=2)],
+    ids=["two-tests", "two-statements"],
+)
+def test_copy_paste_setup_thresholds_come_from_the_config(config):
+    corpus = Path(__file__).parent / "corpus" / "copy-paste-setup"
+
+    findings = analyze([corpus / "test_good_below_the_thresholds.py"], config)
+
+    assert {(f.code, f.line) for f in findings} == {("DS501", 8)}
+
+
+def test_cross_file_findings_do_not_depend_on_the_order_files_are_given(
+    pasted_across_files,
+):
+    assert analyze(pasted_across_files, Config()) == analyze(
+        pasted_across_files[::-1], Config()
+    )
+
+
+def test_per_file_ignore_leaves_a_file_out_of_cross_file_comparison(
+    pasted_across_files,
+):
+    root = pasted_across_files[0].parent
+    config = resolve({"drill_sergeant_per_file_ignores": "*limits.py: DS501"}, root)
+
+    assert analyze(pasted_across_files, config) == []
+
+
+def test_configured_level_applies_to_cross_file_findings(pasted_across_files):
+    findings = analyze(pasted_across_files, Config(levels={"DS501": Level.WARN}))
+
+    assert {(f.code, f.level) for f in findings} == {("DS501", Level.WARN)}
 
 
 @pytest.mark.parametrize(

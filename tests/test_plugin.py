@@ -84,8 +84,16 @@ def test_disabling_the_plugin_turns_it_off(drill, lazy_test):
         "drill_sergeant_voice = maybe",
         "drill_sergeant_levels = DS999=warn",
         "drill_sergeant_bogus = 1",
+        "drill_sergeant_source_dirs = nowhere",
     ],
-    ids=["bad-mode", "non-numeric-number", "bad-bool", "unknown-code", "unknown-key"],
+    ids=[
+        "bad-mode",
+        "non-numeric-number",
+        "bad-bool",
+        "unknown-code",
+        "unknown-key",
+        "missing-source-dir",
+    ],
 )
 def test_bad_config_is_a_usage_error(drill, pytester, lazy_test, ini):
     pytester.makeini(f"[pytest]\n{ini}\n")
@@ -221,6 +229,25 @@ def test_cli_and_plugin_refuse_bad_config_in_the_same_line(
     assert cli_line in drill().stderr.str()
 
 
+def test_production_code_under_src_is_analysed(drill, pytester, special_casing_module):
+    pytester.makepyfile("def test_ok():\n    assert sorted([2, 1]) == [1, 2]\n")
+    special_casing_module(pytester.path / "src")
+
+    result = drill()
+
+    assert result.ret == pytest.ExitCode.TESTS_FAILED
+    assert "src/app.py:4: DS403" in result.stdout.str()
+
+
+def test_cli_and_plugin_note_the_skipped_special_casing_check_in_the_same_line(
+    cli, drill, lazy_test
+):
+    output = cli("check", str(lazy_test)).output
+    [note] = [ln for ln in output.splitlines() if ln.startswith("drill-sergeant: ")]
+
+    assert note in drill().stdout.str()
+
+
 def _section(out: str) -> str:
     return out[out.index("drill sergeant") :].split("\n", 1)[1]
 
@@ -249,3 +276,29 @@ def test_findings_section_wraps_to_pytests_terminal_width(
     continuations, following = wrapped(section, "Found:")
     assert continuations
     assert following.lstrip().startswith("Why:")
+
+
+def test_waived_finding_leaves_the_run_passing_and_is_tallied(drill, pytester):
+    pytester.makepyfile(
+        test_waived="def test_waived():  # drill: waive DS101 -- smoke test\n"
+        "    print('hi')\n"
+    )
+
+    result = drill()
+
+    assert result.ret == pytest.ExitCode.OK
+    assert "1 waived" in result.stdout.str()
+
+
+def test_reasonless_waiver_fails_the_run_and_waives_nothing(drill, pytester):
+    pytester.makepyfile(
+        test_waived="def test_waived():  # drill: waive DS101\n    print('hi')\n"
+    )
+
+    result = drill()
+
+    result.assert_outcomes(passed=1)
+    assert result.ret == pytest.ExitCode.TESTS_FAILED
+    out = result.stdout.str()
+    assert "test_waived.py:1: DS001" in out
+    assert "test_waived.py:1: DS101" in out

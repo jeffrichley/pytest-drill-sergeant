@@ -12,6 +12,8 @@ from pytest_drill_sergeant.checks.ast_tools import (
     excinfo_names,
     is_known_non_act,
     is_real_assertion,
+    module_imports,
+    skips_unconditionally,
     value_params,
     walk_test,
 )
@@ -46,8 +48,10 @@ def _last_call(test: TestFunction) -> ast.Call | None:
 
 
 def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
+    names = module_imports(file.module)
     for test in file.tests:
-        if _has_real_assertion(test):
+        # A test that skips on every run is DS402's to report, not this check's.
+        if _has_real_assertion(test) or skips_unconditionally(test, names):
             continue
         call = _last_call(test)
         target = (
@@ -88,7 +92,9 @@ NO_REAL_ASSERTION = Check(
         "`pytest.raises`, `pytest.warns`, `pytest.deprecated_call` or `pytest.fail`, "
         "no `assert*` call such as a mock's `assert_called_once_with` "
         "or `self.assertEqual`, and no `raise AssertionError`. Such a test only proves "
-        "the code didn't crash. Assert on what the code returns or changes."
+        "the code didn't crash. Assert on what the code returns or changes. A test "
+        "that skips on every run, by its own `pytest.mark.skip` or a `pytest.skip()` "
+        "in its own body, is left to DS402 unconditional-skip."
     ),
     bad_example=(
         "def test_process_payment():\n"

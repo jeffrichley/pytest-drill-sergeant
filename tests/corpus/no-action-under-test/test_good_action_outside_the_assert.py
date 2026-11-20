@@ -20,7 +20,7 @@ def test_method_on_a_literal_is_an_action():
 
 
 def test_action_inside_a_patch():
-    with mock.patch("os.getcwd", return_value="/tmp"):
+    with mock.patch("os.getcwd", autospec=True, return_value="/tmp"):
         registry = []
         register(registry, "grace")
     assert registry == ["grace"]

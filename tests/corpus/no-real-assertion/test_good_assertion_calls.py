@@ -2,7 +2,6 @@
 never run."""
 
 import unittest
-from unittest import mock
 
 from pandas.testing import assert_frame_equal
 
@@ -11,8 +10,7 @@ def notify(sender, message):
     sender.send(message)
 
 
-def test_mock_verification_is_an_assertion():
-    sender = mock.Mock()
+def test_mock_verification_is_an_assertion(sender):
     notify(sender, "hi")
     sender.send.assert_called_once_with("hi")
 

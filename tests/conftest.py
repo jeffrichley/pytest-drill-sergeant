@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
@@ -112,3 +113,48 @@ def wrapped():
         return lines[start + 1 : end], lines[end] if end < len(lines) else ""
 
     return split
+
+
+@pytest.fixture
+def special_casing_module():
+    """Write `app.py`, production code that checks whether pytest is running (DS403
+    on line 4), into a directory, and return its path."""
+
+    def write(directory):
+        directory.mkdir(parents=True, exist_ok=True)
+        path = directory / "app.py"
+        path.write_text("import os\nimport sys\n\nTESTING = 'pytest' in sys.modules\n")
+        return path
+
+    return write
+
+
+@pytest.fixture
+def pasted_across_files():
+    """The corpus's three files, in path order, that each paste the same setup
+    block into one test (one DS501, on the first file's block)."""
+    folder = Path(__file__).parent / "corpus" / "copy-paste-setup" / "cross-file"
+    return sorted(folder.glob("*.py"))
+
+
+@pytest.fixture
+def write_test_file(tmp_path):
+    """Write source to `test_it.py` in `tmp_path` and return its path."""
+
+    def write(source: str):
+        path = tmp_path / "test_it.py"
+        path.write_text(source)
+        return path
+
+    return write
+
+
+@pytest.fixture
+def waived_test(tmp_path):
+    """A test file in `tmp_path`, `test_waived.py`, holding one test whose only
+    finding (DS101 on line 1) is waived with the reason `smoke test`."""
+    path = tmp_path / "test_waived.py"
+    path.write_text(
+        "def test_waived():  # drill: waive DS101 -- smoke test\n    run()\n"
+    )
+    return path

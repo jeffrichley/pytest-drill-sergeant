@@ -1,7 +1,7 @@
 # expect: DS106
 """Tests for the lending library: an agent kept adding a class per feature to one
-file until it passed 500 lines. Every test in it is fine on its own; the file is
-not. Analysed, never run."""
+file until it passed 500 lines, pasting setup between tests as it went (DS501). The
+file is what DS106 is about. Analysed, never run."""
 
 from datetime import date, timedelta
 
@@ -217,7 +217,9 @@ class TestReservations:
 
     def test_reserving_a_book_on_loan_queues_the_member(self, library, member):
         """A reservation puts the member in the book's queue."""
-        other = library.join(Member(name="Grace Hopper", email="grace@example.com"))
+        other = library.join(  # expect: DS501
+            Member(name="Grace Hopper", email="grace@example.com")
+        )
         library.lend("978-0-201-63361-0", to=other, on=OPENING_DAY)
 
         library.reserve("978-0-201-63361-0", for_member=member)
@@ -458,7 +460,7 @@ class TestInterLibraryLoans:
 
     def test_partner_loans_have_a_shorter_period(self, library, member):
         """Books from partners are lent for fourteen days, not twenty-one."""
-        library.add_partner("Northgate", holds=["978-0-596-51774-8"])
+        library.add_partner("Northgate", holds=["978-0-596-51774-8"])  # expect: DS501
         request = library.request_from_partner("978-0-596-51774-8", for_member=member)
         library.arrive(request, on=date(2026, 1, 9))
 
