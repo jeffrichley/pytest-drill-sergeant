@@ -11,7 +11,7 @@ pytestmark = pytest.mark.unit
 def test_close_after_checking(conn):  # expect: DS108
     conn.open()
     assert conn.is_open
-    conn.close()  # expect: DS103
+    conn.close()
 
 
 def test_send_twice(outbox):

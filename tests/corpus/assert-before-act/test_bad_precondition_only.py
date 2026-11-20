@@ -1,29 +1,20 @@
-"""Tests that assert the starting state, then act, and never check what the act did.
-Analysed, never run."""
+"""Tests that assert only the starting state they are handed, then act, and never
+check what the act did: nothing runs before the last assertion. A name never makes
+a call anything but an act. Analysed, never run."""
 
 import pytest
 
 pytestmark = pytest.mark.unit
 
 
-class Cart:
-    def __init__(self):
-        self.items = []
-
-    def add(self, item):
-        self.items.append(item)
-
-
-def test_add_item():
-    cart = Cart()
+def test_add_item(cart):
     assert cart.items == []
     cart.add("apple")  # expect: DS103
 
 
-def test_add_two_items():
-    cart = Cart()
-    assert len(cart.items) == 0
-    assert not cart.items
+def test_add_two_items(cart):
+    assert cart.items == []
+    assert not cart.total
     cart.add("apple")  # expect: DS103
     cart.add("pear")
 
@@ -31,3 +22,14 @@ def test_add_two_items():
 async def test_send_message(client):
     assert client.connected
     await client.send("hello")  # expect: DS103
+
+
+def test_import_rows(importer, rows):
+    assert importer.loaded == 0
+    for row in rows:  # expect: DS103
+        importer.load(row)
+
+
+def test_stop_named_like_cleanup(server):
+    assert server.running
+    server.stop()  # expect: DS103

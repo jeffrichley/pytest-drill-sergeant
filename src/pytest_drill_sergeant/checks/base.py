@@ -8,7 +8,8 @@ cross-file step never needs a file's syntax tree.
 A test's own code, for every check, is its whole body: a helper function, class or
 lambda defined inside a test is part of it, so an assertion or a call there counts
 (`ast_tools.walk_test`). Only the act-and-assert order (DS103, DS104, DS108) reads the
-body's statements one by one, and there a nested `def` only defines its helper.
+body's statements one by one, and there a nested `def` only defines its helper: a
+call to it counts where it is made, as an assertion when the helper holds one.
 """
 
 import ast
