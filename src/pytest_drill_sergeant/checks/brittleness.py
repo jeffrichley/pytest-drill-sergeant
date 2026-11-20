@@ -9,6 +9,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
     expected_class,
     instance_param,
     is_real_assertion,
+    value_params,
     walk_test,
 )
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
@@ -191,25 +192,142 @@ def _is_private_attribute(node: ast.AST, test: TestFunction) -> bool:
     )
 
 
+def _assigned(node: ast.AST) -> Iterator[tuple[ast.expr, ast.expr]]:
+    """Each (target, value) an assignment binds: `=`, an annotated `=` or `:=`."""
+    if isinstance(node, ast.Assign):
+        for target in node.targets:
+            yield target, node.value
+    elif isinstance(node, ast.AnnAssign | ast.NamedExpr) and node.value is not None:
+        yield node.target, node.value
+
+
+class _PrivateReads:
+    """The private attributes an expression reads, through the test's variables.
+
+    A local name holds a private read when every binding of it in the test is an
+    assignment from one (see `held_by`); a parameter, or a name also bound from
+    anything else, is never traced.
+    """
+
+    def __init__(self, test: TestFunction) -> None:
+        self.test = test
+        self.params = set(value_params(test))
+        if (instance := instance_param(test)) is not None:
+            self.params.add(instance)
+        # A bare annotation (`opts: dict`) binds nothing.
+        declared = {
+            id(node.target)
+            for node in walk_test(test)
+            if isinstance(node, ast.AnnAssign) and node.value is None
+        }
+        self.stores: dict[str, set[int]] = {}
+        for node in walk_test(test):
+            if (
+                isinstance(node, ast.Name)
+                and isinstance(node.ctx, ast.Store)
+                and id(node) not in declared
+            ):
+                self.stores.setdefault(node.id, set()).add(id(node))
+        self.held: dict[str, list[str]] = {}
+        self.traced: dict[str, dict[int, list[str]]] = {}
+        changed = True
+        while changed:
+            changed = False
+            for node in walk_test(test):
+                for target, value in _assigned(node):
+                    reads = self.held_by(value)
+                    if not reads:
+                        continue
+                    for name in ast.walk(target):
+                        if (
+                            isinstance(name, ast.Name)
+                            and isinstance(name.ctx, ast.Store)
+                            and self._trace(name, reads)
+                        ):
+                            changed = True
+
+    def _trace(self, name: ast.Name, reads: list[str]) -> bool:
+        """Record one binding of a name to private reads.
+
+        Returns whether that makes the name hold private state: its last untraced
+        binding, and it's no parameter.
+        """
+        if name.id in self.params:
+            return False
+        bound = self.traced.setdefault(name.id, {})
+        if id(name) in bound:
+            return False
+        bound[id(name)] = reads
+        if bound.keys() != self.stores[name.id]:
+            return False
+        self.held[name.id] = list(dict.fromkeys(r for rs in bound.values() for r in rs))
+        return True
+
+    def direct(self, expression: ast.expr) -> list[str]:
+        """The private reads in an expression, each named as the file spells it."""
+        return list(
+            dict.fromkeys(
+                f"{ast.unparse(node.value)}.{node.attr}"
+                for node in ast.walk(expression)
+                if isinstance(node, ast.Attribute)
+                and _is_private_attribute(node, self.test)
+            )
+        )
+
+    def held_by(self, value: ast.expr) -> list[str]:
+        """The private reads a value is, or is part of.
+
+        The value's chain of attributes, subscripts, calls and awaits is followed
+        down to its root: a private attribute on the way, or a variable holding one
+        at the root, makes the value private state. A private read handed in as an
+        argument does not.
+        """
+        reads: list[str] = []
+        node = value
+        while True:
+            if isinstance(node, ast.Attribute):
+                if _is_private_attribute(node, self.test):
+                    reads.append(f"{ast.unparse(node.value)}.{node.attr}")
+                node = node.value
+            elif isinstance(node, ast.Subscript | ast.Await):
+                node = node.value
+            elif isinstance(node, ast.Call):
+                node = node.func
+            else:
+                break
+        if isinstance(node, ast.Name):
+            reads.extend(self.held.get(node.id, []))
+        return reads
+
+    def shown(self, expressions: list[ast.expr]) -> list[str]:
+        """How to name each private read the expressions make, traced ones included.
+
+        A read through a variable is named with the variable: "`d._x` (through `x`)".
+        """
+        shown: list[str] = []
+        for expression in expressions:
+            shown.extend(f"`{read}`" for read in self.direct(expression))
+            for node in ast.walk(expression):
+                if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+                    shown.extend(
+                        f"`{read}` (through `{node.id}`)"
+                        for read in self.held.get(node.id, [])
+                    )
+        return list(dict.fromkeys(shown))
+
+
 def _find_private_state_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         # An `assert` that can't fail is tautological-assertion's to report.
         tautologies = tautological_asserts(test)
+        private = _PrivateReads(test)
         for assertion, checked in _asserted(test):
             if any(assertion is t for t in tautologies):
                 continue
-            names = list(
-                dict.fromkeys(
-                    f"{ast.unparse(node.value)}.{node.attr}"
-                    for expression in checked
-                    for node in ast.walk(expression)
-                    if isinstance(node, ast.Attribute)
-                    and _is_private_attribute(node, test)
-                )
-            )
+            names = private.shown(checked)
             if not names:
                 continue
-            shown = ", ".join(f"`{name}`" for name in names)
+            shown = ", ".join(names)
             yield Hit.on(
                 test,
                 assertion.lineno,
@@ -242,8 +360,11 @@ PRIVATE_STATE_ASSERTION = Check(
         "kin, a pytest-check helper such as `check.equal`, a matcher on "
         "Playwright's `expect(...)`, or `raise AssertionError`) that reads a private "
         "attribute: one starting with `_`, such as `cache._store` or a "
-        "name-mangled `obj._Class__x`. Dunders such as `__dict__` or `__name__`, "
-        "namedtuple's `_asdict`, `_replace`, `_fields`, `_field_defaults` and "
+        "name-mangled `obj._Class__x`. A local variable assigned from a private "
+        "read (`opts = d._options()`, then `assert opts.model == ...`) counts as "
+        "that read, as long as every assignment to it in the test is one; a "
+        "private read handed to a call as an argument does not. Dunders such as "
+        "`__dict__` or `__name__`, namedtuple's `_asdict`, `_replace`, `_fields`, `_field_defaults` and "
         "`_make`, and the test's own instance (`self._x`, by whatever name the "
         "instance goes) are exempt, as is the exception or warning class "
         "`pytest.raises` or `pytest.warns` expects (its first argument, or "

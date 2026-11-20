@@ -14,6 +14,17 @@ WARN_CONFIGS = {
 }
 
 
+@pytest.fixture
+def pkg_under_warn(tmp_path):
+    """`pkg/`, holding an assertion-free test, under a `pytest.ini` setting warn mode;
+    returned so a test can put a config file beside the test."""
+    deep = tmp_path / "pkg"
+    deep.mkdir()
+    (deep / "test_it.py").write_text("def test_it():\n    run()\n")
+    (tmp_path / "pytest.ini").write_text(WARN_CONFIGS["pytest.ini"])
+    return deep
+
+
 @pytest.mark.parametrize("name", WARN_CONFIGS)
 def test_check_reads_the_config_pytest_would(cli, tmp_path, assertion_free_test, name):
     (tmp_path / name).write_text(WARN_CONFIGS[name])
@@ -49,22 +60,25 @@ def test_check_searches_upward_from_the_given_paths(cli, tmp_path):
         ("setup.cfg", "[metadata]\nname = x\n"),
     ],
 )
-def test_check_passes_over_files_without_a_pytest_section(cli, tmp_path, name, content):
-    deep = tmp_path / "pkg"
-    deep.mkdir()
-    (deep / "test_it.py").write_text("def test_it():\n    run()\n")
-    (deep / name).write_text(content)
-    (tmp_path / "pytest.ini").write_text(WARN_CONFIGS["pytest.ini"])
+def test_check_passes_over_files_without_a_pytest_section(
+    cli, pkg_under_warn, name, content
+):
+    (pkg_under_warn / name).write_text(content)
 
     assert cli("check", "pkg").exit_code == 0
 
 
-def test_the_nearest_config_wins(cli, tmp_path):
-    deep = tmp_path / "pkg"
-    deep.mkdir()
-    (deep / "test_it.py").write_text("def test_it():\n    run()\n")
-    (deep / "pytest.ini").write_text("[pytest]\n")
-    (tmp_path / "pytest.ini").write_text(WARN_CONFIGS["pytest.ini"])
+def test_the_nearest_config_wins(cli, pkg_under_warn):
+    (pkg_under_warn / "pytest.ini").write_text("[pytest]\n")
+
+    assert cli("check", "pkg").exit_code == 1
+
+
+@pytest.mark.parametrize("name", ["pytest.ini", "pytest.toml"])
+def test_a_found_pytest_file_with_no_pytest_table_still_ends_the_search(
+    cli, pkg_under_warn, name
+):
+    (pkg_under_warn / name).write_text("")
 
     assert cli("check", "pkg").exit_code == 1
 
@@ -75,6 +89,43 @@ def test_config_option_overrides_discovery(cli, tmp_path, assertion_free_test):
     (tmp_path / "ci" / "pytest.ini").write_text(WARN_CONFIGS["pytest.ini"])
 
     assert cli("check", "--config", "ci/pytest.ini", "test_it.py").exit_code == 0
+
+
+def test_config_option_reads_any_toml_as_pytest_reads_a_pyproject(
+    cli, tmp_path, assertion_free_test
+):
+    (tmp_path / "ci.toml").write_text(WARN_CONFIGS["pyproject.toml"])
+
+    assert cli("check", "--config", "ci.toml", "test_it.py").exit_code == 0
+
+
+@pytest.mark.parametrize(
+    ("name", "content"),
+    [
+        ("ci.toml", '[pytest]\ndrill_sergeant_mode = "warn"\n'),
+        ("pyproject.toml", "[tool.ruff]\nline-length = 88\n"),
+        ("ci.toml", 'tool = "pytest"\n'),
+        ("pytest.toml", "[tool.pytest]\n"),
+        ("ci.ini", "[tool:pytest]\ndrill_sergeant_mode = warn\n"),
+        ("pytest.ini", ""),
+        ("ci.cfg", "[pytest]\ndrill_sergeant_mode = warn\n"),
+    ],
+    ids=[
+        "other-toml-pytest-table",
+        "pyproject-no-tool-pytest",
+        "tool-not-a-table",
+        "pytest-toml-no-pytest-table",
+        "ini-cfg-section",
+        "empty-pytest-ini",
+        "cfg-ini-section",
+    ],
+)
+def test_config_option_refuses_a_file_with_no_pytest_table(
+    cli, tmp_path, assertion_free_test, name, content
+):
+    (tmp_path / name).write_text(content)
+
+    assert cli("check", "--config", name, "test_it.py").exit_code == 2
 
 
 def test_per_file_ignore_globs_are_relative_to_the_config_file(
