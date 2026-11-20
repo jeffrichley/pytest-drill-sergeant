@@ -5,7 +5,9 @@ No pytest in sight.
 
 import ast
 import dataclasses
+import gc
 from collections.abc import Iterable, Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from pathlib import Path
@@ -365,24 +367,39 @@ def inspect(
     files: dict[Path, FileWaivers] = {}
     if config.mode is Level.OFF:
         return Inspection(findings=findings, waived=[])
-    cache = Cache(cache_dir) if cache_dir is not None and config.cache else None
-    shared = context(_per_file_settings(config)) if cache is not None else ""
-    summaries: list[tuple[Path, FileSummary]] = []
-    ordered = sorted(paths, key=lambda p: p.as_posix())
-    production = list(sources)
-    levels = _levels_by_file([*ordered, *production], config)
-    for path in ordered:
-        result = _file_result(path, config, cache, shared)
-        findings.extend(_file_findings(path, result, levels[path]))
-        files[path] = result.waivers
-        summaries.append((path, result.summary))
-    if cache is not None:
-        cache.save()
-    findings.extend(_compare_files(summaries, levels, config))
-    for path in production:
-        source_findings, waivers = _analyze_source(path, config, levels[path])
-        findings.extend(source_findings)
-        files.setdefault(path, waivers)
-    findings.sort(key=lambda f: (f.file.as_posix(), f.line, f.code))
-    kept, waived = apply(findings, files)
+    # The run makes tens of thousands of small objects, all freed by reference
+    # count; the cycle collector would only walk them, at a quarter of a warm run.
+    with _cycle_collector_paused():
+        cache = Cache(cache_dir) if cache_dir is not None and config.cache else None
+        shared = context(_per_file_settings(config)) if cache is not None else ""
+        summaries: list[tuple[Path, FileSummary]] = []
+        ordered = sorted(paths, key=lambda p: p.as_posix())
+        production = list(sources)
+        levels = _levels_by_file([*ordered, *production], config)
+        for path in ordered:
+            result = _file_result(path, config, cache, shared)
+            findings.extend(_file_findings(path, result, levels[path]))
+            files[path] = result.waivers
+            summaries.append((path, result.summary))
+        if cache is not None:
+            cache.save()
+        findings.extend(_compare_files(summaries, levels, config))
+        for path in production:
+            source_findings, waivers = _analyze_source(path, config, levels[path])
+            findings.extend(source_findings)
+            files.setdefault(path, waivers)
+        findings.sort(key=lambda f: (f.file.as_posix(), f.line, f.code))
+        kept, waived = apply(findings, files)
     return Inspection(findings=kept, waived=waived)
+
+
+@contextmanager
+def _cycle_collector_paused() -> Iterator[None]:
+    """Pause Python's cycle collector for the block, if it was running."""
+    running = gc.isenabled()
+    gc.disable()
+    try:
+        yield
+    finally:
+        if running:
+            gc.enable()
