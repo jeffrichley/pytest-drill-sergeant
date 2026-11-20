@@ -1,8 +1,6 @@
 """The cache, through the engine seam: per-file results reused while a file's bytes,
 drill-sergeant and the config that shapes per-file analysis stay the same."""
 
-from pathlib import Path
-
 import pytest
 
 from pytest_drill_sergeant.engine import Config, inspect
@@ -10,7 +8,6 @@ from pytest_drill_sergeant.findings import Level
 
 pytestmark = pytest.mark.unit
 
-CORPUS = Path(__file__).parent / "corpus"
 
 MOCK_SETUP_OF_THREE = (
     "from unittest import mock\n"
@@ -23,8 +20,9 @@ MOCK_SETUP_OF_THREE = (
 )
 
 
-def test_warm_run_over_the_corpus_finds_what_an_uncached_run_finds(cache_dir):
-    files = sorted(CORPUS.rglob("*.py"))
+def test_warm_run_finds_what_an_uncached_run_finds(golden_suite, cache_dir):
+    """Over the golden suite: small, fixed, and with findings in it."""
+    files = golden_suite
     inspect(files, Config(), cache_dir=cache_dir)
 
     warm = inspect(files, Config(), cache_dir=cache_dir)

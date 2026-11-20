@@ -224,6 +224,13 @@ def watch():
 
 
 @pytest.fixture
+def golden_suite():
+    """The golden suite's test files, in path order: small and fixed, with
+    findings in them."""
+    return sorted((Path(__file__).parent / "golden" / "suite").glob("*.py"))
+
+
+@pytest.fixture
 def cache_dir(tmp_path):
     """A cache directory in `tmp_path`, `cache/`, not yet made."""
     return tmp_path / "cache"
