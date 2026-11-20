@@ -96,13 +96,15 @@ def test_unwritable_cache_leaves_the_run_uncached(unseeded_random_test, tmp_path
 
 
 def test_warm_run_reports_at_the_levels_configured_now(assertion_free_test, cache_dir):
-    """DS101 is off by default: a cold run with it off, then a warm run with it on."""
-    inspect([assertion_free_test], Config(), cache_dir=cache_dir)
-    config = Config(levels={"DS101": Level.WARN})
+    """A cold run with DS101 off, then a warm run with it at `fail`."""
+    inspect(
+        [assertion_free_test], Config(levels={"DS101": Level.OFF}), cache_dir=cache_dir
+    )
+    config = Config(levels={"DS101": Level.FAIL})
 
     [finding] = inspect([assertion_free_test], config, cache_dir=cache_dir).findings
 
-    assert finding.level == Level.WARN
+    assert finding.level == Level.FAIL
 
 
 def test_warm_run_applies_the_per_file_ignores_configured_now(
@@ -138,7 +140,7 @@ def test_moved_config_root_analyses_files_again(tmp_path, unmarked_test_at, cach
     assert "`@pytest.mark.e2e`" in findings[0].fix
 
 
-# DS101 is off by default until it is proven.
+# DS101 at `fail`, above its default `warn`, so a finding reads the same either way.
 NO_ASSERTION_ON = Config(levels={"DS101": Level.FAIL})
 ASSERTING_HELPER = "def check_total(items):\n    assert sum(items) == 3\n"
 

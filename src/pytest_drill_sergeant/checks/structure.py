@@ -103,7 +103,7 @@ NO_REAL_ASSERTION = Check(
     code="DS101",
     name="no-real-assertion",
     kind=Kind.DEFECT,
-    default_level=Level.OFF,
+    default_level=Level.WARN,
     voice=(
         "You call that a test, recruit? It runs the code and checks NOTHING!",
         "No assertion, no proof! Green means nothing if it can't go red, maggot!",

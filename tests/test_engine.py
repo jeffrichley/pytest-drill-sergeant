@@ -459,9 +459,11 @@ def test_loop_finding_says_zero_times_only_when_the_loop_can_run_zero_times(
 def test_skip_call_finding_names_the_test_it_is_in(write_test_file, source, where):
     path = write_test_file(source)
 
-    [finding] = analyze([path], Config(levels={"DS401": Level.FAIL}))
+    findings = analyze([path], Config(levels={"DS401": Level.FAIL}))
 
-    assert (finding.code, finding.test) == ("DS401", where)
+    assert [(f.code, f.test) for f in findings if f.code == "DS401"] == [
+        ("DS401", where)
+    ]
 
 
 @pytest.mark.parametrize(
