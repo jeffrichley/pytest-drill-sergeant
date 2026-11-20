@@ -283,15 +283,15 @@ DRILL_CACHE = Path(".pytest_cache") / "d" / "drill-sergeant"
 
 
 def test_second_run_reuses_the_cache_and_writes_nothing(
-    drill, pytester, lazy_test, snapshot
+    drill, pytester, lazy_test, watch
 ):
     drill()
-    before = snapshot(pytester.path / DRILL_CACHE)
+    written = watch(pytester.path / DRILL_CACHE)
 
     result = drill()
 
-    assert before
-    assert snapshot(pytester.path / DRILL_CACHE) == before
+    assert any((pytester.path / DRILL_CACHE).iterdir())
+    assert written() == []
     assert "test_lazy.py:1: DS101" in result.stdout.str()
 
 
@@ -329,14 +329,14 @@ def test_cache_follows_pytests_cache_dir(drill, pytester, lazy_test):
     assert (pytester.path / "elsewhere" / "d" / "drill-sergeant").is_dir()
 
 
-def test_plugin_and_cli_share_one_cache(cli, drill, pytester, lazy_test, snapshot):
+def test_plugin_and_cli_share_one_cache(cli, drill, pytester, lazy_test, watch):
     # `cli` comes first so pytester's directory, not its, is where pytest runs.
     pytester.makeini("[pytest]\n")
     drill()
-    before = snapshot(pytester.path)
+    written = watch(pytester.path)
 
     result = cli("check", str(pytester.path))
 
-    assert any(DRILL_CACHE.as_posix() in p.as_posix() for p in before)
+    assert any((pytester.path / DRILL_CACHE).iterdir())
     assert result.exit_code == 1
-    assert snapshot(pytester.path) == before
+    assert written() == []

@@ -29,15 +29,15 @@ def test_warm_run_over_the_corpus_finds_what_an_uncached_run_finds(cache_dir):
 
 
 def test_warm_run_with_nothing_changed_writes_nothing(
-    assertion_free_test, cache_dir, snapshot
+    assertion_free_test, cache_dir, watch
 ):
     inspect([assertion_free_test], Config(), cache_dir=cache_dir)
-    before = snapshot(cache_dir)
+    written = watch(cache_dir)
 
     inspect([assertion_free_test], Config(), cache_dir=cache_dir)
 
-    assert before
-    assert snapshot(cache_dir) == before
+    assert any(cache_dir.iterdir())
+    assert written() == []
 
 
 def test_changed_file_is_analysed_again(write_test_file, cache_dir):
@@ -50,24 +50,22 @@ def test_changed_file_is_analysed_again(write_test_file, cache_dir):
     assert [(f.code, f.line) for f in findings] == [("DS101", 1)]
 
 
-def test_corrupt_cache_is_rebuilt_silently(assertion_free_test, cache_dir, snapshot):
+def test_corrupt_cache_is_rebuilt_silently(assertion_free_test, cache_dir, watch):
     inspect([assertion_free_test], Config(), cache_dir=cache_dir)
-    for path in snapshot(cache_dir):
+    for path in cache_dir.iterdir():
         path.write_text('{"not": [an entry')
 
     findings = inspect([assertion_free_test], Config(), cache_dir=cache_dir).findings
-    rebuilt = snapshot(cache_dir)
+    written = watch(cache_dir)
     inspect([assertion_free_test], Config(), cache_dir=cache_dir)
 
     assert [f.code for f in findings] == ["DS101"]
-    assert snapshot(cache_dir) == rebuilt
+    assert written() == []
 
 
-def test_cache_of_the_wrong_shape_is_rebuilt_silently(
-    assertion_free_test, cache_dir, snapshot
-):
+def test_cache_of_the_wrong_shape_is_rebuilt_silently(assertion_free_test, cache_dir):
     inspect([assertion_free_test], Config(), cache_dir=cache_dir)
-    for path in snapshot(cache_dir):
+    for path in cache_dir.iterdir():
         path.write_text("[1, 2]")
 
     findings = inspect([assertion_free_test], Config(), cache_dir=cache_dir).findings

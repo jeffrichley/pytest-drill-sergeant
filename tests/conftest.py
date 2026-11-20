@@ -16,8 +16,8 @@ os.environ["COLUMNS"] = "100"
 
 pytest_plugins = ["pytester"]
 
-# The corpus is analysed by the engine, never run.
-collect_ignore = ["corpus"]
+# The corpus and the perf test's fixture suite are analysed by the engine, never run.
+collect_ignore = ["corpus", "perf/suite"]
 
 
 @pytest.fixture
@@ -147,18 +147,26 @@ def waived_test(tmp_path):
 
 
 @pytest.fixture
-def snapshot():
-    """Snapshot a directory: every file under it with its inode and modification
-    time, so a later snapshot differs if anything there was written."""
+def watch():
+    """Start watching a directory: return a function that lists the files under it
+    written since (made, replaced or changed), by inode and modification time."""
 
-    def take(directory: Path) -> dict[Path, tuple[int, int]]:
+    def files(directory: Path) -> dict[Path, tuple[int, int]]:
         return {
             p: (p.stat().st_ino, p.stat().st_mtime_ns)
             for p in directory.rglob("*")
             if p.is_file()
         }
 
-    return take
+    def start(directory: Path):
+        before = files(directory)
+
+        def written() -> list[Path]:
+            return sorted(p for p, s in files(directory).items() if before.get(p) != s)
+
+        return written
+
+    return start
 
 
 @pytest.fixture

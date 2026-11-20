@@ -366,13 +366,13 @@ def test_check_with_cache_off_writes_no_cache(cli, tmp_path, assertion_free_test
 
 
 def test_warm_check_with_nothing_changed_writes_nothing(
-    cli, tmp_path, assertion_free_test, snapshot
+    cli, tmp_path, assertion_free_test, watch
 ):
     cli("check", str(assertion_free_test))
-    before = snapshot(tmp_path / ".pytest_cache")
+    written = watch(tmp_path / ".pytest_cache")
 
     result = cli("check", str(assertion_free_test))
 
-    assert before
     assert result.exit_code == 1
-    assert snapshot(tmp_path / ".pytest_cache") == before
+    assert (tmp_path / ".pytest_cache" / "d" / "drill-sergeant").is_dir()
+    assert written() == []
