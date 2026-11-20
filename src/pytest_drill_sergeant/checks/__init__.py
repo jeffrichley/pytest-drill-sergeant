@@ -8,6 +8,7 @@ from pytest_drill_sergeant.checks.assertions import (
 from pytest_drill_sergeant.checks.base import (
     Check,
     Hit,
+    Kind,
     SourceFile,
     TestFile,
     TestFunction,
@@ -83,4 +84,4 @@ CHECKS: tuple[Check, ...] = (
 )
 
 
-__all__ = ["CHECKS", "Check", "Hit", "SourceFile", "TestFile", "TestFunction"]
+__all__ = ["CHECKS", "Check", "Hit", "Kind", "SourceFile", "TestFile", "TestFunction"]

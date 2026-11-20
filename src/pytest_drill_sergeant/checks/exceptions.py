@@ -11,7 +11,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
     is_real_assertion,
     walk_test,
 )
-from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
+from pytest_drill_sergeant.checks.base import Check, Hit, Kind, TestFile, TestFunction
 from pytest_drill_sergeant.findings import Level
 
 # The exception types that every error is an instance of.
@@ -134,6 +134,7 @@ def _find_broad_raises(file: TestFile) -> Iterator[Hit]:
 BROAD_RAISES = Check(
     code="DS701",
     name="broad-raises",
+    kind=Kind.DEFECT,
     default_level=Level.OFF,
     voice=(
         "Expecting `Exception`? That's not a target, recruit, that's the whole range!",
@@ -314,6 +315,7 @@ def _find_swallowed_exception(file: TestFile) -> Iterator[Hit]:
 SWALLOWED_EXCEPTION = Check(
     code="DS702",
     name="swallowed-exception",
+    kind=Kind.DEFECT,
     default_level=Level.OFF,
     voice=(
         "You caught the failure and HID it, recruit? That's desertion!",

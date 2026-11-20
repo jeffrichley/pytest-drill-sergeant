@@ -19,6 +19,7 @@ from pytest_drill_sergeant.checks.ast_tools import TEST_PATH
 from pytest_drill_sergeant.checks.base import (
     Check,
     Hit,
+    Kind,
     Reports,
     Statement,
     Summaries,
@@ -181,6 +182,7 @@ def _find_copy_paste_setup(
 COPY_PASTE_SETUP = Check(
     code="DS501",
     name="copy-paste-setup",
+    kind=Kind.SMELL,
     default_level=Level.OFF,
     voice=(
         "LISTEN UP, RECRUIT! You wrote the same setup over and over like a broken "
@@ -316,7 +318,8 @@ def _find_near_duplicate_tests(
 NEAR_DUPLICATE_TESTS = Check(
     code=_NEAR_DUPLICATE_TESTS,
     name="near-duplicate-tests",
-    default_level=Level.FAIL,
+    kind=Kind.SMELL,
+    default_level=Level.WARN,
     voice=(
         "Same test, different numbers! You think I can't SEE that, recruit?",
         "One test in a fresh coat of paint is still ONE test, maggot! Parametrize it!",

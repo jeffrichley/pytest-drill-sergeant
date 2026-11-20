@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from pytest_drill_sergeant.checks import CHECKS
+from pytest_drill_sergeant.checks import CHECKS, Kind
 from pytest_drill_sergeant.checks.markers import MISSING_CATEGORY_MARKER
 from pytest_drill_sergeant.engine import Config, analyze
 from pytest_drill_sergeant.findings import Level
@@ -73,14 +73,24 @@ def test_check_has_at_least_three_bad_and_three_good_corpus_files(check):
     assert len(list(folder.glob(f"{prefix}good_*.py"))) >= 3
 
 
-# Proven: zero false positives in a hand-judged sample of real suites (#171).
-ON_BY_DEFAULT = {"DS001", "DS106", "DS301", "DS502", "DS603", "DS802", "DS803"}
+# Proven: zero false positives in a hand-judged sample of real suites (#171), each at
+# the highest level its kind allows.
+ON_BY_DEFAULT = {
+    "DS001": Level.FAIL,
+    "DS106": Level.WARN,
+    "DS301": Level.FAIL,
+    "DS502": Level.WARN,
+    "DS603": Level.FAIL,
+    "DS802": Level.FAIL,
+    "DS803": Level.FAIL,
+}
 
 
 @pytest.mark.parametrize("check", CHECKS, ids=lambda c: c.code)
 def test_check_reports_by_default_only_once_proven(check):
-    """Under the default config a check reports its own bad corpus files only once it
-    is proven; every other check is off until a project turns it on."""
+    """Under the default config a check reports its own bad corpus files, at its
+    default level, only once it is proven; every other check is off until a project
+    turns it on."""
     folder, prefix = corpus_folder(check)
     bad = sorted(folder.glob(f"{prefix}bad_*.py"))
     if check.find_in_source:
@@ -88,4 +98,40 @@ def test_check_reports_by_default_only_once_proven(check):
     else:
         findings = analyze(bad, Config())
 
-    assert (check.code in {f.code for f in findings}) == (check.code in ON_BY_DEFAULT)
+    levels = {f.level for f in findings if f.code == check.code}
+    expected = ON_BY_DEFAULT.get(check.code)
+    assert levels == (set() if expected is None else {expected})
+
+
+# Lowest to highest: a level later in the tuple counts for more.
+LEVELS_IN_ORDER = (Level.OFF, Level.WARN, Level.FAIL)
+
+
+@pytest.mark.parametrize("check", CHECKS, ids=lambda c: c.code)
+def test_check_default_level_is_no_higher_than_its_kind_allows(check):
+    """A defect may default to `fail`, a smell to `warn` at most, and a convention is
+    off until a project opts in (ADR 0001)."""
+    highest = {
+        Kind.DEFECT: Level.FAIL,
+        Kind.SMELL: Level.WARN,
+        Kind.CONVENTION: Level.OFF,
+    }
+
+    assert LEVELS_IN_ORDER.index(check.default_level) <= LEVELS_IN_ORDER.index(
+        highest[check.kind]
+    )
+
+
+KINDS = {
+    Kind.DEFECT: "DS001 DS101 DS102 DS103 DS202 DS301 DS401 DS402 DS403 DS603 DS701 "
+    "DS702 DS801 DS802 DS803",
+    Kind.SMELL: "DS104 DS105 DS106 DS107 DS201 DS203 DS302 DS303 DS501 DS502 DS601 "
+    "DS602",
+    Kind.CONVENTION: "DS108 DS901",
+}
+
+
+@pytest.mark.parametrize("check", CHECKS, ids=lambda c: c.code)
+def test_check_has_the_kind_adr_0001_gives_it(check):
+    """Each check's kind is the one ADR 0001 lists for it."""
+    assert check.code in KINDS[check.kind].split()

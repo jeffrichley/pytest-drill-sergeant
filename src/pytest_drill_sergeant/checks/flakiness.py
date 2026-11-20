@@ -11,7 +11,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
     value_params,
     walk_test,
 )
-from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
+from pytest_drill_sergeant.checks.base import Check, Hit, Kind, TestFile, TestFunction
 from pytest_drill_sergeant.findings import Level
 
 # The sleeps; each only yields, without waiting, when given a zero delay.
@@ -355,6 +355,7 @@ def _find_unseeded_random(file: TestFile) -> Iterator[Hit]:
 SLEEP_IN_TEST = Check(
     code="DS801",
     name="sleep-in-test",
+    kind=Kind.DEFECT,
     default_level=Level.OFF,
     voice=(
         "Napping on duty, recruit? Tests don't SLEEP on my watch!",
@@ -396,6 +397,7 @@ SLEEP_IN_TEST = Check(
 WALL_CLOCK_READ = Check(
     code="DS802",
     name="wall-clock-read",
+    kind=Kind.DEFECT,
     default_level=Level.FAIL,
     voice=(
         "What time is it, recruit? Time for you to stop asking the WALL CLOCK!",
@@ -440,6 +442,7 @@ WALL_CLOCK_READ = Check(
 UNSEEDED_RANDOM = Check(
     code="DS803",
     name="unseeded-random",
+    kind=Kind.DEFECT,
     default_level=Level.FAIL,
     voice=(
         "Rolling dice in my barracks, recruit? Seed it or lose it!",

@@ -2,7 +2,7 @@
 
 from collections.abc import Iterator
 
-from pytest_drill_sergeant.checks.base import Check, Hit, TestFile
+from pytest_drill_sergeant.checks.base import Check, Hit, Kind, TestFile
 from pytest_drill_sergeant.findings import MODULE, Level
 from pytest_drill_sergeant.waivers import MALFORMED_WAIVER_CODE, Waiver
 
@@ -50,6 +50,7 @@ def _find_malformed_waiver(file: TestFile) -> Iterator[Hit]:
 MALFORMED_WAIVER = Check(
     code=MALFORMED_WAIVER_CODE,
     name="malformed-waiver",
+    kind=Kind.DEFECT,
     default_level=Level.FAIL,
     voice=(
         "A waiver without a code AND a reason is just a shrug in a comment, recruit!",

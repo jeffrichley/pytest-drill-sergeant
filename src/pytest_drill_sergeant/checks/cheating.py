@@ -24,7 +24,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
     skip_mark,
     top_level_skips,
 )
-from pytest_drill_sergeant.checks.base import Check, Hit, SourceFile, TestFile
+from pytest_drill_sergeant.checks.base import Check, Hit, Kind, SourceFile, TestFile
 from pytest_drill_sergeant.findings import MODULE, Level
 
 _SKIP_CALLS = frozenset({SKIP_CALL, XFAIL_CALL})
@@ -150,6 +150,7 @@ def _find_skip_without_reason(file: TestFile) -> Iterator[Hit]:
 SKIP_WITHOUT_REASON = Check(
     code="DS401",
     name="skip-without-reason",
+    kind=Kind.DEFECT,
     default_level=Level.OFF,
     voice=(
         "You benched a soldier and didn't write down WHY, recruit?",
@@ -224,6 +225,7 @@ def _find_unconditional_skip(file: TestFile) -> Iterator[Hit]:
 UNCONDITIONAL_SKIP = Check(
     code="DS402",
     name="unconditional-skip",
+    kind=Kind.DEFECT,
     default_level=Level.OFF,
     voice=(
         "Skipping the test doesn't fix the code, recruit! It hides the body!",
@@ -333,6 +335,7 @@ def _find_test_special_casing(file: SourceFile) -> Iterator[Hit]:
 TEST_SPECIAL_CASING = Check(
     code="DS403",
     name="test-special-casing",
+    kind=Kind.DEFECT,
     default_level=Level.OFF,
     voice=(
         "Your code salutes when the inspector walks in and slacks off when he leaves!",
