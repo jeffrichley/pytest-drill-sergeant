@@ -46,6 +46,7 @@ from pathlib import Path
 from pytest_drill_sergeant.cache import content_hash
 from pytest_drill_sergeant.checks.ast_tools import (
     EXPECT_FUNCTIONS,
+    KNOWN_PACKAGES,
     bound_names,
     imports_seen_by,
     instance_param,
@@ -64,10 +65,6 @@ _SRC = "src"
 _MISSING = ""
 _OUTSIDE = "outside"
 
-# The packages whose functions drill-sergeant knows, so a call into them is never
-# code it can't see: pytest's own and pytest-check's. Playwright's `expect` is
-# known too (`EXPECT_FUNCTIONS`): it asserts only through a matcher.
-_KNOWN_PACKAGES = frozenset({"pytest", "_pytest", "pytest_check"})
 _INIT = "__init__.py"
 
 
@@ -483,6 +480,7 @@ class TestTree:
             root = root.value
         if not isinstance(root, ast.Name):
             return False
+        # Playwright's `expect` is known too: it asserts only through a matcher.
         # The imported names the code sees, shadows gone; a relative import is
         # never in them, being the project's own.
         imported = scope.names.get(root.id)
@@ -491,7 +489,7 @@ class TestTree:
         top = imported.split(".")[0]
         return not (
             top in sys.stdlib_module_names
-            or top in _KNOWN_PACKAGES
+            or top in KNOWN_PACKAGES
             or self._in_project(top, os.path.dirname(scope.module.key))
         )
 
