@@ -58,6 +58,36 @@ def test_def_line_waiver_covers_a_finding_anywhere_in_its_test(write_test_file):
     assert flagged(w.finding for w in result.waived) == [("DS201", 3)]
 
 
+def test_waiver_on_a_wrapped_signatures_closing_line_counts_as_the_def_line(
+    write_test_file,
+):
+    path = write_test_file(
+        "def test_it(\n"
+        "    tmp_path,\n"
+        "):  # drill: waive DS201 -- any value will do\n"
+        "    value = make(tmp_path)\n"
+        "    assert value is not None\n"
+    )
+
+    result = inspect([path], Config())
+
+    assert flagged(result.findings) == []
+    assert flagged(w.finding for w in result.waived) == [("DS201", 5)]
+
+
+def test_waiver_on_a_decorator_line_is_not_the_def_line(write_test_file):
+    path = write_test_file(
+        "@pytest.mark.slow  # drill: waive DS201 -- any value will do\n"
+        "def test_it():\n"
+        "    value = make()\n"
+        "    assert value is not None\n"
+    )
+
+    result = inspect([path], Config())
+
+    assert flagged(result.findings) == [("DS201", 4)]
+
+
 def test_def_line_waiver_leaves_other_tests_findings_standing(write_test_file):
     path = write_test_file(
         "def test_one():  # drill: waive DS101 -- smoke test\n"

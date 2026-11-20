@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from pytest_drill_sergeant.findings import Level
+from pytest_drill_sergeant.tokens import Comment
 from pytest_drill_sergeant.waivers import Waiver
 
 FunctionNode = ast.FunctionDef | ast.AsyncFunctionDef
@@ -63,19 +64,6 @@ class Thresholds:
 
 
 @dataclass(frozen=True)
-class Comment:
-    """A comment alone on its line, as `tokenize` reads it, so never text in a string.
-
-    Attributes:
-        line: The line it is on.
-        text: The comment, `#` included.
-    """
-
-    line: int
-    text: str
-
-
-@dataclass(frozen=True)
 class TestFile:
     """One parsed test file: what every check is given.
 
@@ -92,7 +80,7 @@ class TestFile:
         directories: The names of the directories the file is in, outermost
             first, from its path relative to the config root (or as given, when it
             is outside the root).
-        comments: Its comments that stand alone on their lines, in line order.
+        comments: Its comments, in line order.
     """
 
     __test__ = False  # Not a pytest test class, despite the name.

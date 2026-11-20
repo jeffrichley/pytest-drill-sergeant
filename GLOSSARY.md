@@ -113,7 +113,7 @@ The drill-sergeant persona in which findings are delivered: snarky in tone, prec
 _Avoid_: Persona, personality
 
 **Waiver**:
-A `# drill: waive DS### -- <reason>` comment that silences the named check's findings on its line, or anywhere in a test when it sits on the test's `def` line: a reasoned exemption, made deliberately and visible to reviewers. It must name the code and give a reason, or it waives nothing and is itself a finding. Every run tallies the findings waived.
+A `# drill: waive DS### -- <reason>` comment that silences the named check's findings on its line, or anywhere in a test when it sits on the test's `def` line (through the `):` a wrapped signature closes on; never a decorator's line): a reasoned exemption, made deliberately and visible to reviewers. It must name the code and give a reason, or it waives nothing and is itself a finding. Every run tallies the findings waived.
 _Avoid_: Suppression, ignore, noqa
 
 **Agent guide**:

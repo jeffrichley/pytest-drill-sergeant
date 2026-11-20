@@ -1,0 +1,63 @@
+"""What a file's tokens say that its syntax tree doesn't: comments, read once.
+
+A file is tokenized once per analysis. Its comments feed both the inline waivers
+and the AAA comment check (DS108); where each `def` line's signature closes is
+found in the same pass. Only real comments count: text in a string never does.
+"""
+
+import io
+import tokenize
+from collections.abc import Mapping
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Comment:
+    """A comment, as `tokenize` reads it, so never text in a string.
+
+    Attributes:
+        line: The line it is on.
+        text: The comment, `#` included.
+        alone: Whether it stands alone on its line, with no code before it.
+    """
+
+    line: int
+    text: str
+    alone: bool = True
+
+
+@dataclass(frozen=True)
+class Tokens:
+    """What a file's tokens say.
+
+    Attributes:
+        comments: Every comment, in line order.
+        signature_ends: For each `def` line, the line its signature closes on
+            (the `):` of a wrapped signature); the same line when it isn't wrapped.
+    """
+
+    comments: tuple[Comment, ...]
+    signature_ends: Mapping[int, int]
+
+
+def read(source: bytes) -> Tokens:
+    """Tokenize a file's source once, for its comments and its signatures' ends."""
+    comments: list[Comment] = []
+    ends: dict[int, int] = {}
+    open_def: int | None = None
+    depth = 0
+    for token in tokenize.tokenize(io.BytesIO(source).readline):
+        if token.type == tokenize.COMMENT:
+            alone = not token.line[: token.start[1]].strip()
+            comments.append(Comment(token.start[0], token.string, alone))
+        elif token.type == tokenize.NAME and token.string == "def" and depth == 0:
+            open_def = token.start[0]
+        elif token.type == tokenize.OP and open_def is not None:
+            if token.string in {"(", "[", "{"}:
+                depth += 1
+            elif token.string in {")", "]", "}"}:
+                depth -= 1
+            elif token.string == ":" and depth == 0:
+                ends[open_def] = token.start[0]
+                open_def = None
+    return Tokens(comments=tuple(comments), signature_ends=ends)

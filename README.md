@@ -62,7 +62,8 @@ def test_cli_smoke():  # drill: waive DS101 -- the exit code is checked by CI
     main(["--help"])
 ```
 
-- A waiver is a `# drill: waive DS### -- <reason>` comment on the test's `def` line,
+- A waiver is a `# drill: waive DS### -- <reason>` comment on the test's `def` line
+  (or the `):` line a wrapped signature closes on),
   where it covers that check anywhere in the test, or on the line the finding is
   reported on. It silences only the check it names.
 - The code and the reason are both required. A waiver missing either waives nothing

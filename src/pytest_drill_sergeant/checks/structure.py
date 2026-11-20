@@ -18,7 +18,6 @@ from pytest_drill_sergeant.checks.ast_tools import (
 )
 from pytest_drill_sergeant.checks.base import (
     Check,
-    Comment,
     FunctionNode,
     Hit,
     TestFile,
@@ -27,6 +26,7 @@ from pytest_drill_sergeant.checks.base import (
 )
 from pytest_drill_sergeant.checks.exceptions import swallows_an_exception
 from pytest_drill_sergeant.findings import Level
+from pytest_drill_sergeant.tokens import Comment
 
 # pytest's helpers with a call form, by where the function to call sits: after the
 # expected type, or first.
@@ -994,7 +994,8 @@ def _labels(file: TestFile, test: TestFunction) -> list[tuple[int, _Section]]:
     return [
         (comment.line, section)
         for comment in file.comments
-        if first < comment.line <= last
+        if comment.alone
+        and first < comment.line <= last
         and (section := _section_of(comment)) is not None
     ]
 

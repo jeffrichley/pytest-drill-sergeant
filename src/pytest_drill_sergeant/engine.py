@@ -6,8 +6,6 @@ No pytest in sight.
 import ast
 import dataclasses
 import gc
-import io
-import tokenize
 from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -30,7 +28,6 @@ from pytest_drill_sergeant.checks.ast_tools import (
     qualified,
 )
 from pytest_drill_sergeant.checks.base import (
-    Comment,
     FileSummary,
     FunctionNode,
     Thresholds,
@@ -38,6 +35,7 @@ from pytest_drill_sergeant.checks.base import (
 from pytest_drill_sergeant.checks.summary import summarize
 from pytest_drill_sergeant.config import Config
 from pytest_drill_sergeant.findings import Finding, Level
+from pytest_drill_sergeant.tokens import read
 from pytest_drill_sergeant.waivers import (
     FileWaivers,
     WaivedFinding,
@@ -234,23 +232,12 @@ def _per_file_settings(config: Config) -> dict[str, object]:
     }
 
 
-def _own_line_comments(source: bytes) -> tuple[Comment, ...]:
-    """The comments that stand alone on their lines, read with `tokenize`.
-
-    Text in a string is never a comment, and one after code on its line isn't alone.
-    """
-    return tuple(
-        Comment(line=token.start[0], text=token.string)
-        for token in tokenize.tokenize(io.BytesIO(source).readline)
-        if token.type == tokenize.COMMENT and not token.line[: token.start[1]].strip()
-    )
-
-
 def _analyze_file(path: Path, source: bytes, config: Config) -> _FileResult:
     """Per-file analysis: every check's hits in a file, its summary and waivers."""
     module = ast.parse(source, filename=str(path))
     tests = tuple(_tests_in(module.body, module_imports(module)))
-    waivers = parse(source) if config.inline_waivers else ()
+    tokens = read(source)
+    waivers = parse(tokens.comments) if config.inline_waivers else ()
     file = TestFile(
         path=path,
         module=module,
@@ -260,13 +247,20 @@ def _analyze_file(path: Path, source: bytes, config: Config) -> _FileResult:
         thresholds=_thresholds(config),
         category_markers=config.category_markers,
         directories=_directories(_relative(path, config)),
-        comments=_own_line_comments(source),
+        comments=tokens.comments,
     )
     return _FileResult(
         hits={c.code: hits for c in CHECKS if (hits := tuple(c.find(file)))},
         summary=summarize(file),
         waivers=FileWaivers(
-            waivers=waivers, def_lines={t.name: t.node.lineno for t in tests}
+            waivers=waivers,
+            def_lines={
+                t.name: (
+                    t.node.lineno,
+                    tokens.signature_ends.get(t.node.lineno, t.node.lineno),
+                )
+                for t in tests
+            },
         ),
     )
 
@@ -332,7 +326,7 @@ def _analyze_source(
         if check.find_in_source is not None and levels[check.code] is not Level.OFF
         for hit in check.find_in_source(file)
     ]
-    waivers = parse(source) if config.inline_waivers else ()
+    waivers = parse(read(source).comments) if config.inline_waivers else ()
     return findings, FileWaivers(waivers=waivers, def_lines={})
 
 
