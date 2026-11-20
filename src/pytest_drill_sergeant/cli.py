@@ -17,7 +17,7 @@ from pytest_drill_sergeant.agent_guide import (
 from pytest_drill_sergeant.checks import CHECKS
 from pytest_drill_sergeant.config import ConfigError, refusal, resolve
 from pytest_drill_sergeant.discovery import cache_dir, discover, load, test_files
-from pytest_drill_sergeant.engine import inspect
+from pytest_drill_sergeant.engine import UnreadableFileError, inspect
 from pytest_drill_sergeant.findings import Level
 from pytest_drill_sergeant.production import production_code
 from pytest_drill_sergeant.render import render
@@ -86,6 +86,8 @@ def check(
             f"drill-sergeant: cannot parse {error.filename}, line {error.lineno}: "
             f"{error.msg}"
         )
+    except UnreadableFileError as error:
+        _refuse(str(error))
     # The console reads the terminal as it is now: its width (or COLUMNS), and
     # whether it takes colour (not when piped, or under NO_COLOR).
     console = Console(highlight=False)

@@ -110,6 +110,21 @@ def test_bad_config_is_a_usage_error(drill, pytester, lazy_test, ini):
     assert drill().ret == pytest.ExitCode.USAGE_ERROR
 
 
+def test_a_test_file_gone_before_analysis_is_a_usage_error_naming_it(
+    drill, pytester, lazy_test
+):
+    pytester.makeconftest(
+        "def pytest_collection_modifyitems(items):\n"
+        "    for item in items:\n"
+        "        item.path.unlink(missing_ok=True)\n"
+    )
+
+    result = drill()
+
+    assert result.ret == pytest.ExitCode.USAGE_ERROR
+    assert "test_lazy.py" in result.stderr.str()
+
+
 def test_only_files_with_collected_tests_are_analysed(drill, lazy_file, lazy_test):
     lazy_file("test_other.py", "test_other")
     lazy_file("helper.py", "test_helper")
