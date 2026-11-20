@@ -15,6 +15,7 @@ from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
+from pytest_drill_sergeant.checks.ast_tools import TEST_PATH
 from pytest_drill_sergeant.checks.base import (
     Check,
     Hit,
@@ -65,7 +66,7 @@ def _near_duplicates(
     for path, summary in summaries:
         groups: dict[tuple[object, ...], list[TestSummary]] = {}
         for test in summary.tests:
-            scope = test.name.rpartition("::")[0]
+            scope = test.name.rpartition(TEST_PATH)[0]
             key = (scope, test.signature, test.shape, test.names)
             groups.setdefault(key, []).append(test)
         for tests in groups.values():

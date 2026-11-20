@@ -73,8 +73,8 @@ def test_corpus_file_yields_exactly_its_expected_findings(path):
 
 def test_whole_corpus_as_one_run_yields_exactly_the_expected_findings():
     """No corpus file's tests duplicate another's, so a cross-file check finds in
-    one run over the whole corpus (the golden report's run) only what each file
-    expects of the checks on by default."""
+    one run over the whole corpus only what each file expects of the checks on by
+    default."""
     findings = analyze(TEST_FILES, Config(), sources=SOURCE_FILES)
 
     assert {(f.file, f.code, f.line) for f in findings} == {
