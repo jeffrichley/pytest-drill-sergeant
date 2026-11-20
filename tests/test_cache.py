@@ -177,3 +177,19 @@ def test_warm_run_with_a_followed_helper_unchanged_writes_nothing(
     inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir)
 
     assert written() == []
+
+
+def test_a_project_module_appearing_where_a_third_party_import_was_reanalyses(
+    write_test_file, tmp_path, cache_dir
+):
+    """A call into a third-party package may assert; once the module is the
+    project's own, the check sees it asserts nothing."""
+    path = write_test_file(
+        "from shiplib import ship\n\ndef test_ship():\n    ship(1)\n"
+    )
+    inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir)
+    (tmp_path / "shiplib.py").write_text("def ship(order):\n    return order\n")
+
+    findings = inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir).findings
+
+    assert [(f.code, f.line) for f in findings] == [("DS101", 3)]

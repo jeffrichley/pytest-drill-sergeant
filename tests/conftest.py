@@ -231,7 +231,7 @@ def helper_caller(write_test_file, tmp_path):
     from `checks.py` beside it, which isn't written yet; returns the test file and
     where the helper module goes."""
     path = write_test_file(
-        "from checks import check_total\n\ndef test_total():\n    check_total([1, 2])\n"
+        "from .checks import check_total\n\ndef test_total():\n    check_total([1, 2])\n"
     )
     return path, tmp_path / "checks.py"
 

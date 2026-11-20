@@ -6,3 +6,7 @@ run."""
 def validate(order):
     assert order["id"] > 0
     return order
+
+
+def ship(order):
+    return {**order, "shipped": True}

@@ -49,6 +49,6 @@ def test_tuple_assert_is_always_true():  # expect: DS101
 
 
 def test_raises_from_another_library():  # expect: DS101
-    from contracts import raises
+    from .contracts import raises
 
     raises(ValueError)

@@ -67,7 +67,7 @@ _PYTEST_CHECK_ASSERTING = frozenset(
 
 # Playwright's `expect`: a matcher called on what it returns
 # (`expect(page).to_have_title(...)`) fails the test.
-_EXPECT_FUNCTIONS = frozenset(
+EXPECT_FUNCTIONS = frozenset(
     {"playwright.sync_api.expect", "playwright.async_api.expect"}
 )
 
@@ -315,7 +315,7 @@ def _is_expect_matcher(call: ast.Call, names: Mapping[str, str]) -> bool:
     """Whether a call is a matcher on Playwright's `expect(...)`, known by import."""
     func = call.func
     return isinstance(func, ast.Attribute) and calls_to(
-        func.value, _EXPECT_FUNCTIONS, names
+        func.value, EXPECT_FUNCTIONS, names
     )
 
 

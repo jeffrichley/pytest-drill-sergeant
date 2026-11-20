@@ -21,11 +21,15 @@ A call is followed only as far as the files show it:
 whose own body makes no assertion but calls one of its own parameters asserts when
 the call passes, for that parameter, an `assert*` function or a function that
 asserts. A method on a value some call returned is never followed: what it is would
-take the call's return type.
+take the call's return type. A call to a function imported from a third-party
+package, a module found neither under the project nor in the standard library,
+nor pytest's, is code the check can't see: it may assert, so it counts as one.
 
 An absolute import is looked for under each directory above the importing file,
-nearest first, as pytest's rootdir-style `sys.path` finds it; the first file found
-is the module, followed only when it is in the test tree.
+nearest first, and the `src/` in each, up to the project root, as pytest's
+rootdir-style `sys.path` finds it, then in the production source dirs; the first
+file found is the module, followed only when it is in the test tree. In a flat
+layout, production modules beside the tests are in the tree.
 
 Each function's answer is worked out once per run and kept with the modules it
 relied on, so a test file's result can name every module it followed (`followed`)
@@ -34,12 +38,14 @@ for the cache to check.
 
 import ast
 import os
+import sys
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from pytest_drill_sergeant.cache import content_hash
 from pytest_drill_sergeant.checks.ast_tools import (
+    EXPECT_FUNCTIONS,
     bound_names,
     imports_seen_by,
     instance_param,
@@ -54,6 +60,14 @@ from pytest_drill_sergeant.paths import absolute
 _PARTIAL = "functools.partial"
 _METHOD_WRAPPERS = frozenset({"staticmethod", "classmethod"})
 _CONFTEST = "conftest.py"
+_SRC = "src"
+_MISSING = ""
+_OUTSIDE = "outside"
+
+# The packages whose functions drill-sergeant knows, so a call into them is never
+# code it can't see: pytest's own and pytest-check's. Playwright's `expect` is
+# known too (`EXPECT_FUNCTIONS`): it asserts only through a matcher.
+_KNOWN_PACKAGES = frozenset({"pytest", "_pytest", "pytest_check"})
 _INIT = "__init__.py"
 
 
@@ -275,7 +289,10 @@ class TestTree:
     __test__ = False  # Not a pytest test class, despite the name.
 
     def __init__(
-        self, test_files: Iterable[Path], production: Iterable[Path] = ()
+        self,
+        test_files: Iterable[Path],
+        production: Iterable[Path] = (),
+        root: Path | None = None,
     ) -> None:
         """A run's test tree.
 
@@ -283,17 +300,24 @@ class TestTree:
             test_files: The run's test files; their directories, and every
                 directory below them, are in the tree.
             production: Production code: files, and directories whose every file
-                is, kept out of the tree.
+                is, kept out of the tree. A module is looked for in each
+                directory too.
+            root: The project root: an absolute import from a file under it is
+                looked for no higher.
         """
         self._dirs = {os.path.dirname(absolute(p)) for p in test_files}
+        self._root = absolute(root) if root is not None else None
         self._production_files: set[str] = set()
         self._production_dirs: list[str] = []
+        self._source_dirs: list[str] = []
         for path in production:
             key = absolute(path)
             if path.is_dir():
                 self._production_dirs.append(key.rstrip(os.sep) + os.sep)
+                self._source_dirs.append(key)
             else:
                 self._production_files.add(key)
+        self._project_modules: dict[tuple[str, str], tuple[bool, tuple[str, ...]]] = {}
         self._modules: dict[str, _Module | None] = {}
         self._files: dict[str, bool] = {}
         self._digests: dict[str, str] = {}
@@ -334,21 +358,35 @@ class TestTree:
         return known
 
     def digest(self, key: str) -> str:
-        """A module's content hash, or empty when it is missing or not in the tree.
+        """A module's content hash; empty when it is missing, `outside` when it isn't in the tree.
 
         A cached result followed each module under its digest; any change means
         the result is stale.
         """
         known = self._digests.get(key)
         if known is None:
-            known = ""
-            if self._is_file(key) and self.contains(key):
-                try:
-                    known = content_hash(Path(key).read_bytes())
-                except OSError:
-                    known = ""
+            known = _MISSING
+            if self._is_file(key):
+                known = _OUTSIDE
+                if self.contains(key):
+                    try:
+                        known = content_hash(Path(key).read_bytes())
+                    except OSError:
+                        known = _MISSING
             self._digests[key] = known
         return known
+
+    def _absolute_bases(self, start: str) -> list[str]:
+        """Where an absolute import from a file in `start` is looked for, in order.
+
+        Each directory from `start` up, stopping at the project root when `start`
+        is under it, and the `src/` in each; then the production source dirs.
+        """
+        ups = [start]
+        while (parent := os.path.dirname(ups[-1])) != ups[-1] and ups[-1] != self._root:
+            ups.append(parent)
+        bases = [b for up in ups for b in (up, os.path.join(up, _SRC))]
+        return [*bases, *self._source_dirs]
 
     def _note(self, key: str) -> None:
         if self._deps:
@@ -393,9 +431,7 @@ class TestTree:
                 base = os.path.dirname(base)
             bases = [base]
         else:
-            bases = [start]
-            while (parent := os.path.dirname(bases[-1])) != bases[-1]:
-                bases.append(parent)
+            bases = self._absolute_bases(start)
         noted: list[str] = []
         for base in bases:
             stem = os.path.join(base, *parts)
@@ -405,13 +441,59 @@ class TestTree:
                 else [os.path.join(stem, _INIT)]
             )
             for candidate in candidates:
-                exists = self._is_file(candidate)
-                inside = self.contains(candidate)
-                if exists or inside:
-                    noted.append(candidate)
-                if exists:
-                    return (self.module(candidate) if inside else None), tuple(noted)
+                noted.append(candidate)
+                if self._is_file(candidate):
+                    found = self.module(candidate) if self.contains(candidate) else None
+                    return found, tuple(noted)
         return None, tuple(noted)
+
+    # --- Code the check can't see ---------------------------------------------------
+
+    def _in_project(self, top: str, start: str) -> bool:
+        """Whether a top-level module resolves under the project, from a file in `start`.
+
+        It does when a `<top>.py` file or a `<top>/` package is found where
+        `_absolute_bases` looks.
+        """
+        memo_key = (start, top)
+        if memo_key not in self._project_modules:
+            noted: list[str] = []
+            found = False
+            for base in self._absolute_bases(start):
+                stem = os.path.join(base, top)
+                noted += [stem + ".py", os.path.join(stem, _INIT)]
+                if self._is_file(stem + ".py") or os.path.isdir(stem):
+                    found = True
+                    break
+            self._project_modules[memo_key] = (found, tuple(noted))
+        found, noted_keys = self._project_modules[memo_key]
+        for key in noted_keys:
+            self._note(key)
+        return found
+
+    def _calls_unseen_code(self, func: ast.expr, scope: _Scope) -> bool:
+        """Whether a call goes into a third-party package, which may assert.
+
+        That is a function reached through an import whose top-level module
+        resolves neither under the project nor to the standard library, nor to
+        pytest, whose functions drill-sergeant knows.
+        """
+        root = func
+        while isinstance(root, ast.Attribute):
+            root = root.value
+        if not isinstance(root, ast.Name):
+            return False
+        # The imported names the code sees, shadows gone; a relative import is
+        # never in them, being the project's own.
+        imported = scope.names.get(root.id)
+        if imported is None or qualified(func, scope.names) in EXPECT_FUNCTIONS:
+            return False
+        top = imported.split(".")[0]
+        return not (
+            top in sys.stdlib_module_names
+            or top in _KNOWN_PACKAGES
+            or self._in_project(top, os.path.dirname(scope.module.key))
+        )
 
     def _member(  # noqa: PLR0911  # One return per kind of binding.
         self, module: _Module, name: str, seen: frozenset[tuple[str, str]]
@@ -717,7 +799,7 @@ class TestTree:
         """Whether a call reaches a function that asserts, given what it passes."""
         callee = self._target(call.func, scope, frozenset())
         if not isinstance(callee, _Callee):
-            return False
+            return self._calls_unseen_code(call.func, scope)
         found = self.answer(callee.function)
         if found.asserts:
             return True

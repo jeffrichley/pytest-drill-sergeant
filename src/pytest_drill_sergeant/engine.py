@@ -464,7 +464,9 @@ def inspect(
         ordered = sorted(paths, key=lambda p: p.as_posix())
         production = list(sources)
         levels = _levels_by_file([*ordered, *production], config)
-        tree = TestTree(ordered, [*production, *source_directories(config)])
+        tree = TestTree(
+            ordered, [*production, *source_directories(config)], config.root
+        )
         for path in ordered:
             result = _file_result(path, config, cache, shared, tree)
             findings.extend(_file_findings(path, result, levels[path]))

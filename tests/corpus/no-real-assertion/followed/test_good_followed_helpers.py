@@ -1,16 +1,19 @@
 """Near-misses: the assertion is in a helper the test reaches through an import, its
 class, a base class or a parameter, modelled on pandas' `_check_plot_works`,
 `super().test_sort_values_frame()` and `_check_roundtrip(s, tm.assert_series_equal)`,
-networkx's `self.test = partial(_test_func, ...)` and home-assistant's
-`help_test_unique_id`. Analysed, never run."""
+networkx's `self.test = partial(_test_func, ...)`; and a call into a third-party
+package, code the check can't see, which may assert, as home-assistant's
+`help_test_unique_id` from `pytest_homeassistant` does. Analysed, never run."""
 
 from functools import partial
 
+import frame_checks
 import helpers
 import pandas._testing as tm
 import pytest
 from base_tests import BaseOrderTests
 from helpers import check_round_trip, check_through_another, round_trip, same
+from pytest_homeassistant.components.mqtt.common import help_test_unique_id
 from support import check_shipped
 
 from conftest import check_receipt
@@ -85,3 +88,11 @@ class TestCommonNeighbours:
 
     def test_a_function_defined_in_setup_class_is_an_assertion(self):
         self.check({2, 1}, [1, 2])
+
+
+async def test_a_helper_from_a_third_party_package_may_assert(hass):
+    await help_test_unique_id(hass, "light")
+
+
+def test_a_function_through_a_third_party_module_may_assert(frame):
+    frame_checks.verify(frame)
