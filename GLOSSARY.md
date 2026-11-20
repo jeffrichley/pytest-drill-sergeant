@@ -6,7 +6,7 @@ A guardrail that catches the ways AI coding agents write bad tests, and reports 
 
 **Failure mode**:
 A recurring way that AI-written tests go wrong (e.g. copy-pasted setup instead of a fixture, asserting nothing meaningful, brittle string matching).
-_Avoid_: Anti-pattern, test smell (a smell is one kind of failure mode)
+_Avoid_: Anti-pattern, test smell (smell is a kind of check)
 
 **Check**:
 One deterministic detection of a single failure mode.
@@ -97,7 +97,7 @@ A statement in a test that makes, patches in or configures a mock: `repo = mock.
 _Avoid_: Mock configuration, arrange
 
 **Category marker**:
-A pytest marker that classifies a test by kind (e.g. unit, integration, e2e) so whole categories can be selected or skipped.
+A pytest marker that classifies a test by category (e.g. unit, integration, e2e) so whole categories can be selected or skipped.
 _Avoid_: Test type, tag
 
 **Level**:

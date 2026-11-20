@@ -100,7 +100,7 @@ def test_check_reports_by_default_only_once_proven(check):
 
     levels = {f.level for f in findings if f.code == check.code}
     expected = ON_BY_DEFAULT.get(check.code)
-    assert levels == ({expected} if expected else set())
+    assert levels == (set() if expected is None else {expected})
 
 
 # Lowest to highest: a level later in the tuple counts for more.

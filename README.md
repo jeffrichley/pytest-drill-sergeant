@@ -3,7 +3,8 @@
 A pytest plugin and CLI that catch the ways AI coding agents write bad tests:
 copy-pasted setup, assertions that prove nothing, mocks asserted on instead of
 behaviour, skips added to go green, sleeps, and test files too long to follow. It
-reports them as findings that fail the run, in the drill-sergeant voice.
+reports them as findings in the drill-sergeant voice, and fails the run on the ones
+that let a bug through.
 
 **Status:** v1 is being rebuilt from scratch. So far the malformed-waiver check (DS001),
 the structure checks (DS101-DS108), the assertion checks (DS201-DS203), the mocking
@@ -62,11 +63,13 @@ A check's default level is the lower of two answers
   costs later: hard to read, breaks on harmless refactors, duplicated) is at most
   `warn`. A **convention** (a house rule some projects follow) is off unless the
   project opts in.
-- **It is on only once it is proven**: a hand-judged sample of real suites shows it
-  with zero false positives. A check that cries wolf teaches people to ignore every
-  finding, so the rest are off by default and come on one by one, each in the change
-  that proves it ([#171](https://github.com/jeffrichley/pytest-drill-sergeant/issues/171)
-  tracks them).
+- **Its precision decides whether it is on.** It is on only once it is **proven**:
+  a fresh hand-judged sample of real suites with zero false positives allows `fail`;
+  under 15%, with each remaining one waived, allows `warn`; 15% or more keeps it off.
+  A check that cries wolf teaches people to ignore every finding, so the rest are off
+  by default and come on one by one, each in the change that proves it
+  ([#171](https://github.com/jeffrichley/pytest-drill-sergeant/issues/171) tracks
+  them).
 
 On by default, at `fail`: DS001 malformed-waiver, DS301 mock-only-assertion, DS603
 source-text-grep, DS802 wall-clock-read and DS803 unseeded-random. At `warn`: DS106
