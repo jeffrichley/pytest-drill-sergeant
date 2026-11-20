@@ -17,7 +17,7 @@ One occurrence of a failure mode in a specific test, reported by a check. A find
 _Avoid_: Violation, error, issue, warning
 
 **Real assertion**:
-Anything in a test that can fail it on the outcome it checks: an `assert` of anything but a truthy constant or non-empty tuple, `pytest.raises`, `pytest.warns`, `pytest.deprecated_call` or `pytest.fail`, an `assert*` call (a mock's `assert_called_once_with`, `self.assertEqual`, `assert_frame_equal`), or `raise AssertionError`.
+Anything in a test that can fail it on the outcome it checks: an `assert` of anything but a truthy constant or non-empty tuple, `pytest.raises`, `pytest.warns`, `pytest.deprecated_call` or `pytest.fail`, an `assert*` call (a mock's `assert_called_once_with`, `self.assertEqual`, `assert_frame_equal`), a call made through an assertion library, known by the file's imports (a pytest-check helper such as `check.equal`, a matcher on Playwright's `expect(...)`), or `raise AssertionError`.
 _Avoid_: Meaningful assertion, check (a check is drill-sergeant's)
 
 **Weak assertion**:
