@@ -40,7 +40,7 @@ def test_agent_guide_states_the_waiver_rule(cli):
     ],
     ids=["neither", "AGENTS.md", "CLAUDE.md", "both"],
 )
-def test_install_writes_the_skill_and_a_block_in_the_instructions_file(
+def test_install_writes_the_skill_and_a_block_in_agents_md_or_claude_md(
     cli, tmp_path, existing, target, skill
 ):
     for name in existing:
@@ -54,7 +54,7 @@ def test_install_writes_the_skill_and_a_block_in_the_instructions_file(
     assert sorted(p.name for p in tmp_path.glob("*.md")) == sorted({*existing, target})
 
 
-def test_install_leaves_the_other_instructions_file_alone(cli, tmp_path):
+def test_install_leaves_claude_md_alone_beside_agents_md(cli, tmp_path):
     (tmp_path / "AGENTS.md").write_text("# Agents\n")
     (tmp_path / "CLAUDE.md").write_text("# Claude\n")
 

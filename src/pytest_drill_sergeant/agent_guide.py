@@ -80,7 +80,7 @@ SKILL_DESCRIPTION = (
     "finding."
 )
 
-# Where each instructions file's agents look for skills.
+# Where the agents that read AGENTS.md, or CLAUDE.md, look for skills.
 SKILL_DIRS = {"AGENTS.md": ".agents/skills", "CLAUDE.md": ".claude/skills"}
 
 _END = "<!-- /drill-sergeant agent guide -->"
@@ -98,7 +98,7 @@ def skill() -> str:
     )
 
 
-def snippet(skill_path: str) -> str:
+def block(skill_path: str) -> str:
     """The version-marked block for AGENTS.md or CLAUDE.md that points at the skill."""
     return (
         f"{_start()}\n"
@@ -113,18 +113,18 @@ def snippet(skill_path: str) -> str:
     )
 
 
-def _with_block(text: str, block: str) -> str | None:
-    """The instructions file's text with the block refreshed in place, or appended.
+def _with_block(text: str, new_block: str) -> str | None:
+    """AGENTS.md or CLAUDE.md text with the block refreshed in place, or appended.
 
     `None` when the text has the block's start marker but no end marker after it.
     """
     start = _START.search(text)
     if start is None:
-        return f"{text.rstrip()}\n\n{block}\n" if text.strip() else f"{block}\n"
+        return f"{text.rstrip()}\n\n{new_block}\n" if text.strip() else f"{new_block}\n"
     end = text.find(_END, start.end())
     if end == -1:
         return None
-    return text[: start.start()] + block + text[end + len(_END) :]
+    return text[: start.start()] + new_block + text[end + len(_END) :]
 
 
 def install(root: Path) -> list[Path]:
@@ -138,14 +138,14 @@ def install(root: Path) -> list[Path]:
         (n for n in ("AGENTS.md", "CLAUDE.md") if (root / n).is_file()), "AGENTS.md"
     )
     skill_path = f"{SKILL_DIRS[name]}/{SKILL_NAME}/SKILL.md"
-    instructions = root / name
-    existing = instructions.read_text() if instructions.is_file() else ""
-    refreshed = _with_block(existing, snippet(skill_path))
+    block_file = root / name
+    existing = block_file.read_text() if block_file.is_file() else ""
+    refreshed = _with_block(existing, block(skill_path))
     if refreshed is None:
         raise InstallError(
             f"{name} has the agent guide's start marker but no `{_END}` after it"
         )
-    contents = {instructions: refreshed, root / skill_path: skill()}
+    contents = {block_file: refreshed, root / skill_path: skill()}
     written = []
     for path, content in contents.items():
         if path.is_file() and path.read_text() == content:
