@@ -37,6 +37,7 @@ from pytest_drill_sergeant.checks.base import (
 from pytest_drill_sergeant.checks.summary import summarize
 from pytest_drill_sergeant.config import Config
 from pytest_drill_sergeant.findings import MODULE, Finding, Level
+from pytest_drill_sergeant.paths import relative
 from pytest_drill_sergeant.tokens import read
 from pytest_drill_sergeant.waivers import (
     FileWaivers,
@@ -113,41 +114,24 @@ def _tests_in(
             )
 
 
-def _relative(path: Path, config: Config) -> PurePath:
-    """A file's path relative to the config root, or as given when outside it."""
-    resolved = path.resolve()
-    root = config.root.resolve()
-    return resolved.relative_to(root) if resolved.is_relative_to(root) else path
-
-
 def _directories(path: PurePath) -> tuple[str, ...]:
     """The names of the directories a path runs through, outermost first."""
     parts = path.parent.parts
     return parts[1:] if path.anchor else parts
 
 
-def _ignored_codes(path: Path, config: Config, root: str) -> frozenset[str]:
+def _ignored_codes(path: Path, config: Config) -> frozenset[str]:
     """The code prefixes the config's per-file ignores turn off for a file.
 
     A glob matches the file's path relative to the config root, or, for a glob with
     no `/`, the file's name.
-
-    Args:
-        path: The file.
-        config: The resolved configuration.
-        root: The config root, resolved, as a posix path ending in `/`.
     """
     if not config.per_file_ignores:
         return frozenset()
-    # Plain string work: pathlib's own relative-path test costs more than the rest
-    # of a warm run.
-    resolved = path.resolve().as_posix()
-    relative = (
-        resolved.removeprefix(root) if resolved.startswith(root) else path.as_posix()
-    )
+    within = relative(path, config.root).as_posix()
     ignored: set[str] = set()
     for glob, codes in config.per_file_ignores:
-        if fnmatch(relative, glob) or ("/" not in glob and fnmatch(path.name, glob)):
+        if fnmatch(within, glob) or ("/" not in glob and fnmatch(path.name, glob)):
             ignored |= codes
     return frozenset(ignored)
 
@@ -248,7 +232,7 @@ def _analyze_file(path: Path, source: bytes, config: Config) -> _FileResult:
         waivers=waivers,
         thresholds=_thresholds(config),
         category_markers=config.category_markers,
-        directories=_directories(_relative(path, config)),
+        directories=_directories(relative(path, config.root)),
         comments=tokens.comments,
     )
     return _FileResult(
@@ -293,9 +277,8 @@ def _levels_by_file(paths: list[Path], config: Config) -> dict[Path, Levels]:
     """
     shared: dict[frozenset[str], Levels] = {}
     by_file: dict[Path, Levels] = {}
-    root = config.root.resolve().as_posix().rstrip("/") + "/"
     for path in paths:
-        ignored = _ignored_codes(path, config, root)
+        ignored = _ignored_codes(path, config)
         if ignored not in shared:
             shared[ignored] = {c.code: _level(c, ignored, config) for c in CHECKS}
         by_file[path] = shared[ignored]

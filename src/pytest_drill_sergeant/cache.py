@@ -32,6 +32,8 @@ from collections.abc import Callable, Hashable, Mapping
 from pathlib import Path
 from typing import Any, TypeVar
 
+from pytest_drill_sergeant.paths import absolute
+
 _T = TypeVar("_T")
 
 # The cache's directory name under pytest's cache directory, where pytest's
@@ -241,7 +243,7 @@ class Cache:
 
         An entry that doesn't read back as `kind` is a miss, as a stale one is.
         """
-        entry = self._entries.get(os.path.abspath(path))
+        entry = self._entries.get(absolute(path))
         if not isinstance(entry, list) or len(entry) != 2 or entry[0] != key:  # noqa: PLR2004  # An entry is [key, result].
             return None
         try:
@@ -251,7 +253,7 @@ class Cache:
 
     def put(self, path: Path, key: str, result: object) -> None:
         """Keep a file's result under its key, replacing its old entry."""
-        self._entries[os.path.abspath(path)] = [key, encode(result)]
+        self._entries[absolute(path)] = [key, encode(result)]
         self._changed = True
 
     def save(self) -> None:

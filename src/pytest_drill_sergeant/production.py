@@ -11,6 +11,7 @@ from pathlib import Path
 from pytest_drill_sergeant.checks import CHECKS
 from pytest_drill_sergeant.config import Config
 from pytest_drill_sergeant.findings import Level
+from pytest_drill_sergeant.paths import relative
 
 
 @dataclass(frozen=True)
@@ -63,8 +64,5 @@ def production_code(config: Config, here: Path) -> ProductionCode:
             note=f"drill-sergeant: skipped {', '.join(readers)}: no src/ and no "
             "drill_sergeant_source_dirs."
         )
-    here = here.resolve()
     files = sorted({f.resolve() for d in dirs for f in d.rglob("*.py")})
-    return ProductionCode(
-        files=tuple(f.relative_to(here) if f.is_relative_to(here) else f for f in files)
-    )
+    return ProductionCode(files=tuple(relative(f, here) for f in files))

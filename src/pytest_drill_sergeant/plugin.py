@@ -29,6 +29,7 @@ from pytest_drill_sergeant.config import (
 )
 from pytest_drill_sergeant.engine import Inspection, inspect
 from pytest_drill_sergeant.findings import Level
+from pytest_drill_sergeant.paths import relative
 from pytest_drill_sergeant.production import production_code
 from pytest_drill_sergeant.render import render
 
@@ -134,7 +135,7 @@ class _Run:
             return
         here = self.config.invocation_params.dir
         self.inspection = inspect(
-            sorted(p.relative_to(here) if p.is_relative_to(here) else p for p in paths),
+            sorted(relative(p, here) for p in paths),
             self.resolved,
             self.production.files,
             cache_dir=self._cache_dir(),
