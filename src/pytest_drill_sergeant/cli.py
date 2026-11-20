@@ -6,7 +6,14 @@ from typing import Annotated, NoReturn
 import typer
 from rich.console import Console
 
-from pytest_drill_sergeant.agent_guide import EXPLAIN_POINTER, guide, lesson, summary
+from pytest_drill_sergeant.agent_guide import (
+    EXPLAIN_POINTER,
+    InstallError,
+    guide,
+    install,
+    lesson,
+    summary,
+)
 from pytest_drill_sergeant.checks import CHECKS
 from pytest_drill_sergeant.config import ConfigError, refusal, resolve
 from pytest_drill_sergeant.discovery import cache_dir, discover, load, test_files
@@ -119,6 +126,26 @@ def explain(
 
 
 @app.command("agent-guide")
-def agent_guide() -> None:
+def agent_guide(
+    install_guide: Annotated[
+        bool,
+        typer.Option(
+            "--install",
+            help="Write the guide as an Agent Skill and add or refresh its block in "
+            "AGENTS.md or CLAUDE.md, in the current directory.",
+        ),
+    ] = False,
+) -> None:
     """Print the agent guide, which teaches a coding agent the checks."""
-    typer.echo(guide())
+    if not install_guide:
+        typer.echo(guide())
+        return
+    root = Path.cwd()
+    try:
+        written = install(root)
+    except InstallError as error:
+        _refuse(f"drill-sergeant: {error}")
+    for path in written:
+        typer.echo(f"wrote {path.relative_to(root)}")
+    if not written:
+        typer.echo("agent guide already up to date")
