@@ -85,7 +85,7 @@ class _Module:
 
     key: str
     names: dict[str, str]
-    bindings: dict[str, object]
+    bindings: dict[str, "_Binding"]
 
 
 @dataclass(frozen=True)
@@ -123,6 +123,15 @@ class _Callee:
     function: _Function
     args: tuple[_Arg, ...] = ()
     keywords: tuple[tuple[str, _Arg], ...] = ()
+
+
+# What an expression can stand for: a function to call, a class, a module, or
+# nothing known.
+_Target = _Callee | _Class | _Module | None
+
+# What a module's top-level name is bound to: an import, a `def`, a `class` or a
+# value.
+_Binding = _Import | FunctionNode | ast.ClassDef | ast.expr
 
 
 @dataclass(eq=False)
@@ -164,7 +173,7 @@ class _Answer:
 
 _NO = _Answer(asserts=False)
 _YES = _Answer(asserts=True)
-_UNREACHED = 1 << 30
+_NO_CYCLE = 1 << 30
 
 
 def _import_bindings(
@@ -200,8 +209,8 @@ def _top_level(body: list[ast.stmt]) -> Iterator[ast.stmt]:
                 yield from _top_level(part)
 
 
-def _bindings(tree: ast.Module) -> dict[str, object]:
-    bindings: dict[str, object] = {}
+def _bindings(tree: ast.Module) -> dict[str, _Binding]:
+    bindings: dict[str, _Binding] = {}
     for statement in _top_level(tree.body):
         if isinstance(statement, ast.Import | ast.ImportFrom):
             bindings.update(_import_bindings(statement))
@@ -209,21 +218,34 @@ def _bindings(tree: ast.Module) -> dict[str, object]:
             statement, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef
         ):
             bindings[statement.name] = statement
-        elif (
-            isinstance(statement, ast.Assign)
-            and len(statement.targets) == 1
-            and isinstance(statement.targets[0], ast.Name)
-        ):
-            bindings[statement.targets[0].id] = statement.value
+        elif (assigned := _plain_assignment(statement)) is not None:
+            bindings[assigned[0]] = assigned[1]
         elif not isinstance(statement, ast.If | ast.Try):
             for name in bound_names(statement):
                 bindings.pop(name, None)
     return bindings
 
 
-def _is_static(node: FunctionNode | ast.Lambda) -> bool:
-    return isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and any(
-        isinstance(d, ast.Name) and d.id == "staticmethod" for d in node.decorator_list
+def _plain_assignment(node: ast.AST) -> tuple[str, ast.expr] | None:
+    """The name and value of a `name = value` statement, or `None` for any other."""
+    if (
+        isinstance(node, ast.Assign)
+        and len(node.targets) == 1
+        and isinstance(node.targets[0], ast.Name)
+    ):
+        return node.targets[0].id, node.value
+    return None
+
+
+def _is_static(node: FunctionNode | ast.Lambda, names: dict[str, str]) -> bool:
+    """Whether a function is decorated with the builtin `staticmethod`."""
+    return (
+        isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
+        and "staticmethod" not in names
+        and any(
+            isinstance(d, ast.Name) and d.id == "staticmethod"
+            for d in node.decorator_list
+        )
     )
 
 
@@ -279,9 +301,12 @@ class TestTree:
             tuple[str, str, int], tuple[_Module | None, tuple[str, ...]]
         ] = {}
         self._answers: dict[_Function, tuple[_Answer, frozenset[str]]] = {}
-        self._open: dict[_Function, int] = {}
-        self._reach = _UNREACHED
+        # The functions being worked out, each at its depth in the call chain, and
+        # the shallowest of them the answer now being worked out met again.
+        self._in_progress: dict[_Function, int] = {}
+        self._lowest_cycle = _NO_CYCLE
         self._deps: list[set[str]] = []
+        self._resolving: set[int] = set()
 
     # --- What is in the tree ------------------------------------------------------
 
@@ -390,7 +415,7 @@ class TestTree:
 
     def _member(  # noqa: PLR0911  # One return per kind of binding.
         self, module: _Module, name: str, seen: frozenset[tuple[str, str]]
-    ) -> object:
+    ) -> _Target:
         """What a module's top-level name is: a `_Callee`, `_Class`, `_Module` or `None`."""
         if (module.key, name) in seen:
             return None
@@ -412,7 +437,7 @@ class TestTree:
 
     def _imported(
         self, module: _Module, imported: _Import, seen: frozenset[tuple[str, str]]
-    ) -> object:
+    ) -> _Target:
         source = self._resolve(imported.module, imported.level, module)
         if imported.attr is None:
             return source
@@ -449,7 +474,7 @@ class TestTree:
         if (
             cls is not None
             and not isinstance(node, ast.Lambda)
-            and not _is_static(node)
+            and not _is_static(node, module.names)
         ):
             instance = positional[0] if positional else None
             positional = positional[1:]
@@ -473,12 +498,8 @@ class TestTree:
         for child in _body(node):
             if isinstance(child, ast.Import | ast.ImportFrom):
                 scope.imports.update(_import_bindings(child))
-            elif (
-                isinstance(child, ast.Assign)
-                and len(child.targets) == 1
-                and isinstance(child.targets[0], ast.Name)
-            ):
-                scope.values[child.targets[0].id] = child.value
+            elif (assigned := _plain_assignment(child)) is not None:
+                scope.values[assigned[0]] = assigned[1]
             elif (
                 isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef)
                 and child is not node
@@ -486,25 +507,40 @@ class TestTree:
                 scope.functions[child.name] = child
         return scope
 
+    def _scope_of(self, function: _Function) -> _Scope:
+        return self._scope(
+            function.node, function.module, function.cls, function.self_cls
+        )
+
     # --- What a call reaches ------------------------------------------------------
 
     def _target(
         self, expr: ast.expr, scope: _Scope, seen: frozenset[tuple[str, str]]
-    ) -> object:
-        """What an expression stands for: a `_Callee`, `_Class`, `_Module` or `None`."""
-        if isinstance(expr, ast.Name):
-            return self._name_target(expr.id, scope, seen)
+    ) -> _Target:
+        """What an expression stands for: a `_Callee`, `_Class`, `_Module` or `None`.
+
+        An expression met again while it is still being worked out
+        (`self.x = wrap(self.x)`) stands for nothing known.
+        """
         if isinstance(expr, ast.Lambda):
             return _Callee(_Function(expr, scope.module, scope.cls, scope.self_cls))
-        if isinstance(expr, ast.Attribute):
-            return self._attribute_target(expr, scope, seen)
-        if isinstance(expr, ast.Call) and expr.args:
-            return self._wrapped_target(expr, scope, seen)
-        return None
+        if id(expr) in self._resolving:
+            return None
+        self._resolving.add(id(expr))
+        try:
+            if isinstance(expr, ast.Name):
+                return self._name_target(expr.id, scope, seen)
+            if isinstance(expr, ast.Attribute):
+                return self._attribute_target(expr, scope, seen)
+            if isinstance(expr, ast.Call) and expr.args:
+                return self._wrapped_target(expr, scope, seen)
+            return None
+        finally:
+            self._resolving.discard(id(expr))
 
     def _name_target(
         self, name: str, scope: _Scope, seen: frozenset[tuple[str, str]]
-    ) -> object:
+    ) -> _Target:
         """What a bare name stands for; a parameter stands for nothing known."""
         if name in scope.params:
             return None
@@ -521,7 +557,7 @@ class TestTree:
 
     def _attribute_target(
         self, expr: ast.Attribute, scope: _Scope, seen: frozenset[tuple[str, str]]
-    ) -> object:
+    ) -> _Target:
         """What `self.x`, `super().x`, `module.x` or `Class.x` stands for."""
         owner = expr.value
         if isinstance(owner, ast.Name) and owner.id == scope.instance:
@@ -551,10 +587,20 @@ class TestTree:
 
         A `partial` keeps the arguments it gives.
         """
+        func = expr.func
+        is_partial = qualified(func, scope.names) == _PARTIAL
+        is_method_wrapper = (
+            isinstance(func, ast.Name)
+            and func.id in _METHOD_WRAPPERS
+            and func.id not in scope.names
+            and func.id not in scope.values
+        )
+        if not (is_partial or is_method_wrapper):
+            return None
         wrapped = self._target(expr.args[0], scope, seen)
         if not isinstance(wrapped, _Callee):
             return None
-        if qualified(expr.func, scope.names) == _PARTIAL:
+        if is_partial:
             args = [(a, scope) for a in expr.args[1:] if not isinstance(a, ast.Starred)]
             keywords = [(k.arg, (k.value, scope)) for k in expr.keywords if k.arg]
             return _Callee(
@@ -562,19 +608,11 @@ class TestTree:
                 (*wrapped.args, *args),
                 (*wrapped.keywords, *keywords),
             )
-        func = expr.func
-        if (
-            isinstance(func, ast.Name)
-            and func.id in _METHOD_WRAPPERS
-            and func.id not in scope.names
-            and func.id not in scope.values
-        ):
-            return wrapped
-        return None
+        return wrapped
 
     def _class_member(
         self, cls: _Class, name: str, self_cls: _Class | None, seen: set[_Class]
-    ) -> object:
+    ) -> _Target:
         """A method or callable attribute a class or its bases give a name."""
         if cls in seen:
             return None
@@ -597,7 +635,7 @@ class TestTree:
                     return found
         return self._base_member(cls, name, self_cls, seen)
 
-    def _set_on_instance(self, method: FunctionNode, cls: _Class, name: str) -> object:
+    def _set_on_instance(self, method: FunctionNode, cls: _Class, name: str) -> _Target:
         """The callable `self.<name> = ...` or `cls.<name> = ...` sets in a method."""
         method_scope = self._scope(method, cls.module, cls, cls)
         if method_scope.instance is None:
@@ -616,7 +654,7 @@ class TestTree:
 
     def _base_member(
         self, cls: _Class, name: str, self_cls: _Class | None, seen: set[_Class]
-    ) -> object:
+    ) -> _Target:
         scope = self._module_scope(cls.module)
         for base in cls.node.bases:
             found_base = self._target(base, scope, frozenset())
@@ -639,31 +677,29 @@ class TestTree:
             for key in kept[1]:
                 self._note(key)
             return kept[0]
-        if function in self._open:
-            self._reach = min(self._reach, self._open[function])
+        if function in self._in_progress:
+            self._lowest_cycle = min(self._lowest_cycle, self._in_progress[function])
             return _NO
-        depth = len(self._open)
-        self._open[function] = depth
-        outer_reach, self._reach = self._reach, _UNREACHED
+        depth = len(self._in_progress)
+        self._in_progress[function] = depth
+        outer_cycle, self._lowest_cycle = self._lowest_cycle, _NO_CYCLE
         self._deps.append({function.module.key})
         try:
             found = self._work_out(function)
         finally:
             deps = self._deps.pop()
-            del self._open[function]
-            reach, self._reach = self._reach, outer_reach
-        if found.asserts or reach >= depth:
+            del self._in_progress[function]
+            cycle, self._lowest_cycle = self._lowest_cycle, outer_cycle
+        if found.asserts or cycle >= depth:
             self._answers[function] = (found, frozenset(deps))
         else:
-            self._reach = min(self._reach, reach)
+            self._lowest_cycle = min(self._lowest_cycle, cycle)
         if self._deps:
             self._deps[-1].update(deps)
         return found
 
     def _work_out(self, function: _Function) -> _Answer:
-        scope = self._scope(
-            function.node, function.module, function.cls, function.self_cls
-        )
+        scope = self._scope_of(function)
         nodes = list(_body(function.node))
         if any(is_real_assertion(node, scope.names) for node in nodes):
             return _YES
@@ -693,12 +729,7 @@ class TestTree:
         ]
         keywords = dict(callee.keywords)
         keywords.update((k.arg, (k.value, scope)) for k in call.keywords if k.arg)
-        callee_scope = self._scope(
-            callee.function.node,
-            callee.function.module,
-            callee.function.cls,
-            callee.function.self_cls,
-        )
+        callee_scope = self._scope_of(callee.function)
         for param in found.calls_params:
             arg = keywords.get(param)
             if arg is None and param in callee_scope.positional:

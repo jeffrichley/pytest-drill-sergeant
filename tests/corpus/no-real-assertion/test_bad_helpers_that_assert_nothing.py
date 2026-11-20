@@ -4,6 +4,7 @@ never run."""
 from functools import partial
 
 import pytest
+from frames import normalise
 
 pytestmark = pytest.mark.unit
 
@@ -35,3 +36,16 @@ def test_helpers_calling_each_other_check_nothing():  # expect: DS101
 def test_a_partial_of_a_helper_that_asserts_nothing_checks_nothing():  # expect: DS101
     render = partial(_render, {"id": 1})
     render()
+
+
+class TestFrames:
+    def setup_method(self):
+        self.frame = normalise(self.frame)
+        self.left = self.right
+        self.right = self.left
+
+    def test_an_attribute_set_from_itself_checks_nothing(self):  # expect: DS101
+        self.frame.sum()
+
+    def test_attributes_set_from_each_other_check_nothing(self):  # expect: DS101
+        self.left()
