@@ -164,23 +164,29 @@ class _Mocks:
         """How to name the mock an expression starts from: its name, or its call."""
         while isinstance(expr, ast.Attribute | ast.Subscript | ast.Await):
             expr = expr.value
-        if isinstance(expr, ast.Call) and self.is_mock(expr.func):
-            return self.root(expr.func)
+        if isinstance(expr, ast.Call):
+            if self.is_mock(expr.func):
+                return self.root(expr.func)
+            first = f"{ast.unparse(expr.args[0])}, " if expr.args else ""
+            return f"`{ast.unparse(expr.func)}({first}...)`"
         return f"`{ast.unparse(expr)}`"
 
-    def configured_returns(self) -> set[str]:
-        """What the test told its mocks to return, each as its syntax tree dumped."""
-        returns: set[str] = set()
-        calls: list[ast.AST] = [*_patch_decorators(self.test), *walk_test(self.test)]
-        for node in calls:
+    def configured_returns(self) -> dict[str, str]:
+        """What the test told its mocks to return, each as its syntax tree dumped.
+
+        Each maps to how to name the mock told to return it.
+        """
+        returns: dict[str, str] = {}
+        nodes: list[ast.AST] = [*_patch_decorators(self.test), *walk_test(self.test)]
+        for node in nodes:
             if isinstance(node, ast.Call) and _makes_mock(node, self.test):
-                returns.update(
-                    ast.dump(k.value) for k in node.keywords if k.arg == "return_value"
-                )
-            elif isinstance(node, ast.Assign) and any(
-                self._is_return_value(t) for t in node.targets
-            ):
-                returns.add(ast.dump(node.value))
+                for k in node.keywords:
+                    if k.arg == "return_value":
+                        returns[ast.dump(k.value)] = self.root(node)
+            elif isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if self._is_return_value(target):
+                        returns[ast.dump(node.value)] = self.root(target)
         return returns
 
     def _is_return_value(self, expr: ast.expr) -> bool:
@@ -229,8 +235,8 @@ class _Mocks:
 
         return visit(expr) and mocks_read
 
-    def echo_side(self, expr: ast.expr, returns: set[str]) -> ast.expr | None:
-        """The side of an `==` or `is` that is only what a mock was told to return."""
+    def echoed_mock(self, expr: ast.expr, returns: dict[str, str]) -> str | None:
+        """The mock whose return value one side of an `==` or `is` is, named."""
         if not (
             isinstance(expr, ast.Compare)
             and len(expr.ops) == 1
@@ -238,13 +244,15 @@ class _Mocks:
         ):
             return None
         for side in (expr.left, expr.comparators[0]):
-            if self._is_return_value(side) or ast.dump(side) in returns:
-                return side
+            if self._is_return_value(side):
+                return self.root(side)
+            if ast.dump(side) in returns:
+                return returns[ast.dump(side)]
         return None
 
 
 def _mock_only_roots(
-    node: ast.AST, mocks: _Mocks, returns: set[str]
+    node: ast.AST, mocks: _Mocks, returns: dict[str, str]
 ) -> list[str] | None:
     """The mocks a real assertion is about, or `None` if it checks anything else.
 
@@ -263,9 +271,9 @@ def _mock_only_roots(
                 for n in ast.walk(node.test)
                 if isinstance(n, ast.Name) and n.id in mocks.names
             ]
-        side = mocks.echo_side(node.test, returns)
-        if side is not None:
-            return [mocks.root(side)] if mocks.is_mock(side) else ["a mock"]
+        echoed = mocks.echoed_mock(node.test, returns)
+        if echoed is not None:
+            return [echoed]
     return None
 
 
@@ -429,4 +437,112 @@ MOCK_WITHOUT_SPEC = Check(
         "    assert PaymentHandler(gateway).process(100).status == 'ok'\n"
     ),
     find=_find_mock_without_spec,
+)
+
+
+def _sets_up(call: ast.expr, test: TestFunction) -> bool:
+    """Whether an expression is a call that makes or patches in mocks."""
+    return isinstance(call, ast.Call) and _mock_api(call.func, test) in _SETUP
+
+
+def _setup_lines(test: TestFunction) -> list[int]:
+    """The line of each mock-setup statement in a test, decorators first.
+
+    That is a decorator or `with` item that makes or patches in mocks, a
+    statement whose value does, an assignment to an attribute or item of a mock
+    (`repo.get.return_value = ...`), and a bare call of a mock's own method
+    (`repo.configure_mock(...)`) other than an `assert*`.
+    """
+    mocks = _Mocks(test)
+    lines = [d.lineno for d in test.node.decorator_list if _sets_up(d, test)]
+    for node in walk_test(test):
+        if isinstance(node, ast.With | ast.AsyncWith):
+            lines.extend(
+                i.context_expr.lineno
+                for i in node.items
+                if _sets_up(i.context_expr, test)
+            )
+        elif isinstance(node, ast.Assign | ast.AnnAssign | ast.AugAssign):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            configures = any(
+                isinstance(t, ast.Attribute | ast.Subscript) and mocks.is_mock(t)
+                for t in targets
+            )
+            if configures or (node.value is not None and _sets_up(node.value, test)):
+                lines.append(node.lineno)
+        elif isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+            call = node.value
+            if _sets_up(call, test) or (
+                isinstance(call.func, ast.Attribute)
+                and mocks.is_mock(call.func.value)
+                and not is_assert_call(call)
+            ):
+                lines.append(node.lineno)
+    return lines
+
+
+def _find_overgrown_mock_setup(file: TestFile) -> Iterator[Hit]:
+    limit = file.thresholds.max_mock_setup
+    for test in file.tests:
+        lines = _setup_lines(test)
+        if len(lines) <= limit:
+            continue
+        where = ", ".join(str(n) for n in lines)
+        yield Hit.on(
+            test,
+            test.node.lineno,
+            found=(
+                f"has {len(lines)} mock-setup statements, more than the {limit} "
+                "allowed: it scripts its collaborators' calls instead of using them."
+            ),
+            fix=(
+                f"replace the mocks set up on lines {where} with a fake of each "
+                "collaborator, built once in a fixture, or test one level up with "
+                "real objects."
+            ),
+        )
+
+
+OVERGROWN_MOCK_SETUP = Check(
+    code="DS303",
+    name="overgrown-mock-setup",
+    default_level=Level.FAIL,
+    voice=(
+        "More mock setup than test! You're writing a SCREENPLAY, recruit!",
+        "Twenty lines of rehearsal for one line of combat! Use a fake, maggot!",
+        "This test scripts every call the code makes! Change one and it COLLAPSES!",
+    ),
+    why=(
+        "A test buried in mock setup restates the implementation's call sequence, "
+        "so it breaks on any refactor, stays green when the real collaborators "
+        "change, and hides what it checks."
+    ),
+    explain=(
+        "Flags a test with more mock-setup statements than "
+        "`drill_sergeant_max_mock_setup` (10 by default). Mock setup is a `patch` "
+        "decorator or `with` item, a statement that makes a mock (`Mock(...)`, "
+        "`create_autospec(...)`, `mocker.patch(...)`), an assignment to a mock's "
+        "attribute or item (`repo.get.return_value = ...`, `.side_effect = ...`), "
+        "and a bare call of a mock's own method such as `configure_mock()`. A mock "
+        "is known from the file, as DS301 knows it: a fixture named `mock_repo` "
+        "isn't one, and setup in a fixture doesn't count against the test. Replace "
+        "the mocks with fakes built once in a fixture, or test one level up with "
+        "real objects."
+    ),
+    bad_example=(
+        "from unittest import mock\n"
+        "\n"
+        "\n"
+        "def test_checkout_total():\n"
+        "    repo = mock.create_autospec(Repo, instance=True)\n"
+        "    gateway = mock.create_autospec(Gateway, instance=True)\n"
+        + "".join(f"    repo.find_{n}.return_value = {n}\n" for n in range(9))
+        + "    assert Checkout(repo, gateway).run(cart_id=7).total == 1350\n"
+    ),
+    good_example=(
+        "def test_checkout_total(fake_repo, fake_gateway):\n"
+        "    receipt = Checkout(fake_repo, fake_gateway).run(cart_id=7)\n"
+        "    assert receipt.total == 1350\n"
+    ),
+    find=_find_overgrown_mock_setup,
 )

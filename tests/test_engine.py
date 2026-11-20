@@ -31,6 +31,26 @@ def test_mock_without_spec_warns_by_default():
     assert {(f.code, f.level) for f in findings} == {("DS302", Level.WARN)}
 
 
+@pytest.mark.parametrize(("limit", "codes"), [(2, {"DS303"}), (3, set())])
+def test_max_mock_setup_sets_how_much_mock_setup_a_test_may_have(
+    tmp_path, limit, codes
+):
+    path = tmp_path / "test_setup.py"
+    path.write_text(
+        "from unittest import mock\n"
+        "\n"
+        "def test_total():\n"
+        "    repo = mock.create_autospec(Repo, instance=True)\n"
+        "    repo.find.return_value = [1, 2]\n"
+        "    repo.count.return_value = 2\n"
+        "    assert total(repo) == 3\n"
+    )
+
+    findings = analyze([path], Config(max_mock_setup=limit))
+
+    assert {f.code for f in findings} == codes
+
+
 def test_configured_level_overrides_the_default(assertion_free_test):
     [finding] = analyze([assertion_free_test], Config(levels={"DS101": Level.WARN}))
 
