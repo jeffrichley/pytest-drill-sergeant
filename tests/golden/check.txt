@@ -1837,4 +1837,16 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Fix:   In `test_async_import`, line 30: replace the weak assertions on line 30 with exact
            checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-206 findings: 197 fail, 9 warn. Fix them, recruit. DISMISSED!
+Waived findings
+  suite/malformed-waiver/test_good_waived_on_def_line.py:8: DS101 no-real-assertion [fail] in test_cli_smoke
+    Reason: the exit code is checked by CI
+  suite/malformed-waiver/test_good_waived_on_def_line.py:15: DS201 weak-assertion [fail] in test_loads_anything
+    Reason: any loaded value will do
+  suite/malformed-waiver/test_good_waived_on_def_line.py:19: DS101 no-real-assertion [fail] in TestServer::test_starts
+    Reason: startup is the behaviour
+  suite/malformed-waiver/test_good_waived_on_flagged_line.py:8: DS201 weak-assertion [fail] in test_reads_a_value
+    Reason: read() may return anything
+  suite/malformed-waiver/test_good_waived_on_flagged_line.py:13: DS201 weak-assertion [fail] in test_reads_a_flag
+    Reason: a truthy flag is the whole contract
+
+206 findings: 197 fail, 9 warn; 5 waived. Fix them, recruit. DISMISSED!

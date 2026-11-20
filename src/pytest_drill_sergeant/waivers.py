@@ -106,7 +106,8 @@ def apply(
 
     Args:
         findings: The findings, in the engine's order.
-        files: Each file's waivers and `def` lines, by the path its findings carry.
+        files: Each file's waivers and `def` lines, by the path its findings
+            carry; every finding's file is in it.
 
     Returns:
         The findings that stand, and the waived ones, both in the order given.
@@ -114,7 +115,7 @@ def apply(
     kept: list[Finding] = []
     waived: list[WaivedFinding] = []
     for finding in findings:
-        reason = _reason_for(finding, files.get(finding.file))
+        reason = _reason_for(finding, files[finding.file])
         if reason is None or finding.code == MALFORMED_WAIVER:
             kept.append(finding)
         else:
@@ -122,10 +123,8 @@ def apply(
     return kept, waived
 
 
-def _reason_for(finding: Finding, file: FileWaivers | None) -> str | None:
+def _reason_for(finding: Finding, file: FileWaivers) -> str | None:
     """The reason of the waiver that silences a finding, if one does."""
-    if file is None:
-        return None
     lines = {finding.line, file.def_lines.get(finding.test)}
     return next(
         (
