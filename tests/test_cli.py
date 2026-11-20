@@ -174,8 +174,15 @@ def test_per_file_ignore_globs_are_relative_to_the_config_file(cli, tmp_path):
         "drill_sergeant_levels = DS999=warn",
         "drill_sergeant_levels = DS101=loud",
         "drill_sergeant_max_test_lines = fifty",
+        "drill_sergeant_source_dirs = nowhere",
     ],
-    ids=["unknown-key", "unknown-code", "bad-level", "non-numeric-threshold"],
+    ids=[
+        "unknown-key",
+        "unknown-code",
+        "bad-level",
+        "non-numeric-threshold",
+        "missing-source-dir",
+    ],
 )
 def test_check_refuses_bad_config(cli, tmp_path, assertion_free_test, ini):
     (tmp_path / "pytest.ini").write_text(f"[pytest]\n{ini}\n")
@@ -246,9 +253,7 @@ LONG_LOCATION = (
 )
 
 
-def test_a_narrow_terminal_wraps_each_fact_under_its_text_and_keeps_the_location_whole(
-    cli, long_named_test, monkeypatch, wrapped
-):
+def test_a_narrow_terminal_keeps_the_location_whole(cli, long_named_test, monkeypatch):
     monkeypatch.setenv("COLUMNS", "60")
 
     output = cli("check", "test_long.py").output
@@ -256,11 +261,27 @@ def test_a_narrow_terminal_wraps_each_fact_under_its_text_and_keeps_the_location
     location, *rest = [line for line in output.splitlines() if "DS101" in line]
     assert LONG_LOCATION in location
     assert not rest
-    for label, after in [("Found:", "Why:"), ("Why:", "Fix:"), ("Fix:", "")]:
-        continuations, following = wrapped(output, label)
-        assert continuations, label
-        assert following.lstrip().startswith(after), label
-    assert max(len(line) for line in output.splitlines() if line != location) <= 60
+    # The note that DS403 was skipped, for want of production code, is never wrapped.
+    facts = [
+        ln
+        for ln in output.splitlines()
+        if ln != location and not ln.startswith("drill-sergeant: ")
+    ]
+    assert max(len(line) for line in facts) <= 60
+
+
+@pytest.mark.parametrize(
+    ("label", "after"), [("Found:", "Why:"), ("Why:", "Fix:"), ("Fix:", "")]
+)
+def test_a_narrow_terminal_wraps_each_fact_under_its_text(
+    cli, long_named_test, monkeypatch, wrapped, label, after
+):
+    monkeypatch.setenv("COLUMNS", "60")
+
+    continuations, following = wrapped(cli("check", "test_long.py").output, label)
+
+    assert continuations
+    assert following.lstrip().startswith(after)
 
 
 def test_check_writes_no_escape_codes_when_colour_is_off(cli, assertion_free_test):
@@ -277,6 +298,68 @@ def test_forced_colour_styles_the_report_and_links_the_location_to_its_file(
 
     assert "\x1b[" in output
     assert f";{assertion_free_test.resolve().as_uri()}\x1b\\test_it.py:1" in output
+
+
+def test_check_reads_production_code_under_src(
+    cli, tmp_path, assertion_free_test, special_casing_module
+):
+    special_casing_module(tmp_path / "src")
+
+    assert "src/app.py:4: DS403" in cli("check", "test_it.py").output
+
+
+def test_check_reads_the_configured_source_dirs_instead_of_src(
+    cli, tmp_path, assertion_free_test, special_casing_module
+):
+    special_casing_module(tmp_path / "lib")
+    special_casing_module(tmp_path / "src")
+    (tmp_path / "pytest.ini").write_text("[pytest]\ndrill_sergeant_source_dirs = lib\n")
+
+    output = cli("check", "test_it.py").output
+
+    assert "lib/app.py:4: DS403" in output
+    assert "src/app.py" not in output
+
+
+def test_without_production_code_the_special_casing_check_is_skipped_with_a_note(
+    cli, tmp_path
+):
+    (tmp_path / "test_ok.py").write_text(
+        "def test_ok():\n    assert sum([1, 1]) == 2\n"
+    )
+
+    result = cli("check", "test_ok.py")
+
+    assert result.exit_code == 0, result.output
+    assert "DS403" in result.output
+    assert "drill_sergeant_source_dirs" in result.output
+
+
+@pytest.mark.parametrize(
+    "ini",
+    ["drill_sergeant_levels = DS403=off", "drill_sergeant_mode = off"],
+    ids=["check-off", "mode-off"],
+)
+def test_no_note_when_the_special_casing_check_does_not_run(
+    cli, tmp_path, assertion_free_test, ini
+):
+    (tmp_path / "pytest.ini").write_text(f"[pytest]\n{ini}\n")
+
+    assert "drill_sergeant_source_dirs" not in cli("check", "test_it.py").output
+
+
+def test_production_code_is_read_in_full_on_every_run(
+    cli, tmp_path, assertion_free_test, special_casing_module
+):
+    app = special_casing_module(tmp_path / "src")
+    cli("check", "test_it.py")
+    with app.open("a") as source:
+        source.write("LATE = os.environ.get('PYTEST_CURRENT_TEST')\n")
+
+    output = cli("check", "test_it.py").output
+
+    assert "src/app.py:4: DS403" in output
+    assert "src/app.py:5: DS403" in output
 
 
 # A change to the report changes golden/check.txt: rerun

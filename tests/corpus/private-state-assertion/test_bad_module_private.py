@@ -13,6 +13,6 @@ def test_config_loaded():
 
 
 def test_private_state_in_a_nested_block(items):
-    for item in items:
+    for item in items:  # expect: DS107
         if item.ready:
             assert not item._dirty  # expect: DS602

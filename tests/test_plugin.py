@@ -84,8 +84,16 @@ def test_disabling_the_plugin_turns_it_off(drill, lazy_test):
         "drill_sergeant_voice = maybe",
         "drill_sergeant_levels = DS999=warn",
         "drill_sergeant_bogus = 1",
+        "drill_sergeant_source_dirs = nowhere",
     ],
-    ids=["bad-mode", "non-numeric-number", "bad-bool", "unknown-code", "unknown-key"],
+    ids=[
+        "bad-mode",
+        "non-numeric-number",
+        "bad-bool",
+        "unknown-code",
+        "unknown-key",
+        "missing-source-dir",
+    ],
 )
 def test_bad_config_is_a_usage_error(drill, pytester, lazy_test, ini):
     pytester.makeini(f"[pytest]\n{ini}\n")
@@ -219,6 +227,25 @@ def test_cli_and_plugin_refuse_bad_config_in_the_same_line(
 
     assert cli_line.startswith("drill-sergeant: ")
     assert cli_line in drill().stderr.str()
+
+
+def test_production_code_under_src_is_analysed(drill, pytester, special_casing_module):
+    pytester.makepyfile("def test_ok():\n    assert sorted([2, 1]) == [1, 2]\n")
+    special_casing_module(pytester.path / "src")
+
+    result = drill()
+
+    assert result.ret == pytest.ExitCode.TESTS_FAILED
+    assert "src/app.py:4: DS403" in result.stdout.str()
+
+
+def test_cli_and_plugin_note_the_skipped_special_casing_check_in_the_same_line(
+    cli, drill, lazy_test
+):
+    output = cli("check", str(lazy_test)).output
+    [note] = [ln for ln in output.splitlines() if ln.startswith("drill-sergeant: ")]
+
+    assert note in drill().stdout.str()
 
 
 def _section(out: str) -> str:

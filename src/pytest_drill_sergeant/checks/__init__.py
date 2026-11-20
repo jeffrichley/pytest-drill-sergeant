@@ -5,11 +5,22 @@ from pytest_drill_sergeant.checks.assertions import (
     TAUTOLOGICAL_ASSERTION,
     WEAK_ASSERTION,
 )
-from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
+from pytest_drill_sergeant.checks.base import (
+    Check,
+    Hit,
+    SourceFile,
+    TestFile,
+    TestFunction,
+)
 from pytest_drill_sergeant.checks.brittleness import (
     BRITTLE_STRING_MATCH,
     PRIVATE_STATE_ASSERTION,
     SOURCE_TEXT_GREP,
+)
+from pytest_drill_sergeant.checks.cheating import (
+    SKIP_WITHOUT_REASON,
+    TEST_SPECIAL_CASING,
+    UNCONDITIONAL_SKIP,
 )
 from pytest_drill_sergeant.checks.duplication import (
     COPY_PASTE_SETUP,
@@ -28,7 +39,10 @@ from pytest_drill_sergeant.checks.mocking import (
 )
 from pytest_drill_sergeant.checks.structure import (
     ASSERT_BEFORE_ACT,
+    CONDITIONAL_LOGIC,
     INTERLEAVED_ACT_ASSERT,
+    LONG_FILE,
+    LONG_TEST,
     NO_ACTION_UNDER_TEST,
     NO_REAL_ASSERTION,
 )
@@ -40,12 +54,18 @@ CHECKS: tuple[Check, ...] = (
     NO_ACTION_UNDER_TEST,
     ASSERT_BEFORE_ACT,
     INTERLEAVED_ACT_ASSERT,
+    LONG_TEST,
+    LONG_FILE,
+    CONDITIONAL_LOGIC,
     WEAK_ASSERTION,
     TAUTOLOGICAL_ASSERTION,
     MIRROR_ASSERTION,
     MOCK_ONLY_ASSERTION,
     MOCK_WITHOUT_SPEC,
     OVERGROWN_MOCK_SETUP,
+    SKIP_WITHOUT_REASON,
+    UNCONDITIONAL_SKIP,
+    TEST_SPECIAL_CASING,
     COPY_PASTE_SETUP,
     NEAR_DUPLICATE_TESTS,
     BRITTLE_STRING_MATCH,
@@ -59,4 +79,4 @@ CHECKS: tuple[Check, ...] = (
 )
 
 
-__all__ = ["CHECKS", "Check", "Hit", "TestFile", "TestFunction"]
+__all__ = ["CHECKS", "Check", "Hit", "SourceFile", "TestFile", "TestFunction"]

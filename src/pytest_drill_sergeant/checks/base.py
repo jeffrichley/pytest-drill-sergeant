@@ -68,6 +68,7 @@ class TestFile:
         module: The file's syntax tree, for checks that need more than the tests
             (imports, module-level code).
         tests: The tests pytest would collect from it, in source order.
+        lines: How many lines the file has.
         waivers: Its `# drill: waive` comments, complete or not; none when inline
             waivers are off.
         thresholds: The configured thresholds, for checks that measure.
@@ -78,8 +79,22 @@ class TestFile:
     path: Path
     module: ast.Module
     tests: tuple[TestFunction, ...]
+    lines: int
     waivers: tuple[Waiver, ...] = ()
     thresholds: Thresholds = Thresholds()
+
+
+@dataclass(frozen=True)
+class SourceFile:
+    """One parsed file of production code: what a check that reads it is given.
+
+    Attributes:
+        path: The file, as it was given to the engine.
+        module: The file's syntax tree.
+    """
+
+    path: Path
+    module: ast.Module
 
 
 @dataclass(frozen=True)
@@ -142,11 +157,13 @@ class FileSummary:
 
 @dataclass(frozen=True)
 class Hit:
-    """What a check reports about one test, before the engine makes it a finding.
+    """What a check reports, before the engine makes it a finding.
+
+    A hit is about one test, or about the whole file (a file too long).
 
     Attributes:
         line: The line to report.
-        test: The test's name.
+        test: The test's name, or empty for a hit about the whole file.
         found: What the check found, in plain words.
         fix: How to fix it, naming the specifics where the check knows them.
     """
@@ -166,13 +183,30 @@ class Hit:
         return cls.at(test.name, line, found=found, fix=fix)
 
     @classmethod
-    def at(cls, test: str, line: int, *, found: str, fix: str) -> "Hit":
-        """A hit on a line of the test named `test`, phrased as `on` phrases it."""
+    def at(cls, where: str, line: int, *, found: str, fix: str) -> "Hit":
+        """A hit on a line of a named place: a test, a class, a function or `<module>`.
+
+        The phrasing is `on`'s, with the place's name where the test's would be.
+        """
         return cls(
             line=line,
-            test=test,
-            found=f"`{test}` {found}",
-            fix=f"In `{test}`, line {line}: {fix}",
+            test=where,
+            found=f"`{where}` {found}",
+            fix=f"In `{where}`, line {line}: {fix}",
+        )
+
+    @classmethod
+    def on_file(cls, file: "TestFile", *, found: str, fix: str) -> "Hit":
+        """A hit about a whole file, reported on its first line.
+
+        `found` follows "`<file name>` " and `fix` follows "In `<file name>`: ",
+        the file standing where a test's name would.
+        """
+        return cls(
+            line=1,
+            test="",
+            found=f"`{file.path.name}` {found}",
+            fix=f"In `{file.path.name}`: {fix}",
         )
 
 
@@ -211,7 +245,10 @@ class Check:
         explain: What the check flags and how to fix it, for `explain`.
         bad_example: A test the check flags.
         good_example: The same test, fixed.
-        find: Reports the hits in one test file.
+        find: Reports the hits in one test file; by default, none.
+        find_in_source: Reports the hits in one file of production code; `None`
+            for a check that reads only test files. Which files a check reads is
+            which of the two it gives: DS403 gives only this one.
         find_across: Reports the hits that comparing every file's summary turns
             up, each with the file it is in.
     """
@@ -225,6 +262,7 @@ class Check:
     bad_example: str
     good_example: str
     find: Callable[[TestFile], Iterable[Hit]] = _finds_nothing
+    find_in_source: Callable[[SourceFile], Iterable[Hit]] | None = None
     find_across: Callable[[Summaries, Thresholds], Iterable[tuple[Path, Hit]]] = (
         _compares_nothing
     )

@@ -119,6 +119,20 @@ def wrapped():
 
 
 @pytest.fixture
+def special_casing_module():
+    """Write `app.py`, production code that checks whether pytest is running (DS403
+    on line 4), into a directory, and return its path."""
+
+    def write(directory):
+        directory.mkdir(parents=True, exist_ok=True)
+        path = directory / "app.py"
+        path.write_text("import os\nimport sys\n\nTESTING = 'pytest' in sys.modules\n")
+        return path
+
+    return write
+
+
+@pytest.fixture
 def pasted_across_files():
     """The corpus's three files, in path order, that each paste the same setup
     block into one test (one DS501, on the first file's block)."""

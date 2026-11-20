@@ -180,7 +180,10 @@ def test_unset_options_take_the_spec_defaults():
     assert (config.voice, config.inline_waivers, config.cache) == (True, True, True)
 
 
-def test_every_spec_option_is_known_and_typed():
+def test_every_spec_option_is_known_and_typed(tmp_path):
+    (tmp_path / "lib").mkdir()
+    (tmp_path / "app").mkdir()
+
     config = resolve(
         {
             "drill_sergeant_mode": "warn",
@@ -197,7 +200,8 @@ def test_every_spec_option_is_known_and_typed():
             "drill_sergeant_max_findings": "0",
             "drill_sergeant_inline_waivers": "no",
             "drill_sergeant_cache": "0",
-        }
+        },
+        root=tmp_path,
     )
 
     assert (
@@ -260,3 +264,23 @@ def test_configured_level_applies_to_cross_file_findings(pasted_across_files):
     findings = analyze(pasted_across_files, Config(levels={"DS501": Level.WARN}))
 
     assert {(f.code, f.level) for f in findings} == {("DS501", Level.WARN)}
+
+
+@pytest.mark.parametrize(
+    ("threshold", "codes"),
+    [
+        ({"max_test_lines": 3}, set()),
+        ({"max_test_lines": 2}, {"DS105"}),
+        ({"max_file_lines": 3}, set()),
+        ({"max_file_lines": 2}, {"DS106"}),
+    ],
+)
+def test_thresholds_set_how_long_a_test_and_a_file_may_be(tmp_path, threshold, codes):
+    path = tmp_path / "test_add.py"
+    path.write_text(
+        "def test_add(calc):\n    total = calc.add(1, 2)\n    assert total == 3\n"
+    )
+
+    findings = analyze([path], Config(**threshold))
+
+    assert {f.code for f in findings} == codes

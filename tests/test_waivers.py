@@ -173,3 +173,16 @@ def test_with_inline_waivers_off_malformed_waivers_are_not_reported(write_test_f
     result = inspect([path], resolve({"drill_sergeant_inline_waivers": "false"}))
 
     assert (result.findings, result.waived) == ([], [])
+
+
+def test_waiver_on_the_flagged_line_of_production_code_waives_the_finding(tmp_path):
+    path = tmp_path / "app.py"
+    path.write_text(
+        "import sys\n"
+        "QUIET = 'pytest' in sys.modules  # drill: waive DS403 -- quiet test logs\n"
+    )
+
+    result = inspect([], Config(), sources=[path])
+
+    assert result.findings == []
+    assert [(w.finding.code, w.finding.line) for w in result.waived] == [("DS403", 2)]

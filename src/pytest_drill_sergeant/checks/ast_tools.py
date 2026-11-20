@@ -316,3 +316,125 @@ def is_cleanup(call: ast.Call, names: Mapping[str, str]) -> bool:
     imports, never guessed from a name.
     """
     return qualified(call.func, names) in _CLEANUP_FUNCTIONS
+
+
+# What a place outside every function and class is called in a finding.
+MODULE = "<module>"
+
+# pytest's marks that skip a test, or expect it to fail.
+SKIP = "pytest.mark.skip"
+SKIPIF = "pytest.mark.skipif"
+XFAIL = "pytest.mark.xfail"
+_SKIP_MARKS = frozenset({SKIP, SKIPIF, XFAIL})
+
+# pytest's calls that skip a test, or mark it an expected failure, as it runs.
+SKIP_CALL = "pytest.skip"
+XFAIL_CALL = "pytest.xfail"
+
+
+def skip_mark(expr: ast.expr, names: Mapping[str, str]) -> str | None:
+    """Which of pytest's skip marks a decorator or `pytestmark` entry is, or `None`.
+
+    That is `pytest.mark.skip`, `pytest.mark.skipif` or `pytest.mark.xfail`, called
+    or not, through whatever name the imports give it.
+    """
+    mark = qualified(expr.func if isinstance(expr, ast.Call) else expr, names)
+    return mark if mark in _SKIP_MARKS else None
+
+
+def pytestmark_entries(statement: ast.stmt) -> list[ast.expr]:
+    """The marks a `pytestmark = ...` statement applies; none for any other."""
+    if not (
+        isinstance(statement, ast.Assign)
+        and any(
+            isinstance(t, ast.Name) and t.id == "pytestmark" for t in statement.targets
+        )
+    ):
+        return []
+    value = statement.value
+    return list(value.elts) if isinstance(value, ast.List | ast.Tuple) else [value]
+
+
+def is_always_skipped_by(expr: ast.expr, names: Mapping[str, str]) -> bool:
+    """Whether a mark skips whatever the run: `skip`, or `skipif` on a truthy constant.
+
+    A string condition is code pytest evaluates, so it is not a constant here.
+    """
+    mark = skip_mark(expr, names)
+    if mark == SKIP:
+        return True
+    return (
+        mark == SKIPIF
+        and isinstance(expr, ast.Call)
+        and bool(expr.args)
+        and all(
+            isinstance(arg, ast.Constant)
+            and not isinstance(arg.value, str)
+            and bool(arg.value)
+            for arg in expr.args
+        )
+    )
+
+
+def top_level_skips(body: list[ast.stmt], names: Mapping[str, str]) -> list[ast.Call]:
+    """The `pytest.skip(...)` calls that are statements of the body itself.
+
+    One under an `if`, a loop, a `try` or a `with` runs only sometimes, so it isn't
+    one of them.
+    """
+    return [
+        statement.value
+        for statement in body
+        if isinstance(statement, ast.Expr)
+        and isinstance(statement.value, ast.Call)
+        and qualified(statement.value.func, names) == SKIP_CALL
+    ]
+
+
+def skips_unconditionally(test: TestFunction, module_names: Mapping[str, str]) -> bool:
+    """Whether a test skips whatever the run, by its own mark or its own body.
+
+    Its decorator is `pytest.mark.skip` (or `skipif` on a truthy constant), or one
+    of its body's own statements is `pytest.skip(...)`.
+    """
+    return any(
+        is_always_skipped_by(d, module_names) for d in test.node.decorator_list
+    ) or bool(top_level_skips(test.node.body, test.imports))
+
+
+def scoped_walk(
+    module: ast.Module, separator: str
+) -> Iterator[tuple[str, ast.AST, Mapping[str, str]]]:
+    """Every node of a module with where it is and the imported names it sees.
+
+    Where it is names the innermost function or class around it, with the ones
+    around that (`Parser.parse`, or `TestX::test_y` with `::`), or `<module>`. A
+    `def` or `class` itself, its decorators included, is where its name is bound;
+    what is inside it is in it, and a function's own imports and parameters change
+    the names its code sees, as `imports_seen_by` says.
+    """
+
+    def visit(
+        node: ast.AST, where: str, names: Mapping[str, str]
+    ) -> Iterator[tuple[str, ast.AST, Mapping[str, str]]]:
+        for child in ast.iter_child_nodes(node):
+            yield where, child, names
+            if isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
+                inner = (
+                    child.name if where == MODULE else f"{where}{separator}{child.name}"
+                )
+                inner_names = (
+                    names
+                    if isinstance(child, ast.ClassDef)
+                    else imports_seen_by(child, names)
+                )
+                for decorator in child.decorator_list:
+                    for sub in ast.walk(decorator):
+                        yield where, sub, names
+                for part in child.body:
+                    yield inner, part, inner_names
+                    yield from visit(part, inner, inner_names)
+            else:
+                yield from visit(child, where, names)
+
+    yield from visit(module, MODULE, module_imports(module))

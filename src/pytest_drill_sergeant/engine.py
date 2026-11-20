@@ -1,4 +1,7 @@
-"""The engine: test files and a config in, findings out, with no pytest in sight."""
+"""The engine: test files, production code and a config in, findings out.
+
+No pytest in sight.
+"""
 
 import ast
 from collections.abc import Iterable, Iterator, Mapping
@@ -6,7 +9,14 @@ from dataclasses import dataclass
 from fnmatch import fnmatch
 from pathlib import Path
 
-from pytest_drill_sergeant.checks import CHECKS, Check, Hit, TestFile, TestFunction
+from pytest_drill_sergeant.checks import (
+    CHECKS,
+    Check,
+    Hit,
+    SourceFile,
+    TestFile,
+    TestFunction,
+)
 from pytest_drill_sergeant.checks.ast_tools import (
     FIXTURE_DECORATORS,
     imports_seen_by,
@@ -108,7 +118,7 @@ def _ignored_codes(path: Path, config: Config) -> frozenset[str]:
 
 @dataclass(frozen=True)
 class Inspection:
-    """What one run over the test files found.
+    """What one run over the test files and production code found.
 
     Attributes:
         findings: The findings that stand, ordered by file, line and code.
@@ -163,6 +173,7 @@ def _analyze_file(
         path=path,
         module=module,
         tests=tests,
+        lines=len(source.splitlines()),
         waivers=waivers,
         thresholds=_thresholds(config),
     )
@@ -177,6 +188,26 @@ def _analyze_file(
         waivers=waivers, def_lines={t.name: t.node.lineno for t in tests}
     )
     return findings, summarize(file), file_waivers
+
+
+def _analyze_source(path: Path, config: Config) -> tuple[list[Finding], FileWaivers]:
+    """A production file's findings and its inline waivers.
+
+    The findings are those of the checks that read production code; a waiver
+    silences a finding on its own line.
+    """
+    source = path.read_bytes()
+    file = SourceFile(path=path, module=ast.parse(source, filename=str(path)))
+    ignored = _ignored_codes(path, config)
+    findings = [
+        _finding(check, path, hit, level)
+        for check in CHECKS
+        if check.find_in_source is not None
+        and (level := _level(check, ignored, config)) is not Level.OFF
+        for hit in check.find_in_source(file)
+    ]
+    waivers = parse(source) if config.inline_waivers else ()
+    return findings, FileWaivers(waivers=waivers, def_lines={})
 
 
 def _compare_files(
@@ -199,23 +230,30 @@ def _compare_files(
     return findings
 
 
-def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
-    """Run every check over the test files and return the findings that stand.
+def analyze(
+    paths: Iterable[Path], config: Config, sources: Iterable[Path] = ()
+) -> list[Finding]:
+    """Run every check over the test files and production code; return what stands.
 
-    The same as `inspect(paths, config).findings`.
+    The same as `inspect(paths, config, sources).findings`.
     """
-    return inspect(paths, config).findings
+    return inspect(paths, config, sources).findings
 
 
-def inspect(paths: Iterable[Path], config: Config) -> Inspection:
-    """Run every check over the test files, then apply their inline waivers.
+def inspect(
+    paths: Iterable[Path], config: Config, sources: Iterable[Path] = ()
+) -> Inspection:
+    """Run every check over the test files and production code, then apply waivers.
 
     Each file is analysed on its own, for its findings and its per-file summary;
-    then the summaries, never the files, are compared across files.
+    then the summaries, never the files, are compared across files. The
+    production files are read in full, by the checks that read production code
+    (DS403) and no others.
 
     Args:
         paths: The test files to analyse.
         config: The resolved configuration.
+        sources: The production files to analyse.
 
     Returns:
         The findings that stand and the waived ones, each ordered by file, line
@@ -234,6 +272,10 @@ def inspect(paths: Iterable[Path], config: Config) -> Inspection:
         findings.extend(file_findings)
         summaries.append((path, summary))
     findings.extend(_compare_files(summaries, config))
+    for path in sources:
+        source_findings, waivers = _analyze_source(path, config)
+        findings.extend(source_findings)
+        files.setdefault(path, waivers)
     findings.sort(key=lambda f: (f.file.as_posix(), f.line, f.code))
     kept, waived = apply(findings, files)
     return Inspection(findings=kept, waived=waived)

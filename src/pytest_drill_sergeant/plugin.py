@@ -2,8 +2,8 @@
 
 Installing the package turns it on; `-p no:drill_sergeant` or
 `drill_sergeant_mode = off` turns it off. After collection it analyses the files that
-contributed collected test functions, once, on the xdist controller only; the tests
-then run as always. The findings section after the test results shows them, and a
+contributed collected test functions, and the production code, once, on the xdist
+controller only; the tests then run as always. The findings section after the test results shows them, and a
 run whose tests ran and passed exits 1 when any finding is at the `fail` level.
 """
 
@@ -24,6 +24,7 @@ from pytest_drill_sergeant.config import (
 )
 from pytest_drill_sergeant.engine import Inspection, inspect
 from pytest_drill_sergeant.findings import Level
+from pytest_drill_sergeant.production import production_code
 from pytest_drill_sergeant.render import render
 
 # The name the run's state is registered under with pytest's plugin manager.
@@ -116,6 +117,7 @@ class _Run:
         self.config = config
         self.resolved = resolved
         self.inspection: Inspection | None = None
+        self.production = production_code(resolved, config.invocation_params.dir)
 
     def _analyze(self, paths: set[Path]) -> None:
         if self.inspection is not None:
@@ -124,6 +126,7 @@ class _Run:
         self.inspection = inspect(
             sorted(p.relative_to(here) if p.is_relative_to(here) else p for p in paths),
             self.resolved,
+            self.production.files,
         )
 
     def pytest_collection_finish(self, session: pytest.Session) -> None:
@@ -162,6 +165,9 @@ class _Run:
             color_system="standard" if writer.hasmarkup else None,
             highlight=False,
         )
+        if self.production.note:
+            # One line, as it stands, however narrow the terminal.
+            console.print(self.production.note, soft_wrap=True, markup=False)
         console.print(
             render(
                 self.inspection.findings,
