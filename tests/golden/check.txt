@@ -1,77 +1,89 @@
-DRILL SERGEANT INSPECTION: 194 findings in 49 files. FALL IN!
+DRILL SERGEANT INSPECTION: 196 findings in 50 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
     "You checked the ground, then fired blind! Assert AFTER you act, recruit!"
     Found: `test_register_then_rename` runs `registry.rename('ada', 'grace')` on line 8 after its last assertion (line 7), so nothing checks what it did.
-    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
-    Fix: In `test_register_then_rename`, line 8: assert on what the act on line 8 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_register_then_rename`, line 8: assert on what the act on line 8 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
   suite/assert-before-act/test_bad_act_after_the_check.py:13: DS103 assert-before-act [fail] in test_import_rows
     "Asserting before the action is inspecting your rifle after the battle!"
     Found: `test_import_rows` runs the `for` block on line 13 after its last assertion (line 12), so nothing checks what it did.
-    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
-    Fix: In `test_import_rows`, line 13: assert on what the act on line 13 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_import_rows`, line 13: assert on what the act on line 13 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
   suite/assert-before-act/test_bad_act_after_the_check.py:20: DS103 assert-before-act [fail] in test_remove_after_the_check
     "Asserting before the action is inspecting your rifle after the battle!"
     Found: `test_remove_after_the_check` runs `cart.remove('apple')` on line 20 after its last assertion (line 19), so nothing checks what it did.
-    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
-    Fix: In `test_remove_after_the_check`, line 20: assert on what the act on line 20 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_remove_after_the_check`, line 20: assert on what the act on line 20 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
+
+suite/assert-before-act/test_bad_cleanup_after_the_check.py
+  suite/assert-before-act/test_bad_cleanup_after_the_check.py:13: DS103 assert-before-act [fail] in test_writes_report
+    "Asserting before the action is inspecting your rifle after the battle!"
+    Found: `test_writes_report` runs `path.unlink()` on line 13 after its last assertion (line 12), so nothing checks what it did.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_writes_report`, line 13: assert on what the act on line 13 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
+  suite/assert-before-act/test_bad_cleanup_after_the_check.py:20: DS103 assert-before-act [fail] in test_files_removed_after
+    "Asserting before the action is inspecting your rifle after the battle!"
+    Found: `test_files_removed_after` runs `os.remove(path)` on line 20 after its last assertion (line 19), so nothing checks what it did.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_files_removed_after`, line 20: assert on what the act on lines 20, 21, 22 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
 
 suite/assert-before-act/test_bad_inside_a_patch.py
   suite/assert-before-act/test_bad_inside_a_patch.py:10: DS103 assert-before-act [fail] in test_refresh_token
     "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
     Found: `test_refresh_token` runs `session.refresh()` on line 10 after its last assertion (line 9), so nothing checks what it did.
-    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
-    Fix: In `test_refresh_token`, line 10: assert on what the act on line 10 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_refresh_token`, line 10: assert on what the act on line 10 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
   suite/assert-before-act/test_bad_inside_a_patch.py:16: DS103 assert-before-act [fail] in test_retry
     "Asserting before the action is inspecting your rifle after the battle!"
     Found: `test_retry` runs `fetcher.fetch('/a')` on line 16 after its last assertion (line 15), so nothing checks what it did.
-    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
-    Fix: In `test_retry`, line 16: assert on what the act on line 16 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_retry`, line 16: assert on what the act on line 16 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
 
 suite/assert-before-act/test_bad_named_like_cleanup.py
   suite/assert-before-act/test_bad_named_like_cleanup.py:9: DS103 assert-before-act [fail] in test_server_answers
     "You checked the ground, then fired blind! Assert AFTER you act, recruit!"
     Found: `test_server_answers` runs `server.stop()` on line 9 after its last assertion (line 8), so nothing checks what it did.
-    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
-    Fix: In `test_server_answers`, line 9: assert on what the act on line 9 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_server_answers`, line 9: assert on what the act on line 9 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
   suite/assert-before-act/test_bad_named_like_cleanup.py:15: DS103 assert-before-act [fail] in test_notifier_reset_after
     "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
     Found: `test_notifier_reset_after` runs `sender.reset_mock()` on line 15 after its last assertion (line 14), so nothing checks what it did.
-    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
-    Fix: In `test_notifier_reset_after`, line 15: assert on what the act on line 15 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_notifier_reset_after`, line 15: assert on what the act on line 15 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
   suite/assert-before-act/test_bad_named_like_cleanup.py:21: DS103 assert-before-act [fail] in test_logger_fixture_called_after
     "You checked the ground, then fired blind! Assert AFTER you act, recruit!"
     Found: `test_logger_fixture_called_after` runs `logger.info('written')` on line 21 after its last assertion (line 20), so nothing checks what it did.
-    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
-    Fix: In `test_logger_fixture_called_after`, line 21: assert on what the act on line 21 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_logger_fixture_called_after`, line 21: assert on what the act on line 21 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
   suite/assert-before-act/test_bad_named_like_cleanup.py:28: DS103 assert-before-act [fail] in test_recorder_named_like_a_fixture
     "You checked the ground, then fired blind! Assert AFTER you act, recruit!"
     Found: `test_recorder_named_like_a_fixture` runs `caplog.clear()` on line 28 after its last assertion (line 27), so nothing checks what it did.
-    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
-    Fix: In `test_recorder_named_like_a_fixture`, line 28: assert on what the act on line 28 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_recorder_named_like_a_fixture`, line 28: assert on what the act on line 28 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
   suite/assert-before-act/test_bad_named_like_cleanup.py:35: DS103 assert-before-act [fail] in TestJob::test_job_logs
     "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
     Found: `TestJob::test_job_logs` runs `self.log.info('ran')` on line 35 after its last assertion (line 34), so nothing checks what it did.
-    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
-    Fix: In `TestJob::test_job_logs`, line 35: assert on what the act on line 35 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `TestJob::test_job_logs`, line 35: assert on what the act on line 35 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
 
 suite/assert-before-act/test_bad_precondition_only.py
   suite/assert-before-act/test_bad_precondition_only.py:16: DS103 assert-before-act [fail] in test_add_item
     "Asserting before the action is inspecting your rifle after the battle!"
     Found: `test_add_item` runs `cart.add('apple')` on line 16 after its last assertion (line 15), so nothing checks what it did.
-    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
-    Fix: In `test_add_item`, line 16: assert on what the act on line 16 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_add_item`, line 16: assert on what the act on line 16 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
   suite/assert-before-act/test_bad_precondition_only.py:23: DS103 assert-before-act [fail] in test_add_two_items
     "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
     Found: `test_add_two_items` runs `cart.add('apple')` on line 23 after its last assertion (line 22), so nothing checks what it did.
-    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
-    Fix: In `test_add_two_items`, line 23: assert on what the act on lines 23, 24 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_add_two_items`, line 23: assert on what the act on lines 23, 24 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
   suite/assert-before-act/test_bad_precondition_only.py:29: DS103 assert-before-act [fail] in test_send_message
     "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
     Found: `test_send_message` runs `await client.send('hello')` on line 29 after its last assertion (line 28), so nothing checks what it did.
-    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing.
-    Fix: In `test_send_message`, line 29: assert on what the act on line 29 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state.
+    Why: When the act runs after the last assertion, the test checks only the starting state, so it stays green when the act does the wrong thing; and cleanup there never runs when an assertion fails.
+    Fix: In `test_send_message`, line 29: assert on what the act on line 29 returns or changes, after it runs; keep an assertion before it only as a guard on the starting state. If it is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
 
 suite/brittle-string-match/test_bad_captured_output.py
   suite/brittle-string-match/test_bad_captured_output.py:10: DS601 brittle-string-match [fail] in test_greeting_printed
@@ -1068,4 +1080,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `test_async_import`, line 30: replace the weak assertions on line 30 with exact checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-194 findings: 194 fail, 0 warn. Fix them, recruit. DISMISSED!
+196 findings: 196 fail, 0 warn. Fix them, recruit. DISMISSED!

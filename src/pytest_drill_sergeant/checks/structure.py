@@ -7,7 +7,6 @@ from enum import Enum
 from pytest_drill_sergeant.checks.ast_tools import (
     calls_to,
     excinfo_names,
-    is_cleanup,
     is_known_non_act,
     is_real_assertion,
     value_params,
@@ -234,9 +233,10 @@ class _Order:
     def acts(self, node: ast.AST) -> bool:
         """Whether a statement is a call made for its effect: the act under test.
 
-        That is a bare call or awaited call that isn't an assertion, cleanup, or
-        known output or pytest instrument (`ast_tools.is_known_non_act`). An
-        assignment from a call is setup or reads a result, so it isn't one.
+        That is a bare call or awaited call that isn't an assertion, known output
+        or a pytest instrument (`ast_tools.is_known_non_act`). Cleanup is an act:
+        after the last assertion it doesn't run when one fails. An assignment from
+        a call is setup or reads a result, so it isn't one.
         """
         if not isinstance(node, ast.Expr):
             return False
@@ -244,7 +244,6 @@ class _Order:
         return (
             isinstance(value, ast.Call)
             and not self.asserts(value)
-            and not is_cleanup(value, self.names)
             and not is_known_non_act(value, self.test)
         )
 
@@ -317,7 +316,8 @@ def _find_assert_before_act(file: TestFile) -> Iterator[Hit]:
             fix=(
                 f"assert on what the act on {where} returns or changes, after it "
                 "runs; keep an assertion before it only as a guard on the starting "
-                "state."
+                "state. If it is cleanup, move it into a fixture (`tmp_path`, a "
+                "`yield` fixture) or a `finally`."
             ),
         )
 
@@ -333,20 +333,22 @@ ASSERT_BEFORE_ACT = Check(
     ),
     why=(
         "When the act runs after the last assertion, the test checks only the "
-        "starting state, so it stays green when the act does the wrong thing."
+        "starting state, so it stays green when the act does the wrong thing; and "
+        "cleanup there never runs when an assertion fails."
     ),
     explain=(
         "Flags a test whose act runs after its last assertion: a bare call or "
         "`await` made for its effect, with no assertion following it. Not an act: "
-        "`os.remove()`, `os.unlink()` or `shutil.rmtree()` through the imports; "
         "output known from the code (the builtin `print()`, `logging` or a logger "
         "from `logging.getLogger()`); a method of a pytest built-in fixture the test "
         "takes (`caplog.clear()`, `capsys.readouterr()`, `monkeypatch.setenv()`); "
         "and `.match()` on what `pytest.raises` caught, which asserts. A name never "
         "counts: `logger.info()` or `server.stop()` on a value whose kind the file "
-        "doesn't show is an act. A guard assertion on the starting state is fine "
-        "when the outcome is also asserted after the act. Move the assertion after "
-        "the act, or add one there."
+        "doesn't show is an act. Cleanup is flagged on purpose, even `os.remove()`: "
+        "after the last assertion it never runs when one fails, so it belongs in a "
+        "fixture (`tmp_path`, a `yield` fixture) or a `finally`. A guard assertion "
+        "on the starting state is fine when the outcome is also asserted after the "
+        "act. Move the assertion after the act, or add one there."
     ),
     bad_example=(
         "def test_add_item():\n"
@@ -420,10 +422,10 @@ INTERLEAVED_ACT_ASSERT = Check(
     explain=(
         "Flags a test that acts, asserts, then acts and asserts again. An act is a "
         "bare call or `await` made for its effect, counted as DS103 counts it: "
-        "`os.remove()` through the imports, known output such as `logging.info()`, "
-        "or a method of a pytest built-in fixture the test takes such as "
-        "`caplog.clear()` is not one, and a name such as `reset_mock()` or "
-        "`close()` never makes a call anything but an act. An assignment that reads "
+        "known output such as `logging.info()`, or a method of a pytest built-in "
+        "fixture the test takes such as `caplog.clear()`, is not one, and a name "
+        "such as `reset_mock()` or `close()` never makes a call anything but an "
+        "act. An assignment that reads "
         "a result between assertions isn't one, and a guard assertion before the "
         "only act is fine. Split the test into one test per act, with shared setup "
         "in a fixture."

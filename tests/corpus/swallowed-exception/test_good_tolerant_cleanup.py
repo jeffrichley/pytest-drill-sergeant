@@ -18,12 +18,14 @@ def test_cleanup_tolerates_a_missing_file(tmp_path):
     assert not path.exists()
 
 
-def test_cleanup_after_the_check_tolerates_missing_files(tmp_path):
+def test_cleanup_in_a_finally_tolerates_missing_files(tmp_path):
     path = tmp_path / "out.txt"
     save(path, "done")
-    assert path.read_text() == "done"
     try:
-        os.remove(path)
-        shutil.rmtree(tmp_path / "cache")
-    except (FileNotFoundError, NotADirectoryError):
-        pass
+        assert path.read_text() == "done"
+    finally:
+        try:
+            os.remove(path)
+            shutil.rmtree(tmp_path / "cache")
+        except (FileNotFoundError, NotADirectoryError):
+            pass

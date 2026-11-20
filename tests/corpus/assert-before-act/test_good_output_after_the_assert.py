@@ -3,8 +3,6 @@ pytest's own fixtures, never an act. Known from the imports, a module-level logg
 or a fixture taken as a parameter. Analysed, never run."""
 
 import logging
-import os
-import shutil
 
 import pytest
 
@@ -23,15 +21,6 @@ def test_logged_after(report):
     logging.info("written")
     logging.getLogger("tests").debug("checked")
     log.info("done")
-
-
-def test_files_removed_after(tmp_path, report):
-    path = tmp_path / "out.txt"
-    report.write(path)
-    assert path.read_text() == "done"
-    os.remove(path)
-    os.unlink(tmp_path / "lock")
-    shutil.rmtree(tmp_path / "cache")
 
 
 def test_fixtures_used_after(caplog, capsys, recwarn, monkeypatch, greeter):
