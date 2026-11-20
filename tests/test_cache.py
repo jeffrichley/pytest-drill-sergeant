@@ -1,5 +1,6 @@
 """The cache, through the engine seam: per-file results reused while a file's bytes,
-drill-sergeant and the config that shapes per-file analysis stay the same."""
+drill-sergeant, the config that shapes per-file analysis and the test-tree modules
+its analysis followed stay the same."""
 
 import pytest
 
@@ -95,13 +96,15 @@ def test_unwritable_cache_leaves_the_run_uncached(unseeded_random_test, tmp_path
 
 
 def test_warm_run_reports_at_the_levels_configured_now(assertion_free_test, cache_dir):
-    """DS101 is off by default: a cold run with it off, then a warm run with it on."""
-    inspect([assertion_free_test], Config(), cache_dir=cache_dir)
-    config = Config(levels={"DS101": Level.WARN})
+    """A cold run with DS101 off, then a warm run with it at `fail`."""
+    inspect(
+        [assertion_free_test], Config(levels={"DS101": Level.OFF}), cache_dir=cache_dir
+    )
+    config = Config(levels={"DS101": Level.FAIL})
 
     [finding] = inspect([assertion_free_test], config, cache_dir=cache_dir).findings
 
-    assert finding.level == Level.WARN
+    assert finding.level == Level.FAIL
 
 
 def test_warm_run_applies_the_per_file_ignores_configured_now(
@@ -135,3 +138,60 @@ def test_moved_config_root_analyses_files_again(tmp_path, unmarked_test_at, cach
     ).findings
 
     assert "`@pytest.mark.e2e`" in findings[0].fix
+
+
+# DS101 at `fail`, above its default `warn`, so a finding reads the same either way.
+NO_ASSERTION_ON = Config(levels={"DS101": Level.FAIL})
+ASSERTING_HELPER = "def check_total(items):\n    assert sum(items) == 3\n"
+
+
+def test_editing_only_a_followed_helper_module_analyses_the_test_again(
+    helper_caller, cache_dir
+):
+    path, helper = helper_caller
+    helper.write_text(ASSERTING_HELPER)
+    inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir)
+    helper.write_text("def check_total(items):\n    return sum(items)\n")
+
+    findings = inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir).findings
+
+    assert [(f.code, f.line) for f in findings] == [("DS101", 3)]
+
+
+def test_writing_a_helper_module_that_was_missing_analyses_the_test_again(
+    helper_caller, cache_dir
+):
+    path, helper = helper_caller
+    inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir)
+    helper.write_text(ASSERTING_HELPER)
+
+    assert inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir).findings == []
+
+
+def test_warm_run_with_a_followed_helper_unchanged_writes_nothing(
+    helper_caller, cache_dir, watch
+):
+    path, helper = helper_caller
+    helper.write_text(ASSERTING_HELPER)
+    inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir)
+    written = watch(cache_dir)
+
+    inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir)
+
+    assert written() == []
+
+
+def test_a_project_module_appearing_where_a_third_party_import_was_reanalyses(
+    write_test_file, tmp_path, cache_dir
+):
+    """A call into a third-party package may assert; once the module is the
+    project's own, the check sees it asserts nothing."""
+    path = write_test_file(
+        "from shiplib import ship\n\ndef test_ship():\n    ship(1)\n"
+    )
+    inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir)
+    (tmp_path / "shiplib.py").write_text("def ship(order):\n    return order\n")
+
+    findings = inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir).findings
+
+    assert [(f.code, f.line) for f in findings] == [("DS101", 3)]

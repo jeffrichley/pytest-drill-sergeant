@@ -226,6 +226,17 @@ def write_test_file(tmp_path):
 
 
 @pytest.fixture
+def helper_caller(write_test_file, tmp_path):
+    """A test file in `tmp_path` whose one test only calls `check_total`, imported
+    from `checks.py` beside it, which isn't written yet; returns the test file and
+    where the helper module goes."""
+    path = write_test_file(
+        "from .checks import check_total\n\ndef test_total():\n    check_total([1, 2])\n"
+    )
+    return path, tmp_path / "checks.py"
+
+
+@pytest.fixture
 def waived_test(tmp_path, cli_ini):
     """A test file in `tmp_path`, `test_waived.py`, holding one test whose only
     finding (DS101 on line 1) is waived with the reason `smoke test`, and a

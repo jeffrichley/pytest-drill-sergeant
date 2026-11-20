@@ -33,8 +33,12 @@ One occurrence of a failure mode in a specific test, reported by a check. A find
 _Avoid_: Violation, error, issue, warning
 
 **Real assertion**:
-Anything in a test that can fail it on the outcome it checks: an `assert` of anything but a truthy constant or non-empty tuple, `pytest.raises`, `pytest.warns`, `pytest.deprecated_call` or `pytest.fail`, an `assert*` call (a mock's `assert_called_once_with`, `self.assertEqual`, `assert_frame_equal`), a call made through an assertion library, known by the file's imports (a pytest-check helper such as `check.equal`, a matcher on Playwright's `expect(...)`), or `raise AssertionError`.
+Anything in a test that can fail it on the outcome it checks: an `assert` of anything but a truthy constant or non-empty tuple, `pytest.raises`, `pytest.warns`, `pytest.deprecated_call` or `pytest.fail`, an `assert*` call (a mock's `assert_called_once_with`, `self.assertEqual`, `assert_frame_equal`), a call made through an assertion library, known by the file's imports (a pytest-check helper such as `check.equal`, a matcher on Playwright's `expect(...)`), or `raise AssertionError`; or a call to a function in the test tree whose body holds one, at any depth (a helper in the file or imported, a method reached through `self`, `cls` or `super()`, a name bound to one such as `partial(_check, ...)`, or a helper calling its own parameter when the call passes it an `assert*` function or such a function). A method on an object another call returned is never followed. A call to a function imported from a third-party package, a module found neither under the project nor in the standard library (pytest aside, whose functions are known), is code drill-sergeant can't see, so it may be one.
 _Avoid_: Meaningful assertion, check (a check is drill-sergeant's)
+
+**Test tree**:
+The modules a test's calls are followed into for its real assertions: the run's test files, every `conftest.py`, and the modules in or below a directory that holds one of the run's test files, minus production code. In a flat layout, the production modules beside the tests are in it. An import is looked for under each directory above the importing file, nearest first, and the `src/` in each, up to the project root.
+_Avoid_: Test suite (the tests alone), test package
 
 **Weak assertion**:
 An `assert` that holds for almost any value, wrong ones included: a bare name's truthiness, `is not None`, `isinstance`, `hasattr`, `callable`, `>= 0`, or a length that is merely non-zero.
@@ -73,7 +77,7 @@ The fingerprint of statements with every name and literal blanked: alike for tes
 _Avoid_: Skeleton, structure hash
 
 **Per-file analysis**:
-The step that reads one test file on its own and gives that file's findings and its per-file summary; the same file bytes and config give the same result.
+The step that reads one test file, and the modules of the test tree its tests' calls are followed into, and gives that file's findings and its per-file summary; the same bytes of those files and config give the same result.
 _Avoid_: Local pass, file scan
 
 **Per-file summary**:
@@ -81,7 +85,7 @@ What per-file analysis records of each test in a file for cross-file analysis: i
 _Avoid_: File index, digest
 
 **Cache**:
-Each test file's per-file analysis result, kept between runs in `d/drill-sergeant/` under pytest's cache directory and shared by the plugin and the CLI. A file is analysed again only when its key changes: the hash of its bytes, drill-sergeant's own code, or a config option per-file analysis reads (thresholds, category markers, source dirs, inline waivers). Levels, mode and per-file ignores apply after it, so changing them reuses every entry. Cross-file analysis always reruns, from the cached summaries.
+Each test file's per-file analysis result, kept between runs in `d/drill-sergeant/` under pytest's cache directory and shared by the plugin and the CLI. A file is analysed again only when its key changes: the hash of its bytes, drill-sergeant's own code, or a config option per-file analysis reads (thresholds, category markers, source dirs, inline waivers); or when a module of the test tree its analysis followed, or looked for there, has changed, appeared, gone or left the test tree since. Levels, mode and per-file ignores apply after it, so changing them reuses every entry. Cross-file analysis always reruns, from the cached summaries.
 _Avoid_: Memo, store
 
 **Cross-file analysis**:

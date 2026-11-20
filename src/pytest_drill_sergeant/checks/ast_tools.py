@@ -67,7 +67,7 @@ _PYTEST_CHECK_ASSERTING = frozenset(
 
 # Playwright's `expect`: a matcher called on what it returns
 # (`expect(page).to_have_title(...)`) fails the test.
-_EXPECT_FUNCTIONS = frozenset(
+EXPECT_FUNCTIONS = frozenset(
     {"playwright.sync_api.expect", "playwright.async_api.expect"}
 )
 
@@ -315,15 +315,17 @@ def _is_expect_matcher(call: ast.Call, names: Mapping[str, str]) -> bool:
     """Whether a call is a matcher on Playwright's `expect(...)`, known by import."""
     func = call.func
     return isinstance(func, ast.Attribute) and calls_to(
-        func.value, _EXPECT_FUNCTIONS, names
+        func.value, EXPECT_FUNCTIONS, names
     )
 
 
 def is_real_assertion(node: ast.AST, names: Mapping[str, str]) -> bool:
-    """Whether a node is a real assertion, as GLOSSARY.md's entry defines it.
+    """Whether a node is itself a real assertion, as GLOSSARY.md's entry defines it.
 
     pytest's helpers and assertion libraries are known through whatever names the
-    file's imports give them.
+    file's imports give them. A call into a function of the test tree that holds
+    one is a real assertion too, which takes more than the node to know:
+    `checks.helpers.Assertions` follows those.
 
     Args:
         node: The node.

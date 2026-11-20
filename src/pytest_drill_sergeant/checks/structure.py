@@ -40,11 +40,6 @@ _DEPRECATED_CALL = frozenset({"pytest.deprecated_call"})
 _PYTEST_FAIL = frozenset({"pytest.fail"})
 
 
-def _has_real_assertion(test: TestFunction) -> bool:
-    """Whether anything in the test, nested code included, is a real assertion."""
-    return any(is_real_assertion(node, test.imports) for node in walk_test(test))
-
-
 def _last_call(test: TestFunction) -> ast.Call | None:
     """The call the test's last statement makes, if it makes one."""
     last = test.node.body[-1]
@@ -54,11 +49,28 @@ def _last_call(test: TestFunction) -> ast.Call | None:
     return value if isinstance(value, ast.Call) else None
 
 
+# The fix's last sentence for a test whose last call's result is thrown away: such a
+# test only proves the call didn't raise, which earns no exemption.
+_DOES_NOT_RAISE = (
+    " If the test only proves the call doesn't raise, say so with "
+    "`# drill: waive DS101 -- <reason>` on its `def` line."
+)
+
+
+def _discards_last_call(test: TestFunction) -> bool:
+    """Whether the test's last statement is a call whose result is thrown away."""
+    last = test.node.body[-1]
+    value = last.value if isinstance(last, ast.Expr) else None
+    if isinstance(value, ast.Await):
+        value = value.value
+    return isinstance(value, ast.Call)
+
+
 def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         # A test that skips on every run is left to DS402, and one that loses an
         # exception it catches to DS702 by `yields_to`: each only where it reports.
-        if _has_real_assertion(test):
+        if file.assertions.holds(test):
             continue
         left_to = (
             UNCONDITIONAL_SKIP.code
@@ -81,6 +93,7 @@ def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
             fix=(
                 f"assert on {target}, or wrap the call in "
                 "`pytest.raises(..., match=...)` if it should raise."
+                + (_DOES_NOT_RAISE if _discards_last_call(test) else "")
             ),
             left_to=left_to,
         )
@@ -90,7 +103,7 @@ NO_REAL_ASSERTION = Check(
     code="DS101",
     name="no-real-assertion",
     kind=Kind.DEFECT,
-    default_level=Level.OFF,
+    default_level=Level.WARN,
     voice=(
         "You call that a test, recruit? It runs the code and checks NOTHING!",
         "No assertion, no proof! Green means nothing if it can't go red, maggot!",
@@ -109,8 +122,22 @@ NO_REAL_ASSERTION = Check(
         "reach (a pytest-check helper such as `check.equal`, a matcher on Playwright's "
         "`expect(...)` such as `to_be_visible`; hamcrest's and assertpy's "
         "`assert_that` are `assert*` calls), and no `raise AssertionError`. A local "
-        "`expect` or `check` no such import gives counts for nothing. Such a test only proves "
-        "the code didn't crash. Assert on what the code returns or changes. A test "
+        "`expect` or `check` no such import gives counts for nothing. A call into a "
+        "function of the test tree (the test files, every `conftest.py` and the "
+        "modules in or below a directory holding a test file, never production code; "
+        "in a flat layout, production modules beside the tests are in it too) "
+        "whose body holds a real assertion, at any depth, counts: a helper in the "
+        "file or imported, a method reached through `self`, `cls` or `super()` in the "
+        "test's class or its bases, or a name bound to one (`partial(_check, ...)`). "
+        "So does a helper that calls its own parameter when the test passes it an "
+        "`assert*` function or a helper that asserts. A method on a helper object "
+        "another call returned is not followed. A call to a function imported from a "
+        "third-party package (a module found neither under the project nor in the "
+        "standard library, and not pytest's) is code the check can't see, so it may "
+        "assert, and the test isn't flagged. Such a test only proves "
+        "the code didn't crash. Assert on what the code returns or changes; a test "
+        "meant only to prove a call doesn't raise gets no exemption, so waive it "
+        "with that reason. A test "
         "that skips on every run, by a `pytest.mark.skip` (or `skipif()`, or "
         "`skipif` on a truthy constant) on it, its class or the module's "
         "`pytestmark`, or a `pytest.skip()` in its own body or the module's, is "
@@ -175,7 +202,7 @@ def _runs_anything(test: TestFunction) -> bool:
 def _find_no_action_under_test(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         if (
-            not _has_real_assertion(test)
+            not file.assertions.holds(test)
             or _takes_values_in(test)
             or _runs_anything(test)
         ):

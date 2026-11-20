@@ -17,7 +17,8 @@ from pathlib import Path
 import pytest
 
 from pytest_drill_sergeant.checks import CHECKS
-from pytest_drill_sergeant.checks.structure import AAA_COMMENTS
+from pytest_drill_sergeant.checks.cheating import UNCONDITIONAL_SKIP
+from pytest_drill_sergeant.checks.structure import AAA_COMMENTS, NO_REAL_ASSERTION
 from pytest_drill_sergeant.engine import Config, analyze
 from pytest_drill_sergeant.findings import Level
 
@@ -75,17 +76,28 @@ def test_corpus_file_yields_exactly_its_expected_findings(path):
     )
 
 
+# The checks DS101 leaves a test to where they report: DS702 (`yields_to`) and
+# DS402 (a hit's `left_to`). Both are off by default; the whole-corpus run turns them
+# on so each of those tests stays with the check its marker names.
+LEFT_TO_BY_DS101 = {
+    NO_REAL_ASSERTION.yields_to: Level.WARN,
+    UNCONDITIONAL_SKIP.code: Level.WARN,
+}
+
+
 def test_whole_corpus_as_one_run_yields_exactly_the_expected_findings():
     """No corpus file's tests duplicate another's, so a cross-file check finds in
     one run over the whole corpus only what each file expects of the checks on by
-    default."""
-    findings = analyze(TEST_FILES, Config(), sources=SOURCE_FILES)
+    default, and of the checks DS101 leaves tests to."""
+    findings = analyze(
+        TEST_FILES, Config(levels=LEFT_TO_BY_DS101), sources=SOURCE_FILES
+    )
 
     assert {(f.file, f.code, f.line) for f in findings} == {
         (path, code, line)
         for path in CORPUS_FILES
         for code, line in expected_findings(path)
-        if code not in OFF_BY_DEFAULT
+        if code not in OFF_BY_DEFAULT or code in LEFT_TO_BY_DS101
     }
 
 
