@@ -34,6 +34,13 @@ def test_warns_matching_a_private_message():
         Service().run()
 
 
+def test_raises_assertion_error_on_private_state():
+    service = Service()
+    service.run()
+    if service._retries:
+        raise AssertionError(service._retries)  # expect: DS602
+
+
 class TestAccount(unittest.TestCase):
     def test_balance(self):
         account = Account(10)
