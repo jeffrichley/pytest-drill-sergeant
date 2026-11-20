@@ -46,3 +46,15 @@ class TestOrders(BaseOrderTests):
 
     def test_order_builds(self):  # expect: DS101
         super().test_order_builds()
+
+
+class TestCommonNeighbours:
+    @classmethod
+    def setup_class(cls):
+        def render(graph):
+            return sorted(graph)
+
+        cls.render = staticmethod(render)
+
+    def test_a_set_up_function_checks_nothing(self):  # expect: DS101
+        self.render({2, 1})

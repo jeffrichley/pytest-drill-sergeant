@@ -73,3 +73,15 @@ class TestRoundTrips:
 
     def test_a_classmethod_helper_through_cls_is_an_assertion(self):
         self._check_all([3])
+
+
+class TestCommonNeighbours:
+    @classmethod
+    def setup_class(cls):
+        def check(graph, expected):
+            assert sorted(graph) == expected
+
+        cls.check = staticmethod(check)
+
+    def test_a_function_defined_in_setup_class_is_an_assertion(self):
+        self.check({2, 1}, [1, 2])

@@ -139,6 +139,7 @@ class _Scope:
         params: Every parameter it takes.
         values: The names its body binds with a plain assignment, to the value.
         imports: The names its body binds by import.
+        functions: The functions its body defines, by name.
     """
 
     module: _Module
@@ -150,6 +151,7 @@ class _Scope:
     params: set[str]
     values: dict[str, ast.expr] = field(default_factory=dict)
     imports: dict[str, _Import] = field(default_factory=dict)
+    functions: dict[str, FunctionNode] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -477,6 +479,11 @@ class TestTree:
                 and isinstance(child.targets[0], ast.Name)
             ):
                 scope.values[child.targets[0].id] = child.value
+            elif (
+                isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef)
+                and child is not node
+            ):
+                scope.functions[child.name] = child
         return scope
 
     # --- What a call reaches ------------------------------------------------------
@@ -506,6 +513,8 @@ class TestTree:
             if key in seen:
                 return None
             return self._target(scope.values[name], scope, seen | {key})
+        if name in scope.functions:
+            return _Callee(_Function(scope.functions[name], scope.module))
         if name in scope.imports:
             return self._imported(scope.module, scope.imports[name], seen)
         return self._member(scope.module, name, seen)
