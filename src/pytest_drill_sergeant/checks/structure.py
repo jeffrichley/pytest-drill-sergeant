@@ -492,7 +492,7 @@ ASSERT_BEFORE_ACT = Check(
     code="DS103",
     name="assert-before-act",
     kind=Kind.SMELL,
-    default_level=Level.OFF,
+    default_level=Level.WARN,
     voice=(
         "You checked the ground, then fired blind! Assert AFTER you act, recruit!",
         "Asserting before the action is inspecting your rifle after the battle!",
