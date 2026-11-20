@@ -10,8 +10,7 @@ suite/test_cart.py
     Fix:   In `test_adding_an_item_to_the_cart`, line 10: assert on what `cart.add(...)` returns or
            changes, or wrap the call in `pytest.raises(..., match=...)` if it should raise. If the
            test only proves the call doesn't raise, say so with `# drill: waive DS101 -- <reason>`
-           on its `def` line; better, assert on what the call returns or changes. See
-           `drill-sergeant explain DS101`.
+           on its `def` line. See `drill-sergeant explain DS101`.
 
 suite/test_checkout.py
   suite/test_checkout.py:15: DS104 interleaved-act-assert [warn] in test_checkout_applies_and_removes_a_discount_code

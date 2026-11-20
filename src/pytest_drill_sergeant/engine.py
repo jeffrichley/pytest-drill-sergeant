@@ -218,7 +218,7 @@ class _FileResult:
             none is left out.
         summary: The file's per-file summary.
         waivers: The file's inline waivers, for applying after cross-file analysis.
-        follows: Each other module of the test tree its analysis followed a call
+        followed: Each other module of the test tree its analysis followed a call
             into, or looked for there, by absolute path, with the module's digest
             then (`TestTree.digest`); the result stands only while each is the same.
     """
@@ -226,7 +226,7 @@ class _FileResult:
     hits: Mapping[str, tuple[Hit, ...]]
     summary: FileSummary
     waivers: FileWaivers
-    follows: tuple[tuple[str, str], ...] = ()
+    followed: tuple[tuple[str, str], ...] = ()
 
 
 # The config fields per-file analysis never reads: changing one of them keeps every
@@ -287,7 +287,7 @@ def _analyze_file(
                 for t in tests
             },
         ),
-        follows=tuple(assertions.followed.items()),
+        followed=tuple(assertions.followed.items()),
     )
 
 
@@ -304,7 +304,7 @@ def _file_result(
         return _analyze_file(path, source, config, tree)
     key = f"{content_hash(source)}:{shared}"
     result = cache.get(path, key, _FileResult)
-    if result is None or any(tree.digest(m) != d for m, d in result.follows):
+    if result is None or any(tree.digest(m) != d for m, d in result.followed):
         result = _analyze_file(path, source, config, tree)
         cache.put(path, key, result)
     return result
@@ -424,8 +424,9 @@ def inspect(
 ) -> Inspection:
     """Run every check over the test files and production code, then apply waivers.
 
-    Each file is analysed on its own, for its findings and its per-file summary;
-    then the summaries, never the files, are compared across files. The
+    Each file is analysed on its own, with the test-tree modules its tests' calls
+    are followed into, for its findings and its per-file summary; then the
+    summaries, never the files, are compared across files. The
     production files are read in full, by the checks that read production code
     (DS403) and no others.
 

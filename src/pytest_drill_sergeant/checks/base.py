@@ -1,6 +1,7 @@
 """What a check is, and what it is given and gives back.
 
-A check reads one test file at a time, or compares the per-file summaries of every
+A check reads one test file at a time (and, through `TestFile.assertions`, the
+test-tree modules its tests call into), or compares the per-file summaries of every
 file in the run (cross-file analysis), or both. A summary is plain data, so the
 cross-file step never needs a file's syntax tree.
 

@@ -53,8 +53,7 @@ def _last_call(test: TestFunction) -> ast.Call | None:
 # test only proves the call didn't raise, which earns no exemption.
 _DOES_NOT_RAISE = (
     " If the test only proves the call doesn't raise, say so with "
-    "`# drill: waive DS101 -- <reason>` on its `def` line; better, assert on what "
-    "the call returns or changes."
+    "`# drill: waive DS101 -- <reason>` on its `def` line."
 )
 
 

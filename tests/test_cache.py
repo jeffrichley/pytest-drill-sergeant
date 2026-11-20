@@ -1,5 +1,6 @@
 """The cache, through the engine seam: per-file results reused while a file's bytes,
-drill-sergeant and the config that shapes per-file analysis stay the same."""
+drill-sergeant, the config that shapes per-file analysis and the test-tree modules
+its analysis followed stay the same."""
 
 import pytest
 
