@@ -17,6 +17,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
 from pytest_drill_sergeant.checks.base import (
     Check,
     Hit,
+    Kind,
     TestFile,
     TestFunction,
     and_list,
@@ -70,6 +71,7 @@ def _find_missing_category_marker(file: TestFile) -> Iterator[Hit]:
 MISSING_CATEGORY_MARKER = Check(
     code="DS901",
     name="missing-category-marker",
+    kind=Kind.CONVENTION,
     default_level=Level.OFF,
     voice=(
         "Which unit are you with, recruit? NO MARKINGS, NO DEPLOYMENT!",

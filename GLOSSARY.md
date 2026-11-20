@@ -6,11 +6,27 @@ A guardrail that catches the ways AI coding agents write bad tests, and reports 
 
 **Failure mode**:
 A recurring way that AI-written tests go wrong (e.g. copy-pasted setup instead of a fixture, asserting nothing meaningful, brittle string matching).
-_Avoid_: Anti-pattern, test smell
+_Avoid_: Anti-pattern, test smell (smell is a kind of check)
 
 **Check**:
 One deterministic detection of a single failure mode.
 _Avoid_: Rule, validator, detector, analyzer
+
+**Kind**:
+What a check's failure mode costs: a defect, a smell or a convention. Each check has one, and it sets the highest default level the check can have (ADR 0001).
+_Avoid_: Category (that's a category marker), type, severity
+
+**Defect**:
+The kind of a check whose failure mode leaves a test unable to catch a bug, cheating, or failing at random. Its default level can be `fail`.
+_Avoid_: Bug, error
+
+**Smell**:
+The kind of a check whose failure mode leaves a test working but costing later: hard to read, broken by harmless refactors, or duplicated. Its default level is at most `warn`.
+_Avoid_: Code smell, style issue
+
+**Convention**:
+The kind of a check that enforces a house rule some projects follow, such as AAA comments (DS108) or category markers (DS901). It is off by default; a project opts in.
+_Avoid_: Style rule, house style
 
 **Finding**:
 One occurrence of a failure mode in a specific test, reported by a check. A finding names where it is, as a test's name would be: a class for a mark on the class, a function in production code, and `<module>` outside all of them, as for a skip mark in the module's `pytestmark` or a test file too long (the one failure mode of a whole file).
@@ -81,15 +97,15 @@ A statement in a test that makes, patches in or configures a mock: `repo = mock.
 _Avoid_: Mock configuration, arrange
 
 **Category marker**:
-A pytest marker that classifies a test by kind (e.g. unit, integration, e2e) so whole categories can be selected or skipped.
+A pytest marker that classifies a test by category (e.g. unit, integration, e2e) so whole categories can be selected or skipped.
 _Avoid_: Test type, tag
 
 **Level**:
-How a check's findings count: `fail` (they fail the run), `warn` (reported, the run's result unchanged) or `off` (not reported). Each check has a default level, which is on only once the check is proven; DS108 (AAA comments) and DS901 (category markers) are conventions a project opts into, and stay off whatever their proof.
+How a check's findings count: `fail` (they fail the run), `warn` (reported, the run's result unchanged) or `off` (not reported). Each check has a default level, the lower of what its kind allows and what its proof allows: off until the check is proven, and never above `warn` for a smell or above `off` for a convention.
 _Avoid_: Severity
 
 **Proven**:
-Said of a check whose findings, over a hand-judged sample of real suites, hold zero false positives. Only a proven check is on by default; the rest come on one by one as each is proven.
+Said of a check whose findings, over a fresh hand-judged sample of real suites, hold few enough false positives for a level: none allows `fail`; under 15%, with each remaining one waived, allows `warn`; 15% or more keeps it off. Only a proven check is on by default, at the lower of that level and its kind's highest; the rest come on one by one as each is proven.
 _Avoid_: Stable, trusted
 
 **Mode**:

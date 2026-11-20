@@ -350,6 +350,13 @@ def test_explain_prints_the_registrys_rationale_explanation_and_both_examples(
     assert check.good_example in result.output
 
 
+@pytest.mark.parametrize("check", CHECKS, ids=lambda c: c.code)
+def test_explain_heads_a_check_with_its_default_level_and_kind(cli, check):
+    header = cli("explain", check.code).output.splitlines()[0]
+
+    assert header.endswith(f"[{check.default_level}, {check.kind}]")
+
+
 def test_explain_with_no_code_lists_every_check(cli):
     result = cli("explain")
 

@@ -21,6 +21,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
 from pytest_drill_sergeant.checks.base import (
     Check,
     Hit,
+    Kind,
     TestFile,
     TestFunction,
     and_list,
@@ -503,6 +504,7 @@ def _find_mirror_assertion(file: TestFile) -> Iterator[Hit]:
 WEAK_ASSERTION = Check(
     code="DS201",
     name="weak-assertion",
+    kind=Kind.SMELL,
     default_level=Level.OFF,
     voice=(
         "'Is not None'? My GRANDMOTHER is not None, recruit! What IS it?",
@@ -541,6 +543,7 @@ WEAK_ASSERTION = Check(
 TAUTOLOGICAL_ASSERTION = Check(
     code="DS202",
     name="tautological-assertion",
+    kind=Kind.DEFECT,
     default_level=Level.OFF,
     voice=(
         "You asserted that a thing equals itself. Congratulations, you discovered math!",
@@ -578,6 +581,7 @@ TAUTOLOGICAL_ASSERTION = Check(
 MIRROR_ASSERTION = Check(
     code="DS203",
     name="mirror-assertion",
+    kind=Kind.SMELL,
     default_level=Level.OFF,
     voice=(
         "You checked the code against ITSELF! Of course it agrees, recruit!",

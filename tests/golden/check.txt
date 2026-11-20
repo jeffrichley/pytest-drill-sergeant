@@ -23,7 +23,7 @@ suite/test_checkout.py
            fixture. See `drill-sergeant explain DS104`.
 
 suite/test_inventory.py
-  suite/test_inventory.py:1: DS106 long-file [fail] in <module>
+  suite/test_inventory.py:1: DS106 long-file [warn] in <module>
     "You've lost track of what's in this file, and so has everyone else!"
     Found: `test_inventory.py` is 48 lines long, more than the 40 a test file may have; it holds 5
            tests.
@@ -38,4 +38,4 @@ Waived findings
   suite/test_cart.py:23: DS101 no-real-assertion [fail] in test_empty_cart_smoke
     Reason: import smoke test for the release
 
-3 findings: 2 fail, 1 warn; 1 waived. Fix them, recruit. DISMISSED!
+3 findings: 1 fail, 2 warn; 1 waived. Fix them, recruit. DISMISSED!
