@@ -16,12 +16,26 @@ marker (DS901) are reported both by the pytest plugin and by
 the [v1 spec](https://github.com/jeffrichley/pytest-drill-sergeant/issues/118). Version
 0.4 is archived under the tag `archive/2026-11-19/v0.4/main`.
 
+## Install
+
+Add it as a dev dependency. While v1 is in pre-release, pin the exact version:
+
+```sh
+uv add --dev "pytest-drill-sergeant==1.0.0a1"
+```
+
+An exact pre-release pin needs no flag. Leave out `--prerelease=allow`: uv writes it
+into `uv.lock` as a lock-wide `prerelease-mode`, and `uv sync --locked` then refuses
+the lock. A bare `uv add pytest-drill-sergeant` picks the archived 0.4.
+
 ## The pytest plugin
 
 Installing the package turns the plugin on: every `pytest` run is a drill-sergeant run.
 
 - After collection it analyses the files that contributed collected tests (doctests
   don't count), once. A narrow run (one file, `-k`, `--lf`) checks only those files.
+  The same goes for files whose tests are all deselected (`-m "not slow"`), so the
+  plugin can count fewer findings than `drill-sergeant check` over the same paths.
 - The tests always run. A findings section headed `drill sergeant` comes after the
   test results; no test items are added.
 - When the tests ran and passed but a finding is at the `fail` level, the run exits 1.
@@ -114,7 +128,9 @@ the config file the way pytest does, searching upward from the paths it checks f
 `[tool.pytest]`), `tox.ini` (`[pytest]`) or `setup.cfg` (`[tool:pytest]`);
 `--config <file>` names one instead, read as pytest's `-c` reads it (a `.toml` not
 named `pytest.toml` is read like a `pyproject.toml`), and refused when it holds no
-pytest table. An unknown `drill_sergeant_*` option, unknown
+pytest table. Because of that search, `check` on a sub-package with its own pytest
+config (say `pkg/pyproject.toml`) uses that package's config, not the root's; pass
+`--config` to choose. An unknown `drill_sergeant_*` option, unknown
 check code, bad level or non-numeric threshold is a usage error (exit 2 from the CLI, 4 from pytest).
 
 ```toml
