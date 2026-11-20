@@ -12,6 +12,8 @@ from pytest_drill_sergeant.checks.ast_tools import (
     excinfo_names,
     is_known_non_act,
     is_real_assertion,
+    own_statements,
+    setup,
     skips_unconditionally,
     value_params,
     walk_test,
@@ -484,19 +486,11 @@ def _find_long_test(file: TestFile) -> Iterator[Hit]:
         length = last - first + 1
         if length <= limit:
             continue
-        asserts = [
-            node.lineno
-            for node in walk_test(test)
-            if isinstance(node, ast.stmt | ast.expr)
-            and is_real_assertion(node, test.imports)
-        ]
-        body = test.node.body
-        if ast.get_docstring(test.node) is not None and len(body) > 1:
-            body = body[1:]
-        setup = (
-            f" Lines {body[0].lineno}-{min(asserts) - 1} run before its first "
-            "assertion: what is setup there belongs in a fixture."
-            if asserts and min(asserts) > body[0].lineno
+        before = setup(test)
+        moved = (
+            f" Lines {before[0].lineno}-{before[-1].end_lineno} run before its "
+            "first assertion: what is setup there belongs in a fixture."
+            if before and len(before) < len(own_statements(test))
             else ""
         )
         yield Hit.on(
@@ -509,7 +503,7 @@ def _find_long_test(file: TestFile) -> Iterator[Hit]:
             fix=(
                 f"cut it to {limit} lines or fewer: split it into one test per "
                 "behaviour it checks, each named for that behaviour, and move "
-                f"shared setup into fixtures.{setup}"
+                f"shared setup into fixtures.{moved}"
             ),
         )
 
@@ -1020,10 +1014,7 @@ def _runs(order: _Order, statement: ast.stmt) -> bool:
 
 def _own_steps(order: _Order) -> list[tuple[ast.stmt, _Step]]:
     """A test's statements in order, each with what it does, its docstring aside."""
-    body = order.test.node.body
-    if ast.get_docstring(order.test.node) is not None:
-        body = body[1:]
-    return order.steps(body)
+    return order.steps(own_statements(order.test))
 
 
 def _plan(order: _Order, steps: list[tuple[ast.stmt, _Step]]) -> dict[_Section, int]:

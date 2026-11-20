@@ -1,7 +1,7 @@
 """The per-file summary: what cross-file analysis needs to know of one test file.
 
 A test's setup is its leading statements, before the first one that holds a real
-assertion; a docstring is not one of them. Each statement is recorded by its
+assertion, its docstring aside (`ast_tools.setup`). Each statement is recorded by its
 fingerprint, so two statements that read the same, wherever they stand, compare
 equal, and a different name or literal makes them differ. A test's whole body is
 recorded by its fingerprint and by its shape, the fingerprint with every name and
@@ -15,7 +15,11 @@ import ast
 import copy
 import hashlib
 
-from pytest_drill_sergeant.checks.ast_tools import bound_names, is_real_assertion
+from pytest_drill_sergeant.checks.ast_tools import (
+    bound_names,
+    own_statements,
+    setup,
+)
 from pytest_drill_sergeant.checks.base import (
     FileSummary,
     Statement,
@@ -88,32 +92,8 @@ def _signature(test: TestFunction) -> str:
     return fingerprint([head])
 
 
-def _is_docstring(statement: ast.stmt) -> bool:
-    return (
-        isinstance(statement, ast.Expr)
-        and isinstance(statement.value, ast.Constant)
-        and isinstance(statement.value.value, str)
-    )
-
-
-def _asserts(statement: ast.stmt, test: TestFunction) -> bool:
-    return any(is_real_assertion(node, test.imports) for node in ast.walk(statement))
-
-
 def _summarize_test(test: TestFunction) -> TestSummary:
-    body = [s for s in test.node.body if not _is_docstring(s)]
-    setup: list[Statement] = []
-    for statement in body:
-        if _asserts(statement, test):
-            break
-        setup.append(
-            Statement(
-                fingerprint=fingerprint([statement]),
-                line=statement.lineno,
-                end_line=statement.end_lineno or statement.lineno,
-                binds=tuple(bound_names(statement)),
-            )
-        )
+    body = own_statements(test)
     names: list[str] = []
     literals: list[str] = []
     for statement in body:
@@ -121,7 +101,15 @@ def _summarize_test(test: TestFunction) -> TestSummary:
     return TestSummary(
         name=test.name,
         line=test.node.lineno,
-        setup=tuple(setup),
+        setup=tuple(
+            Statement(
+                fingerprint=fingerprint([statement]),
+                line=statement.lineno,
+                end_line=statement.end_lineno or statement.lineno,
+                binds=tuple(bound_names(statement)),
+            )
+            for statement in setup(test)
+        ),
         body=fingerprint(body),
         shape=shape(body),
         names=tuple(names),

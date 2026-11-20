@@ -241,6 +241,25 @@ def is_real_assertion(node: ast.AST, names: Mapping[str, str]) -> bool:
     return False
 
 
+def own_statements(test: TestFunction) -> list[ast.stmt]:
+    """A test's own statements, in order, its docstring aside."""
+    body = test.node.body
+    return body[1:] if ast.get_docstring(test.node) is not None else body
+
+
+def setup(test: TestFunction) -> list[ast.stmt]:
+    """A test's setup: its statements before the first that holds a real assertion.
+
+    The docstring is set aside (`own_statements`); a test with no real assertion
+    is all setup.
+    """
+    statements = own_statements(test)
+    for index, statement in enumerate(statements):
+        if any(is_real_assertion(node, test.imports) for node in ast.walk(statement)):
+            return statements[:index]
+    return statements
+
+
 def excinfo_names(test: TestFunction) -> set[str]:
     """The names a test binds to what `pytest.raises` caught (`with ... as e`)."""
     return {
