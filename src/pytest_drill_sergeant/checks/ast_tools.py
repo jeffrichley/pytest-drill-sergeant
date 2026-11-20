@@ -285,7 +285,7 @@ def expected_class(call: ast.Call, names: Mapping[str, str]) -> ast.expr | None:
 def walk_test(test: TestFunction) -> Iterator[ast.AST]:
     """Every node of a test's own code: its body, at any depth.
 
-    A helper function, class or lambda defined in the test is part of it, so its
+    A function, class or lambda defined in the test is part of it, so its
     nodes count; the test's decorators and parameter defaults don't.
     """
     for statement in test.node.body:
