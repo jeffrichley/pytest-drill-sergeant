@@ -5,11 +5,22 @@ from pytest_drill_sergeant.checks.assertions import (
     TAUTOLOGICAL_ASSERTION,
     WEAK_ASSERTION,
 )
-from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
+from pytest_drill_sergeant.checks.base import (
+    Check,
+    Hit,
+    SourceFile,
+    TestFile,
+    TestFunction,
+)
 from pytest_drill_sergeant.checks.brittleness import (
     BRITTLE_STRING_MATCH,
     PRIVATE_STATE_ASSERTION,
     SOURCE_TEXT_GREP,
+)
+from pytest_drill_sergeant.checks.cheating import (
+    SKIP_WITHOUT_REASON,
+    TEST_SPECIAL_CASING,
+    UNCONDITIONAL_SKIP,
 )
 from pytest_drill_sergeant.checks.exceptions import BROAD_RAISES, SWALLOWED_EXCEPTION
 from pytest_drill_sergeant.checks.flakiness import (
@@ -32,6 +43,9 @@ CHECKS: tuple[Check, ...] = (
     WEAK_ASSERTION,
     TAUTOLOGICAL_ASSERTION,
     MIRROR_ASSERTION,
+    SKIP_WITHOUT_REASON,
+    UNCONDITIONAL_SKIP,
+    TEST_SPECIAL_CASING,
     BRITTLE_STRING_MATCH,
     PRIVATE_STATE_ASSERTION,
     SOURCE_TEXT_GREP,
@@ -43,4 +57,4 @@ CHECKS: tuple[Check, ...] = (
 )
 
 
-__all__ = ["CHECKS", "Check", "Hit", "TestFile", "TestFunction"]
+__all__ = ["CHECKS", "Check", "Hit", "SourceFile", "TestFile", "TestFunction"]

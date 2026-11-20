@@ -1,4 +1,8 @@
-"""The corpus: every check proven through the engine, file by file."""
+"""The corpus: every check proven through the engine, file by file.
+
+A file under a `source/` folder is production code, handed to the engine as such;
+every other file is a test file.
+"""
 
 import re
 from pathlib import Path
@@ -22,18 +26,25 @@ def expected_findings(path):
     return expected
 
 
+def analyze_corpus_file(path):
+    """The findings for a corpus file, read as production code under `source/`."""
+    if path.parent.name == "source":
+        return analyze([], Config(), sources=[path])
+    return analyze([path], Config())
+
+
 @pytest.mark.parametrize(
     "path", CORPUS_FILES, ids=[str(p.relative_to(CORPUS)) for p in CORPUS_FILES]
 )
 def test_corpus_file_yields_exactly_its_expected_findings(path):
-    findings = analyze([path], Config())
+    findings = analyze_corpus_file(path)
 
     assert {(f.code, f.line) for f in findings} == expected_findings(path)
 
 
 @pytest.mark.parametrize(
     "path",
-    [p for p in CORPUS_FILES if p.name.startswith("test_good_")],
+    [p for p in CORPUS_FILES if p.name.removeprefix("test_").startswith("good_")],
     ids=lambda p: str(p.relative_to(CORPUS)),
 )
 def test_good_corpus_file_declares_no_findings(path):

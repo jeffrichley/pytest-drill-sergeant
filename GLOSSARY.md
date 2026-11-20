@@ -32,6 +32,14 @@ _Avoid_: Trivial assertion, always-true assertion
 An `==` whose expected side is taken from the code under test: the same call on both sides, directly or through names the test bound to it. Names never matter: `first == second`, each bound to the same call, is one just as `result == expected` is.
 _Avoid_: Self-check, circular assertion
 
+**Production code**:
+The code under test, as opposed to the tests: the `.py` files under `drill_sergeant_source_dirs`, or under `src/` when that is empty. Only the special-casing check (DS403) reads it, in full every run.
+_Avoid_: Source (alone), app code, implementation
+
+**Unconditional skip**:
+A skip that happens on every run: `pytest.mark.skip`, `skipif` on a truthy constant, or `pytest.skip(...)` as a statement of a test's own body under no condition.
+_Avoid_: Disabled test
+
 **Category marker**:
 A pytest marker that classifies a test by kind (e.g. unit, integration, e2e) so whole categories can be selected or skipped.
 _Avoid_: Test type, tag

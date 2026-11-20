@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 196 findings in 50 files. FALL IN!
+DRILL SERGEANT INSPECTION: 217 findings in 56 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -936,6 +936,87 @@ suite/private-state-assertion/test_bad_module_private.py
            behaviour it stands for: a return value, a public attribute or method, or what a fake
            collaborator received.
 
+suite/skip-without-reason/test_bad_calls_without_reason.py
+  suite/skip-without-reason/test_bad_calls_without_reason.py:14: DS401 skip-without-reason [fail] in test_mailer_sends_over_smtp
+    "Nobody will ever know why this test stopped marching, maggot! WRITE IT DOWN!"
+    Found: `test_mailer_sends_over_smtp` skips with no reason: `pytest.skip()`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_mailer_sends_over_smtp`, line 14: give it `reason="..."` saying what is wrong
+           and when the test can run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_calls_without_reason.py:21: DS401 skip-without-reason [fail] in test_mailer_retries_on_timeout
+    "A skip with no reason is a deserter with no paperwork! FILL IT OUT!"
+    Found: `test_mailer_retries_on_timeout` skips with no reason: `pytest.xfail()`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_mailer_retries_on_timeout`, line 21: give it `reason="..."` saying what is wrong
+           and when the test can run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_calls_without_reason.py:27: DS401 skip-without-reason [fail] in test_mailer_rejects_empty_body
+    "You benched a soldier and didn't write down WHY, recruit?"
+    Found: `test_mailer_rejects_empty_body` skips with no reason: `pytest.skip(reason='   ')`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_mailer_rejects_empty_body`, line 27: give it `reason="..."` saying what is wrong
+           and when the test can run again, such as a ticket link.
+
+suite/skip-without-reason/test_bad_marks_without_reason.py
+  suite/skip-without-reason/test_bad_marks_without_reason.py:9: DS401 skip-without-reason [fail] in test_invoice_path_uses_forward_slashes
+    "A skip with no reason is a deserter with no paperwork! FILL IT OUT!"
+    Found: `test_invoice_path_uses_forward_slashes` is skipped with no reason:
+           `@pytest.mark.skipif(sys.platform == 'win32')`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_invoice_path_uses_forward_slashes`, line 9: give it `reason="..."` saying what
+           is wrong and when the test can run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_marks_without_reason.py:14: DS401 skip-without-reason [fail] in test_invoice_total_rounds_half_up
+    "A skip with no reason is a deserter with no paperwork! FILL IT OUT!"
+    Found: `test_invoice_total_rounds_half_up` is marked an expected failure with no reason:
+           `@pytest.mark.xfail`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_invoice_total_rounds_half_up`, line 14: give it `reason="..."` saying what is
+           wrong and when the test can run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_marks_without_reason.py:19: DS401 skip-without-reason [fail] in test_invoice_rejects_negative_amounts
+    "Nobody will ever know why this test stopped marching, maggot! WRITE IT DOWN!"
+    Found: `test_invoice_rejects_negative_amounts` is marked an expected failure with no reason:
+           `@pytest.mark.xfail(strict=True)`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_invoice_rejects_negative_amounts`, line 19: give it `reason="..."` saying what
+           is wrong and when the test can run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_marks_without_reason.py:25: DS401 skip-without-reason [fail] in test_invoice_number_is_padded
+    "You benched a soldier and didn't write down WHY, recruit?"
+    Found: `test_invoice_number_is_padded` is skipped with no reason:
+           `@pytest.mark.skipif(sys.version_info < (3, 12), reason='')`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_invoice_number_is_padded`, line 25: give it `reason="..."` saying what is wrong
+           and when the test can run again, such as a ticket link.
+
+suite/skip-without-reason/test_bad_through_imports.py
+  suite/skip-without-reason/test_bad_through_imports.py:13: DS401 skip-without-reason [fail] in <module>
+    "You benched a soldier and didn't write down WHY, recruit?"
+    Found: `<module>` is skipped with no reason: `@m.skipif(sys.platform == 'darwin')`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `<module>`, line 13: give it `reason="..."` saying what is wrong and when the test can
+           run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_through_imports.py:16: DS401 skip-without-reason [fail] in TestQueue
+    "You benched a soldier and didn't write down WHY, recruit?"
+    Found: `TestQueue` is marked an expected failure with no reason:
+           `@pt.mark.xfail(sys.version_info < (3, 12))`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `TestQueue`, line 16: give it `reason="..."` saying what is wrong and when the test
+           can run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_through_imports.py:28: DS401 skip-without-reason [fail] in test_queue_blocks_when_full
+    "A skip with no reason is a deserter with no paperwork! FILL IT OUT!"
+    Found: `test_queue_blocks_when_full` skips with no reason: `xfail('')`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_queue_blocks_when_full`, line 28: give it `reason="..."` saying what is wrong
+           and when the test can run again, such as a ticket link.
+
 suite/sleep-in-test/test_bad_aliased_sleeps.py
   suite/sleep-in-test/test_bad_aliased_sleeps.py:13: DS801 sleep-in-test [fail] in test_worker_finishes
     "Napping on duty, recruit? Tests don't SLEEP on my watch!"
@@ -1468,6 +1549,103 @@ suite/tautological-assertion/test_bad_values_the_test_wrote.py
     Fix:   In `test_flag_set_by_the_test`, line 29: replace `assert loaded` with an assertion on
            what the code under test returns, against a value worked out by hand.
 
+suite/unconditional-skip/test_bad_skip_calls.py
+  suite/unconditional-skip/test_bad_skip_calls.py:12: DS402 unconditional-skip [fail] in test_report_totals_each_column
+    "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!"
+    Found: `test_report_totals_each_column` skips on every run: `pytest.skip('unrelated failure, fix
+           later')` runs under no condition.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_report_totals_each_column`, line 12: fix what makes it fail and delete
+           `pytest.skip('unrelated failure, fix later')`; if it can't run somewhere, call it only
+           under that condition (`if ...:`), with a reason.
+  suite/unconditional-skip/test_bad_skip_calls.py:17: DS402 unconditional-skip [fail] in test_report_exports_csv
+    "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!"
+    Found: `test_report_exports_csv` skips on every run: `skip('csv export is flaky')` runs under no
+           condition.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_report_exports_csv`, line 17: fix what makes it fail and delete `skip('csv
+           export is flaky')`; if it can't run somewhere, call it only under that condition (`if
+           ...:`), with a reason.
+  suite/unconditional-skip/test_bad_skip_calls.py:22: DS402 unconditional-skip [fail] in test_report_streams_rows
+    "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!"
+    Found: `test_report_streams_rows` skips on every run: `pytest.skip(reason='times out on CI')`
+           runs under no condition.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_report_streams_rows`, line 22: fix what makes it fail and delete
+           `pytest.skip(reason='times out on CI')`; if it can't run somewhere, call it only under
+           that condition (`if ...:`), with a reason.
+
+suite/unconditional-skip/test_bad_skip_marks.py
+  suite/unconditional-skip/test_bad_skip_marks.py:7: DS402 unconditional-skip [fail] in test_create_record_assigns_an_id
+    "You silenced the alarm and called the fire OUT? NOT ON MY WATCH!"
+    Found: `test_create_record_assigns_an_id` is skipped on every run:
+           `@pytest.mark.skip(reason='Pre-existing FK migration issue')`.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_create_record_assigns_an_id`, line 7: fix what makes it fail and delete the
+           mark; if it can't run somewhere, use `pytest.mark.skipif` on that condition, with a
+           reason.
+  suite/unconditional-skip/test_bad_skip_marks.py:12: DS401 skip-without-reason [fail] in test_delete_record_removes_it
+    "A skip with no reason is a deserter with no paperwork! FILL IT OUT!"
+    Found: `test_delete_record_removes_it` is skipped with no reason: `@pytest.mark.skip`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_delete_record_removes_it`, line 12: give it `reason="..."` saying what is wrong
+           and when the test can run again, such as a ticket link.
+  suite/unconditional-skip/test_bad_skip_marks.py:12: DS402 unconditional-skip [fail] in test_delete_record_removes_it
+    "You silenced the alarm and called the fire OUT? NOT ON MY WATCH!"
+    Found: `test_delete_record_removes_it` is skipped on every run: `@pytest.mark.skip`.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_delete_record_removes_it`, line 12: fix what makes it fail and delete the mark;
+           if it can't run somewhere, use `pytest.mark.skipif` on that condition, with a reason.
+  suite/unconditional-skip/test_bad_skip_marks.py:19: DS402 unconditional-skip [fail] in test_create_record_rejects_duplicates
+    "You silenced the alarm and called the fire OUT? NOT ON MY WATCH!"
+    Found: `test_create_record_rejects_duplicates` is skipped on every run:
+           `@pytest.mark.skipif(True, reason='flaky')`.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_create_record_rejects_duplicates`, line 19: fix what makes it fail and delete
+           the mark; if it can't run somewhere, use `pytest.mark.skipif` on that condition, with a
+           reason.
+  suite/unconditional-skip/test_bad_skip_marks.py:26: DS402 unconditional-skip [fail] in test_create_record_stores_the_email
+    "Skipping the test doesn't fix the code, recruit! It hides the body!"
+    Found: `test_create_record_stores_the_email` is skipped on every run:
+           `@pytest.mark.skip('waiting on the new schema')`.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_create_record_stores_the_email`, line 26: fix what makes it fail and delete the
+           mark; if it can't run somewhere, use `pytest.mark.skipif` on that condition, with a
+           reason.
+
+suite/unconditional-skip/test_bad_whole_scopes.py
+  suite/unconditional-skip/test_bad_whole_scopes.py:10: DS402 unconditional-skip [fail] in <module>
+    "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!"
+    Found: `<module>` skips on every run: `pt.skip('search is being rewritten',
+           allow_module_level=True)` runs under no condition.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `<module>`, line 10: fix what makes it fail and delete `pt.skip('search is being
+           rewritten', allow_module_level=True)`; if it can't run somewhere, call it only under that
+           condition (`if ...:`), with a reason.
+  suite/unconditional-skip/test_bad_whole_scopes.py:12: DS402 unconditional-skip [fail] in <module>
+    "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!"
+    Found: `<module>` is skipped on every run: `@mark.skip(reason='search is being rewritten')`.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `<module>`, line 12: fix what makes it fail and delete the mark; if it can't run
+           somewhere, use `pytest.mark.skipif` on that condition, with a reason.
+  suite/unconditional-skip/test_bad_whole_scopes.py:15: DS402 unconditional-skip [fail] in TestIndex
+    "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!"
+    Found: `TestIndex` is skipped on every run: `@pt.mark.skip(reason='ranking changed')`.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `TestIndex`, line 15: fix what makes it fail and delete the mark; if it can't run
+           somewhere, use `pytest.mark.skipif` on that condition, with a reason.
+
 suite/unseeded-random/test_bad_numpy_random.py
   suite/unseeded-random/test_bad_numpy_random.py:17: DS803 unseeded-random [fail] in test_mean_of_random_samples
     "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
@@ -1758,4 +1936,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Fix:   In `test_async_import`, line 30: replace the weak assertions on line 30 with exact
            checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-196 findings: 187 fail, 9 warn. Fix them, recruit. DISMISSED!
+217 findings: 208 fail, 9 warn. Fix them, recruit. DISMISSED!

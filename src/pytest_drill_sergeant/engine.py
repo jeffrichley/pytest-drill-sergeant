@@ -1,11 +1,21 @@
-"""The engine: test files and a config in, findings out, with no pytest in sight."""
+"""The engine: test files, production code and a config in, findings out.
+
+No pytest in sight.
+"""
 
 import ast
 from collections.abc import Iterable, Iterator, Mapping
 from fnmatch import fnmatch
 from pathlib import Path
 
-from pytest_drill_sergeant.checks import CHECKS, TestFile, TestFunction
+from pytest_drill_sergeant.checks import (
+    CHECKS,
+    Check,
+    Hit,
+    SourceFile,
+    TestFile,
+    TestFunction,
+)
 from pytest_drill_sergeant.checks.ast_tools import (
     FIXTURE_DECORATORS,
     imports_seen_by,
@@ -98,12 +108,44 @@ def _ignored_codes(path: Path, config: Config) -> frozenset[str]:
     return frozenset(ignored)
 
 
-def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
-    """Run every check over the test files and return the findings.
+def _finding(check: Check, level: Level, path: Path, hit: Hit) -> Finding:
+    return Finding(
+        code=check.code,
+        name=check.name,
+        file=path,
+        line=hit.line,
+        test=hit.test,
+        level=level,
+        found=hit.found,
+        why=check.why,
+        fix=hit.fix,
+    )
+
+
+def _levelled_checks(path: Path, config: Config) -> Iterator[tuple[Check, Level]]:
+    """The checks that report on a file, each with the level it reports at.
+
+    Not the checks configured `off`, nor those a per-file ignore names for the
+    file; in `warn` mode every level is `warn`.
+    """
+    ignored = _ignored_codes(path, config)
+    for check in CHECKS:
+        level = config.levels.get(check.code, check.default_level)
+        if level is Level.OFF or any(check.code.startswith(c) for c in ignored):
+            continue
+        yield check, Level.WARN if config.mode is Level.WARN else level
+
+
+def analyze(
+    paths: Iterable[Path], config: Config, sources: Iterable[Path] = ()
+) -> list[Finding]:
+    """Run every check over the test files and production code; return the findings.
 
     Args:
         paths: The test files to analyse.
         config: The resolved configuration.
+        sources: The production files to analyse, read in full, by the checks
+            that read production code (DS403) and no others.
 
     Returns:
         The findings, ordered by file, line and code. Checks configured `off`
@@ -122,25 +164,18 @@ def analyze(paths: Iterable[Path], config: Config) -> list[Finding]:
         module = ast.parse(path.read_bytes(), filename=str(path))
         tests = tuple(_tests_in(module.body, module_imports(module)))
         file = TestFile(path=path, module=module, tests=tests, thresholds=thresholds)
-        ignored = _ignored_codes(path, config)
-        for check in CHECKS:
-            level = config.levels.get(check.code, check.default_level)
-            if level is Level.OFF or any(check.code.startswith(c) for c in ignored):
-                continue
-            if config.mode is Level.WARN:
-                level = Level.WARN
+        for check, level in _levelled_checks(path, config):
             findings.extend(
-                Finding(
-                    code=check.code,
-                    name=check.name,
-                    file=path,
-                    line=hit.line,
-                    test=hit.test,
-                    level=level,
-                    found=hit.found,
-                    why=check.why,
-                    fix=hit.fix,
-                )
-                for hit in check.find(file)
+                _finding(check, level, path, hit) for hit in check.find(file)
             )
+    for path in sources:
+        source = SourceFile(
+            path=path, module=ast.parse(path.read_bytes(), filename=str(path))
+        )
+        for check, level in _levelled_checks(path, config):
+            if check.find_in_source is not None:
+                findings.extend(
+                    _finding(check, level, path, hit)
+                    for hit in check.find_in_source(source)
+                )
     return sorted(findings, key=lambda f: (f.file.as_posix(), f.line, f.code))

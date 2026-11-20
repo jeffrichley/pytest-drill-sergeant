@@ -70,6 +70,19 @@ class TestFile:
 
 
 @dataclass(frozen=True)
+class SourceFile:
+    """One parsed file of production code: what a check that reads it is given.
+
+    Attributes:
+        path: The file, as it was given to the engine.
+        module: The file's syntax tree.
+    """
+
+    path: Path
+    module: ast.Module
+
+
+@dataclass(frozen=True)
 class Hit:
     """What a check reports about one test, before the engine makes it a finding.
 
@@ -92,11 +105,19 @@ class Hit:
         `found` follows "`<test>` " and `fix` follows "In `<test>`, line <n>: ",
         so every finding names its test first and every fix says where to look.
         """
+        return cls.at(test.name, line, found=found, fix=fix)
+
+    @classmethod
+    def at(cls, where: str, line: int, *, found: str, fix: str) -> "Hit":
+        """A hit on a line of a named place: a test, a class, a function or `<module>`.
+
+        The phrasing is `on`'s, with the place's name where the test's would be.
+        """
         return cls(
             line=line,
-            test=test.name,
-            found=f"`{test.name}` {found}",
-            fix=f"In `{test.name}`, line {line}: {fix}",
+            test=where,
+            found=f"`{where}` {found}",
+            fix=f"In `{where}`, line {line}: {fix}",
         )
 
 
@@ -113,7 +134,10 @@ class Check:
         explain: What the check flags and how to fix it, for `explain`.
         bad_example: A test the check flags.
         good_example: The same test, fixed.
-        find: Reports the hits in one test file.
+        find: Reports the hits in one test file; by default, none.
+        find_in_source: Reports the hits in one file of production code; `None`
+            for a check that reads only test files. Which files a check reads is
+            which of the two it gives: DS403 gives only this one.
     """
 
     code: str
@@ -124,4 +148,5 @@ class Check:
     explain: str
     bad_example: str
     good_example: str
-    find: Callable[[TestFile], Iterable[Hit]]
+    find: Callable[[TestFile], Iterable[Hit]] = lambda _file: ()
+    find_in_source: Callable[[SourceFile], Iterable[Hit]] | None = None
