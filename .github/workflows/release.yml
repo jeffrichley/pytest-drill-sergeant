@@ -52,11 +52,28 @@ jobs:
 
       - name: 🎯 Verify Deployment
         run: |
-          # Wait for PyPI to process the package
-          sleep 60
-          # Verify the package is available
-          uv pip install --system pytest-drill-sergeant
-          echo "✅ Production deployment verified!"
+          # The version just built, as PyPI spells it (the wheel name is PEP 440 normalised,
+          # so a 1.0.0-alpha.1 tag gives 1.0.0a1).
+          wheels=(dist/*.whl)
+          version="$(basename "${wheels[0]}" | cut -d- -f2)"
+          echo "Verifying pytest-drill-sergeant==${version} on PyPI"
+          # Pin the exact version, pre-release included; retry while PyPI's index catches up.
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if uv pip install --system --refresh --prerelease=explicit "pytest-drill-sergeant==${version}"; then
+              break
+            fi
+            if [ "$attempt" -eq 10 ]; then
+              echo "❌ pytest-drill-sergeant==${version} never became installable from PyPI"
+              exit 1
+            fi
+            sleep 30
+          done
+          installed="$(python -c 'from importlib.metadata import version; print(version("pytest-drill-sergeant"))')"
+          if [ "$installed" != "$version" ]; then
+            echo "❌ Installed ${installed}, expected ${version}"
+            exit 1
+          fi
+          echo "✅ Production deployment verified: ${installed}"
 
       - name: 📋 Deployment Summary
         run: |
