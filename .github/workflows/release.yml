@@ -68,8 +68,9 @@ jobs:
             fi
             sleep 30
           done
+          # Installed metadata keeps pyproject's spelling (1.0.0-alpha.1), so compare as PEP 440 versions.
           installed="$(python -c 'from importlib.metadata import version; print(version("pytest-drill-sergeant"))')"
-          if [ "$installed" != "$version" ]; then
+          if ! uv run --no-project --with packaging python -c 'import sys; from packaging.version import Version as V; sys.exit(V(sys.argv[1]) != V(sys.argv[2]))' "$installed" "$version"; then
             echo "❌ Installed ${installed}, expected ${version}"
             exit 1
           fi
