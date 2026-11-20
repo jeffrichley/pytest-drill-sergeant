@@ -6,6 +6,8 @@ No pytest in sight.
 import ast
 import dataclasses
 import gc
+import io
+import tokenize
 from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -27,7 +29,12 @@ from pytest_drill_sergeant.checks.ast_tools import (
     module_imports,
     qualified,
 )
-from pytest_drill_sergeant.checks.base import FileSummary, FunctionNode, Thresholds
+from pytest_drill_sergeant.checks.base import (
+    Comment,
+    FileSummary,
+    FunctionNode,
+    Thresholds,
+)
 from pytest_drill_sergeant.checks.summary import summarize
 from pytest_drill_sergeant.config import Config
 from pytest_drill_sergeant.findings import Finding, Level
@@ -227,6 +234,18 @@ def _per_file_settings(config: Config) -> dict[str, object]:
     }
 
 
+def _own_line_comments(source: bytes) -> tuple[Comment, ...]:
+    """The comments that stand alone on their lines, read with `tokenize`.
+
+    Text in a string is never a comment, and one after code on its line isn't alone.
+    """
+    return tuple(
+        Comment(line=token.start[0], text=token.string)
+        for token in tokenize.tokenize(io.BytesIO(source).readline)
+        if token.type == tokenize.COMMENT and not token.line[: token.start[1]].strip()
+    )
+
+
 def _analyze_file(path: Path, source: bytes, config: Config) -> _FileResult:
     """Per-file analysis: every check's hits in a file, its summary and waivers."""
     module = ast.parse(source, filename=str(path))
@@ -241,6 +260,7 @@ def _analyze_file(path: Path, source: bytes, config: Config) -> _FileResult:
         thresholds=_thresholds(config),
         category_markers=config.category_markers,
         directories=_directories(_relative(path, config)),
+        comments=_own_line_comments(source),
     )
     return _FileResult(
         hits={c.code: hits for c in CHECKS if (hits := tuple(c.find(file)))},

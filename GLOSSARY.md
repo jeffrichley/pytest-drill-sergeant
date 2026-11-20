@@ -44,6 +44,10 @@ _Avoid_: Disabled test
 A test's statements before the first one that holds a real assertion, its docstring aside.
 _Avoid_: Arrange block, preamble
 
+**AAA comment**:
+A comment alone on its line that heads a section of a test: `# Arrange`, `# Act`, `# Assert`, or `# Act and assert` for both, alone or followed by `:` or a dash and any text. It heads the statements below it, up to the next one. Only the opt-in AAA comment check (DS108) reads them.
+_Avoid_: Section marker, given/when/then
+
 **Fingerprint**:
 A short, stable digest of what one or more statements say: the same for statements that read alike wherever they stand, different for any change of name, literal or structure. Comments and layout don't change it.
 _Avoid_: Hash (of a file), signature

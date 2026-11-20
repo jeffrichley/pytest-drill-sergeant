@@ -17,15 +17,14 @@ CORPUS = Path(__file__).parent / "corpus"
 
 def analyze_as_read_by(check, path):
     """The findings for a file, handed to the engine as the check reads it: as
-    production code or as a test file.
+    production code or as a test file, with the check on even when it is off by
+    default.
 
     An example shows one failure mode, so only the category-marker check's own
     examples are read with that check on: a category marker belongs to the project's
     file, not to an example of another check."""
-    config = (
-        Config()
-        if check is MISSING_CATEGORY_MARKER
-        else Config(levels={MISSING_CATEGORY_MARKER.code: Level.OFF})
+    config = Config(
+        levels={MISSING_CATEGORY_MARKER.code: Level.OFF, check.code: Level.FAIL}
     )
     if check.find_in_source:
         return analyze([], config, sources=[path])
