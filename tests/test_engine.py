@@ -391,3 +391,24 @@ def test_category_marker_fix_lists_every_marker_when_no_directory_below_the_root
     assert all(
         f"`@pytest.mark.{m}`" in finding.fix for m in ("unit", "integration", "e2e")
     )
+
+
+def test_category_marker_fix_names_the_one_configured_marker(
+    tmp_path, unmarked_test_at
+):
+    path = unmarked_test_at("test_total.py")
+
+    [finding] = analyze([path], Config(root=tmp_path, category_markers=("unit",)))
+
+    assert "add `@pytest.mark.unit` to" in finding.fix
+
+
+def test_category_marker_fix_reads_directory_names_in_any_case(
+    tmp_path, unmarked_test_at
+):
+    path = unmarked_test_at("tests/Unit/test_total.py")
+
+    [finding] = analyze([path], Config(root=tmp_path))
+
+    assert "`@pytest.mark.unit`" in finding.fix
+    assert "e2e" not in finding.fix
