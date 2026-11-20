@@ -72,8 +72,7 @@ EXPECT_FUNCTIONS = frozenset(
 )
 
 # The packages whose functions drill-sergeant knows: pytest's own and pytest-check's.
-# A call into them is never code it can't see, nor code under test. Playwright's
-# `expect` is known too (`EXPECT_FUNCTIONS`): it asserts only through a matcher.
+# A call into them is never code it can't see, nor code under test.
 KNOWN_PACKAGES = frozenset({"pytest", "_pytest", "pytest_check"})
 
 # The decorators that make a function a fixture, which pytest never collects.
@@ -126,9 +125,11 @@ def _bind_imports(
     for with its leading dots (`.contract.DOC_TYPES`).
     """
     if isinstance(statement, ast.ImportFrom) and statement.level and relative:
-        prefix = "." * statement.level + (statement.module or "")
+        prefix = "." * statement.level + (
+            f"{statement.module}." if statement.module else ""
+        )
         for alias in statement.names:
-            names[alias.asname or alias.name] = f"{prefix}.{alias.name}"
+            names[alias.asname or alias.name] = prefix + alias.name
     elif isinstance(statement, ast.Import):
         for alias in statement.names:
             if alias.asname:

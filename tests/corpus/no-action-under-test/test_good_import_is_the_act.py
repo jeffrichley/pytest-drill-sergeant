@@ -23,3 +23,8 @@ def test_stdlib_import_runs_code_too():
     import os.path
 
     assert os.path.sep == "/"
+
+
+def test_importorskip_imports_like_a_statement():
+    legacy = pytest.importorskip("app.legacy")
+    assert legacy.VERSION == "1"

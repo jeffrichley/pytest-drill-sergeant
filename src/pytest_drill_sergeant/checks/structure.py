@@ -42,6 +42,8 @@ from pytest_drill_sergeant.tokens import Comment
 _CALL_FORM_AFTER_TYPE = frozenset({"pytest.raises", "pytest.warns"})
 _DEPRECATED_CALL = frozenset({"pytest.deprecated_call"})
 _PYTEST_FAIL = frozenset({"pytest.fail"})
+# pytest's call that imports the module it names, as an `import` statement would.
+_IMPORTORSKIP = frozenset({"pytest.importorskip"})
 
 
 def _last_call(test: TestFunction) -> ast.Call | None:
@@ -213,7 +215,8 @@ def _runs_code_under_test(test: TestFunction, module_names: Mapping[str, str]) -
     That is any call but a direct one to pytest's (`pytest.raises(E)`,
     `pytest.approx`): an `assert*`-named one is the code under test as much as any
     other, and pytest's call form (`pytest.raises(E, func, arg)`) runs `func`. So
-    does an `await`, an `import` in the body, and a read of a name imported from
+    does an `await`, an `import` in the body (or `pytest.importorskip`), and a
+    read of a name imported from
     outside the standard library: an attribute, subscript, operator or iteration
     on it runs that module's code.
 
@@ -229,6 +232,7 @@ def _runs_code_under_test(test: TestFunction, module_names: Mapping[str, str]) -
         if isinstance(node, ast.Call) and (
             not _is_known_package(qualified(node.func, test.imports))
             or _calls_through_pytest(node, test.imports)
+            or calls_to(node, _IMPORTORSKIP, test.imports)
         ):
             return True
         if (
@@ -283,7 +287,7 @@ NO_ACTION_UNDER_TEST = Check(
     explain=(
         "Flags a test that has a real assertion but runs no code under test: no "
         "call (an `assert*`-named one counts, being code too, and so does pytest's "
-        "call form, `pytest.raises(E, func, arg)`; a direct call to pytest's own, "
+        "call form, `pytest.raises(E, func, arg)`, and `pytest.importorskip`; a direct call to pytest's own, "
         "such as `pytest.raises(E)` or `pytest.approx`, doesn't), no `await`, no "
         "`import` in its body, no read of a name imported from outside the standard "
         "library (an attribute, subscript, operator or iteration on it runs that "

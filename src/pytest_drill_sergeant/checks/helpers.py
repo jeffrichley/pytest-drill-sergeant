@@ -480,6 +480,7 @@ class TestTree:
             root = root.value
         if not isinstance(root, ast.Name):
             return False
+        # Playwright's `expect` is known too: it asserts only through a matcher.
         # The imported names the code sees, shadows gone; a relative import is
         # never in them, being the project's own.
         imported = scope.names.get(root.id)
