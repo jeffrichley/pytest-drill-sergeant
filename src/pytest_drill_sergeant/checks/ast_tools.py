@@ -71,6 +71,11 @@ EXPECT_FUNCTIONS = frozenset(
     {"playwright.sync_api.expect", "playwright.async_api.expect"}
 )
 
+# The packages whose functions drill-sergeant knows: pytest's own and pytest-check's.
+# A call into them is never code it can't see, nor code under test. Playwright's
+# `expect` is known too (`EXPECT_FUNCTIONS`): it asserts only through a matcher.
+KNOWN_PACKAGES = frozenset({"pytest", "_pytest", "pytest_check"})
+
 # The decorators that make a function a fixture, which pytest never collects.
 FIXTURE_DECORATORS = frozenset({"pytest.fixture", "pytest_asyncio.fixture"})
 
@@ -110,10 +115,21 @@ def call_name(call: ast.Call) -> str | None:
 
 
 def _bind_imports(
-    statement: ast.Import | ast.ImportFrom, names: dict[str, str]
+    statement: ast.Import | ast.ImportFrom,
+    names: dict[str, str],
+    *,
+    relative: bool = False,
 ) -> None:
-    """Record the local names an import binds, each with what it stands for."""
-    if isinstance(statement, ast.Import):
+    """Record the local names an import binds, each with what it stands for.
+
+    A relative import is recorded only when `relative` is set, as what it stands
+    for with its leading dots (`.contract.DOC_TYPES`).
+    """
+    if isinstance(statement, ast.ImportFrom) and statement.level and relative:
+        prefix = "." * statement.level + (statement.module or "")
+        for alias in statement.names:
+            names[alias.asname or alias.name] = f"{prefix}.{alias.name}"
+    elif isinstance(statement, ast.Import):
         for alias in statement.names:
             if alias.asname:
                 names[alias.asname] = alias.name
@@ -158,7 +174,7 @@ def _logger_bound_by(statement: ast.stmt, names: Mapping[str, str]) -> str | Non
     return None
 
 
-def module_imports(module: ast.Module) -> dict[str, str]:
+def module_imports(module: ast.Module, *, relative: bool = False) -> dict[str, str]:
     """The names a module binds by import at its top level, minus any it rebinds.
 
     Each maps to what it stands for in full: `pt` to `pytest` after `import pytest
@@ -167,16 +183,16 @@ def module_imports(module: ast.Module) -> dict[str, str]:
     `except ImportError`) doesn't undo them; a later top-level `def`, `class` or
     assignment of the same name wins, as it does at run time. A top-level
     `log = logging.getLogger(...)` binds `log` to `logging.Logger`, what the call
-    returns.
+    returns. Relative imports count only when `relative` is set (`_bind_imports`).
     """
     names: dict[str, str] = {}
     for statement in module.body:
         if isinstance(statement, ast.If | ast.Try):
             for node in ast.walk(statement):
                 if isinstance(node, ast.Import | ast.ImportFrom):
-                    _bind_imports(node, names)
+                    _bind_imports(node, names, relative=relative)
         elif isinstance(statement, ast.Import | ast.ImportFrom):
-            _bind_imports(statement, names)
+            _bind_imports(statement, names, relative=relative)
         elif (logger := _logger_bound_by(statement, names)) is not None:
             names[logger] = _LOGGER
         else:
