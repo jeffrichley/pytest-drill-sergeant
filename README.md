@@ -9,8 +9,9 @@ reports them as findings that fail the run, in the drill-sergeant voice.
 the structure checks (DS101-DS107), the assertion checks (DS201-DS203), the mocking
 checks (DS301-DS303), the cheating checks (DS401-DS403), copy-pasted setup (DS501),
 near-duplicate tests (DS502), the brittleness checks (DS601-DS603), the exception
-checks (DS701, DS702) and the flakiness checks (DS801-DS803) are reported both by the
-pytest plugin and by `drill-sergeant check <paths>`. The plan is
+checks (DS701, DS702), the flakiness checks (DS801-DS803) and the missing category
+marker (DS901) are reported both by the pytest plugin and by
+`drill-sergeant check <paths>`. The plan is
 the [v1 spec](https://github.com/jeffrichley/pytest-drill-sergeant/issues/118). Version
 0.4 is archived under the tag `archive/2026-11-19/v0.4/main`.
 
@@ -31,6 +32,8 @@ Installing the package turns the plugin on: every `pytest` run is a drill-sergea
 - The section closes with a tally of the findings by level and the number of waived
   findings.
 - Under pytest-xdist the controller analyses; the workers only run tests.
+- It registers the configured category markers with pytest, so `--strict-markers`
+  accepts them.
 - `-p no:drill_sergeant` or `drill_sergeant_mode = "off"` turns it off. Bad config
   is a pytest usage error (exit 4).
 
@@ -83,15 +86,28 @@ drill_sergeant_voice = false
 | `drill_sergeant_max_mock_setup` | whole number | 10 |
 | `drill_sergeant_duplicate_setup_min_statements` | whole number | 3 |
 | `drill_sergeant_duplicate_setup_min_tests` | whole number | 3 |
-| `drill_sergeant_category_markers` | marker names | `unit integration e2e` |
+| `drill_sergeant_category_markers` | marker names; every test must carry one (DS901), and the plugin registers them | `unit integration e2e` |
 | `drill_sergeant_source_dirs` | directory lines, relative to the config file; each must exist. The production code DS403 reads in full; with none and no `src/`, DS403 is skipped and the output says so | `src/` if it exists |
 | `drill_sergeant_voice` | `true` or `false`; off prints Found/Why/Fix without the voice | `true` |
 | `drill_sergeant_max_findings` | whole number, 0 for all | 25 |
 | `drill_sergeant_inline_waivers` | `true` or `false` | `true` |
 | `drill_sergeant_cache` | `true` or `false` | `true` |
 
-The thresholds, markers and cache are accepted now and take
-effect as the checks that use them land.
+The cache is accepted now and takes effect when it lands.
+
+### Category markers
+
+DS901 requires every test to carry one of the configured category markers, as
+`pytest.mark.<marker>` on the test, its class or the module's `pytestmark`. Its fix
+suggests the marker named by the nearest directory in the file's path, relative to the
+config file's directory (`tests/integration/test_x.py` suggests
+`@pytest.mark.integration`), and otherwise lists the configured markers. The check
+reads the files, never edits them.
+
+**Known limitation:** markers a project's own conftest hook adds at collection time
+(`pytest_collection_modifyitems` marking by directory, say) are not in the test files,
+so the check can't see them. Such projects turn it off:
+`drill_sergeant_levels = ["DS901=off"]`.
 
 ## Development
 
