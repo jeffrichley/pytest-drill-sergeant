@@ -23,6 +23,10 @@ house rules hold here:
   rendered text. When text is the fact, match the shortest fragment that identifies it
   (a code, a command name), never a sentence. Only the golden-output test reads whole
   output.
+- **The golden suite stays small and fixed.** The golden-output test runs the CLI over
+  `tests/golden/suite/`, never the corpus, so a new check or corpus file leaves
+  `tests/golden/check.txt` alone. It changes only when the report changes or a check
+  fires on the suite's files: run `just golden` and review `git diff tests/golden`.
 - **A refusal is pinned by its identity.** Assert a refusal's exit code or error kind;
   its one-line message is for people.
 - **The environment is pinned once.** `conftest.py` fixes colour, terminal width and CI
