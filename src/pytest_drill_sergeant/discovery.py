@@ -32,6 +32,13 @@ _NORECURSEDIRS = (
     "{arch}",
 )
 
+# The `.toml` config files that hold a top-level `[pytest]` table; pytest reads any
+# other `.toml` as it reads a `pyproject.toml`.
+_PYTEST_TOMLS = frozenset({"pytest.toml", ".pytest.toml"})
+
+# The config files pytest takes as the config even with no pytest table in them.
+_ALWAYS_CONFIG = _PYTEST_TOMLS | {"pytest.ini", ".pytest.ini"}
+
 # pytest's config files, in the order it tries them within one directory.
 _CONFIG_NAMES = (
     "pytest.toml",
@@ -74,9 +81,9 @@ def _read_toml(path: Path) -> dict[str, object] | None:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as error:
         raise ConfigError(f"{path}: cannot read it: {error}") from None
-    if path.name != "pyproject.toml":
+    if path.name in _PYTEST_TOMLS:
         table = data.get("pytest")
-        return table if isinstance(table, dict) else {}
+        return table if isinstance(table, dict) else None
     tool = data.get("tool", {}).get("pytest")
     if not isinstance(tool, dict):
         return None
@@ -91,6 +98,15 @@ def _read_toml(path: Path) -> dict[str, object] | None:
     return native
 
 
+def _table(path: Path) -> str:
+    """The pytest table or section a config file holds its config in."""
+    if path.suffix == ".toml":
+        if path.name in _PYTEST_TOMLS:
+            return "[pytest]"
+        return "[tool.pytest] or [tool.pytest.ini_options]"
+    return "[tool:pytest]" if path.suffix == ".cfg" else "[pytest]"
+
+
 def _read_ini(path: Path, section: str) -> dict[str, object] | None:
     parser = configparser.ConfigParser(interpolation=None)
     parser.optionxform = str  # type: ignore[assignment,method-assign]  # Keep keys' case, as pytest does.
@@ -100,25 +116,31 @@ def _read_ini(path: Path, section: str) -> dict[str, object] | None:
         raise ConfigError(f"{path}: cannot read it: {error}") from None
     if parser.has_section(section):
         return dict(parser.items(section))
-    return {} if path.name in {"pytest.ini", ".pytest.ini"} else None
+    return None
 
 
 def _read(path: Path) -> dict[str, object] | None:
     """A config file's pytest section, or `None` when it has none."""
     if path.suffix == ".toml":
         return _read_toml(path)
-    return _read_ini(path, "tool:pytest" if path.suffix == ".cfg" else "pytest")
+    return _read_ini(path, _table(path).strip("[]"))
 
 
 def load(path: Path) -> IniSource:
     """The ini values in a config file named on purpose, as `--config` does.
 
+    The file is read as pytest's `-c` reads it: a `.toml` not named `pytest.toml` or
+    `.pytest.toml` is read as a `pyproject.toml`.
+
     Raises:
-        ConfigError: When the file is missing or doesn't parse.
+        ConfigError: When the file is missing, doesn't parse, or holds no pytest
+            table, even a `pytest.ini` pytest would take as an empty config.
     """
     if not path.is_file():
         raise ConfigError(f"no such config file: {path}")
-    values = _read(path) or {}
+    values = _read(path)
+    if values is None:
+        raise ConfigError(f"{path}: no {_table(path)} table in it")
     return IniSource(
         root=path.resolve().parent,
         path=path,
@@ -148,6 +170,8 @@ def discover(paths: Iterable[Path]) -> IniSource:
             candidate = directory / name
             if candidate.is_file():
                 values = _read(candidate)
+                if values is None and name in _ALWAYS_CONFIG:
+                    values = {}
                 if values is not None:
                     return IniSource(
                         root=directory,
