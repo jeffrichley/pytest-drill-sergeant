@@ -6,7 +6,7 @@ behaviour, skips added to go green, sleeps, and test files too long to follow. I
 reports them as findings that fail the run, in the drill-sergeant voice.
 
 **Status:** v1 is being rebuilt from scratch. So far the structure checks (DS101-DS104),
-the assertion checks (DS201-DS203), the brittleness checks (DS601-DS603), the exception
+the assertion checks (DS201-DS203), the mocking checks (DS301-DS303), the brittleness checks (DS601-DS603), the exception
 checks (DS701, DS702) and the flakiness checks (DS801-DS803) are
 reported both by the pytest plugin and by `drill-sergeant check <paths>`. The plan is
 the [v1 spec](https://github.com/jeffrichley/pytest-drill-sergeant/issues/118). Version
