@@ -56,7 +56,7 @@ class UnreadableFileError(Exception):
     """
 
 
-def _read(path: Path) -> bytes:
+def _require_source(path: Path) -> bytes:
     """A file's bytes.
 
     Raises:
@@ -278,7 +278,7 @@ def _file_result(
     path: Path, config: Config, cache: Cache | None, shared: str
 ) -> _FileResult:
     """A file's per-file result: from the cache when its key still matches."""
-    source = _read(path)
+    source = _require_source(path)
     if cache is None:
         return _analyze_file(path, source, config)
     key = f"{content_hash(source)}:{shared}"
@@ -339,7 +339,7 @@ def _analyze_source(
     The findings are those of the checks that read production code; a waiver
     silences a finding on its own line.
     """
-    source = _read(path)
+    source = _require_source(path)
     file = SourceFile(path=path, module=ast.parse(source, filename=str(path)))
     findings = [
         _finding(check, path, hit, levels[check.code])
