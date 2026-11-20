@@ -220,7 +220,15 @@ just sync           # create .venv with the dev tools
 just install-hooks  # pre-commit and commit-msg hooks
 just check          # the gate: lint, format, types, dead code, tests
 just perf           # the speed budget: a warm run over 300 test files (not in the gate)
+just try ../other/tests DS101 DS103  # this checkout on another project's tests
 ```
+
+`just try <path>` runs this checkout's `drill-sergeant check <path>` with that project's
+own config. Codes after the path also turn those checks on at `fail`, for that run
+only: it writes a temporary config file beside the project's, with the codes appended
+to `drill_sergeant_levels`, passes it with `--config` and deletes it afterwards. The
+project's files are left as they were; only a run killed outright leaves a
+`.drill-sergeant-try-*.toml` behind.
 
 ## License
 

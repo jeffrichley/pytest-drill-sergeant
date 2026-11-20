@@ -6,6 +6,7 @@ Follow the house handbook, the private repo [`jeffrichley/handbook`](https://git
 
 - Ticket start: claim it on GitHub before any work, with `gh issue edit <issue> --add-assignee @me`. Already assigned to someone else? Stop and ask. Then branch off main.
 - Ticket done: verify before anything leaves the machine: `just check` green, every acceptance criterion checked against what was built, and the code-review skill run over the branch with its findings fixed or reported. Then push and open a PR for Jeff to review that closes the ticket with a Conventional Commits title (`fix: ...`), and wait for its checks with `gh pr checks <pr> --watch`; on "no checks reported", run it again. A job still queued after five minutes has a stuck runner: recreate it as the handbook's `infrastructure.md` says, then watch again. Checks red: fix, push, watch again. Checks green: stop and report the PR with its full URL, so Jeff can click straight to it. Merging is Jeff's.
+- Proving a #171 check on a real suite: run it from this checkout with `just try <path> DS###`, which turns the check on for that run only and leaves the other project's files untouched. Never edit the other project's config to turn it on.
 - Renovate: the central Renovate run merges its own grouped non-major pull request once CI is green, the one exception to "Merging is Jeff's".
 
 ## Agent skills
