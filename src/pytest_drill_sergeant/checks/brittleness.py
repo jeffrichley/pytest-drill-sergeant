@@ -7,7 +7,7 @@ from pytest_drill_sergeant.checks.assertions import tautological_asserts
 from pytest_drill_sergeant.checks.ast_tools import (
     call_name,
     instance_param,
-    is_assert_call,
+    is_real_assertion,
     walk_test,
 )
 from pytest_drill_sergeant.checks.base import Check, Hit, TestFile, TestFunction
@@ -146,15 +146,16 @@ BRITTLE_STRING_MATCH = Check(
 def _asserted(
     test: TestFunction,
 ) -> Iterator[tuple[ast.Assert | ast.Call, list[ast.expr]]]:
-    """Each assertion in a test, with the expressions it checks.
+    """Each real assertion in a test, with the expressions it checks.
 
-    An `assert` checks its test. An `assert*` call (`self.assertEqual`, a mock's
-    `assert_called_once`) checks its arguments and the object it is called on.
+    An `assert` checks its test. An asserting call (`self.assertEqual`, a mock's
+    `assert_called_once`, a pytest-check helper, a matcher on Playwright's
+    `expect(...)`) checks its arguments and the object it is called on.
     """
     for node in walk_test(test):
         if isinstance(node, ast.Assert):
             yield node, [node.test]
-        elif isinstance(node, ast.Call) and is_assert_call(node):
+        elif isinstance(node, ast.Call) and is_real_assertion(node, test.imports):
             func = node.func
             receiver = [func.value] if isinstance(func, ast.Attribute) else []
             yield node, [*receiver, *node.args]
@@ -233,8 +234,10 @@ PRIVATE_STATE_ASSERTION = Check(
         "so a refactor that keeps the behaviour still breaks the test."
     ),
     explain=(
-        "Flags an assertion (an `assert`, or an `assert*` call such as "
-        "`self.assertEqual` or a mock's `assert_called_once`) that reads a private "
+        "Flags an assertion (an `assert`, an `assert*` call such as "
+        "`self.assertEqual` or a mock's `assert_called_once`, `pytest.raises` and "
+        "kin, a pytest-check helper such as `check.equal`, or a matcher on "
+        "Playwright's `expect(...)`) that reads a private "
         "attribute: one starting with `_`, such as `cache._store` or a "
         "name-mangled `obj._Class__x`. Dunders such as `__dict__` or `__name__`, "
         "namedtuple's `_asdict`, `_replace`, `_fields`, `_field_defaults` and "
