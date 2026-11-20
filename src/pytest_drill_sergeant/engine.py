@@ -4,13 +4,17 @@ No pytest in sight.
 """
 
 import ast
+import dataclasses
+import gc
 import io
 import tokenize
 from collections.abc import Iterable, Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from pathlib import Path
 
+from pytest_drill_sergeant.cache import Cache, content_hash, context
 from pytest_drill_sergeant.checks import (
     CHECKS,
     Check,
@@ -103,18 +107,24 @@ def _tests_in(
             yield from _tests_in(node.body, names, f"{prefix}{node.name}::")
 
 
-def _ignored_codes(path: Path, config: Config) -> frozenset[str]:
+def _ignored_codes(path: Path, config: Config, root: str) -> frozenset[str]:
     """The code prefixes the config's per-file ignores turn off for a file.
 
     A glob matches the file's path relative to the config root, or, for a glob with
     no `/`, the file's name.
+
+    Args:
+        path: The file.
+        config: The resolved configuration.
+        root: The config root, resolved, as a posix path ending in `/`.
     """
-    resolved = path.resolve()
-    root = config.root.resolve()
+    if not config.per_file_ignores:
+        return frozenset()
+    # Plain string work: pathlib's own relative-path test costs more than the rest
+    # of a warm run.
+    resolved = path.resolve().as_posix()
     relative = (
-        resolved.relative_to(root).as_posix()
-        if resolved.is_relative_to(root)
-        else path.as_posix()
+        resolved.removeprefix(root) if resolved.startswith(root) else path.as_posix()
     )
     ignored: set[str] = set()
     for glob, codes in config.per_file_ignores:
@@ -168,6 +178,42 @@ def _finding(check: Check, path: Path, hit: Hit, level: Level) -> Finding:
     )
 
 
+@dataclass(frozen=True)
+class _FileResult:
+    """What per-file analysis gives for one file, before the config's levels apply.
+
+    It is what the cache keeps, so it holds every check's hits, whatever its level:
+    a changed level or per-file ignore never needs a file analysed again.
+
+    Attributes:
+        hits: Each check's hits in the file, by the check's code; a check with
+            none is left out.
+        summary: The file's per-file summary.
+        waivers: The file's inline waivers, for applying after cross-file analysis.
+    """
+
+    hits: Mapping[str, tuple[Hit, ...]]
+    summary: FileSummary
+    waivers: FileWaivers
+
+
+# The config fields per-file analysis never reads: changing one of them keeps every
+# cached result. Every other field is part of the cache key, so a field added to
+# the config invalidates the cache until it is listed here.
+_NOT_PER_FILE = frozenset(
+    {"mode", "levels", "per_file_ignores", "root", "voice", "max_findings", "cache"}
+)
+
+
+def _per_file_settings(config: Config) -> dict[str, object]:
+    """The config fields that can change a file's per-file result."""
+    return {
+        f.name: getattr(config, f.name)
+        for f in dataclasses.fields(config)
+        if f.name not in _NOT_PER_FILE
+    }
+
+
 def _own_line_comments(source: bytes) -> tuple[Comment, ...]:
     """The comments that stand alone on their lines, read with `tokenize`.
 
@@ -180,11 +226,8 @@ def _own_line_comments(source: bytes) -> tuple[Comment, ...]:
     )
 
 
-def _analyze_file(
-    path: Path, config: Config
-) -> tuple[list[Finding], FileSummary, FileWaivers]:
-    """Per-file analysis: a file's findings, per-file summary and inline waivers."""
-    source = path.read_bytes()
+def _analyze_file(path: Path, source: bytes, config: Config) -> _FileResult:
+    """Per-file analysis: every check's hits in a file, its summary and waivers."""
     module = ast.parse(source, filename=str(path))
     tests = tuple(_tests_in(module.body, module_imports(module)))
     waivers = parse(source) if config.inline_waivers else ()
@@ -197,20 +240,63 @@ def _analyze_file(
         thresholds=_thresholds(config),
         comments=_own_line_comments(source),
     )
-    ignored = _ignored_codes(path, config)
-    findings = [
-        _finding(check, path, hit, level)
-        for check in CHECKS
-        if (level := _level(check, ignored, config)) is not Level.OFF
-        for hit in check.find(file)
-    ]
-    file_waivers = FileWaivers(
-        waivers=waivers, def_lines={t.name: t.node.lineno for t in tests}
+    return _FileResult(
+        hits={c.code: hits for c in CHECKS if (hits := tuple(c.find(file)))},
+        summary=summarize(file),
+        waivers=FileWaivers(
+            waivers=waivers, def_lines={t.name: t.node.lineno for t in tests}
+        ),
     )
-    return findings, summarize(file), file_waivers
 
 
-def _analyze_source(path: Path, config: Config) -> tuple[list[Finding], FileWaivers]:
+def _file_result(
+    path: Path, config: Config, cache: Cache | None, shared: str
+) -> _FileResult:
+    """A file's per-file result: from the cache when its key still matches."""
+    source = path.read_bytes()
+    if cache is None:
+        return _analyze_file(path, source, config)
+    key = f"{content_hash(source)}:{shared}"
+    result = cache.get(path, key, _FileResult)
+    if result is None:
+        result = _analyze_file(path, source, config)
+        cache.put(path, key, result)
+    return result
+
+
+# The level each check reports at in a file, by the check's code.
+Levels = Mapping[str, Level]
+
+
+def _levels_by_file(paths: list[Path], config: Config) -> dict[Path, Levels]:
+    """The level each check reports at in each file.
+
+    Files that the same per-file ignores match share one mapping.
+    """
+    shared: dict[frozenset[str], Levels] = {}
+    by_file: dict[Path, Levels] = {}
+    root = config.root.resolve().as_posix().rstrip("/") + "/"
+    for path in paths:
+        ignored = _ignored_codes(path, config, root)
+        if ignored not in shared:
+            shared[ignored] = {c.code: _level(c, ignored, config) for c in CHECKS}
+        by_file[path] = shared[ignored]
+    return by_file
+
+
+def _file_findings(path: Path, result: _FileResult, levels: Levels) -> list[Finding]:
+    """A file's findings: its hits, at the level each check reports at there."""
+    return [
+        _finding(check, path, hit, levels[check.code])
+        for check in CHECKS
+        if levels[check.code] is not Level.OFF
+        for hit in result.hits.get(check.code, ())
+    ]
+
+
+def _analyze_source(
+    path: Path, config: Config, levels: Levels
+) -> tuple[list[Finding], FileWaivers]:
     """A production file's findings and its inline waivers.
 
     The findings are those of the checks that read production code; a waiver
@@ -218,12 +304,10 @@ def _analyze_source(path: Path, config: Config) -> tuple[list[Finding], FileWaiv
     """
     source = path.read_bytes()
     file = SourceFile(path=path, module=ast.parse(source, filename=str(path)))
-    ignored = _ignored_codes(path, config)
     findings = [
-        _finding(check, path, hit, level)
+        _finding(check, path, hit, levels[check.code])
         for check in CHECKS
-        if check.find_in_source is not None
-        and (level := _level(check, ignored, config)) is not Level.OFF
+        if check.find_in_source is not None and levels[check.code] is not Level.OFF
         for hit in check.find_in_source(file)
     ]
     waivers = parse(source) if config.inline_waivers else ()
@@ -231,7 +315,9 @@ def _analyze_source(path: Path, config: Config) -> tuple[list[Finding], FileWaiv
 
 
 def _compare_files(
-    summaries: list[tuple[Path, FileSummary]], config: Config
+    summaries: list[tuple[Path, FileSummary]],
+    levels: Mapping[Path, Levels],
+    config: Config,
 ) -> list[Finding]:
     """Cross-file analysis: the findings comparing every file's summary turns up.
 
@@ -239,29 +325,38 @@ def _compare_files(
     comparison.
     """
     findings: list[Finding] = []
-    ignored = {path: _ignored_codes(path, config) for path, _ in summaries}
     for check in CHECKS:
-        levels = {path: _level(check, ignored[path], config) for path in ignored}
-        seen = [(p, s) for p, s in summaries if levels[p] is not Level.OFF]
+        if not check.compares_files:
+            continue
+        code = check.code
+        seen = [(p, s) for p, s in summaries if levels[p][code] is not Level.OFF]
         findings.extend(
-            _finding(check, path, hit, levels[path])
+            _finding(check, path, hit, levels[path][code])
             for path, hit in check.find_across(seen, _thresholds(config))
         )
     return findings
 
 
 def analyze(
-    paths: Iterable[Path], config: Config, sources: Iterable[Path] = ()
+    paths: Iterable[Path],
+    config: Config,
+    sources: Iterable[Path] = (),
+    *,
+    cache_dir: Path | None = None,
 ) -> list[Finding]:
     """Run every check over the test files and production code; return what stands.
 
-    The same as `inspect(paths, config, sources).findings`.
+    The same as `inspect(paths, config, sources, cache_dir=cache_dir).findings`.
     """
-    return inspect(paths, config, sources).findings
+    return inspect(paths, config, sources, cache_dir=cache_dir).findings
 
 
 def inspect(
-    paths: Iterable[Path], config: Config, sources: Iterable[Path] = ()
+    paths: Iterable[Path],
+    config: Config,
+    sources: Iterable[Path] = (),
+    *,
+    cache_dir: Path | None = None,
 ) -> Inspection:
     """Run every check over the test files and production code, then apply waivers.
 
@@ -273,7 +368,13 @@ def inspect(
     Args:
         paths: The test files to analyse.
         config: The resolved configuration.
-        sources: The production files to analyse.
+        sources: The production files to analyse. They are never cached: they are
+            read in full every run.
+        cache_dir: The directory the cache is kept in, or `None` to run uncached.
+            With `config.cache` off the run is uncached too. A test file whose
+            bytes, drill-sergeant and per-file settings are unchanged since a
+            cached run isn't analysed again; cross-file analysis always reruns,
+            from the summaries.
 
     Returns:
         The findings that stand and the waived ones, each ordered by file, line
@@ -286,16 +387,39 @@ def inspect(
     files: dict[Path, FileWaivers] = {}
     if config.mode is Level.OFF:
         return Inspection(findings=findings, waived=[])
-    summaries: list[tuple[Path, FileSummary]] = []
-    for path in sorted(paths, key=lambda p: p.as_posix()):
-        file_findings, summary, files[path] = _analyze_file(path, config)
-        findings.extend(file_findings)
-        summaries.append((path, summary))
-    findings.extend(_compare_files(summaries, config))
-    for path in sources:
-        source_findings, waivers = _analyze_source(path, config)
-        findings.extend(source_findings)
-        files.setdefault(path, waivers)
-    findings.sort(key=lambda f: (f.file.as_posix(), f.line, f.code))
-    kept, waived = apply(findings, files)
+    # The run makes tens of thousands of small objects, all freed by reference
+    # count; the cycle collector would only walk them, at a quarter of a warm run.
+    with _cycle_collector_paused():
+        cache = Cache(cache_dir) if cache_dir is not None and config.cache else None
+        shared = context(_per_file_settings(config)) if cache is not None else ""
+        summaries: list[tuple[Path, FileSummary]] = []
+        ordered = sorted(paths, key=lambda p: p.as_posix())
+        production = list(sources)
+        levels = _levels_by_file([*ordered, *production], config)
+        for path in ordered:
+            result = _file_result(path, config, cache, shared)
+            findings.extend(_file_findings(path, result, levels[path]))
+            files[path] = result.waivers
+            summaries.append((path, result.summary))
+        if cache is not None:
+            cache.save()
+        findings.extend(_compare_files(summaries, levels, config))
+        for path in production:
+            source_findings, waivers = _analyze_source(path, config, levels[path])
+            findings.extend(source_findings)
+            files.setdefault(path, waivers)
+        findings.sort(key=lambda f: (f.file.as_posix(), f.line, f.code))
+        kept, waived = apply(findings, files)
     return Inspection(findings=kept, waived=waived)
+
+
+@contextmanager
+def _cycle_collector_paused() -> Iterator[None]:
+    """Pause Python's cycle collector for the block, if it was running."""
+    running = gc.isenabled()
+    gc.disable()
+    try:
+        yield
+    finally:
+        if running:
+            gc.enable()

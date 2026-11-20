@@ -64,6 +64,10 @@ _Avoid_: Local pass, file scan
 What per-file analysis records of each test in a file for cross-file analysis: its name and line; the fingerprint, lines and bound names of each setup statement; the fingerprint and shape of its whole body, with the names and literals that shape blanks; and the fingerprint of its `def` line and decorators. Plain data, never the syntax tree.
 _Avoid_: File index, digest
 
+**Cache**:
+Each test file's per-file analysis result, kept between runs in `d/drill-sergeant/` under pytest's cache directory and shared by the plugin and the CLI. A file is analysed again only when its key changes: the hash of its bytes, drill-sergeant's own code, or a config option per-file analysis reads (thresholds, category markers, source dirs, inline waivers). Levels, mode and per-file ignores apply after it, so changing them reuses every entry. Cross-file analysis always reruns, from the cached summaries.
+_Avoid_: Memo, store
+
 **Cross-file analysis**:
 The step, after per-file analysis of every file in the run, that compares the per-file summaries, never the files, to find what is repeated across tests, in one file or many.
 _Avoid_: Global pass, project analysis
