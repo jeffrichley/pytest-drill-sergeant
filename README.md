@@ -49,6 +49,25 @@ offline:
   matters.
 - An unknown code is a usage error (exit 2).
 
+## The agent guide
+
+The agent guide teaches a coding agent the checks before it writes tests, so it
+avoids the failure modes instead of learning them from findings. It is generated
+from the checks themselves, so it can't drift from them.
+
+- `drill-sergeant agent-guide` prints it: every check with why it matters, a test it
+  flags and the fixed test, and the waiver rule.
+- `drill-sergeant agent-guide --install`, run at the repo root, writes the guide as
+  an Agent Skill and adds a short block to `AGENTS.md`, or to `CLAUDE.md` when only
+  that exists (creating `AGENTS.md` when neither does). The skill goes in
+  `.agents/skills/drill-sergeant/` beside `AGENTS.md`, or `.claude/skills/drill-sergeant/`
+  beside `CLAUDE.md`.
+- The block says the repo uses drill-sergeant, points at the skill and `explain`,
+  and states the waiver rule: the agent may ask, but adds a waiver or changes config
+  only after an explicit yes from a human for that specific finding.
+- The block is marked with the drill-sergeant version. Rerun `--install` after
+  upgrading: it replaces only that block and leaves the rest of the file alone.
+
 ## The cache
 
 Each file's analysis is cached, so a run with nothing changed adds only tens of
