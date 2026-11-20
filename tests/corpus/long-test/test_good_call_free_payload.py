@@ -1,5 +1,7 @@
-"""An async test in a class whose request payload is written out inline, pushing it
-past 50 lines. Analysed, never run."""
+"""Near-miss: an async test in a class whose request payload is written out inline,
+51 lines from `def` to its last line. The payload is a dict holding no call, lambda,
+comprehension or `await`, so it counts as one line: the test is data and one act.
+Analysed, never run."""
 
 import pytest
 
@@ -7,7 +9,7 @@ pytestmark = pytest.mark.unit
 
 
 class TestImportApi:
-    async def test_import_accepts_a_full_batch(self, client):  # expect: DS105
+    async def test_import_accepts_a_full_batch(self, client):
         payload = {
             "batch_id": "b-2026-11-19",
             "source": "warehouse-east",

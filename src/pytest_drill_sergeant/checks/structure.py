@@ -497,11 +497,78 @@ INTERLEAVED_ACT_ASSERT = Check(
 )
 
 
+# Literals that are data when they hold no code: a multi-line one counts as one line.
+_DATA_LITERALS = (ast.List, ast.Tuple, ast.Dict, ast.Set, ast.JoinedStr)
+# What makes a literal code rather than data.
+_CODE_IN_LITERAL = (
+    ast.Call,
+    ast.Lambda,
+    ast.ListComp,
+    ast.SetComp,
+    ast.DictComp,
+    ast.GeneratorExp,
+    ast.Await,
+)
+
+
+def _is_data_literal(node: ast.AST) -> bool:
+    """Whether a node is data: a literal holding no code.
+
+    That is a list, tuple, dict, set, str or f-string literal holding none of
+    `_CODE_IN_LITERAL`.
+    """
+    is_literal = isinstance(node, _DATA_LITERALS) or (
+        isinstance(node, ast.Constant) and isinstance(node.value, str)
+    )
+    return is_literal and not any(
+        isinstance(inner, _CODE_IN_LITERAL) for inner in ast.walk(node)
+    )
+
+
+def _lines_of_code(test: TestFunction, code_lines: frozenset[int]) -> int:
+    """How many lines of code a test has, from its `def` line to its last line.
+
+    Blank and comment-only lines don't count, nor does its docstring, and a
+    multi-line data literal (`_is_data_literal`) counts as one line.
+    """
+    node = test.node
+    lines = set(range(node.lineno, (node.end_lineno or node.lineno) + 1)) & code_lines
+    body = node.body
+    if (
+        isinstance(body[0], ast.Expr)
+        and isinstance(body[0].value, ast.Constant)
+        and isinstance(body[0].value.value, str)
+    ):
+        lines -= set(range(body[0].lineno, (body[0].end_lineno or 0) + 1))
+    for literal in _data_literals(node):
+        lines -= set(range(literal.lineno + 1, (literal.end_lineno or 0) + 1))
+    return len(lines)
+
+
+def _data_literals(node: ast.AST) -> Iterator[ast.expr]:
+    """The outermost data literals (`_is_data_literal`) under a node.
+
+    The text and format specs of an f-string that holds code are part of that
+    f-string, never literals of their own: only the expressions in its braces are
+    searched. (Before Python 3.12 a format spec is given the whole f-string's
+    lines.)
+    """
+    if isinstance(node, ast.expr) and _is_data_literal(node):
+        yield node
+    elif isinstance(node, ast.JoinedStr):
+        for part in node.values:
+            if isinstance(part, ast.FormattedValue):
+                yield from _data_literals(part.value)
+    else:
+        for child in ast.iter_child_nodes(node):
+            yield from _data_literals(child)
+
+
 def _find_long_test(file: TestFile) -> Iterator[Hit]:
     limit = file.thresholds.max_test_lines
     for test in file.tests:
         first, last = test.node.lineno, test.node.end_lineno or test.node.lineno
-        length = last - first + 1
+        length = _lines_of_code(test, file.code_lines)
         if length <= limit:
             continue
         before = setup(test)
@@ -515,11 +582,11 @@ def _find_long_test(file: TestFile) -> Iterator[Hit]:
             test,
             first,
             found=(
-                f"is {length} lines long (lines {first}-{last}), more than the "
-                f"{limit} a test may have."
+                f"has {length} lines of code (lines {first}-{last}), more than "
+                f"the {limit} a test may have."
             ),
             fix=(
-                f"cut it to {limit} lines or fewer: split it into one test per "
+                f"cut it to {limit} lines of code or fewer: split it into one test per "
                 "behaviour it checks, each named for that behaviour, and move "
                 f"shared setup into fixtures.{moved}"
             ),
@@ -530,7 +597,7 @@ LONG_TEST = Check(
     code="DS105",
     name="long-test",
     kind=Kind.SMELL,
-    default_level=Level.OFF,
+    default_level=Level.WARN,
     voice=(
         "This test is longer than my last deployment! CUT IT DOWN, recruit!",
         "Nobody can read a test this long, maggot, and nobody will!",
@@ -542,11 +609,16 @@ LONG_TEST = Check(
         "it closely."
     ),
     explain=(
-        "Flags a test function longer than `drill_sergeant_max_test_lines` (50 by "
-        "default), counted from its `def` line to its last line, blank lines, "
-        "comments and docstring included. Its decorators don't count, so a long "
-        "`parametrize` table is fine. Move setup into fixtures and split the test "
-        "into one test per behaviour."
+        "Flags a test function with more lines of code than "
+        "`drill_sergeant_max_test_lines` (50 by default), counted from its `def` "
+        "line to its last line. Blank lines, comment-only lines and its docstring "
+        "don't count, so AAA comments and space between sections never lengthen a "
+        "test. A multi-line list, tuple, dict, set, string or f-string literal "
+        "holding no call, lambda, comprehension or `await` is data and counts as "
+        "one line; one holding any of them counts line by line. Its decorators "
+        "don't count, so a long `parametrize` table is fine. Move setup into "
+        "fixtures and split the test into one test per behaviour. It warns rather "
+        "than fails: a long test still works, it only costs later."
     ),
     bad_example=(
         "def test_checkout(shop):\n"

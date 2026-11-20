@@ -77,6 +77,7 @@ def test_check_has_at_least_three_bad_and_three_good_corpus_files(check):
 # the highest level its kind allows.
 ON_BY_DEFAULT = {
     "DS001": Level.FAIL,
+    "DS105": Level.WARN,
     "DS106": Level.WARN,
     "DS301": Level.FAIL,
     "DS401": Level.FAIL,

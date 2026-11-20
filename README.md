@@ -73,10 +73,11 @@ A check's default level is the lower of two answers
 
 On by default, at `fail`: DS001 malformed-waiver, DS301 mock-only-assertion, DS401
 skip-without-reason, DS603 source-text-grep, DS801 sleep-in-test, DS802
-wall-clock-read and DS803 unseeded-random. At `warn`: DS106 long-file and DS502
-near-duplicate-tests. Every other check is off: DS101-DS105, DS107, DS201-DS203,
-DS302, DS303, DS402, DS403, DS501, DS601, DS602, DS701 and DS702 until each is
-proven, and the two conventions: DS108 (AAA comments) and DS901 (category markers).
+wall-clock-read and DS803 unseeded-random. At `warn`: DS105 long-test, DS106
+long-file and DS502 near-duplicate-tests. Every other check is off: DS101-DS104,
+DS107, DS201-DS203, DS302, DS303, DS402, DS403, DS501, DS601, DS602, DS701 and DS702
+until each is proven, and the two conventions: DS108 (AAA comments) and DS901
+(category markers).
 
 Turn an off check on with `drill_sergeant_levels`, at `fail` or `warn`:
 
@@ -184,7 +185,7 @@ drill_sergeant_voice = false
 | `drill_sergeant_levels` | `CODE=level` lines; a family prefix (`DS1`, `DS1xx`) covers the family; the most specific entry wins | each check's default |
 | `drill_sergeant_per_file_ignores` | `glob: codes` lines, globs relative to the config file; a glob with no `/` also matches file names | none |
 | `drill_sergeant_max_file_lines` | whole number | 500 |
-| `drill_sergeant_max_test_lines` | whole number | 50 |
+| `drill_sergeant_max_test_lines` | whole number: the most lines of code a test may have; `drill-sergeant explain DS105` says what counts | 50 |
 | `drill_sergeant_max_mock_setup` | whole number | 10 |
 | `drill_sergeant_duplicate_setup_min_statements` | whole number | 3 |
 | `drill_sergeant_duplicate_setup_min_tests` | whole number | 3 |
