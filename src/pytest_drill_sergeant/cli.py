@@ -6,6 +6,7 @@ from typing import Annotated, NoReturn
 import typer
 from rich.console import Console
 
+from pytest_drill_sergeant.checks import CHECKS, Check
 from pytest_drill_sergeant.config import ConfigError, refusal, resolve
 from pytest_drill_sergeant.discovery import cache_dir, discover, load, test_files
 from pytest_drill_sergeant.engine import inspect
@@ -92,3 +93,51 @@ def check(
     )
     if any(f.level is Level.FAIL for f in result.findings):
         raise typer.Exit(1)
+
+
+_CHECKS = {check.code: check for check in CHECKS}
+
+
+def _lesson(check: Check) -> str:
+    """One check taught in full: its rationale, then a test it flags and the fix."""
+    return (
+        f"{check.code} {check.name} [{check.default_level}]\n\n"
+        f"Why: {check.why}\n\n"
+        f"{check.explain}\n\n"
+        f"Bad:\n\n{check.bad_example}\n"
+        f"Good:\n\n{check.good_example}"
+    )
+
+
+def _guide() -> str:
+    """Every check in a line: its code, name and default level, and why it matters."""
+    lines = [
+        f"{check.code} {check.name} [{check.default_level}]: {check.why}"
+        for check in CHECKS
+    ]
+    return "\n".join(
+        [
+            *lines,
+            "",
+            "`drill-sergeant explain DS###` shows a check's bad and fixed test.",
+        ]
+    )
+
+
+@app.command()
+def explain(
+    code: Annotated[
+        str | None,
+        typer.Argument(help="A check's code, such as DS101; none lists every check."),
+    ] = None,
+) -> None:
+    """Teach a check: why it matters, a test it flags and the fixed test."""
+    if code is None:
+        typer.echo(_guide())
+        return
+    check = _CHECKS.get(code)
+    if check is None:
+        _refuse(
+            f"drill-sergeant: no check {code}; `drill-sergeant explain` lists them."
+        )
+    typer.echo(_lesson(check))

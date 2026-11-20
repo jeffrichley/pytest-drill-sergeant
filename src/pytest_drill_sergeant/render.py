@@ -92,8 +92,12 @@ class _Hanging:
 
 
 def _facts(finding: Finding) -> _Hanging:
-    """Found/Why/Fix: bold labels, then the plain text."""
-    rows = [("Found:", finding.found), ("Why:", finding.why), ("Fix:", finding.fix)]
+    """Found/Why/Fix: bold labels, then the plain text.
+
+    The fix ends by pointing at the check's worked example.
+    """
+    fix = f"{finding.fix} See `drill-sergeant explain {finding.code}`."
+    rows = [("Found:", finding.found), ("Why:", finding.why), ("Fix:", fix)]
     return _Hanging(
         [
             (Text.assemble(" " * _FACT_INDENT, (label, _LABEL), " "), Text(fact))
