@@ -24,6 +24,13 @@ _PYTEST_ASSERTING = frozenset(
 )
 PYTEST_RAISES = frozenset({"pytest.raises"})
 
+# The keyword that names the class `pytest.raises` or `pytest.warns` expects, when
+# the first positional argument doesn't.
+_EXPECTED_CLASS_KEYWORD = {
+    "pytest.raises": "expected_exception",
+    "pytest.warns": "expected_warning",
+}
+
 # pytest-check's helpers, each of which fails the test when its check doesn't hold,
 # reached through the module or its `check` object.
 _PYTEST_CHECK_HELPERS = (
@@ -254,6 +261,25 @@ def qualified(expr: ast.expr, names: Mapping[str, str]) -> str | None:
 def calls_to(node: ast.AST, targets: frozenset[str], names: Mapping[str, str]) -> bool:
     """Whether a node is a call to one of the targets, named in full."""
     return isinstance(node, ast.Call) and qualified(node.func, names) in targets
+
+
+def expected_class(call: ast.Call, names: Mapping[str, str]) -> ast.expr | None:
+    """The exception or warning class a `pytest.raises` or `pytest.warns` call expects.
+
+    It is the call's first positional argument, or its `expected_exception` (for
+    `pytest.raises`) or `expected_warning` (for `pytest.warns`) keyword; `None` for
+    any other call, or one that names no class.
+
+    Args:
+        call: The call.
+        names: The imported names in scope, as `imports_seen_by` gives them.
+    """
+    keyword = _EXPECTED_CLASS_KEYWORD.get(qualified(call.func, names) or "")
+    if keyword is None:
+        return None
+    if call.args:
+        return call.args[0]
+    return next((k.value for k in call.keywords if k.arg == keyword), None)
 
 
 def walk_test(test: TestFunction) -> Iterator[ast.AST]:

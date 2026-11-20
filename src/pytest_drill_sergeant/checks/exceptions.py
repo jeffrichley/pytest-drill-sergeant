@@ -6,6 +6,7 @@ from collections.abc import Iterator, Mapping
 from pytest_drill_sergeant.checks.ast_tools import (
     PYTEST_RAISES,
     calls_to,
+    expected_class,
     is_cleanup,
     is_real_assertion,
     walk_test,
@@ -31,13 +32,6 @@ _CATCHES_ASSERTION = frozenset({"Exception", "BaseException", "AssertionError"})
 _CAUGHT_READS = frozenset({"type", "value", "typename", "errisinstance", "match"})
 
 _TryNode = ast.Try | ast.TryStar
-
-
-def _expected_exception(call: ast.Call) -> ast.expr | None:
-    """The exception type a `pytest.raises` call expects, if it names one."""
-    if call.args:
-        return call.args[0]
-    return next((k.value for k in call.keywords if k.arg == "expected_exception"), None)
 
 
 def _type_names(expr: ast.expr | None) -> set[str]:
@@ -119,7 +113,7 @@ def _find_broad_raises(file: TestFile) -> Iterator[Hit]:
                 and calls_to(node, PYTEST_RAISES, test.imports)
             ):
                 continue
-            broad = sorted(_type_names(_expected_exception(node)) & _BROAD)
+            broad = sorted(_type_names(expected_class(node, test.imports)) & _BROAD)
             if not broad or _has_match(node) or id(node) in matched:
                 continue
             yield Hit.on(

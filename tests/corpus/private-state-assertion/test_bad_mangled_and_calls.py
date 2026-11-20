@@ -24,8 +24,13 @@ def test_private_method_result():
     assert Service()._build_url("x") == "https://example.com/x"  # expect: DS602
 
 
-def test_raises_a_private_error():
-    with pytest.raises(Service._Timeout):  # expect: DS602
+def test_raises_matching_a_private_message():
+    with pytest.raises(ValueError, match=Service._timeout_message):  # expect: DS602
+        Service().run()
+
+
+def test_warns_matching_a_private_message():
+    with pytest.warns(UserWarning, match=Service._slow_message):  # expect: DS602
         Service().run()
 
 
