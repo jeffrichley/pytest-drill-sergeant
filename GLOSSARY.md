@@ -40,6 +40,30 @@ _Avoid_: Source (alone), app code, implementation
 A skip that happens on every run: `pytest.mark.skip`, `skipif` on a truthy constant, or `pytest.skip(...)` as a statement of a test's own body under no condition.
 _Avoid_: Disabled test
 
+**Setup**:
+A test's statements before the first one that holds a real assertion, its docstring aside.
+_Avoid_: Arrange block, preamble
+
+**Fingerprint**:
+A short, stable digest of what one or more statements say: the same for statements that read alike wherever they stand, different for any change of name, literal or structure. Comments and layout don't change it.
+_Avoid_: Hash (of a file), signature
+
+**Shape**:
+The fingerprint of statements with every name and literal blanked: alike for tests that differ only in their names and values.
+_Avoid_: Skeleton, structure hash
+
+**Per-file analysis**:
+The step that reads one test file on its own and gives that file's findings and its per-file summary; the same file bytes and config give the same result.
+_Avoid_: Local pass, file scan
+
+**Per-file summary**:
+What per-file analysis records of each test in a file for cross-file analysis: its name and line; the fingerprint, lines and bound names of each setup statement; and the fingerprint and shape of its whole body. Plain data, never the syntax tree.
+_Avoid_: File index, digest
+
+**Cross-file analysis**:
+The step, after per-file analysis of every file in the run, that compares the per-file summaries, never the files, to find what is repeated across tests, in one file or many.
+_Avoid_: Global pass, project analysis
+
 **Mock**:
 A test double made by `unittest.mock` or a pytest-mock fixture such as `mocker` (`Mock()`, `create_autospec`, `patch`), as the file shows it: made in the test, handed in by a `patch` decorator, or reached from one. A name such as `mock_db` never makes a value one.
 _Avoid_: Stub, fake (a fake is a working stand-in, not a mock)

@@ -1,5 +1,9 @@
 """What a check is, and what it is given and gives back.
 
+A check reads one test file at a time, or compares the per-file summaries of every
+file in the run (cross-file analysis), or both. A summary is plain data, so the
+cross-file step never needs a file's syntax tree.
+
 A test's own code, for every check, is its whole body: a helper function, class or
 lambda defined inside a test is part of it, so an assertion or a call there counts
 (`ast_tools.walk_test`). Only the act-and-assert order (DS103, DS104) reads the
@@ -7,7 +11,7 @@ body's statements one by one, and there a nested `def` only defines its helper.
 """
 
 import ast
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -43,11 +47,16 @@ class Thresholds:
         max_file_lines: The most lines a test file may have.
         max_test_lines: The most lines a test function may have.
         max_mock_setup: The most mock-setup statements a test may have.
+        duplicate_setup_min_statements: The fewest statements a copy-pasted setup
+            block has.
+        duplicate_setup_min_tests: The fewest tests a copy-pasted setup block is in.
     """
 
     max_file_lines: int = 500
     max_test_lines: int = 50
     max_mock_setup: int = 10
+    duplicate_setup_min_statements: int = 3
+    duplicate_setup_min_tests: int = 3
 
 
 @dataclass(frozen=True)
@@ -84,6 +93,56 @@ class SourceFile:
 
     path: Path
     module: ast.Module
+
+
+@dataclass(frozen=True)
+class Statement:
+    """One statement of a test, as a per-file summary records it.
+
+    Attributes:
+        fingerprint: The statement's fingerprint.
+        line: The line it starts on.
+        end_line: The line it ends on.
+        binds: The names it binds, in order.
+    """
+
+    fingerprint: str
+    line: int
+    end_line: int
+    binds: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class TestSummary:
+    """One test, as a per-file summary records it.
+
+    Attributes:
+        name: The test's name, with its class path (`TestX::test_y`).
+        line: The line its `def` is on.
+        setup: Its setup statements, in order.
+        body: The fingerprint of its whole body.
+        shape: Its whole body's shape: the fingerprint with every name and
+            literal blanked, alike for tests that differ only in their values.
+    """
+
+    __test__ = False  # Not a pytest test class, despite the name.
+
+    name: str
+    line: int
+    setup: tuple[Statement, ...]
+    body: str
+    shape: str
+
+
+@dataclass(frozen=True)
+class FileSummary:
+    """A per-file summary: what cross-file analysis knows of one test file.
+
+    Attributes:
+        tests: Each test pytest would collect from the file, in source order.
+    """
+
+    tests: tuple[TestSummary, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -125,6 +184,21 @@ class Hit:
         )
 
 
+# The files a cross-file check compares, each as given to the engine with its
+# summary, ordered by path.
+Summaries = Sequence[tuple[Path, FileSummary]]
+
+
+def _finds_nothing(_file: TestFile) -> Iterable[Hit]:
+    return ()
+
+
+def _compares_nothing(
+    _summaries: Summaries, _thresholds: Thresholds
+) -> Iterable[tuple[Path, Hit]]:
+    return ()
+
+
 @dataclass(frozen=True)
 class Check:
     """One deterministic detection of a single failure mode.
@@ -142,6 +216,8 @@ class Check:
         find_in_source: Reports the hits in one file of production code; `None`
             for a check that reads only test files. Which files a check reads is
             which of the two it gives: DS403 gives only this one.
+        find_across: Reports the hits that comparing every file's summary turns
+            up, each with the file it is in.
     """
 
     code: str
@@ -152,5 +228,8 @@ class Check:
     explain: str
     bad_example: str
     good_example: str
-    find: Callable[[TestFile], Iterable[Hit]] = lambda _file: ()
+    find: Callable[[TestFile], Iterable[Hit]] = _finds_nothing
     find_in_source: Callable[[SourceFile], Iterable[Hit]] | None = None
+    find_across: Callable[[Summaries, Thresholds], Iterable[tuple[Path, Hit]]] = (
+        _compares_nothing
+    )

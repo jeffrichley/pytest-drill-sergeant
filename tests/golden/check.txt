@@ -1,5 +1,5 @@
 drill-sergeant: skipped DS403 test-special-casing: no src/ and no drill_sergeant_source_dirs.
-DRILL SERGEANT INSPECTION: 260 findings in 68 files. FALL IN!
+DRILL SERGEANT INSPECTION: 266 findings in 73 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -422,6 +422,74 @@ suite/broad-raises/test_bad_other_spellings.py
            from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix:   In `test_aliased_name`, line 45: replace `BaseException` with the specific exception the
            code raises, and add `match=` for the part of its message that matters.
+
+suite/copy-paste-setup/cross-file/test_bad_billing_charges.py
+  suite/copy-paste-setup/cross-file/test_bad_billing_charges.py:9: DS501 copy-paste-setup [fail] in test_charge_debits_the_account
+    "One fixture, recruit! Not the same orders barked in every tent!"
+    Found: `test_charge_debits_the_account` shares 3 setup statements (lines 9-11) with 2 other
+           tests, alike in every name and literal.
+    Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
+           and it buries what makes each test different.
+    Fix:   In `test_charge_debits_the_account`, line 9: move lines 9-11 into a fixture, e.g.
+           `account`, and request it here and in `test_charge_over_the_limit_is_refused`
+           (suite/copy-paste-setup/cross-file/test_bad_billing_limits.py, line 8),
+           `test_refund_credits_the_account`
+           (suite/copy-paste-setup/cross-file/test_bad_billing_refunds.py, line 8).
+
+suite/copy-paste-setup/test_bad_after_a_different_start.py
+  suite/copy-paste-setup/test_bad_after_a_different_start.py:10: DS501 copy-paste-setup [fail] in TestRestock::test_restock_fills_the_shelf
+    "LISTEN UP, RECRUIT! You wrote the same setup over and over like a broken record!"
+    Found: `TestRestock::test_restock_fills_the_shelf` shares 4 setup statements (lines 10-13) with
+           3 other tests, alike in every name and literal.
+    Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
+           and it buries what makes each test different.
+    Fix:   In `TestRestock::test_restock_fills_the_shelf`, line 10: move lines 10-13 into a fixture,
+           e.g. `shelf`, and request it here and in `TestRestock::test_restock_draws_down_the_stock`
+           (line 19), `test_empty_shelf_reports_zero` (line 28), `test_shelf_refuses_past_capacity`
+           (line 37).
+
+suite/copy-paste-setup/test_bad_overlapping_blocks.py
+  suite/copy-paste-setup/test_bad_overlapping_blocks.py:9: DS501 copy-paste-setup [fail] in test_provider_reads_the_issue_title
+    "Copy, paste, copy, paste! That's not engineering, that's a PHOTOCOPIER, maggot!"
+    Found: `test_provider_reads_the_issue_title` shares 5 setup statements (lines 9-13) with 2 other
+           tests, alike in every name and literal.
+    Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
+           and it buries what makes each test different.
+    Fix:   In `test_provider_reads_the_issue_title`, line 9: move lines 9-13 into a fixture, e.g.
+           `provider`, and request it here and in `test_provider_reads_the_issue_number` (line 18),
+           `test_provider_counts_the_issues` (line 27).
+
+suite/copy-paste-setup/test_bad_same_file.py
+  suite/copy-paste-setup/test_bad_same_file.py:8: DS501 copy-paste-setup [fail] in test_order_total_sums_the_lines
+    "LISTEN UP, RECRUIT! You wrote the same setup over and over like a broken record!"
+    Found: `test_order_total_sums_the_lines` shares 4 setup statements (lines 8-11) with 3 other
+           tests, alike in every name and literal.
+    Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
+           and it buries what makes each test different.
+    Fix:   In `test_order_total_sums_the_lines`, line 8: move lines 8-11 into a fixture, e.g.
+           `order`, and request it here and in `test_order_ships_once_paid` (line 17),
+           `test_order_cancel_empties_the_cart` (line 26), `test_apple_order_total`
+           (suite/copy-paste-setup/test_good_different_values.py, line 9).
+
+suite/copy-paste-setup/test_bad_two_blocks.py
+  suite/copy-paste-setup/test_bad_two_blocks.py:10: DS501 copy-paste-setup [fail] in test_report_renders_its_title
+    "Copy, paste, copy, paste! That's not engineering, that's a PHOTOCOPIER, maggot!"
+    Found: `test_report_renders_its_title` shares 3 setup statements (lines 10-12) with 2 other
+           tests, alike in every name and literal.
+    Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
+           and it buries what makes each test different.
+    Fix:   In `test_report_renders_its_title`, line 10: move lines 10-12 into a fixture, e.g.
+           `report`, and request it here and in `test_report_renders_no_rows` (line 17),
+           `test_report_has_no_footer` (line 24).
+  suite/copy-paste-setup/test_bad_two_blocks.py:31: DS501 copy-paste-setup [fail] in test_html_renderer_escapes_markup
+    "Copy, paste, copy, paste! That's not engineering, that's a PHOTOCOPIER, maggot!"
+    Found: `test_html_renderer_escapes_markup` shares 3 setup statements (lines 31-33) with 2 other
+           tests, alike in every name and literal.
+    Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
+           and it buries what makes each test different.
+    Fix:   In `test_html_renderer_escapes_markup`, line 31: move lines 31-33 into a fixture, e.g.
+           `renderer`, and request it here and in `test_html_renderer_keeps_text` (line 38),
+           `test_html_renderer_wraps_lines` (line 45).
 
 suite/interleaved-act-assert/test_bad_async_steps.py
   suite/interleaved-act-assert/test_bad_async_steps.py:7: DS104 interleaved-act-assert [warn] in test_connection
@@ -2370,4 +2438,4 @@ Waived findings
   suite/malformed-waiver/test_good_waived_on_flagged_line.py:13: DS201 weak-assertion [fail] in test_reads_a_flag
     Reason: a truthy flag is the whole contract
 
-260 findings: 233 fail, 27 warn; 5 waived. Fix them, recruit. DISMISSED!
+266 findings: 239 fail, 27 warn; 5 waived. Fix them, recruit. DISMISSED!

@@ -7,10 +7,10 @@ reports them as findings that fail the run, in the drill-sergeant voice.
 
 **Status:** v1 is being rebuilt from scratch. So far the malformed-waiver check (DS001),
 the structure checks (DS101-DS104), the assertion checks (DS201-DS203), the mocking
-checks (DS301-DS303), the cheating checks (DS401-DS403), the brittleness checks
-(DS601-DS603), the exception
-checks (DS701, DS702) and the flakiness checks (DS801-DS803) are
-reported both by the pytest plugin and by `drill-sergeant check <paths>`. The plan is
+checks (DS301-DS303), the cheating checks (DS401-DS403), copy-pasted setup (DS501),
+the brittleness checks (DS601-DS603), the exception checks (DS701, DS702) and the
+flakiness checks (DS801-DS803) are reported both by the pytest plugin and by
+`drill-sergeant check <paths>`. The plan is
 the [v1 spec](https://github.com/jeffrichley/pytest-drill-sergeant/issues/118). Version
 0.4 is archived under the tag `archive/2026-11-19/v0.4/main`.
 

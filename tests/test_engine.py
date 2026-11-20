@@ -228,3 +228,39 @@ def test_typed_values_from_toml_or_pytest_resolve_too():
 
     assert (config.max_file_lines, config.voice) == (900, False)
     assert config.category_markers == ("unit", "smoke")
+
+
+@pytest.mark.parametrize(
+    "config",
+    [Config(duplicate_setup_min_tests=2), Config(duplicate_setup_min_statements=2)],
+    ids=["two-tests", "two-statements"],
+)
+def test_copy_paste_setup_thresholds_come_from_the_config(config):
+    corpus = Path(__file__).parent / "corpus" / "copy-paste-setup"
+
+    findings = analyze([corpus / "test_good_below_the_thresholds.py"], config)
+
+    assert {(f.code, f.line) for f in findings} == {("DS501", 8)}
+
+
+def test_cross_file_findings_do_not_depend_on_the_order_files_are_given(
+    pasted_across_files,
+):
+    assert analyze(pasted_across_files, Config()) == analyze(
+        pasted_across_files[::-1], Config()
+    )
+
+
+def test_per_file_ignore_leaves_a_file_out_of_cross_file_comparison(
+    pasted_across_files,
+):
+    root = pasted_across_files[0].parent
+    config = resolve({"drill_sergeant_per_file_ignores": "*limits.py: DS501"}, root)
+
+    assert analyze(pasted_across_files, config) == []
+
+
+def test_configured_level_applies_to_cross_file_findings(pasted_across_files):
+    findings = analyze(pasted_across_files, Config(levels={"DS501": Level.WARN}))
+
+    assert {(f.code, f.level) for f in findings} == {("DS501", Level.WARN)}

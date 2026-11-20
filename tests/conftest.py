@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
@@ -126,6 +127,14 @@ def special_casing_module():
         return path
 
     return write
+
+
+@pytest.fixture
+def pasted_across_files():
+    """The corpus's three files, in path order, that each paste the same setup
+    block into one test (one DS501, on the first file's block)."""
+    folder = Path(__file__).parent / "corpus" / "copy-paste-setup" / "cross-file"
+    return sorted(folder.glob("*.py"))
 
 
 @pytest.fixture

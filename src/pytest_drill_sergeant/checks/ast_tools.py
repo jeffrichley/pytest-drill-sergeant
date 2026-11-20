@@ -77,7 +77,7 @@ def _bind_imports(
             names[alias.asname or alias.name] = f"{statement.module}.{alias.name}"
 
 
-def _bound_names(statement: ast.stmt) -> Iterator[str]:
+def bound_names(statement: ast.stmt) -> Iterator[str]:
     """The names a statement binds where it stands, imports aside.
 
     That is a `def` or `class`, an assignment, a `for` target or a `with ... as`.
@@ -132,7 +132,7 @@ def module_imports(module: ast.Module) -> dict[str, str]:
         elif (logger := _logger_bound_by(statement, names)) is not None:
             names[logger] = _LOGGER
         else:
-            for bound in _bound_names(statement):
+            for bound in bound_names(statement):
                 names.pop(bound, None)
     return names
 
@@ -164,7 +164,7 @@ def imports_seen_by(
         if isinstance(child, ast.Import | ast.ImportFrom):
             _bind_imports(child, names)
         elif isinstance(child, ast.stmt):
-            shadows.update(_bound_names(child))
+            shadows.update(bound_names(child))
     for shadow in shadows:
         names.pop(shadow, None)
     return names
