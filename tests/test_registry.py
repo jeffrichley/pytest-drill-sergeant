@@ -7,16 +7,19 @@ import pytest
 
 from pytest_drill_sergeant.checks import CHECKS
 from pytest_drill_sergeant.engine import Config, analyze
+from pytest_drill_sergeant.findings import Level
 
 CORPUS = Path(__file__).parent / "corpus"
 
 
 def analyze_as_read_by(check, path):
     """The findings for a file, handed to the engine as the check reads it: as
-    production code or as a test file."""
+    production code or as a test file, with the check on even when it is off by
+    default."""
+    config = Config(levels={check.code: Level.FAIL})
     if check.find_in_source:
-        return analyze([], Config(), sources=[path])
-    return analyze([path], Config())
+        return analyze([], config, sources=[path])
+    return analyze([path], config)
 
 
 def corpus_folder(check):
