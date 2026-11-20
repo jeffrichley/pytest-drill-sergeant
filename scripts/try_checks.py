@@ -7,7 +7,8 @@ writes a temporary config file: the pytest section the CLI's config search finds
 the path, with the checks appended to `drill_sergeant_levels`. It goes in the found
 config's directory, so paths in it (source dirs, per-file ignores, `src/`, the cache)
 mean what they mean in the project's own config. The run reads it through `--config`,
-and it is deleted afterwards, whatever the outcome.
+and it is deleted afterwards, whatever the outcome; only a run killed outright
+leaves a `.drill-sergeant-try-*.toml` behind.
 """
 
 import json
@@ -17,29 +18,41 @@ import tempfile
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
+from pytest_drill_sergeant.checks import CHECKS
 from pytest_drill_sergeant.cli import app
-from pytest_drill_sergeant.config import RawValue
+from pytest_drill_sergeant.config import ConfigError, RawValue, refusal
 from pytest_drill_sergeant.discovery import discover
 
 LEVELS = "drill_sergeant_levels"
 
 
+def _string(text: str) -> str:
+    """A TOML basic string.
+
+    JSON's, with characters outside ASCII left as they are: TOML takes no escaped
+    surrogate pair.
+    """
+    return json.dumps(text, ensure_ascii=False)
+
+
 def _toml(value: RawValue) -> str:
-    """A raw ini value as a TOML value; a JSON string is a TOML basic string."""
+    """A raw ini value as a TOML value."""
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, int):
         return str(value)
     if isinstance(value, list):
-        return "[" + ", ".join(json.dumps(item) for item in value) + "]"
-    return json.dumps(value)
+        return "[" + ", ".join(_string(item) for item in value) + "]"
+    return _string(value)
 
 
 def config_text(values: Mapping[str, RawValue], codes: Sequence[str]) -> str:
     """A pyproject-style config holding `values`, with each code turned on at `fail`.
 
-    The codes are appended to `drill_sergeant_levels`, after the project's own
-    entries, so they win over any entry for the same code.
+    A family prefix (`DS1`, `DS1xx`) stands for each check in it. Each check's code
+    is appended to `drill_sergeant_levels`, after the project's own entries, so it
+    wins over any entry for that check. A code that names no check is appended as it
+    is, for the run to refuse.
     """
     existing = values.get(LEVELS, [])
     lines = existing if isinstance(existing, list) else str(existing).splitlines()
@@ -47,11 +60,21 @@ def config_text(values: Mapping[str, RawValue], codes: Sequence[str]) -> str:
         **values,
         LEVELS: [
             *(line.strip() for line in lines if line.strip()),
-            *(f"{code}=fail" for code in codes),
+            *(f"{code}=fail" for code in _expanded(codes)),
         ],
     }
-    body = "".join(f"{json.dumps(key)} = {_toml(v)}\n" for key, v in merged.items())
+    body = "".join(f"{_string(key)} = {_toml(v)}\n" for key, v in merged.items())
     return f"[tool.pytest.ini_options]\n{body}"
+
+
+def _expanded(codes: Sequence[str]) -> list[str]:
+    """Each code as the codes of the checks it names, or as it is when it names none."""
+    expanded = []
+    for code in codes:
+        prefix = code.strip().rstrip("x")
+        matching = [c.code for c in CHECKS if prefix and c.code.startswith(prefix)]
+        expanded.extend(matching or [code])
+    return expanded
 
 
 def _check(args: list[str]) -> int:
@@ -77,10 +100,19 @@ def main(argv: Sequence[str]) -> int:
     if not codes or not Path(path).exists():
         # Nothing to add, or nothing to check: the CLI as it stands.
         return _check([path])
-    source = discover([Path(path)])
-    handle, name = tempfile.mkstemp(
-        prefix=".drill-sergeant-try-", suffix=".toml", dir=source.root
-    )
+    try:
+        source = discover([Path(path)])
+        handle, name = tempfile.mkstemp(
+            prefix=".drill-sergeant-try-", suffix=".toml", dir=source.root
+        )
+    except ConfigError as error:
+        print(refusal(error), file=sys.stderr)
+        return 2
+    except OSError as error:
+        print(
+            f"try_checks.py: cannot write a config in {error.filename}", file=sys.stderr
+        )
+        return 2
     try:
         with os.fdopen(handle, "w", encoding="utf-8") as file:
             file.write(config_text(source.values, codes))

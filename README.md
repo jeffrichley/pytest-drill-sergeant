@@ -225,7 +225,8 @@ just try ../other/tests DS101 DS103  # this checkout on another project's tests
 own config. Codes after the path also turn those checks on at `fail`, for that run
 only: it writes a temporary config file beside the project's, with the codes appended
 to `drill_sergeant_levels`, passes it with `--config` and deletes it afterwards. The
-project's files are left as they were.
+project's files are left as they were; only a run killed outright leaves a
+`.drill-sergeant-try-*.toml` behind.
 
 ## License
 
