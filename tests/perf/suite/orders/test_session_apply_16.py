@@ -6,6 +6,8 @@ import pytest
 
 from shop.orders import Repository, make_session, apply
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def session():

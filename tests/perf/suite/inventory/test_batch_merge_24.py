@@ -6,6 +6,8 @@ import pytest
 
 from shop.inventory import Repository, make_batch, merge
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def batch():

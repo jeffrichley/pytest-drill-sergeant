@@ -165,3 +165,6 @@ markers = [
 # Our own suite runs with the plugin on and passes its own checks. The corpus is bad
 # tests on purpose, so no check reports on it (`DS` is every family).
 drill_sergeant_per_file_ignores = ["tests/corpus/**: DS"]
+# Every test carries a category marker (DS901): `unit` for the engine seam,
+# `integration` for the CLI and plugin, `perf` for the speed budget.
+drill_sergeant_category_markers = ["unit", "integration", "e2e", "perf"]

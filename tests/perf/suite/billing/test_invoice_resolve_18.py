@@ -6,6 +6,8 @@ import pytest
 
 from shop.billing import Repository, make_invoice, resolve
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def invoice():

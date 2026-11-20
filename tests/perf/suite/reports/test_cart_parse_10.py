@@ -6,6 +6,8 @@ import pytest
 
 from shop.reports import Repository, make_cart, parse
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def cart():

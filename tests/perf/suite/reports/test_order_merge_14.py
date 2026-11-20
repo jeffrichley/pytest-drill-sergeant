@@ -6,6 +6,8 @@ import pytest
 
 from shop.reports import Repository, make_order, merge
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def order():

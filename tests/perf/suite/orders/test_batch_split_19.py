@@ -6,6 +6,8 @@ import pytest
 
 from shop.orders import Repository, make_batch, split
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def batch():

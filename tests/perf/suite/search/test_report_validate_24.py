@@ -6,6 +6,8 @@ import pytest
 
 from shop.search import Repository, make_report, validate
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def report():

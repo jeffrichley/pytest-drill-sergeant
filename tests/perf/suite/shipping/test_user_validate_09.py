@@ -6,6 +6,8 @@ import pytest
 
 from shop.shipping import Repository, make_user, validate
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def user():

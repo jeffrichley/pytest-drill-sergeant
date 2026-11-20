@@ -6,6 +6,8 @@ import pytest
 
 from shop.orders import Repository, make_rate, render
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def rate():

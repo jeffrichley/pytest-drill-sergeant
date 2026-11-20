@@ -6,6 +6,8 @@ import pytest
 
 from shop.orders import Repository, make_refund, compute
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def refund():

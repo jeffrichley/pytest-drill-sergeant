@@ -6,6 +6,8 @@ import pytest
 
 from shop.auth import Repository, make_refund, format
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def refund():

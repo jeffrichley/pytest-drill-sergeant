@@ -6,6 +6,8 @@ import pytest
 
 from shop.orders import Repository, make_event, validate
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def event():

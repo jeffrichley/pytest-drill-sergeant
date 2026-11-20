@@ -6,6 +6,8 @@ import pytest
 
 from shop.inventory import Repository, make_report, convert
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def report():

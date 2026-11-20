@@ -6,6 +6,8 @@ import pytest
 
 from shop.accounts import Repository, make_token, build
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def token():

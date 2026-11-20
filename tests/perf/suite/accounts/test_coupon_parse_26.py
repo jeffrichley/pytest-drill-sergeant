@@ -6,6 +6,8 @@ import pytest
 
 from shop.accounts import Repository, make_coupon, parse
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def coupon():

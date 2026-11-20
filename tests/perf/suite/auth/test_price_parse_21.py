@@ -6,6 +6,8 @@ import pytest
 
 from shop.auth import Repository, make_price, parse
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def price():

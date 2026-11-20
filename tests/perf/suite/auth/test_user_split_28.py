@@ -6,6 +6,8 @@ import pytest
 
 from shop.auth import Repository, make_user, split
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def user():

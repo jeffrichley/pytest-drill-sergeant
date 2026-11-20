@@ -6,6 +6,8 @@ import pytest
 
 from shop.billing import Repository, make_coupon, validate
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def coupon():

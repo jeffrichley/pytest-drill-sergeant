@@ -6,6 +6,8 @@ import pytest
 
 from shop.reports import Repository, make_event, apply
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def event():

@@ -6,6 +6,8 @@ import pytest
 
 from shop.notifications import Repository, make_user, build
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def user():

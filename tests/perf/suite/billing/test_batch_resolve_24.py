@@ -6,6 +6,8 @@ import pytest
 
 from shop.billing import Repository, make_batch, resolve
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def batch():

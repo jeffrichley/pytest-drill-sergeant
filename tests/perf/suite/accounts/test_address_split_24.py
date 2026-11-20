@@ -6,6 +6,8 @@ import pytest
 
 from shop.accounts import Repository, make_address, split
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def address():

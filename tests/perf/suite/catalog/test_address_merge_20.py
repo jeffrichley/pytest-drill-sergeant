@@ -6,6 +6,8 @@ import pytest
 
 from shop.catalog import Repository, make_address, merge
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def address():
