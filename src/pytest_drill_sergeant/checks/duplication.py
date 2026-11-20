@@ -65,7 +65,7 @@ def _windows(setups: list[_Setup], size: int) -> dict[tuple[str, ...], list[_Cop
     return windows
 
 
-def _length(copies: list[_Copy], size: int) -> int:
+def _block_length(copies: list[_Copy], size: int) -> int:
     """How far every copy runs on alike, from a shared run of `size` statements."""
     length = size
     while True:
@@ -86,8 +86,13 @@ def _where(copy: _Copy, anchor: Path) -> str:
 
 
 def _fixture_name(block: list[Statement]) -> str:
-    """The fixture to suggest: named for the last name the block binds."""
-    names = [name for statement in block for name in statement.binds]
+    """The fixture to suggest: named for the last public name the block binds."""
+    names = [
+        name
+        for statement in block
+        for name in statement.binds
+        if not name.startswith("_")
+    ]
     return f"a fixture, e.g. `{names[-1]}`," if names else "a fixture"
 
 
@@ -96,14 +101,14 @@ def _find_copy_paste_setup(
 ) -> Iterator[tuple[Path, Hit]]:
     # A block is at least one statement, and is pasted only if two tests hold it.
     size = max(thresholds.duplicate_setup_min_statements, 1)
-    least = max(thresholds.duplicate_setup_min_tests, 2)
+    min_tests = max(thresholds.duplicate_setup_min_tests, 2)
     # A statement is reported in one block at most: a block that overlaps one
     # already reported, in any test, waits for that one's fixture.
     reported: set[tuple[int, int]] = set()  # (setup id, statement index)
     for copies in _windows(_setups(summaries), size).values():
-        if len(copies) < least:
+        if len(copies) < min_tests:
             continue
-        length = _length(copies, size)
+        length = _block_length(copies, size)
         spans = [{(id(c.setup), c.start + i) for i in range(length)} for c in copies]
         if any(span & reported for span in spans):
             continue
@@ -119,7 +124,8 @@ def _find_copy_paste_setup(
                 block[0].line,
                 found=(
                     f"shares {length} setup statements ({lines}) with "
-                    f"{len(others)} other tests, alike in every name and literal."
+                    f"{len(others)} other test{'s' if len(others) > 1 else ''}, "
+                    "alike in every name and literal."
                 ),
                 fix=(
                     f"move {lines} into {_fixture_name(block)} and request it "
@@ -147,8 +153,9 @@ COPY_PASTE_SETUP = Check(
     explain=(
         "Flags a block of setup statements pasted into several tests, in one file or "
         "across files: at least `drill_sergeant_duplicate_setup_min_statements` "
-        "statements in a row (3 by default), alike in every name and literal, in at "
-        "least `drill_sergeant_duplicate_setup_min_tests` tests (3 by default). A "
+        "statements in a row (3 by default; at least 1), alike in every name and "
+        "literal, in at least `drill_sergeant_duplicate_setup_min_tests` tests (3 by "
+        "default; at least 2). A "
         "test's setup is its statements before the first one that holds a real "
         "assertion. One finding per block, on its first occurrence, names the other "
         "tests that hold it; a statement is reported in one block at most, so a "

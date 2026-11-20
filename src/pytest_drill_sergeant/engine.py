@@ -159,13 +159,10 @@ def _compare_files(
     findings: list[Finding] = []
     ignored = {path: _ignored_codes(path, config) for path, _ in summaries}
     for check in CHECKS:
-        seen = [
-            (path, summary)
-            for path, summary in summaries
-            if _level(check, ignored[path], config) is not Level.OFF
-        ]
+        levels = {path: _level(check, ignored[path], config) for path in ignored}
+        seen = [(p, s) for p, s in summaries if levels[p] is not Level.OFF]
         findings.extend(
-            _finding(check, path, hit, _level(check, ignored[path], config))
+            _finding(check, path, hit, levels[path])
             for path, hit in check.find_across(seen, _thresholds(config))
         )
     return findings
