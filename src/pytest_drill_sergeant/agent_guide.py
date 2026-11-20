@@ -24,10 +24,15 @@ WAIVER_RULE = (
 EXPLAIN_POINTER = "`drill-sergeant explain DS###` shows a check's bad and fixed test."
 
 
+def _header(check: Check) -> str:
+    """A check's code and name, with its default level and kind beside them."""
+    return f"{check.code} {check.name} [{check.default_level}, {check.kind}]"
+
+
 def lesson(check: Check) -> str:
     """One check taught in full: its rationale, then a test it flags and the fix."""
     return (
-        f"{check.code} {check.name} [{check.default_level}]\n\n"
+        f"{_header(check)}\n\n"
         f"Why: {check.why}\n\n"
         f"{check.explain}\n\n"
         f"Bad:\n\n{check.bad_example}\n"
@@ -36,11 +41,8 @@ def lesson(check: Check) -> str:
 
 
 def summary() -> str:
-    """Every check in a line: its code, name and default level, and why it matters."""
-    return "\n".join(
-        f"{check.code} {check.name} [{check.default_level}]: {check.why}"
-        for check in CHECKS
-    )
+    """Every check in a line: its header, then why it matters."""
+    return "\n".join(f"{_header(check)}: {check.why}" for check in CHECKS)
 
 
 def guide() -> str:
