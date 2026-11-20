@@ -348,7 +348,7 @@ def _compare_files(
 
     findings: list[Finding] = []
     for check in CHECKS:
-        if not check.compares_files:
+        if check.find_across is None:
             continue
         code = check.code
         seen = [(p, s) for p, s in summaries if levels[p][code] is not Level.OFF]

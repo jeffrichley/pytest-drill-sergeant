@@ -47,6 +47,8 @@ class TestFunction:
 class Thresholds:
     """The configured thresholds a check may measure one file against.
 
+    Their defaults are the config's (`Config`), the one place they are set.
+
     Attributes:
         max_file_lines: The most lines a test file may have.
         max_test_lines: The most lines a test function may have.
@@ -56,11 +58,11 @@ class Thresholds:
         duplicate_setup_min_tests: The fewest tests a copy-pasted setup block is in.
     """
 
-    max_file_lines: int = 500
-    max_test_lines: int = 50
-    max_mock_setup: int = 10
-    duplicate_setup_min_statements: int = 3
-    duplicate_setup_min_tests: int = 3
+    max_file_lines: int
+    max_test_lines: int
+    max_mock_setup: int
+    duplicate_setup_min_statements: int
+    duplicate_setup_min_tests: int
 
 
 @dataclass(frozen=True)
@@ -89,11 +91,11 @@ class TestFile:
     module: ast.Module
     tests: tuple[TestFunction, ...]
     lines: int
-    waivers: tuple[Waiver, ...] = ()
-    thresholds: Thresholds = Thresholds()
-    category_markers: tuple[str, ...] = ("unit", "integration", "e2e")
-    directories: tuple[str, ...] = ()
-    comments: tuple[Comment, ...] = ()
+    waivers: tuple[Waiver, ...]
+    thresholds: Thresholds
+    category_markers: tuple[str, ...]
+    directories: tuple[str, ...]
+    comments: tuple[Comment, ...]
 
 
 @dataclass(frozen=True)
@@ -247,12 +249,6 @@ def _finds_nothing(_file: TestFile) -> Iterable[Hit]:
     return ()
 
 
-def _compares_nothing(
-    _summaries: Summaries, _thresholds: Thresholds, _reports: Reports
-) -> Iterable[tuple[Path, Hit]]:
-    return ()
-
-
 @dataclass(frozen=True)
 class Check:
     """One deterministic detection of a single failure mode.
@@ -268,11 +264,12 @@ class Check:
         good_example: The same test, fixed.
         find: Reports the hits in one test file; by default, none.
         find_in_source: Reports the hits in one file of production code; `None`
-            for a check that reads only test files. Which files a check reads is
-            which of the two it gives: DS403 gives only this one.
+            for a check that doesn't read production code. Which files a check
+            reads is which of the two it gives: DS403 gives only this one.
         find_across: Reports the hits that comparing every file's summary turns
-            up, each with the file it is in; it is told which checks report in
-            which files, so it can leave a problem to a more specific check.
+            up, each with the file it is in; `None` for a check that doesn't
+            compare files. It is told which checks report in which files, so it
+            can leave a problem to a more specific check.
     """
 
     code: str
@@ -285,9 +282,4 @@ class Check:
     good_example: str
     find: Callable[[TestFile], Iterable[Hit]] = _finds_nothing
     find_in_source: Callable[[SourceFile], Iterable[Hit]] | None = None
-    find_across: FindAcross = _compares_nothing
-
-    @property
-    def compares_files(self) -> bool:
-        """Whether the check compares files' summaries, not only reads files."""
-        return self.find_across is not _compares_nothing
+    find_across: FindAcross | None = None
