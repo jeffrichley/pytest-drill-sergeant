@@ -135,3 +135,44 @@ def test_moved_config_root_analyses_files_again(tmp_path, unmarked_test_at, cach
     ).findings
 
     assert "`@pytest.mark.e2e`" in findings[0].fix
+
+
+# DS101 is off by default until it is proven.
+NO_ASSERTION_ON = Config(levels={"DS101": Level.FAIL})
+ASSERTING_HELPER = "def check_total(items):\n    assert sum(items) == 3\n"
+
+
+def test_editing_only_a_followed_helper_module_analyses_the_test_again(
+    helper_caller, cache_dir
+):
+    path, helper = helper_caller
+    helper.write_text(ASSERTING_HELPER)
+    inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir)
+    helper.write_text("def check_total(items):\n    return sum(items)\n")
+
+    findings = inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir).findings
+
+    assert [(f.code, f.line) for f in findings] == [("DS101", 3)]
+
+
+def test_writing_a_helper_module_that_was_missing_analyses_the_test_again(
+    helper_caller, cache_dir
+):
+    path, helper = helper_caller
+    inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir)
+    helper.write_text(ASSERTING_HELPER)
+
+    assert inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir).findings == []
+
+
+def test_warm_run_with_a_followed_helper_unchanged_writes_nothing(
+    helper_caller, cache_dir, watch
+):
+    path, helper = helper_caller
+    helper.write_text(ASSERTING_HELPER)
+    inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir)
+    written = watch(cache_dir)
+
+    inspect([path], NO_ASSERTION_ON, cache_dir=cache_dir)
+
+    assert written() == []
