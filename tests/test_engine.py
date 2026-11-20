@@ -336,6 +336,10 @@ def test_long_file_split_never_moves_tests_to_the_file_itself(write_test_file, s
     assert "to `test_loans.py`" not in finding.fix
 
 
+# DS901 is off by default, a convention a project opts into.
+MARKERS_ON = {"DS901": Level.FAIL}
+
+
 @pytest.mark.parametrize(
     ("markers", "codes"), [(("e2e",), {"DS901"}), (("smoke",), set())]
 )
@@ -345,7 +349,7 @@ def test_category_markers_come_from_the_config(write_test_file, markers, codes):
         "    assert total([1, 2]) == 3\n"
     )
 
-    findings = analyze([path], Config(category_markers=markers))
+    findings = analyze([path], Config(category_markers=markers, levels=MARKERS_ON))
 
     assert {f.code for f in findings} == codes
 
@@ -353,7 +357,7 @@ def test_category_markers_come_from_the_config(write_test_file, markers, codes):
 def test_no_configured_category_markers_flags_nothing(unmarked_test_at):
     path = unmarked_test_at("test_total.py")
 
-    assert analyze([path], Config(category_markers=())) == []
+    assert analyze([path], Config(category_markers=(), levels=MARKERS_ON)) == []
 
 
 def test_category_marker_fix_names_the_nearest_category_directory(
@@ -361,7 +365,7 @@ def test_category_marker_fix_names_the_nearest_category_directory(
 ):
     path = unmarked_test_at("e2e/integration/test_total.py")
 
-    [finding] = analyze([path], Config(root=tmp_path))
+    [finding] = analyze([path], Config(root=tmp_path, levels=MARKERS_ON))
 
     assert finding.code == "DS901"
     assert "`@pytest.mark.integration`" in finding.fix
@@ -374,7 +378,7 @@ def test_category_marker_fix_lists_every_marker_when_no_directory_below_the_root
     """The config root's own name is not a directory the file is in."""
     path = unmarked_test_at("unit/checks/test_total.py")
 
-    [finding] = analyze([path], Config(root=tmp_path / "unit"))
+    [finding] = analyze([path], Config(root=tmp_path / "unit", levels=MARKERS_ON))
 
     assert all(
         f"`@pytest.mark.{m}`" in finding.fix for m in ("unit", "integration", "e2e")
@@ -386,7 +390,9 @@ def test_category_marker_fix_names_the_one_configured_marker(
 ):
     path = unmarked_test_at("test_total.py")
 
-    [finding] = analyze([path], Config(root=tmp_path, category_markers=("unit",)))
+    [finding] = analyze(
+        [path], Config(root=tmp_path, category_markers=("unit",), levels=MARKERS_ON)
+    )
 
     assert "add `@pytest.mark.unit` to" in finding.fix
 
@@ -396,7 +402,7 @@ def test_category_marker_fix_reads_directory_names_in_any_case(
 ):
     path = unmarked_test_at("tests/Unit/test_total.py")
 
-    [finding] = analyze([path], Config(root=tmp_path))
+    [finding] = analyze([path], Config(root=tmp_path, levels=MARKERS_ON))
 
     assert "`@pytest.mark.unit`" in finding.fix
     assert "e2e" not in finding.fix

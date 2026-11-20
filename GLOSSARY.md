@@ -85,7 +85,7 @@ A pytest marker that classifies a test by kind (e.g. unit, integration, e2e) so 
 _Avoid_: Test type, tag
 
 **Level**:
-How a check's findings count: `fail` (they fail the run), `warn` (reported, the run's result unchanged) or `off` (not reported). Each check has a default level, which is on only once the check is proven; two stand apart from that rule: DS108 stays off (a style a project opts into) and DS901 stays on (a project convention).
+How a check's findings count: `fail` (they fail the run), `warn` (reported, the run's result unchanged) or `off` (not reported). Each check has a default level, which is on only once the check is proven; DS108 (AAA comments) and DS901 (category markers) are conventions a project opts into, and stay off whatever their proof.
 _Avoid_: Severity
 
 **Proven**:

@@ -31,7 +31,10 @@ def test_check_exits_nonzero_and_locates_the_finding(cli, assertion_free_test):
     assert "DS101" in result.output
 
 
-def test_check_finds_test_files_in_a_directory_and_skips_the_rest(cli, tmp_path):
+def test_check_finds_test_files_in_a_directory_and_skips_the_rest(
+    cli, cli_ini, tmp_path
+):
+    cli_ini()
     for name in ("test_a.py", "b_test.py", "helpers.py", ".venv/test_vendored.py"):
         (tmp_path / "suite" / name).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / "suite" / name).write_text("def test_x():\n    run()\n")
@@ -44,11 +47,11 @@ def test_check_finds_test_files_in_a_directory_and_skips_the_rest(cli, tmp_path)
     assert "test_vendored.py" not in result.output
 
 
-def test_check_takes_test_files_by_the_configs_python_files(cli, tmp_path):
+def test_check_takes_test_files_by_the_configs_python_files(cli, cli_ini, tmp_path):
     for name in ("check_a.py", "test_b.py"):
         (tmp_path / "suite" / name).parent.mkdir(exist_ok=True)
         (tmp_path / "suite" / name).write_text("def test_x():\n    run()\n")
-    (tmp_path / "pytest.ini").write_text("[pytest]\npython_files = check_*.py\n")
+    cli_ini("python_files = check_*.py")
 
     result = cli("check", "suite")
 
@@ -61,7 +64,9 @@ def test_check_skips_the_configs_norecursedirs(cli, tmp_path):
         (tmp_path / "suite" / name).parent.mkdir(parents=True, exist_ok=True)
         (tmp_path / "suite" / name).write_text("def test_x():\n    run()\n")
     (tmp_path / "pyproject.toml").write_text(
-        '[tool.pytest.ini_options]\nnorecursedirs = ["legacy"]\n'
+        "[tool.pytest.ini_options]\n"
+        'norecursedirs = ["legacy"]\n'
+        'drill_sergeant_levels = ["DS101=fail"]\n'
     )
 
     result = cli("check", "suite")

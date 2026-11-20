@@ -14,13 +14,18 @@ WARN_CONFIGS = {
 }
 
 
+# A test whose only finding is from a check on by default: DS803 on line 4.
+UNSEEDED_DRAW = "import random\n\ndef test_draw():\n    assert random.random() < 2\n"
+
+
 @pytest.fixture
 def pkg_under_warn(tmp_path):
-    """`pkg/`, holding an assertion-free test, under a `pytest.ini` setting warn mode;
-    returned so a test can put a config file beside the test."""
+    """`pkg/`, holding a test with an unseeded random draw (DS803, on by default),
+    under a `pytest.ini` setting warn mode; returned so a test can put a config file
+    beside the test."""
     deep = tmp_path / "pkg"
     deep.mkdir()
-    (deep / "test_it.py").write_text("def test_it():\n    run()\n")
+    (deep / "test_draw.py").write_text(UNSEEDED_DRAW)
     (tmp_path / "pytest.ini").write_text(WARN_CONFIGS["pytest.ini"])
     return deep
 
@@ -46,7 +51,7 @@ def test_check_reads_pytest_9_native_toml(cli, tmp_path, unseeded_random_test):
 def test_check_searches_upward_from_the_given_paths(cli, tmp_path):
     deep = tmp_path / "pkg" / "tests"
     deep.mkdir(parents=True)
-    (deep / "test_it.py").write_text("def test_it():\n    run()\n")
+    (deep / "test_draw.py").write_text(UNSEEDED_DRAW)
     (tmp_path / "pytest.ini").write_text(WARN_CONFIGS["pytest.ini"])
 
     assert cli("check", "pkg/tests").exit_code == 0

@@ -62,10 +62,10 @@ tracks them).
 
 On by default, at `fail`: DS001 malformed-waiver, DS106 long-file, DS301
 mock-only-assertion, DS502 near-duplicate-tests, DS603 source-text-grep, DS802
-wall-clock-read, DS803 unseeded-random, and DS901 missing-category-marker, a project
-convention. Every other check is off: DS101-DS105, DS107, DS201-DS203, DS302, DS303,
-DS401-DS403, DS501, DS601, DS602, DS701, DS702 and DS801 until each is proven, and
-DS108 (AAA comments), a style a project opts into.
+wall-clock-read and DS803 unseeded-random. Every other check is off: DS101-DS105,
+DS107, DS201-DS203, DS302, DS303, DS401-DS403, DS501, DS601, DS602, DS701, DS702 and
+DS801 until each is proven, and two conventions a project opts into: DS108 (AAA
+comments) and DS901 (category markers).
 
 Turn an off check on with `drill_sergeant_levels`, at `fail` or `warn`:
 
@@ -177,7 +177,7 @@ drill_sergeant_voice = false
 | `drill_sergeant_max_mock_setup` | whole number | 10 |
 | `drill_sergeant_duplicate_setup_min_statements` | whole number | 3 |
 | `drill_sergeant_duplicate_setup_min_tests` | whole number | 3 |
-| `drill_sergeant_category_markers` | marker names; every test must carry one (DS901), and the plugin registers them | `unit integration e2e` |
+| `drill_sergeant_category_markers` | marker names; with DS901 on, every test must carry one; the plugin registers them | `unit integration e2e` |
 | `drill_sergeant_source_dirs` | directory lines, relative to the config file; each must exist. The production code DS403 reads in full; with none and no `src/`, DS403, when on, is skipped and the output says so | `src/` if it exists |
 | `drill_sergeant_voice` | `true` or `false`; off prints Found/Why/Fix without the voice | `true` |
 | `drill_sergeant_max_findings` | whole number, 0 for all | 25 |
@@ -186,8 +186,9 @@ drill_sergeant_voice = false
 
 ### Category markers
 
-DS901 requires every test to carry one of the configured category markers, as
-`pytest.mark.<marker>` on the test, its class or the module's `pytestmark`. Its fix
+DS901, off by default, requires every test to carry one of the configured category
+markers, as `pytest.mark.<marker>` on the test, its class or the module's
+`pytestmark`. Its fix
 suggests the marker named by the nearest directory in the file's path, relative to the
 config file's directory (`tests/integration/test_x.py` suggests
 `@pytest.mark.integration`), and otherwise lists the configured markers. The check
@@ -195,8 +196,8 @@ reads the files, never edits them.
 
 **Known limitation:** markers a project's own conftest hook adds at collection time
 (`pytest_collection_modifyitems` marking by directory, say) are not in the test files,
-so the check can't see them. Such projects turn it off:
-`drill_sergeant_levels = ["DS901=off"]`.
+so the check can't see them. Such projects leave it off. Others turn it on with
+`drill_sergeant_levels = ["DS901=fail"]`.
 
 ## Development
 

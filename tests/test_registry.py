@@ -73,15 +73,14 @@ def test_check_has_at_least_three_bad_and_three_good_corpus_files(check):
     assert len(list(folder.glob(f"{prefix}good_*.py"))) >= 3
 
 
-# Proven: zero false positives in a hand-judged sample of real suites (#171). DS901
-# is a project convention, not a judgement of a test, and stays on outside that rule.
-ON_BY_DEFAULT = {"DS001", "DS106", "DS301", "DS502", "DS603", "DS802", "DS803", "DS901"}
+# Proven: zero false positives in a hand-judged sample of real suites (#171).
+ON_BY_DEFAULT = {"DS001", "DS106", "DS301", "DS502", "DS603", "DS802", "DS803"}
 
 
 @pytest.mark.parametrize("check", CHECKS, ids=lambda c: c.code)
 def test_check_reports_by_default_only_once_proven(check):
     """Under the default config a check reports its own bad corpus files only once it
-    is proven (or is DS901); every other check is off until a project turns it on."""
+    is proven; every other check is off until a project turns it on."""
     folder, prefix = corpus_folder(check)
     bad = sorted(folder.glob(f"{prefix}bad_*.py"))
     if check.find_in_source:
