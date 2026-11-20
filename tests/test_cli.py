@@ -5,7 +5,7 @@ import pytest
 
 pytestmark = pytest.mark.integration
 
-CORPUS = Path(__file__).parent / "corpus"
+GOLDEN = Path(__file__).parent / "golden"
 
 
 def test_help_names_the_command(cli):
@@ -358,17 +358,15 @@ def test_production_code_is_read_in_full_on_every_run(
     assert "src/app.py:5: DS403" in output
 
 
-# A change to the report changes golden/check.txt: rerun
-# `drill-sergeant check --show-waived suite` over a copy of the corpus with
-# NO_COLOR=1 COLUMNS=100, and review the diff.
+# The golden suite is a small fixed suite, apart from the corpus, so only a change to
+# the report (or a check firing on its files) changes golden/check.txt. Regenerate it
+# with `just golden` and review `git diff tests/golden`.
 def test_check_output_matches_the_golden_report(cli, tmp_path):
-    golden = Path(__file__).parent / "golden" / "check.txt"
-    suite = tmp_path / "suite"
-    shutil.copytree(CORPUS, suite)
+    shutil.copytree(GOLDEN / "suite", tmp_path / "suite")
 
     result = cli("check", "--show-waived", "suite")
 
-    assert result.output == golden.read_text()
+    assert result.output == (GOLDEN / "check.txt").read_text()
 
 
 def test_waived_findings_leave_the_exit_code_and_are_tallied(cli, waived_test):

@@ -16,8 +16,8 @@ os.environ["COLUMNS"] = "100"
 
 pytest_plugins = ["pytester"]
 
-# The corpus and the perf test's fixture suite are analysed by the engine, never run.
-collect_ignore = ["corpus", "perf/suite"]
+# The corpus and the perf and golden tests' fixture suites are analysed, never run.
+collect_ignore = ["corpus", "perf/suite", "golden/suite"]
 
 # Ends a generated test file so its tests carry a category marker (no DS901) while
 # every line above it, and so every finding's line, stays where it was.
