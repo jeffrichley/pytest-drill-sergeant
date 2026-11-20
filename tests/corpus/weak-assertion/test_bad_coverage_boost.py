@@ -26,7 +26,7 @@ class TestCoverageBoost:
         assert len(version_str) > 0  # expect: DS201
 
         docstring = pytest_drill_sergeant.__doc__
-        if docstring:
+        if docstring:  # expect: DS107
             assert len(str(docstring)) != 0
 
     def test_list_operations(self) -> None:
@@ -34,7 +34,7 @@ class TestCoverageBoost:
         all_items = pytest_drill_sergeant.__all__
         assert len(all_items) >= 0  # expect: DS201
 
-        for item in all_items:
+        for item in all_items:  # expect: DS107
             assert isinstance(item, str)
             assert 0 < len(item)
 

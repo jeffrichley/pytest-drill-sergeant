@@ -4,9 +4,11 @@ A test's setup is its leading statements, before the first one that holds a real
 assertion; a docstring is not one of them. Each statement is recorded by its
 fingerprint, so two statements that read the same, wherever they stand, compare
 equal, and a different name or literal makes them differ. A test's whole body is
-recorded twice: by its fingerprint, and by its shape, the fingerprint with every
-name and literal blanked. The summary is plain data, the same for the same file
-bytes.
+recorded by its fingerprint and by its shape, the fingerprint with every name and
+literal blanked, with the names and the literals that shape blanked, in order, so
+tests of one shape can be told apart by them; its `def` line and decorators are
+recorded by their fingerprint. The summary is plain data, the same for the same
+file bytes.
 """
 
 import ast
@@ -54,6 +56,38 @@ def shape(nodes: list[ast.stmt]) -> str:
     return fingerprint([_blanked(node) for node in nodes])
 
 
+def _is_signed_literal(node: ast.AST) -> bool:
+    return (
+        isinstance(node, ast.UnaryOp)
+        and isinstance(node.op, ast.USub | ast.UAdd)
+        and isinstance(node.operand, ast.Constant)
+    )
+
+
+def _blanked_leaves(node: ast.AST, names: list[str], literals: list[str]) -> None:
+    """Collect, in source order, the names and literals a shape blanks.
+
+    A signed literal (`-1`) is one literal, as it reads.
+    """
+    if isinstance(node, ast.Name):
+        names.append(node.id)
+    elif isinstance(node, ast.arg):
+        names.append(node.arg)
+    if isinstance(node, ast.Constant) or _is_signed_literal(node):
+        literals.append(ast.unparse(node))
+        return
+    for child in ast.iter_child_nodes(node):
+        _blanked_leaves(child, names, literals)
+
+
+def _signature(test: TestFunction) -> str:
+    """The fingerprint of a test's `def` line and decorators, blind to its name."""
+    head = copy.copy(test.node)
+    head.name = "_"
+    head.body = []
+    return fingerprint([head])
+
+
 def _is_docstring(statement: ast.stmt) -> bool:
     return (
         isinstance(statement, ast.Expr)
@@ -80,12 +114,19 @@ def _summarize_test(test: TestFunction) -> TestSummary:
                 binds=tuple(bound_names(statement)),
             )
         )
+    names: list[str] = []
+    literals: list[str] = []
+    for statement in body:
+        _blanked_leaves(statement, names, literals)
     return TestSummary(
         name=test.name,
         line=test.node.lineno,
         setup=tuple(setup),
         body=fingerprint(body),
         shape=shape(body),
+        names=tuple(names),
+        literals=tuple(literals),
+        signature=_signature(test),
     )
 
 

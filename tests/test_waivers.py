@@ -61,7 +61,7 @@ def test_def_line_waiver_leaves_other_tests_findings_standing(write_test_file):
         "def test_one():  # drill: waive DS101 -- smoke test\n"
         "    run()\n"
         "def test_two():\n"
-        "    run()\n"
+        "    stop()\n"
     )
 
     result = inspect([path], Config())
@@ -85,14 +85,36 @@ def test_waiver_off_the_def_and_flagged_lines_waives_nothing(write_test_file, bo
     assert (flagged(result.findings), result.waived) == ([("DS101", 1)], [])
 
 
-def test_waiver_for_another_check_waives_nothing(write_test_file):
-    path = write_test_file(
-        "def test_it():  # drill: waive DS201 -- smoke test\n    run()\n"
-    )
+@pytest.mark.parametrize(
+    ("source", "standing"),
+    [
+        (
+            "def test_it():  # drill: waive DS201 -- smoke test\n    run()\n",
+            [("DS101", 1)],
+        ),
+        (
+            'def test_it():\n    run("# drill: waive DS101 -- smoke test")\n',
+            [("DS101", 1)],
+        ),
+        (
+            "def test_it():  # drill: waive DS001 -- let me off\n"
+            "    run()  # drill: waive DS101\n"
+            "    assert sorted([2, 1]) == [1, 2]\n",
+            [("DS001", 2)],
+        ),
+    ],
+    ids=[
+        "for-another-check",
+        "text-in-a-string-is-not-a-waiver",
+        "malformed-waiver-finding-is-never-waived",
+    ],
+)
+def test_waiver_that_does_not_apply_waives_nothing(write_test_file, source, standing):
+    path = write_test_file(source)
 
     result = inspect([path], Config())
 
-    assert (flagged(result.findings), result.waived) == ([("DS101", 1)], [])
+    assert (flagged(result.findings), result.waived) == (standing, [])
 
 
 @pytest.mark.parametrize(
@@ -116,16 +138,6 @@ def test_malformed_waiver_waives_nothing_and_is_reported(write_test_file, commen
     )
 
 
-def test_waiver_text_in_a_string_is_not_a_waiver(write_test_file):
-    path = write_test_file(
-        'def test_it():\n    run("# drill: waive DS101 -- smoke test")\n'
-    )
-
-    result = inspect([path], Config())
-
-    assert (flagged(result.findings), result.waived) == ([("DS101", 1)], [])
-
-
 def test_waiver_that_matches_no_finding_is_not_reported(write_test_file):
     path = write_test_file(
         "def test_it():  # drill: waive DS201 -- not needed\n"
@@ -135,18 +147,6 @@ def test_waiver_that_matches_no_finding_is_not_reported(write_test_file):
     result = inspect([path], Config())
 
     assert (result.findings, result.waived) == ([], [])
-
-
-def test_malformed_waiver_finding_is_never_waived(write_test_file):
-    path = write_test_file(
-        "def test_it():  # drill: waive DS001 -- let me off\n"
-        "    run()  # drill: waive DS101\n"
-        "    assert sorted([2, 1]) == [1, 2]\n"
-    )
-
-    result = inspect([path], Config())
-
-    assert (flagged(result.findings), result.waived) == ([("DS001", 2)], [])
 
 
 def test_waived_finding_keeps_its_level(write_test_file):
@@ -173,3 +173,16 @@ def test_with_inline_waivers_off_malformed_waivers_are_not_reported(write_test_f
     result = inspect([path], resolve({"drill_sergeant_inline_waivers": "false"}))
 
     assert (result.findings, result.waived) == ([], [])
+
+
+def test_waiver_on_the_flagged_line_of_production_code_waives_the_finding(tmp_path):
+    path = tmp_path / "app.py"
+    path.write_text(
+        "import sys\n"
+        "QUIET = 'pytest' in sys.modules  # drill: waive DS403 -- quiet test logs\n"
+    )
+
+    result = inspect([], Config(), sources=[path])
+
+    assert result.findings == []
+    assert [(w.finding.code, w.finding.line) for w in result.waived] == [("DS403", 2)]

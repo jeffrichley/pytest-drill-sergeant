@@ -22,4 +22,4 @@ async def test_poller_runs_after_a_float_zero_tick():
     poller = Poller()
     poller.submit("job")
     await asyncio.sleep(0.0)
-    assert poller.seen == ["job"]
+    assert poller.done == ["job"]

@@ -15,20 +15,20 @@ def test_finding_carries_the_checks_default_level(assertion_free_test):
     assert (finding.code, finding.level) == ("DS101", Level.FAIL)
 
 
-def test_interleaved_act_assert_warns_by_default():
-    corpus = Path(__file__).parent / "corpus" / "interleaved-act-assert"
+@pytest.mark.parametrize(
+    ("corpus_file", "code"),
+    [
+        ("interleaved-act-assert/test_bad_two_behaviours.py", "DS104"),
+        ("mock-without-spec/test_bad_mocker_doubles.py", "DS302"),
+    ],
+    ids=["interleaved-act-assert", "mock-without-spec"],
+)
+def test_check_warns_by_default(corpus_file, code):
+    path = Path(__file__).parent / "corpus" / corpus_file
 
-    findings = analyze([corpus / "test_bad_two_behaviours.py"], Config())
+    findings = analyze([path], Config())
 
-    assert {(f.code, f.level) for f in findings} == {("DS104", Level.WARN)}
-
-
-def test_mock_without_spec_warns_by_default():
-    corpus = Path(__file__).parent / "corpus" / "mock-without-spec"
-
-    findings = analyze([corpus / "test_bad_mocker_doubles.py"], Config())
-
-    assert {(f.code, f.level) for f in findings} == {("DS302", Level.WARN)}
+    assert {(f.code, f.level) for f in findings} == {(code, Level.WARN)}
 
 
 @pytest.mark.parametrize(("limit", "codes"), [(2, {"DS303"}), (3, set())])
@@ -180,7 +180,10 @@ def test_unset_options_take_the_spec_defaults():
     assert (config.voice, config.inline_waivers, config.cache) == (True, True, True)
 
 
-def test_every_spec_option_is_known_and_typed():
+def test_every_spec_option_is_known_and_typed(tmp_path):
+    (tmp_path / "lib").mkdir()
+    (tmp_path / "app").mkdir()
+
     config = resolve(
         {
             "drill_sergeant_mode": "warn",
@@ -197,7 +200,8 @@ def test_every_spec_option_is_known_and_typed():
             "drill_sergeant_max_findings": "0",
             "drill_sergeant_inline_waivers": "no",
             "drill_sergeant_cache": "0",
-        }
+        },
+        root=tmp_path,
     )
 
     assert (
@@ -260,3 +264,23 @@ def test_configured_level_applies_to_cross_file_findings(pasted_across_files):
     findings = analyze(pasted_across_files, Config(levels={"DS501": Level.WARN}))
 
     assert {(f.code, f.level) for f in findings} == {("DS501", Level.WARN)}
+
+
+@pytest.mark.parametrize(
+    ("threshold", "codes"),
+    [
+        ({"max_test_lines": 3}, set()),
+        ({"max_test_lines": 2}, {"DS105"}),
+        ({"max_file_lines": 3}, set()),
+        ({"max_file_lines": 2}, {"DS106"}),
+    ],
+)
+def test_thresholds_set_how_long_a_test_and_a_file_may_be(tmp_path, threshold, codes):
+    path = tmp_path / "test_add.py"
+    path.write_text(
+        "def test_add(calc):\n    total = calc.add(1, 2)\n    assert total == 3\n"
+    )
+
+    findings = analyze([path], Config(**threshold))
+
+    assert {f.code for f in findings} == codes

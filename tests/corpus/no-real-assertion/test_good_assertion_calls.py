@@ -24,11 +24,6 @@ class TestUnittestStyle(unittest.TestCase):
         self.assertEqual(int("3"), 3)
 
 
-def test_assertion_inside_a_loop():
-    for text, number in [("1", 1), ("2", 2)]:
-        assert int(text) == number
-
-
 def test_truthy_constant_beside_a_real_assertion():
     assert True
     assert int("4") == 4

@@ -13,7 +13,7 @@ One deterministic detection of a single failure mode.
 _Avoid_: Rule, validator, detector, analyzer
 
 **Finding**:
-One occurrence of a failure mode in a specific test, reported by a check.
+One occurrence of a failure mode in a specific test, reported by a check. A test file too long is the one failure mode of a whole file: its finding names the file and no test.
 _Avoid_: Violation, error, issue, warning
 
 **Real assertion**:
@@ -32,6 +32,14 @@ _Avoid_: Trivial assertion, always-true assertion
 An `==` whose expected side is taken from the code under test: the same call on both sides, directly or through names the test bound to it. Names never matter: `first == second`, each bound to the same call, is one just as `result == expected` is.
 _Avoid_: Self-check, circular assertion
 
+**Production code**:
+The code under test, as opposed to the tests: the `.py` files under `drill_sergeant_source_dirs`, or under `src/` when that is empty. Only the special-casing check (DS403) reads it, in full every run.
+_Avoid_: Source (alone), app code, implementation
+
+**Unconditional skip**:
+A skip that happens on every run: `pytest.mark.skip`, `skipif` on a truthy constant, or `pytest.skip(...)` as a statement of a test's own body under no condition.
+_Avoid_: Disabled test
+
 **Setup**:
 A test's statements before the first one that holds a real assertion, its docstring aside.
 _Avoid_: Arrange block, preamble
@@ -49,7 +57,7 @@ The step that reads one test file on its own and gives that file's findings and 
 _Avoid_: Local pass, file scan
 
 **Per-file summary**:
-What per-file analysis records of each test in a file for cross-file analysis: its name and line; the fingerprint, lines and bound names of each setup statement; and the fingerprint and shape of its whole body. Plain data, never the syntax tree.
+What per-file analysis records of each test in a file for cross-file analysis: its name and line; the fingerprint, lines and bound names of each setup statement; the fingerprint and shape of its whole body, with the names and literals that shape blanks; and the fingerprint of its `def` line and decorators. Plain data, never the syntax tree.
 _Avoid_: File index, digest
 
 **Cache**:

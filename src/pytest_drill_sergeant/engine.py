@@ -1,4 +1,7 @@
-"""The engine: test files and a config in, findings out, with no pytest in sight."""
+"""The engine: test files, production code and a config in, findings out.
+
+No pytest in sight.
+"""
 
 import ast
 import dataclasses
@@ -8,7 +11,14 @@ from fnmatch import fnmatch
 from pathlib import Path
 
 from pytest_drill_sergeant.cache import Cache, content_hash, context
-from pytest_drill_sergeant.checks import CHECKS, Check, Hit, TestFile, TestFunction
+from pytest_drill_sergeant.checks import (
+    CHECKS,
+    Check,
+    Hit,
+    SourceFile,
+    TestFile,
+    TestFunction,
+)
 from pytest_drill_sergeant.checks.ast_tools import (
     FIXTURE_DECORATORS,
     imports_seen_by,
@@ -116,7 +126,7 @@ def _ignored_codes(path: Path, config: Config, root: str) -> frozenset[str]:
 
 @dataclass(frozen=True)
 class Inspection:
-    """What one run over the test files found.
+    """What one run over the test files and production code found.
 
     Attributes:
         findings: The findings that stand, ordered by file, line and code.
@@ -203,6 +213,7 @@ def _analyze_file(path: Path, source: bytes, config: Config) -> _FileResult:
         path=path,
         module=module,
         tests=tests,
+        lines=len(source.splitlines()),
         waivers=waivers,
         thresholds=_thresholds(config),
     )
@@ -260,6 +271,26 @@ def _file_findings(path: Path, result: _FileResult, levels: Levels) -> list[Find
     ]
 
 
+def _analyze_source(
+    path: Path, config: Config, levels: Levels
+) -> tuple[list[Finding], FileWaivers]:
+    """A production file's findings and its inline waivers.
+
+    The findings are those of the checks that read production code; a waiver
+    silences a finding on its own line.
+    """
+    source = path.read_bytes()
+    file = SourceFile(path=path, module=ast.parse(source, filename=str(path)))
+    findings = [
+        _finding(check, path, hit, levels[check.code])
+        for check in CHECKS
+        if check.find_in_source is not None and levels[check.code] is not Level.OFF
+        for hit in check.find_in_source(file)
+    ]
+    waivers = parse(source) if config.inline_waivers else ()
+    return findings, FileWaivers(waivers=waivers, def_lines={})
+
+
 def _compare_files(
     summaries: list[tuple[Path, FileSummary]],
     levels: Mapping[Path, Levels],
@@ -284,31 +315,43 @@ def _compare_files(
 
 
 def analyze(
-    paths: Iterable[Path], config: Config, cache_dir: Path | None = None
+    paths: Iterable[Path],
+    config: Config,
+    sources: Iterable[Path] = (),
+    *,
+    cache_dir: Path | None = None,
 ) -> list[Finding]:
-    """Run every check over the test files and return the findings that stand.
+    """Run every check over the test files and production code; return what stands.
 
-    The same as `inspect(paths, config, cache_dir).findings`.
+    The same as `inspect(paths, config, sources, cache_dir=cache_dir).findings`.
     """
-    return inspect(paths, config, cache_dir).findings
+    return inspect(paths, config, sources, cache_dir=cache_dir).findings
 
 
 def inspect(
-    paths: Iterable[Path], config: Config, cache_dir: Path | None = None
+    paths: Iterable[Path],
+    config: Config,
+    sources: Iterable[Path] = (),
+    *,
+    cache_dir: Path | None = None,
 ) -> Inspection:
-    """Run every check over the test files, then apply their inline waivers.
+    """Run every check over the test files and production code, then apply waivers.
 
     Each file is analysed on its own, for its findings and its per-file summary;
-    then the summaries, never the files, are compared across files.
+    then the summaries, never the files, are compared across files. The
+    production files are read in full, by the checks that read production code
+    (DS403) and no others.
 
     Args:
         paths: The test files to analyse.
         config: The resolved configuration.
+        sources: The production files to analyse. They are never cached: they are
+            read in full every run.
         cache_dir: The directory the cache is kept in, or `None` to run uncached.
-            With `config.cache` off the run is uncached too. A file whose bytes,
-            drill-sergeant and per-file settings are unchanged since a cached run
-            isn't analysed again; cross-file analysis always reruns, from the
-            summaries.
+            With `config.cache` off the run is uncached too. A test file whose
+            bytes, drill-sergeant and per-file settings are unchanged since a
+            cached run isn't analysed again; cross-file analysis always reruns,
+            from the summaries.
 
     Returns:
         The findings that stand and the waived ones, each ordered by file, line
@@ -325,7 +368,8 @@ def inspect(
     shared = context(_per_file_settings(config)) if cache is not None else ""
     summaries: list[tuple[Path, FileSummary]] = []
     ordered = sorted(paths, key=lambda p: p.as_posix())
-    levels = _levels_by_file(ordered, config)
+    production = list(sources)
+    levels = _levels_by_file([*ordered, *production], config)
     for path in ordered:
         result = _file_result(path, config, cache, shared)
         findings.extend(_file_findings(path, result, levels[path]))
@@ -334,6 +378,10 @@ def inspect(
     if cache is not None:
         cache.save()
     findings.extend(_compare_files(summaries, levels, config))
+    for path in production:
+        source_findings, waivers = _analyze_source(path, config, levels[path])
+        findings.extend(source_findings)
+        files.setdefault(path, waivers)
     findings.sort(key=lambda f: (f.file.as_posix(), f.line, f.code))
     kept, waived = apply(findings, files)
     return Inspection(findings=kept, waived=waived)

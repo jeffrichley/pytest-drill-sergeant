@@ -1,4 +1,5 @@
-DRILL SERGEANT INSPECTION: 245 findings in 67 files. FALL IN!
+drill-sergeant: skipped DS403 test-special-casing: no src/ and no drill_sergeant_source_dirs.
+DRILL SERGEANT INSPECTION: 311 findings in 87 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -330,6 +331,15 @@ suite/broad-raises/test_bad_catch_all.py
            exception the code raises, and add `match=` for the part of its message that matters.
 
 suite/broad-raises/test_bad_hidden_in_flow.py
+  suite/broad-raises/test_bad_hidden_in_flow.py:17: DS107 conditional-logic [warn] in test_every_bad_input_raises
+    "Your loop checks nothing when it's empty, and you'll never know it!"
+    Found: `test_every_bad_input_raises` asserts inside a `for` loop on line 17: if the loop runs
+           zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_every_bad_input_raises`, line 17: assert once on everything `range(2)` gives, as
+           a whole (`assert [... for _ in range(2)] == [...]`), so an empty result fails the test;
+           or `parametrize` over known inputs.
   suite/broad-raises/test_bad_hidden_in_flow.py:18: DS701 broad-raises [fail] in test_every_bad_input_raises
     "Any error passes this test! Even the wrong one! ESPECIALLY the wrong one!"
     Found: `test_every_bad_input_raises` expects `Exception` with no `match=`, so any error at all
@@ -421,6 +431,158 @@ suite/broad-raises/test_bad_other_spellings.py
            from a typo in the test, so it can't tell the expected failure from a broken one.
     Fix:   In `test_aliased_name`, line 45: replace `BaseException` with the specific exception the
            code raises, and add `match=` for the part of its message that matters.
+
+suite/conditional-logic/test_bad_branch_on_the_outcome.py
+  suite/conditional-logic/test_bad_branch_on_the_outcome.py:11: DS107 conditional-logic [warn] in test_strong_assertion_inside_a_branch_still_counts
+    "Your loop checks nothing when it's empty, and you'll never know it!"
+    Found: `test_strong_assertion_inside_a_branch_still_counts` has an `if` on line 11 with
+           assertions inside it, so they run only on some paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_strong_assertion_inside_a_branch_still_counts`, line 11: set up the case so its
+           outcome is known, and assert that one outcome with no branch; write one test per path.
+  suite/conditional-logic/test_bad_branch_on_the_outcome.py:18: DS107 conditional-logic [warn] in test_refund
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_refund` has an `if` on line 18 with assertions inside it, so they run only on some
+           paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_refund`, line 18: set up the case so its outcome is known, and assert that one
+           outcome with no branch; write one test per path.
+  suite/conditional-logic/test_bad_branch_on_the_outcome.py:26: DS107 conditional-logic [warn] in test_parse_reply
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `test_parse_reply` has a `match` on line 26 with assertions inside it, so they run only
+           on some paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_parse_reply`, line 26: set up the case so its outcome is known, and assert that
+           one outcome with no branch; write one test per path.
+  suite/conditional-logic/test_bad_branch_on_the_outcome.py:36: DS107 conditional-logic [warn] in test_upgrade_path
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_upgrade_path` has an `if` on line 36 with assertions inside it, so they run only on
+           some paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_upgrade_path`, line 36: set up the case so its outcome is known, and assert that
+           one outcome with no branch; write one test per path.
+  suite/conditional-logic/test_bad_branch_on_the_outcome.py:42: DS107 conditional-logic [warn] in test_retry_until_it_works
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `test_retry_until_it_works` has an `if` on line 42 with assertions inside it, so they run
+           only on some paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_retry_until_it_works`, line 42: set up the case so its outcome is known, and
+           assert that one outcome with no branch; write one test per path.
+  suite/conditional-logic/test_bad_branch_on_the_outcome.py:52: DS107 conditional-logic [warn] in TestExport::test_export_format
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `TestExport::test_export_format` has an `if` on line 52 with assertions inside it, so
+           they run only on some paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `TestExport::test_export_format`, line 52: set up the case so its outcome is known,
+           and assert that one outcome with no branch; write one test per path.
+
+suite/conditional-logic/test_bad_loop_over_literal.py
+  suite/conditional-logic/test_bad_loop_over_literal.py:18: DS107 conditional-logic [warn] in test_assertion_inside_a_loop
+    "Your loop checks nothing when it's empty, and you'll never know it!"
+    Found: `test_assertion_inside_a_loop` asserts inside a `for` loop on line 18: if the loop runs
+           zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_assertion_inside_a_loop`, line 18: replace the loop with
+           `@pytest.mark.parametrize("text, number", [('1', 1), ('2', 2)])`, so each case runs,
+           passes and fails as its own test.
+  suite/conditional-logic/test_bad_loop_over_literal.py:23: DS107 conditional-logic [warn] in test_raise_after_the_try
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_raise_after_the_try` asserts inside a `for` loop on line 23: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_raise_after_the_try`, line 23: replace the loop with
+           `@pytest.mark.parametrize("text", ['x', 'y'])`, so each case runs, passes and fails as
+           its own test.
+  suite/conditional-logic/test_bad_loop_over_literal.py:32: DS107 conditional-logic [warn] in test_parse_suffixes
+    "Your loop checks nothing when it's empty, and you'll never know it!"
+    Found: `test_parse_suffixes` asserts inside a `for` loop on line 32: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_parse_suffixes`, line 32: replace the loop with `@pytest.mark.parametrize("text,
+           expected", CASES)`, so each case runs, passes and fails as its own test.
+  suite/conditional-logic/test_bad_loop_over_literal.py:37: DS107 conditional-logic [warn] in test_every_unit_is_case_insensitive
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `test_every_unit_is_case_insensitive` asserts inside a `for` loop on line 37: if the loop
+           runs zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_every_unit_is_case_insensitive`, line 37: replace the loop with
+           `@pytest.mark.parametrize("unit", UNITS)`, so each case runs, passes and fails as its own
+           test.
+  suite/conditional-logic/test_bad_loop_over_literal.py:42: DS107 conditional-logic [warn] in test_rejects_garbage
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_rejects_garbage` asserts inside a `for` loop on line 42: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_rejects_garbage`, line 42: replace the loop with
+           `@pytest.mark.parametrize("text", [...])` with the 9 values from line 42, so each case
+           runs, passes and fails as its own test.
+
+suite/conditional-logic/test_bad_loop_over_results.py
+  suite/conditional-logic/test_bad_loop_over_results.py:14: DS107 conditional-logic [warn] in test_loop_variable_named_random
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `test_loop_variable_named_random` asserts inside a `for` loop on line 14: if the loop
+           runs zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_loop_variable_named_random`, line 14: assert once on everything `rngs` gives, as
+           a whole (`assert [... for random in rngs] == [...]`), so an empty result fails the test;
+           or `parametrize` over known inputs.
+  suite/conditional-logic/test_bad_loop_over_results.py:20: DS107 conditional-logic [warn] in test_every_user_is_active
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_every_user_is_active` asserts inside a `for` loop on line 20: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_every_user_is_active`, line 20: assert once on everything `response.json()`
+           gives, as a whole (`assert [... for user in response.json()] == [...]`), so an empty
+           result fails the test; or `parametrize` over known inputs.
+  suite/conditional-logic/test_bad_loop_over_results.py:26: DS107 conditional-logic [warn] in test_rows_import
+    "Your loop checks nothing when it's empty, and you'll never know it!"
+    Found: `test_rows_import` asserts inside a `for` loop on line 26: if the loop runs zero times,
+           nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_rows_import`, line 26: assert once on everything `importer.rows()` gives, as a
+           whole (`assert [... for row in importer.rows()] == [...]`), so an empty result fails the
+           test; or `parametrize` over known inputs.
+  suite/conditional-logic/test_bad_loop_over_results.py:32: DS107 conditional-logic [warn] in test_drain_the_queue
+    "Your loop checks nothing when it's empty, and you'll never know it!"
+    Found: `test_drain_the_queue` asserts inside a `while` loop on line 32: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_drain_the_queue`, line 32: assert once, after the loop, on the whole outcome, so
+           a loop that runs zero times fails the test; or `parametrize` over known inputs.
+  suite/conditional-logic/test_bad_loop_over_results.py:38: DS107 conditional-logic [warn] in test_stream_yields_only_ticks
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `test_stream_yields_only_ticks` asserts inside a `async for` loop on line 38: if the loop
+           runs zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_stream_yields_only_ticks`, line 38: assert once on everything
+           `feed.stream(limit=10)` gives, as a whole (`assert [... async for event in
+           feed.stream(limit=10)] == [...]`), so an empty result fails the test; or `parametrize`
+           over known inputs.
+  suite/conditional-logic/test_bad_loop_over_results.py:44: DS107 conditional-logic [warn] in test_checks_in_a_helper
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_checks_in_a_helper` asserts inside a `for` loop on line 44: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_checks_in_a_helper`, line 44: assert once on everything `items` gives, as a
+           whole (`assert [... for item in items] == [...]`), so an empty result fails the test; or
+           `parametrize` over known inputs.
 
 suite/copy-paste-setup/cross-file/test_bad_billing_charges.py
   suite/copy-paste-setup/cross-file/test_bad_billing_charges.py:9: DS501 copy-paste-setup [fail] in test_charge_debits_the_account
@@ -578,6 +740,201 @@ suite/interleaved-act-assert/test_bad_two_behaviours.py
            name doesn't say which one broke, and a failing early step hides every later one.
     Fix:   In `test_log_cleared_then_add_again`, line 28: split the test into one test per act
            (lines 25, 28), each named for its behaviour, with any shared setup in a fixture.
+
+suite/long-file/test_bad_flat_module.py
+  suite/long-file/test_bad_flat_module.py:1: DS106 long-file [fail]
+    "This file is a WAREHOUSE, recruit! Nobody can find anything in here!"
+    Found: `test_bad_flat_module.py` is 509 lines long, more than the 500 a test file may have; it
+           holds 45 tests.
+    Why:   A test file this long can't be held in mind: tests in it get duplicated or contradict
+           each other because nobody, agent or person, can see what is already there.
+    Fix:   In `test_bad_flat_module.py`: split it into files of at most 500 lines: move its 45
+           module-level tests (lines 10-509) by the code they call: the 22 that call `Duration` to
+           `test_duration.py`, the 16 that call `parse_duration` to `test_parse_duration.py`, the 7
+           that call `format_duration` to `test_format_duration.py`. Move fixtures the new files
+           share into `conftest.py`.
+  suite/long-file/test_bad_flat_module.py:314: DS502 near-duplicate-tests [fail] in test_zero_is_allowed
+    "One test in a fresh coat of paint is still ONE test, maggot! Parametrize it!"
+    Found: `test_zero_is_allowed` and 4 other tests in its file differ only in their literals:
+           `test_whitespace_around_the_text_is_ignored` (line 318), `test_iso_8601_input` (line
+           360), `test_parse_reads_a_clock_style_duration` (line 454) and
+           `test_clock_style_without_hours_reads_minutes_and_seconds` (line 458).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_zero_is_allowed`, line 314: merge it with
+           `test_whitespace_around_the_text_is_ignored` (line 318), `test_iso_8601_input` (line
+           360), `test_parse_reads_a_clock_style_duration` (line 454) and
+           `test_clock_style_without_hours_reads_minutes_and_seconds` (line 458) into one test, with
+           the literals that differ as parameters: `@pytest.mark.parametrize(("value_1", "value_2"),
+           [('0s', 0), ('  90m  ', 5400), ('PT1H30M', 5400), ('01:30:15', 5415), ('12:05', 725)])`.
+  suite/long-file/test_bad_flat_module.py:376: DS502 near-duplicate-tests [fail] in test_humanize_rounds_to_the_largest_unit
+    "One test in a fresh coat of paint is still ONE test, maggot! Parametrize it!"
+    Found: `test_humanize_rounds_to_the_largest_unit` and 1 other test in its file differ only in
+           their literals: `test_humanize_says_moments_for_under_ten_seconds` (line 380).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_humanize_rounds_to_the_largest_unit`, line 376: merge it with
+           `test_humanize_says_moments_for_under_ten_seconds` (line 380) into one test, with the
+           literals that differ as parameters: `@pytest.mark.parametrize(("value_1", "value_2"),
+           [(3700, 'about an hour'), (9, 'a few moments')])`.
+  suite/long-file/test_bad_flat_module.py:384: DS502 near-duplicate-tests [fail] in test_humanize_pluralises_days
+    "One test in a fresh coat of paint is still ONE test, maggot! Parametrize it!"
+    Found: `test_humanize_pluralises_days` and 1 other test in its file differ only in their
+           literals: `test_humanize_uses_weeks_from_fourteen_days` (line 388).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_humanize_pluralises_days`, line 384: merge it with
+           `test_humanize_uses_weeks_from_fourteen_days` (line 388) into one test, with the literals
+           that differ as parameters: `@pytest.mark.parametrize(("value_1", "value_2"), [(3, '3
+           days'), (14, '2 weeks')])`.
+  suite/long-file/test_bad_flat_module.py:467: DS502 near-duplicate-tests [fail] in test_format_clock_style
+    "You copied the drill and changed the count! That's a table, not a new drill!"
+    Found: `test_format_clock_style` and 1 other test in its file differ only in their literals:
+           `test_format_clock_style_past_a_day_keeps_counting_hours` (line 471).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_format_clock_style`, line 467: merge it with
+           `test_format_clock_style_past_a_day_keeps_counting_hours` (line 471) into one test, with
+           the literals that differ as parameters: `@pytest.mark.parametrize(("value_1", "value_2"),
+           [(5415, '01:30:15'), (90061, '25:01:01')])`.
+
+suite/long-file/test_bad_grown_by_classes.py
+  suite/long-file/test_bad_grown_by_classes.py:1: DS106 long-file [fail]
+    "You've lost track of what's in this file, and so has everyone else!"
+    Found: `test_bad_grown_by_classes.py` is 508 lines long, more than the 500 a test file may have;
+           it holds 58 tests.
+    Why:   A test file this long can't be held in mind: tests in it get duplicated or contradict
+           each other because nobody, agent or person, can see what is already there.
+    Fix:   In `test_bad_grown_by_classes.py`: split it into files of at most 500 lines: move
+           `TestCatalogSearch` (lines 28-78, 8 tests) to `test_catalog_search.py`; `TestLoans`
+           (lines 81-143, 8 tests) to `test_loans.py`; `TestFines` (lines 146-212, 8 tests) to
+           `test_fines.py`; `TestReservations` (lines 215-274, 6 tests) to `test_reservations.py`;
+           `TestMemberAccounts` (lines 277-325, 7 tests) to `test_member_accounts.py`;
+           `TestOpeningHours` (lines 328-358, 5 tests) to `test_opening_hours.py`; `TestReports`
+           (lines 361-396, 4 tests) to `test_reports.py`; `TestNotifications` (lines 399-442, 5
+           tests) to `test_notifications.py`; `TestInterLibraryLoans` (lines 445-508, 7 tests) to
+           `test_inter_library_loans.py`. Move fixtures the new files share into `conftest.py`.
+  suite/long-file/test_bad_grown_by_classes.py:37: DS502 near-duplicate-tests [fail] in TestCatalogSearch::test_title_search_ignores_case
+    "One test in a fresh coat of paint is still ONE test, maggot! Parametrize it!"
+    Found: `TestCatalogSearch::test_title_search_ignores_case` and 1 other test in its file differ
+           only in their literals:
+           `TestCatalogSearch::test_title_search_matches_a_word_inside_the_title` (line 43).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `TestCatalogSearch::test_title_search_ignores_case`, line 37: merge it with
+           `TestCatalogSearch::test_title_search_matches_a_word_inside_the_title` (line 43) into one
+           test, with the literals that differ as parameters: `@pytest.mark.parametrize(("value_1",
+           "value_2"), [('design PATTERNS', 'Design Patterns'), ('programmer', 'The Pragmatic
+           Programmer')])`.
+  suite/long-file/test_bad_grown_by_classes.py:220: DS501 copy-paste-setup [fail] in TestReservations::test_reserving_a_book_on_loan_queues_the_member
+    "Copy, paste, copy, paste! That's not engineering, that's a PHOTOCOPIER, maggot!"
+    Found: `TestReservations::test_reserving_a_book_on_loan_queues_the_member` shares 3 setup
+           statements (lines 220-225) with 2 other tests, alike in every name and literal.
+    Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
+           and it buries what makes each test different.
+    Fix:   In `TestReservations::test_reserving_a_book_on_loan_queues_the_member`, line 220: move
+           lines 220-225 into a fixture, e.g. `other`, and request it here and in
+           `TestReservations::test_cancelling_a_reservation_leaves_the_queue` (line 259),
+           `TestReservations::test_one_member_cannot_reserve_twice` (line 269).
+  suite/long-file/test_bad_grown_by_classes.py:331: DS502 near-duplicate-tests [fail] in TestOpeningHours::test_open_on_a_weekday
+    "You copied the drill and changed the count! That's a table, not a new drill!"
+    Found: `TestOpeningHours::test_open_on_a_weekday` and 1 other test in its file differ only in
+           their literals: `TestOpeningHours::test_closed_on_sunday` (line 335).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `TestOpeningHours::test_open_on_a_weekday`, line 331: merge it with
+           `TestOpeningHours::test_closed_on_sunday` (line 335) into one test, with the literals
+           that differ as parameters: `@pytest.mark.parametrize(("value_1", "value_2"), [(7, True),
+           (11, False)])`.
+  suite/long-file/test_bad_grown_by_classes.py:463: DS501 copy-paste-setup [fail] in TestInterLibraryLoans::test_partner_loans_have_a_shorter_period
+    "LISTEN UP, RECRUIT! You wrote the same setup over and over like a broken record!"
+    Found: `TestInterLibraryLoans::test_partner_loans_have_a_shorter_period` shares 4 setup
+           statements (lines 463-467) with 2 other tests, alike in every name and literal.
+    Why:   Pasted setup drifts apart copy by copy, every change to it has to be made in each test,
+           and it buries what makes each test different.
+    Fix:   In `TestInterLibraryLoans::test_partner_loans_have_a_shorter_period`, line 463: move
+           lines 463-467 into a fixture, e.g. `loan`, and request it here and in
+           `TestInterLibraryLoans::test_partner_loans_cannot_be_renewed` (line 473),
+           `TestInterLibraryLoans::test_returned_partner_copy_is_sent_back` (line 483).
+
+suite/long-file/test_bad_mixed_async_client.py
+  suite/long-file/test_bad_mixed_async_client.py:1: DS106 long-file [fail]
+    "Five hundred lines and still growing? Split this barracks up, maggot!"
+    Found: `test_bad_mixed_async_client.py` is 506 lines long, more than the 500 a test file may
+           have; it holds 61 tests.
+    Why:   A test file this long can't be held in mind: tests in it get duplicated or contradict
+           each other because nobody, agent or person, can see what is already there.
+    Fix:   In `test_bad_mixed_async_client.py`: split it into files of at most 500 lines: move
+           `TestCurrentConditions` (lines 38-111, 10 tests) to `test_current_conditions.py`;
+           `TestForecast` (lines 114-213, 12 tests) to `test_forecast.py`; its 39 module-level tests
+           (lines 216-506) by the code they call: the 5 that call `Celsius` to `test_celsius.py`,
+           the 5 that call `weather.Settings` to `test_settings.py`, the 2 that call `Fahrenheit` to
+           `test_fahrenheit.py`, the 2 that call `weather.Client` to `test_client.py`, the other 25
+           by the behaviour they check. Move fixtures the new files share into `conftest.py`.
+  suite/long-file/test_bad_mixed_async_client.py:89: DS502 near-duplicate-tests [fail] in TestCurrentConditions::test_rejects_a_latitude_out_of_range
+    "One test in a fresh coat of paint is still ONE test, maggot! Parametrize it!"
+    Found: `TestCurrentConditions::test_rejects_a_latitude_out_of_range` and 1 other test in its
+           file differ only in their literals:
+           `TestCurrentConditions::test_rejects_a_longitude_out_of_range` (line 94).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `TestCurrentConditions::test_rejects_a_latitude_out_of_range`, line 89: merge it with
+           `TestCurrentConditions::test_rejects_a_longitude_out_of_range` (line 94) into one test,
+           with the literals that differ as parameters: `@pytest.mark.parametrize(("value_1",
+           "value_2", "value_3"), [('latitude', 91.0, 0.0), ('longitude', 0.0, 181.0)])`.
+  suite/long-file/test_bad_mixed_async_client.py:180: DS502 near-duplicate-tests [fail] in TestForecast::test_more_than_fourteen_days_is_refused
+    "You copied the drill and changed the count! That's a table, not a new drill!"
+    Found: `TestForecast::test_more_than_fourteen_days_is_refused` and 1 other test in its file
+           differ only in their literals: `TestForecast::test_zero_days_is_refused` (line 185).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `TestForecast::test_more_than_fourteen_days_is_refused`, line 180: merge it with
+           `TestForecast::test_zero_days_is_refused` (line 185) into one test, with the literals
+           that differ as parameters: `@pytest.mark.parametrize(("value_1", "value_2"), [('14 days',
+           15), ('at least one day', 0)])`.
+  suite/long-file/test_bad_mixed_async_client.py:471: DS502 near-duplicate-tests [fail] in test_user_agent_names_the_client_version
+    "Same test, different numbers! You think I can't SEE that, recruit?"
+    Found: `test_user_agent_names_the_client_version` and 1 other test in its file differ only in
+           their literals: `test_requests_ask_for_gzip` (line 479).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_user_agent_names_the_client_version`, line 471: merge it with
+           `test_requests_ask_for_gzip` (line 479) into one test, with the literals that differ as
+           parameters: `@pytest.mark.parametrize(("value_1", "value_2"), [('User-Agent',
+           'weather-client/2.4'), ('Accept-Encoding', 'gzip')])`.
+
+suite/long-test/test_bad_decorated_and_long.py
+  suite/long-test/test_bad_decorated_and_long.py:8: DS105 long-test [fail] in test_invoice_rendering
+    "One test, one mission! This is a whole CAMPAIGN!"
+    Found: `test_invoice_rendering` is 52 lines long (lines 8-59), more than the 50 a test may have.
+    Why:   A long test checks many things at once and buries what it is about: when it fails,
+           finding the cause means reading all of it, and nobody reviews it closely.
+    Fix:   In `test_invoice_rendering`, line 8: cut it to 50 lines or fewer: split it into one test
+           per behaviour it checks, each named for that behaviour, and move shared setup into
+           fixtures. Lines 10-35 run before its first assertion: what is setup there belongs in a
+           fixture.
+
+suite/long-test/test_bad_end_to_end_script.py
+  suite/long-test/test_bad_end_to_end_script.py:5: DS105 long-test [fail] in test_checkout_flow
+    "Nobody can read a test this long, maggot, and nobody will!"
+    Found: `test_checkout_flow` is 52 lines long (lines 5-56), more than the 50 a test may have.
+    Why:   A long test checks many things at once and buries what it is about: when it fails,
+           finding the cause means reading all of it, and nobody reviews it closely.
+    Fix:   In `test_checkout_flow`, line 5: cut it to 50 lines or fewer: split it into one test per
+           behaviour it checks, each named for that behaviour, and move shared setup into fixtures.
+           Lines 6-39 run before its first assertion: what is setup there belongs in a fixture.
+
+suite/long-test/test_bad_inline_payload.py
+  suite/long-test/test_bad_inline_payload.py:6: DS105 long-test [fail] in TestImportApi::test_import_accepts_a_full_batch
+    "This test is longer than my last deployment! CUT IT DOWN, recruit!"
+    Found: `TestImportApi::test_import_accepts_a_full_batch` is 51 lines long (lines 6-56), more
+           than the 50 a test may have.
+    Why:   A long test checks many things at once and buries what it is about: when it fails,
+           finding the cause means reading all of it, and nobody reviews it closely.
+    Fix:   In `TestImportApi::test_import_accepts_a_full_batch`, line 6: cut it to 50 lines or
+           fewer: split it into one test per behaviour it checks, each named for that behaviour, and
+           move shared setup into fixtures. Lines 7-47 run before its first assertion: what is setup
+           there belongs in a fixture.
 
 suite/malformed-waiver/test_bad_no_code.py
   suite/malformed-waiver/test_bad_no_code.py:6: DS001 malformed-waiver [fail] in test_adds
@@ -995,6 +1352,73 @@ suite/mock-without-spec/test_bad_patches_without_autospec.py
     Fix:   In `TestNotifier::test_ping_reports`, line 21: in `patch.object(Mailer, 'deliver')`, pass
            `autospec=True`, so the mock it puts in place has the real target's attributes and
            signature.
+
+suite/near-duplicate-tests/test_bad_exact_copies.py
+  suite/near-duplicate-tests/test_bad_exact_copies.py:7: DS502 near-duplicate-tests [fail] in test_empty_cart_totals_zero
+    "One test in a fresh coat of paint is still ONE test, maggot! Parametrize it!"
+    Found: `test_empty_cart_totals_zero` is a copy of 1 other test in its file, alike in every name
+           and literal: `test_new_cart_has_no_total` (line 12).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_empty_cart_totals_zero`, line 7: keep this test and delete
+           `test_new_cart_has_no_total` (line 12).
+  suite/near-duplicate-tests/test_bad_exact_copies.py:17: DS502 near-duplicate-tests [fail] in test_refund_of_one_lowers_the_balance
+    "Same test, different numbers! You think I can't SEE that, recruit?"
+    Found: `test_refund_of_one_lowers_the_balance` and 1 other test in its file differ only in their
+           literals: `test_refund_of_five_lowers_the_balance` (line 23).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_refund_of_one_lowers_the_balance`, line 17: merge it with
+           `test_refund_of_five_lowers_the_balance` (line 23) into one test, with the literals that
+           differ as parameters: `@pytest.mark.parametrize("value", [-1, -5])`.
+
+suite/near-duplicate-tests/test_bad_in_a_class.py
+  suite/near-duplicate-tests/test_bad_in_a_class.py:10: DS502 near-duplicate-tests [fail] in TestDiscounts::test_ten_percent_off
+    "Same test, different numbers! You think I can't SEE that, recruit?"
+    Found: `TestDiscounts::test_ten_percent_off` and 2 other tests in its file differ only in their
+           literals: `TestDiscounts::test_half_off` (line 15) and `TestDiscounts::test_no_discount`
+           (line 24).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `TestDiscounts::test_ten_percent_off`, line 10: merge it with
+           `TestDiscounts::test_half_off` (line 15) and `TestDiscounts::test_no_discount` (line 24)
+           into one test, with the literals that differ as parameters:
+           `@pytest.mark.parametrize(("value_1", "value_2"), [(10, 90), (50, 50), (0, 100)])`.
+
+suite/near-duplicate-tests/test_bad_same_parametrize.py
+  suite/near-duplicate-tests/test_bad_same_parametrize.py:9: DS502 near-duplicate-tests [fail] in test_one_fruit_costs_three
+    "Same test, different numbers! You think I can't SEE that, recruit?"
+    Found: `test_one_fruit_costs_three` and 1 other test in its file differ only in their literals:
+           `test_two_fruits_cost_six` (line 16).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_one_fruit_costs_three`, line 9: merge it with `test_two_fruits_cost_six` (line
+           16) into one test, with the literals that differ as parameters:
+           `@pytest.mark.parametrize(("value_1", "value_2"), [(1, 3), (2, 6)])`.
+
+suite/near-duplicate-tests/test_bad_values_differ.py
+  suite/near-duplicate-tests/test_bad_values_differ.py:7: DS502 near-duplicate-tests [fail] in test_one_apple_costs_three
+    "You copied the drill and changed the count! That's a table, not a new drill!"
+    Found: `test_one_apple_costs_three` and 2 other tests in its file differ only in their literals:
+           `test_two_pears_cost_eight` (line 13) and `test_three_plums_cost_fifteen` (line 19).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_one_apple_costs_three`, line 7: merge it with `test_two_pears_cost_eight` (line
+           13) and `test_three_plums_cost_fifteen` (line 19) into one test, with the literals that
+           differ as parameters: `@pytest.mark.parametrize(("value_1", "value_2", "value_3"),
+           [('apple', 1, 3), ('pear', 2, 8), ('plum from the orchard on ...', 3, 15)])`.
+
+suite/near-duplicate-tests/test_bad_with_pasted_setup.py
+  suite/near-duplicate-tests/test_bad_with_pasted_setup.py:8: DS502 near-duplicate-tests [fail] in test_order_of_one_apple
+    "You copied the drill and changed the count! That's a table, not a new drill!"
+    Found: `test_order_of_one_apple` and 2 other tests in its file differ only in their literals:
+           `test_order_of_two_apples` (line 17) and `test_order_of_three_apples` (line 26).
+    Why:   Tests that differ only in their values multiply the code to read and change, drift apart
+           copy by copy, and hide the one table of cases they really are.
+    Fix:   In `test_order_of_one_apple`, line 8: merge it with `test_order_of_two_apples` (line 17)
+           and `test_order_of_three_apples` (line 26) into one test, with the literals that differ
+           as parameters: `@pytest.mark.parametrize(("value_1", "value_2"), [(1, 4), (2, 8), (3,
+           12)])`.
 
 suite/no-action-under-test/test_bad_constants_only.py
   suite/no-action-under-test/test_bad_constants_only.py:5: DS102 no-action-under-test [fail] in test_discount_rate
@@ -1416,6 +1840,15 @@ suite/private-state-assertion/test_bad_module_private.py
     Fix:   In `test_config_loaded`, line 12: replace `config._loaded` with the public behaviour it
            stands for: a return value, a public attribute or method, or what a fake collaborator
            received.
+  suite/private-state-assertion/test_bad_module_private.py:16: DS107 conditional-logic [warn] in test_private_state_in_a_nested_block
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `test_private_state_in_a_nested_block` asserts inside a `for` loop on line 16: if the
+           loop runs zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_private_state_in_a_nested_block`, line 16: assert once on everything `items`
+           gives, as a whole (`assert [... for item in items] == [...]`), so an empty result fails
+           the test; or `parametrize` over known inputs.
   suite/private-state-assertion/test_bad_module_private.py:18: DS602 private-state-assertion [fail] in test_private_state_in_a_nested_block
     "That underscore means KEEP OUT! Test what it does, not what it hides!"
     Found: `test_private_state_in_a_nested_block` asserts on private state: `item._dirty`.
@@ -1424,6 +1857,87 @@ suite/private-state-assertion/test_bad_module_private.py
     Fix:   In `test_private_state_in_a_nested_block`, line 18: replace `item._dirty` with the public
            behaviour it stands for: a return value, a public attribute or method, or what a fake
            collaborator received.
+
+suite/skip-without-reason/test_bad_calls_without_reason.py
+  suite/skip-without-reason/test_bad_calls_without_reason.py:14: DS401 skip-without-reason [fail] in test_mailer_sends_over_smtp
+    "Nobody will ever know why this test stopped marching, maggot! WRITE IT DOWN!"
+    Found: `test_mailer_sends_over_smtp` skips with no reason: `pytest.skip()`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_mailer_sends_over_smtp`, line 14: give it `reason="..."` saying what is wrong
+           and when the test can run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_calls_without_reason.py:21: DS401 skip-without-reason [fail] in test_mailer_retries_on_timeout
+    "A skip with no reason is a deserter with no paperwork! FILL IT OUT!"
+    Found: `test_mailer_retries_on_timeout` skips with no reason: `pytest.xfail()`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_mailer_retries_on_timeout`, line 21: give it `reason="..."` saying what is wrong
+           and when the test can run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_calls_without_reason.py:27: DS401 skip-without-reason [fail] in test_mailer_rejects_empty_body
+    "You benched a soldier and didn't write down WHY, recruit?"
+    Found: `test_mailer_rejects_empty_body` skips with no reason: `pytest.skip(reason='   ')`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_mailer_rejects_empty_body`, line 27: give it `reason="..."` saying what is wrong
+           and when the test can run again, such as a ticket link.
+
+suite/skip-without-reason/test_bad_marks_without_reason.py
+  suite/skip-without-reason/test_bad_marks_without_reason.py:9: DS401 skip-without-reason [fail] in test_invoice_path_uses_forward_slashes
+    "A skip with no reason is a deserter with no paperwork! FILL IT OUT!"
+    Found: `test_invoice_path_uses_forward_slashes` is skipped with no reason:
+           `@pytest.mark.skipif(sys.platform == 'win32')`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_invoice_path_uses_forward_slashes`, line 9: give it `reason="..."` saying what
+           is wrong and when the test can run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_marks_without_reason.py:14: DS401 skip-without-reason [fail] in test_invoice_total_rounds_half_up
+    "A skip with no reason is a deserter with no paperwork! FILL IT OUT!"
+    Found: `test_invoice_total_rounds_half_up` is marked an expected failure with no reason:
+           `@pytest.mark.xfail`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_invoice_total_rounds_half_up`, line 14: give it `reason="..."` saying what is
+           wrong and when the test can run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_marks_without_reason.py:19: DS401 skip-without-reason [fail] in test_invoice_rejects_negative_amounts
+    "Nobody will ever know why this test stopped marching, maggot! WRITE IT DOWN!"
+    Found: `test_invoice_rejects_negative_amounts` is marked an expected failure with no reason:
+           `@pytest.mark.xfail(strict=True)`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_invoice_rejects_negative_amounts`, line 19: give it `reason="..."` saying what
+           is wrong and when the test can run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_marks_without_reason.py:25: DS401 skip-without-reason [fail] in test_invoice_number_is_padded
+    "You benched a soldier and didn't write down WHY, recruit?"
+    Found: `test_invoice_number_is_padded` is skipped with no reason:
+           `@pytest.mark.skipif(sys.version_info < (3, 12), reason='')`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_invoice_number_is_padded`, line 25: give it `reason="..."` saying what is wrong
+           and when the test can run again, such as a ticket link.
+
+suite/skip-without-reason/test_bad_through_imports.py
+  suite/skip-without-reason/test_bad_through_imports.py:13: DS401 skip-without-reason [fail] in <module>
+    "You benched a soldier and didn't write down WHY, recruit?"
+    Found: `<module>` is skipped with no reason: `@m.skipif(sys.platform == 'darwin')`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `<module>`, line 13: give it `reason="..."` saying what is wrong and when the test can
+           run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_through_imports.py:16: DS401 skip-without-reason [fail] in TestQueue
+    "You benched a soldier and didn't write down WHY, recruit?"
+    Found: `TestQueue` is marked an expected failure with no reason:
+           `@pt.mark.xfail(sys.version_info < (3, 12))`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `TestQueue`, line 16: give it `reason="..."` saying what is wrong and when the test
+           can run again, such as a ticket link.
+  suite/skip-without-reason/test_bad_through_imports.py:28: DS401 skip-without-reason [fail] in test_queue_blocks_when_full
+    "A skip with no reason is a deserter with no paperwork! FILL IT OUT!"
+    Found: `test_queue_blocks_when_full` skips with no reason: `xfail('')`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_queue_blocks_when_full`, line 28: give it `reason="..."` saying what is wrong
+           and when the test can run again, such as a ticket link.
 
 suite/sleep-in-test/test_bad_aliased_sleeps.py
   suite/sleep-in-test/test_bad_aliased_sleeps.py:13: DS801 sleep-in-test [fail] in test_worker_finishes
@@ -1711,6 +2225,15 @@ suite/swallowed-exception/test_bad_make_it_not_crash.py
     Fix:   In `test_sync`, line 14: remove the `try` that catches `Exception` and let the exception
            fail the test; if raising is the expected behaviour, use `pytest.raises(..., match=...)`
            instead.
+  suite/swallowed-exception/test_bad_make_it_not_crash.py:20: DS107 conditional-logic [warn] in test_sync_each_source
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `test_sync_each_source` asserts inside a `for` loop on line 20: if the loop runs zero
+           times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `test_sync_each_source`, line 20: replace the loop with
+           `@pytest.mark.parametrize("source", ['a', 'b'])`, so each case runs, passes and fails as
+           its own test.
   suite/swallowed-exception/test_bad_make_it_not_crash.py:23: DS201 weak-assertion [fail] in test_sync_each_source
     "Truthy, has a length, is a string. You described a potato, maggot!"
     Found: `test_sync_each_source` makes only weak assertions: each holds for almost any value,
@@ -1957,6 +2480,103 @@ suite/tautological-assertion/test_bad_values_the_test_wrote.py
     Fix:   In `test_flag_set_by_the_test`, line 29: replace `assert loaded` with an assertion on
            what the code under test returns, against a value worked out by hand.
 
+suite/unconditional-skip/test_bad_skip_calls.py
+  suite/unconditional-skip/test_bad_skip_calls.py:12: DS402 unconditional-skip [fail] in test_report_totals_each_column
+    "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!"
+    Found: `test_report_totals_each_column` skips on every run: `pytest.skip('unrelated failure, fix
+           later')` runs under no condition.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_report_totals_each_column`, line 12: fix what makes it fail and delete
+           `pytest.skip('unrelated failure, fix later')`; if it can't run somewhere, call it only
+           under that condition (`if ...:`), with a reason.
+  suite/unconditional-skip/test_bad_skip_calls.py:17: DS402 unconditional-skip [fail] in test_report_exports_csv
+    "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!"
+    Found: `test_report_exports_csv` skips on every run: `skip('csv export is flaky')` runs under no
+           condition.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_report_exports_csv`, line 17: fix what makes it fail and delete `skip('csv
+           export is flaky')`; if it can't run somewhere, call it only under that condition (`if
+           ...:`), with a reason.
+  suite/unconditional-skip/test_bad_skip_calls.py:22: DS402 unconditional-skip [fail] in test_report_streams_rows
+    "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!"
+    Found: `test_report_streams_rows` skips on every run: `pytest.skip(reason='times out on CI')`
+           runs under no condition.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_report_streams_rows`, line 22: fix what makes it fail and delete
+           `pytest.skip(reason='times out on CI')`; if it can't run somewhere, call it only under
+           that condition (`if ...:`), with a reason.
+
+suite/unconditional-skip/test_bad_skip_marks.py
+  suite/unconditional-skip/test_bad_skip_marks.py:7: DS402 unconditional-skip [fail] in test_create_record_assigns_an_id
+    "You silenced the alarm and called the fire OUT? NOT ON MY WATCH!"
+    Found: `test_create_record_assigns_an_id` is skipped on every run:
+           `@pytest.mark.skip(reason='Pre-existing FK migration issue')`.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_create_record_assigns_an_id`, line 7: fix what makes it fail and delete the
+           mark; if it can't run somewhere, use `pytest.mark.skipif` on that condition, with a
+           reason.
+  suite/unconditional-skip/test_bad_skip_marks.py:12: DS401 skip-without-reason [fail] in test_delete_record_removes_it
+    "A skip with no reason is a deserter with no paperwork! FILL IT OUT!"
+    Found: `test_delete_record_removes_it` is skipped with no reason: `@pytest.mark.skip`.
+    Why:   A skip or xfail with no reason can't be reviewed or revisited: nobody can tell a real
+           limitation from a failing test hidden to go green.
+    Fix:   In `test_delete_record_removes_it`, line 12: give it `reason="..."` saying what is wrong
+           and when the test can run again, such as a ticket link.
+  suite/unconditional-skip/test_bad_skip_marks.py:12: DS402 unconditional-skip [fail] in test_delete_record_removes_it
+    "You silenced the alarm and called the fire OUT? NOT ON MY WATCH!"
+    Found: `test_delete_record_removes_it` is skipped on every run: `@pytest.mark.skip`.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_delete_record_removes_it`, line 12: fix what makes it fail and delete the mark;
+           if it can't run somewhere, use `pytest.mark.skipif` on that condition, with a reason.
+  suite/unconditional-skip/test_bad_skip_marks.py:19: DS402 unconditional-skip [fail] in test_create_record_rejects_duplicates
+    "You silenced the alarm and called the fire OUT? NOT ON MY WATCH!"
+    Found: `test_create_record_rejects_duplicates` is skipped on every run:
+           `@pytest.mark.skipif(True, reason='flaky')`.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_create_record_rejects_duplicates`, line 19: fix what makes it fail and delete
+           the mark; if it can't run somewhere, use `pytest.mark.skipif` on that condition, with a
+           reason.
+  suite/unconditional-skip/test_bad_skip_marks.py:26: DS402 unconditional-skip [fail] in test_create_record_stores_the_email
+    "Skipping the test doesn't fix the code, recruit! It hides the body!"
+    Found: `test_create_record_stores_the_email` is skipped on every run:
+           `@pytest.mark.skip('waiting on the new schema')`.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `test_create_record_stores_the_email`, line 26: fix what makes it fail and delete the
+           mark; if it can't run somewhere, use `pytest.mark.skipif` on that condition, with a
+           reason.
+
+suite/unconditional-skip/test_bad_whole_scopes.py
+  suite/unconditional-skip/test_bad_whole_scopes.py:10: DS402 unconditional-skip [fail] in <module>
+    "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!"
+    Found: `<module>` skips on every run: `pt.skip('search is being rewritten',
+           allow_module_level=True)` runs under no condition.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `<module>`, line 10: fix what makes it fail and delete `pt.skip('search is being
+           rewritten', allow_module_level=True)`; if it can't run somewhere, call it only under that
+           condition (`if ...:`), with a reason.
+  suite/unconditional-skip/test_bad_whole_scopes.py:12: DS402 unconditional-skip [fail] in <module>
+    "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!"
+    Found: `<module>` is skipped on every run: `@mark.skip(reason='search is being rewritten')`.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `<module>`, line 12: fix what makes it fail and delete the mark; if it can't run
+           somewhere, use `pytest.mark.skipif` on that condition, with a reason.
+  suite/unconditional-skip/test_bad_whole_scopes.py:15: DS402 unconditional-skip [fail] in TestIndex
+    "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!"
+    Found: `TestIndex` is skipped on every run: `@pt.mark.skip(reason='ranking changed')`.
+    Why:   A test skipped on every run never checks anything again: the run stays green while the
+           behaviour it covered is broken.
+    Fix:   In `TestIndex`, line 15: fix what makes it fail and delete the mark; if it can't run
+           somewhere, use `pytest.mark.skipif` on that condition, with a reason.
+
 suite/unseeded-random/test_bad_numpy_random.py
   suite/unseeded-random/test_bad_numpy_random.py:17: DS803 unseeded-random [fail] in test_mean_of_random_samples
     "This test checks a different case every run! When it fails, NOBODY can make it fail again!"
@@ -2147,6 +2767,14 @@ suite/weak-assertion/test_bad_coverage_boost.py
     Fix:   In `TestCoverageBoost::test_string_operations`, line 26: replace the weak assertions on
            lines 26 and 30 with exact checks: assert what `version_str` and `str(docstring)` should
            equal, as in `assert value == expected`.
+  suite/weak-assertion/test_bad_coverage_boost.py:29: DS107 conditional-logic [warn] in TestCoverageBoost::test_string_operations
+    "IF? There is no IF in a test, recruit! You know the outcome or you don't!"
+    Found: `TestCoverageBoost::test_string_operations` has an `if` on line 29 with assertions inside
+           it, so they run only on some paths, and the test passes on the others.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `TestCoverageBoost::test_string_operations`, line 29: set up the case so its outcome
+           is known, and assert that one outcome with no branch; write one test per path.
   suite/weak-assertion/test_bad_coverage_boost.py:35: DS201 weak-assertion [fail] in TestCoverageBoost::test_list_operations
     "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
     Found: `TestCoverageBoost::test_list_operations` makes only weak assertions: each holds for
@@ -2156,6 +2784,15 @@ suite/weak-assertion/test_bad_coverage_boost.py
     Fix:   In `TestCoverageBoost::test_list_operations`, line 35: replace the weak assertions on
            lines 35, 38 and 39 with exact checks: assert what `all_items` and `item` should equal,
            as in `assert value == expected`.
+  suite/weak-assertion/test_bad_coverage_boost.py:37: DS107 conditional-logic [warn] in TestCoverageBoost::test_list_operations
+    "A test that takes whichever path is open passes on every path, maggot!"
+    Found: `TestCoverageBoost::test_list_operations` asserts inside a `for` loop on line 37: if the
+           loop runs zero times, nothing is checked and the test still passes.
+    Why:   An assertion under a branch or in a loop runs only on some paths: the test passes on the
+           others, or when the loop runs zero times, without checking anything.
+    Fix:   In `TestCoverageBoost::test_list_operations`, line 37: assert once on everything
+           `all_items` gives, as a whole (`assert [... for item in all_items] == [...]`), so an
+           empty result fails the test; or `parametrize` over known inputs.
   suite/weak-assertion/test_bad_coverage_boost.py:43: DS201 weak-assertion [fail] in TestCoverageBoost::test_boolean_operations
     "That assertion passes for the right answer AND every wrong one! PIN IT DOWN!"
     Found: `TestCoverageBoost::test_boolean_operations` makes only weak assertions: each holds for
@@ -2259,4 +2896,4 @@ Waived findings
   suite/malformed-waiver/test_good_waived_on_flagged_line.py:13: DS201 weak-assertion [fail] in test_reads_a_flag
     Reason: a truthy flag is the whole contract
 
-245 findings: 218 fail, 27 warn; 5 waived. Fix them, recruit. DISMISSED!
+311 findings: 262 fail, 49 warn; 5 waived. Fix them, recruit. DISMISSED!

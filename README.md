@@ -6,10 +6,11 @@ behaviour, skips added to go green, sleeps, and test files too long to follow. I
 reports them as findings that fail the run, in the drill-sergeant voice.
 
 **Status:** v1 is being rebuilt from scratch. So far the malformed-waiver check (DS001),
-the structure checks (DS101-DS104), the assertion checks (DS201-DS203), the mocking
-checks (DS301-DS303), copy-pasted setup (DS501), the brittleness checks
-(DS601-DS603), the exception checks (DS701, DS702) and the flakiness checks
-(DS801-DS803) are reported both by the pytest plugin and by `drill-sergeant check <paths>`. The plan is
+the structure checks (DS101-DS107), the assertion checks (DS201-DS203), the mocking
+checks (DS301-DS303), the cheating checks (DS401-DS403), copy-pasted setup (DS501),
+near-duplicate tests (DS502), the brittleness checks (DS601-DS603), the exception
+checks (DS701, DS702) and the flakiness checks (DS801-DS803) are reported both by the
+pytest plugin and by `drill-sergeant check <paths>`. The plan is
 the [v1 spec](https://github.com/jeffrichley/pytest-drill-sergeant/issues/118). Version
 0.4 is archived under the tag `archive/2026-11-19/v0.4/main`.
 
@@ -98,14 +99,14 @@ drill_sergeant_voice = false
 | `drill_sergeant_duplicate_setup_min_statements` | whole number | 3 |
 | `drill_sergeant_duplicate_setup_min_tests` | whole number | 3 |
 | `drill_sergeant_category_markers` | marker names | `unit integration e2e` |
-| `drill_sergeant_source_dirs` | directory lines | `src/` if it exists |
+| `drill_sergeant_source_dirs` | directory lines, relative to the config file; each must exist. The production code DS403 reads in full; with none and no `src/`, DS403 is skipped and the output says so | `src/` if it exists |
 | `drill_sergeant_voice` | `true` or `false`; off prints Found/Why/Fix without the voice | `true` |
 | `drill_sergeant_max_findings` | whole number, 0 for all | 25 |
 | `drill_sergeant_inline_waivers` | `true` or `false` | `true` |
 | `drill_sergeant_cache` | `true` or `false`; off analyses every file on every run | `true` |
 
-The thresholds, markers and source dirs are accepted now and take effect as the
-checks that use them land.
+The thresholds and markers are accepted now and take effect as the checks that use
+them land.
 
 ## Development
 

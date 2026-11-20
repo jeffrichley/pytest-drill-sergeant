@@ -11,6 +11,7 @@ from pytest_drill_sergeant.config import ConfigError, refusal, resolve
 from pytest_drill_sergeant.discovery import cache_dir, discover, load, test_files
 from pytest_drill_sergeant.engine import inspect
 from pytest_drill_sergeant.findings import Level
+from pytest_drill_sergeant.production import production_code
 from pytest_drill_sergeant.render import render
 
 app = typer.Typer(
@@ -64,10 +65,12 @@ def check(
     except ConfigError as error:
         _refuse(refusal(error))
     files = test_files(paths, source)
+    production = production_code(config, Path.cwd())
     try:
         result = inspect(
             files,
             config,
+            production.files,
             # pytest's `cache.mkdir` puts the plugin's cache here; the CLI shares it.
             cache_dir=cache_dir(source) / "d" / CACHE_NAME if config.cache else None,
         )
@@ -78,7 +81,11 @@ def check(
         )
     # The console reads the terminal as it is now: its width (or COLUMNS), and
     # whether it takes colour (not when piped, or under NO_COLOR).
-    Console(highlight=False).print(
+    console = Console(highlight=False)
+    if production.note:
+        # One line, as it stands, however narrow the terminal.
+        console.print(production.note, soft_wrap=True, markup=False)
+    console.print(
         render(
             result.findings,
             waived=result.waived,
