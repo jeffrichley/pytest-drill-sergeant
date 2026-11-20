@@ -408,7 +408,7 @@ def _find_interleaved_act_assert(file: TestFile) -> Iterator[Hit]:
 INTERLEAVED_ACT_ASSERT = Check(
     code="DS104",
     name="interleaved-act-assert",
-    default_level=Level.FAIL,
+    default_level=Level.WARN,
     voice=(
         "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!",
         "One test, one mission! You're running three operations in one, maggot!",
@@ -428,7 +428,9 @@ INTERLEAVED_ACT_ASSERT = Check(
         "act. An assignment that reads "
         "a result between assertions isn't one, and a guard assertion before the "
         "only act is fine. Split the test into one test per act, with shared setup "
-        "in a fixture."
+        "in a fixture. It warns by default rather than failing: a workflow or state "
+        "test that steps through a sequence is sometimes rightly shaped this way, and "
+        "a waiver records that it is."
     ),
     bad_example=(
         "def test_cart(cart):\n"

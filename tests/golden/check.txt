@@ -233,53 +233,53 @@ suite/broad-raises/test_bad_other_spellings.py
     Fix: In `test_aliased_name`, line 45: replace `BaseException` with the specific exception the code raises, and add `match=` for the part of its message that matters.
 
 suite/interleaved-act-assert/test_bad_async_steps.py
-  suite/interleaved-act-assert/test_bad_async_steps.py:7: DS104 interleaved-act-assert [fail] in test_connection
+  suite/interleaved-act-assert/test_bad_async_steps.py:7: DS104 interleaved-act-assert [warn] in test_connection
     "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
     Found: `test_connection` acts and asserts 2 times: after the assertions on the act at line 5, `await conn.send('ping')` on line 7 acts again.
     Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
     Fix: In `test_connection`, line 7: split the test into one test per act (lines 5, 7), each named for its behaviour, with any shared setup in a fixture.
-  suite/interleaved-act-assert/test_bad_async_steps.py:15: DS104 interleaved-act-assert [fail] in TestDoor::test_door
+  suite/interleaved-act-assert/test_bad_async_steps.py:15: DS104 interleaved-act-assert [warn] in TestDoor::test_door
     "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
     Found: `TestDoor::test_door` acts and asserts 2 times: after the assertions on the act at line 13, `await door.lock()` on line 15 acts again.
     Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
     Fix: In `TestDoor::test_door`, line 15: split the test into one test per act (lines 13, 15), each named for its behaviour, with any shared setup in a fixture.
 
 suite/interleaved-act-assert/test_bad_blocks.py
-  suite/interleaved-act-assert/test_bad_blocks.py:11: DS104 interleaved-act-assert [fail] in test_counter_under_patch
+  suite/interleaved-act-assert/test_bad_blocks.py:11: DS104 interleaved-act-assert [warn] in test_counter_under_patch
     "When this goes red, which act failed? NOBODY KNOWS! Split it up!"
     Found: `test_counter_under_patch` acts and asserts 2 times: after the assertions on the act at line 9, `counter.reset()` on line 11 acts again.
     Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
     Fix: In `test_counter_under_patch`, line 11: split the test into one test per act (lines 9, 11), each named for its behaviour, with any shared setup in a fixture.
-  suite/interleaved-act-assert/test_bad_blocks.py:18: DS104 interleaved-act-assert [fail] in test_queue
+  suite/interleaved-act-assert/test_bad_blocks.py:18: DS104 interleaved-act-assert [warn] in test_queue
     "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
     Found: `test_queue` acts and asserts 2 times: after the assertions on the act at line 16, the `for` block on line 18 acts again.
     Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
     Fix: In `test_queue`, line 18: split the test into one test per act (lines 16, 18), each named for its behaviour, with any shared setup in a fixture.
 
 suite/interleaved-act-assert/test_bad_named_like_a_reset.py
-  suite/interleaved-act-assert/test_bad_named_like_a_reset.py:8: DS104 interleaved-act-assert [fail] in test_mock_reset_between_checks
+  suite/interleaved-act-assert/test_bad_named_like_a_reset.py:8: DS104 interleaved-act-assert [warn] in test_mock_reset_between_checks
     "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
     Found: `test_mock_reset_between_checks` acts and asserts 2 times: after the assertions on the act at line 6, `sender.reset_mock()` on line 8 acts again.
     Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
     Fix: In `test_mock_reset_between_checks`, line 8: split the test into one test per act (lines 6, 8), each named for its behaviour, with any shared setup in a fixture.
-  suite/interleaved-act-assert/test_bad_named_like_a_reset.py:15: DS104 interleaved-act-assert [fail] in test_closed_between_checks
+  suite/interleaved-act-assert/test_bad_named_like_a_reset.py:15: DS104 interleaved-act-assert [warn] in test_closed_between_checks
     "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
     Found: `test_closed_between_checks` acts and asserts 2 times: after the assertions on the act at line 13, `conn.close()` on line 15 acts again.
     Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
     Fix: In `test_closed_between_checks`, line 15: split the test into one test per act (lines 13, 15), each named for its behaviour, with any shared setup in a fixture.
 
 suite/interleaved-act-assert/test_bad_two_behaviours.py
-  suite/interleaved-act-assert/test_bad_two_behaviours.py:10: DS104 interleaved-act-assert [fail] in test_cart
+  suite/interleaved-act-assert/test_bad_two_behaviours.py:10: DS104 interleaved-act-assert [warn] in test_cart
     "When this goes red, which act failed? NOBODY KNOWS! Split it up!"
     Found: `test_cart` acts and asserts 2 times: after the assertions on the act at line 8, `cart.remove('apple')` on line 10 acts again.
     Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
     Fix: In `test_cart`, line 10: split the test into one test per act (lines 8, 10), each named for its behaviour, with any shared setup in a fixture.
-  suite/interleaved-act-assert/test_bad_two_behaviours.py:17: DS104 interleaved-act-assert [fail] in test_user_lifecycle
+  suite/interleaved-act-assert/test_bad_two_behaviours.py:17: DS104 interleaved-act-assert [warn] in test_user_lifecycle
     "When this goes red, which act failed? NOBODY KNOWS! Split it up!"
     Found: `test_user_lifecycle` acts and asserts 3 times: after the assertions on the act at line 15, `users.rename('ada', 'grace')` on line 17 acts again.
     Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
     Fix: In `test_user_lifecycle`, line 17: split the test into one test per act (lines 15, 17, 19), each named for its behaviour, with any shared setup in a fixture.
-  suite/interleaved-act-assert/test_bad_two_behaviours.py:28: DS104 interleaved-act-assert [fail] in test_log_cleared_then_add_again
+  suite/interleaved-act-assert/test_bad_two_behaviours.py:28: DS104 interleaved-act-assert [warn] in test_log_cleared_then_add_again
     "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!"
     Found: `test_log_cleared_then_add_again` acts and asserts 2 times: after the assertions on the act at line 25, `cart.add('b')` on line 28 acts again.
     Why: A test that acts and asserts more than once checks several behaviours: when it fails, its name doesn't say which one broke, and a failing early step hides every later one.
@@ -1080,4 +1080,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Why: A weak assertion holds for almost any value, so the test stays green when the code returns the wrong one.
     Fix: In `test_async_import`, line 30: replace the weak assertions on line 30 with exact checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-196 findings: 196 fail, 0 warn. Fix them, recruit. DISMISSED!
+196 findings: 187 fail, 9 warn. Fix them, recruit. DISMISSED!

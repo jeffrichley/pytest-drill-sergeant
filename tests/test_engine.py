@@ -15,6 +15,14 @@ def test_finding_carries_the_checks_default_level(assertion_free_test):
     assert (finding.code, finding.level) == ("DS101", Level.FAIL)
 
 
+def test_interleaved_act_assert_warns_by_default():
+    corpus = Path(__file__).parent / "corpus" / "interleaved-act-assert"
+
+    findings = analyze([corpus / "test_bad_two_behaviours.py"], Config())
+
+    assert {(f.code, f.level) for f in findings} == {("DS104", Level.WARN)}
+
+
 def test_configured_level_overrides_the_default(assertion_free_test):
     [finding] = analyze([assertion_free_test], Config(levels={"DS101": Level.WARN}))
 
