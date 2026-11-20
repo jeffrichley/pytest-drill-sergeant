@@ -112,7 +112,9 @@ config: no environment variables, no command-line flags. `drill-sergeant check` 
 the config file the way pytest does, searching upward from the paths it checks for
 `pytest.toml`, `pytest.ini`, `pyproject.toml` (`[tool.pytest.ini_options]` or
 `[tool.pytest]`), `tox.ini` (`[pytest]`) or `setup.cfg` (`[tool:pytest]`);
-`--config <file>` names one instead. An unknown `drill_sergeant_*` option, unknown
+`--config <file>` names one instead, read as pytest's `-c` reads it (a `.toml` not
+named `pytest.toml` is read like a `pyproject.toml`), and refused when it holds no
+pytest table. An unknown `drill_sergeant_*` option, unknown
 check code, bad level or non-numeric threshold is a usage error (exit 2 from the CLI, 4 from pytest).
 
 ```toml
