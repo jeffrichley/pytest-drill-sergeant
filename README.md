@@ -38,6 +38,17 @@ Installing the package turns the plugin on: every `pytest` run is a drill-sergea
 - `-p no:drill_sergeant` or `drill_sergeant_mode = "off"` turns it off. Bad config
   is a pytest usage error (exit 4).
 
+## Learning a check
+
+Each finding's fix ends by pointing at `drill-sergeant explain DS###`, which works
+offline:
+
+- `drill-sergeant explain DS101` prints why the check matters, what it flags and how
+  to fix it, then a test it flags and the same test fixed.
+- `drill-sergeant explain` lists every check with its default level and why it
+  matters.
+- An unknown code is a usage error (exit 2).
+
 ## The cache
 
 Each file's analysis is cached, so a run with nothing changed adds only tens of
