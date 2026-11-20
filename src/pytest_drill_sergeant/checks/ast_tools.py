@@ -52,9 +52,9 @@ _PYTEST_CHECK_HELPERS = (
     "raises",
     "fail",
 )
-_LIBRARY_ASSERTING = frozenset(
+_PYTEST_CHECK_ASSERTING = frozenset(
     f"{owner}.{helper}"
-    for owner in ("pytest_check", "pytest_check.check")
+    for owner in ("pytest_check", "pytest_check.check", "pytest_check.check_functions")
     for helper in _PYTEST_CHECK_HELPERS
 )
 
@@ -178,7 +178,7 @@ def module_imports(module: ast.Module) -> dict[str, str]:
     return names
 
 
-def _param_names(node: FunctionNode) -> list[str]:
+def _param_names(node: FunctionNode | ast.Lambda) -> list[str]:
     """Every parameter a function takes, in order, positional ones first."""
     args = node.args
     starred = [a for a in (args.vararg, args.kwarg) if a is not None]
@@ -217,14 +217,17 @@ def imports_seen_by(
 ) -> dict[str, str]:
     """The imported names a test sees: the module's, its own imports, minus shadows.
 
-    A parameter (a fixture) or a name the test binds itself, such as a nested
-    `def sleep`, hides the module's import of the same name.
+    A parameter (a fixture), a nested function's or lambda's parameter, or a name
+    the test binds itself, such as a nested `def sleep`, hides the module's import
+    of the same name.
     """
     names = dict(module_names)
     shadows = set(_param_names(node))
     for child in ast.walk(node):
         if child is node:
             continue
+        if isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef | ast.Lambda):
+            shadows.update(_param_names(child))
         if isinstance(child, ast.Import | ast.ImportFrom):
             _bind_imports(child, names)
         elif isinstance(child, ast.stmt):
@@ -308,7 +311,7 @@ def is_real_assertion(node: ast.AST, names: Mapping[str, str]) -> bool:
         return not is_always_true(node.test)
     if isinstance(node, ast.Call):
         return (
-            calls_to(node, _PYTEST_ASSERTING | _LIBRARY_ASSERTING, names)
+            calls_to(node, _PYTEST_ASSERTING | _PYTEST_CHECK_ASSERTING, names)
             or is_assert_call(node)
             or _is_expect_matcher(node, names)
         )

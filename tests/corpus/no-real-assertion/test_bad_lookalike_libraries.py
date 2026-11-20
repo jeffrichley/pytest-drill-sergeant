@@ -30,3 +30,10 @@ def test_an_expect_parameter_asserts_nothing(page, pw_expect):  # expect: DS101
 async def test_a_bare_playwright_expect_asserts_nothing(page):  # expect: DS101
     await page.goto("/scenes")
     pw_expect(page)
+
+
+def test_a_nested_helpers_expect_parameter_asserts_nothing(page):  # expect: DS101
+    def shows(pw_expect):
+        pw_expect(page).to_be_visible()
+
+    shows(lambda value: value)

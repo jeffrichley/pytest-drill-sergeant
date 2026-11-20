@@ -46,3 +46,10 @@ def test_a_pytest_check_helper_imported_by_name_is_an_assertion(cart):
 def test_an_assertpy_chain_is_an_assertion(cart):
     cart.add("apple")
     assert_that(cart.items).contains("apple")
+
+
+def test_a_pytest_check_function_from_its_module_is_an_assertion(cart):
+    from pytest_check.check_functions import is_true
+
+    cart.add("apple")
+    is_true(cart.count == 1)
