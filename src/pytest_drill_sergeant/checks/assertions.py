@@ -147,10 +147,10 @@ def _is_simple_assignment(name: ast.Name, parent: ast.AST) -> bool:
     return isinstance(parent, ast.AnnAssign) and parent.value is not None
 
 
-def _stand_ins(test: TestFunction) -> dict[str, ast.Assign | ast.AnnAssign]:
+def _aliases(test: TestFunction) -> dict[str, ast.Assign | ast.AnnAssign]:
     """The names a test binds once and only reads in assertions, with their bindings.
 
-    Such a name is a stand-in for its value: nothing in the test passes it to code
+    Such a name is an alias of its value: nothing in the test passes it to code
     that could change it. A name read anywhere else (a call argument, a method
     receiver) is not one, and nor is a name only read to bind one of those.
     """
@@ -368,7 +368,7 @@ def _state_changes(test: TestFunction, known: list[ast.stmt]) -> list[ast.stmt]:
 
 def _verdicts(test: TestFunction) -> list[_Verdict]:
     """Every `assert` in the test, in source order, with its kind."""
-    bindings = _stand_ins(test)
+    bindings = _aliases(test)
     values = {name: s.value for name, s in bindings.items() if s.value is not None}
     aliases = {
         name: value

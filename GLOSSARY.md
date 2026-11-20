@@ -90,7 +90,11 @@ _Avoid_: Global pass, project analysis
 
 **Mock**:
 A test double made by `unittest.mock` or a pytest-mock fixture such as `mocker` (`Mock()`, `create_autospec`, `patch`), as the file shows it: made in the test, handed in by a `patch` decorator, or reached from one. A name such as `mock_db` never makes a value one.
-_Avoid_: Stub, fake (a fake is a working stand-in, not a mock)
+_Avoid_: Stub, fake (a fake is a working substitute, not a mock)
+
+**Stand-in**:
+A function, class or lambda a test defines and hands to the code under test without calling it itself, such as a slow callback passed in or a `side_effect`. What runs inside it is the stand-in's behaviour, not the test's.
+_Avoid_: Fake (a fake is a working substitute), helper (a helper is one the test calls)
 
 **Mock setup**:
 A statement in a test that makes, patches in or configures a mock: `repo = mock.Mock(spec=Repo)`, a `patch` decorator or `with` item, `repo.get.return_value = ...`.
