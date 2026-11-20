@@ -11,19 +11,18 @@ from collections.abc import Iterator, Mapping
 from pytest_drill_sergeant.checks.ast_tools import (
     SKIP,
     SKIP_CALL,
-    SKIPIF,
     TEST_PATH,
     XFAIL,
     XFAIL_CALL,
     calls_to,
     inside,
     is_always_skipped_by,
+    mark_conditions,
     module_imports,
     pytestmark_entries,
     qualified,
     scoped_walk,
     skip_mark,
-    skipif_conditions,
     top_level_skips,
 )
 from pytest_drill_sergeant.checks.base import Check, Hit, SourceFile, TestFile
@@ -56,15 +55,18 @@ def _mark_has_no_reason(mark: str, expr: ast.expr) -> bool:
     """Whether a skip mark gives no reason.
 
     `skip` takes one by keyword or first by position; `skipif` and `xfail` take
-    their conditions by position, so only `reason=` counts, but for a `skipif`
-    whose conditions are all strings: pytest shows the string as its reason.
+    their conditions by position, so only `reason=` counts, but for one whose
+    conditions are all strings: pytest shows the string as its reason. A
+    `**kwargs` may hold one, so it doesn't say there is none.
     """
     if not isinstance(expr, ast.Call):
         return True
+    if any(k.arg is None for k in expr.keywords):
+        return False
     reason = _keyword(expr, "reason")
     if reason is None and mark == SKIP and expr.args:
         reason = expr.args[0]
-    conditions = skipif_conditions(expr) if mark == SKIPIF else []
+    conditions = (mark_conditions(expr) if mark != SKIP else None) or []
     if reason is None and conditions:
         return any(_blank(c) or not _is_string(c) for c in conditions)
     return _blank(reason)
@@ -176,8 +178,8 @@ SKIP_WITHOUT_REASON = Check(
         "`pytest.xfail`, that give no reason or a blank one. `skip` and the calls "
         "take a reason first by position or as `reason=`; `skipif` and `xfail` only "
         "as `reason=`, since their positional arguments are conditions, but a "
-        "`skipif` whose conditions are all strings has one: pytest shows the string "
-        "as its reason. `xfail(raises=...)` says what fails, not why, so it needs a "
+        "`skipif` or `xfail` whose conditions are all strings has one: pytest shows "
+        "the string as its reason. `xfail(raises=...)` says what fails, not why, so it needs a "
         "reason too. A reason in a variable counts. Import aliases are followed; a local function named "
         "`skip` is not pytest's, and `pytest.importorskip` names its module itself. "
         "Say what is wrong and when the test can run again. A skip on every run "

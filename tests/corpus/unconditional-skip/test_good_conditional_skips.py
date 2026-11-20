@@ -22,6 +22,14 @@ def test_create_record_keeps_the_email():
     assert create_record("ada", email="a@b.c").email == "a@b.c"
 
 
+ON_CI = {"condition": "CI" in os.environ, "reason": "needs a real disk"}
+
+
+@pytest.mark.skipif(**ON_CI)
+def test_export_records_to_disk():
+    assert export_records("/tmp/records") == 1
+
+
 @pytest.mark.skipif(False, reason="kept for the Windows port, see #12")
 def test_create_record_trims_the_name():
     assert create_record(" ada ").name == "ada"

@@ -496,8 +496,16 @@ def pytestmark_entries(statement: ast.stmt) -> list[ast.expr]:
     return list(value.elts) if isinstance(value, ast.List | ast.Tuple) else [value]
 
 
-def skipif_conditions(call: ast.Call) -> list[ast.expr]:
-    """The conditions a `skipif` call gives: by position, or as `condition=`."""
+def mark_conditions(call: ast.Call) -> list[ast.expr] | None:
+    """The conditions a `skipif` or `xfail` call gives, or `None` if it can't tell.
+
+    They come by position, or as `condition=`. An unpacked `*args` or `**kwargs`
+    hides them, so the file doesn't show them.
+    """
+    if any(isinstance(arg, ast.Starred) for arg in call.args) or any(
+        k.arg is None for k in call.keywords
+    ):
+        return None
     condition = next((k.value for k in call.keywords if k.arg == "condition"), None)
     return list(call.args) if condition is None else [condition]
 
@@ -505,20 +513,22 @@ def skipif_conditions(call: ast.Call) -> list[ast.expr]:
 def is_always_skipped_by(expr: ast.expr, names: Mapping[str, str]) -> bool:
     """Whether a mark skips whatever the run: `skip`, or `skipif` with no condition.
 
-    A `skipif` on truthy constants alone has no real condition either. A string condition is code pytest evaluates, so it is not a constant here.
+    A `skipif` on truthy constants alone has no real condition either. A string
+    condition is code pytest evaluates, so it is not a constant here.
     """
     mark = skip_mark(expr, names)
     if mark == SKIP:
         return True
-    return (
-        mark == SKIPIF
-        and isinstance(expr, ast.Call)
-        and all(
-            isinstance(arg, ast.Constant)
-            and not isinstance(arg.value, str)
-            and bool(arg.value)
-            for arg in skipif_conditions(expr)
-        )
+    if mark != SKIPIF:
+        return False
+    if not isinstance(expr, ast.Call):
+        return True
+    conditions = mark_conditions(expr)
+    return conditions is not None and all(
+        isinstance(arg, ast.Constant)
+        and not isinstance(arg.value, str)
+        and bool(arg.value)
+        for arg in conditions
     )
 
 

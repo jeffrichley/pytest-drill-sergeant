@@ -111,6 +111,11 @@ def test_no_real_assertion_yields_to_a_swallowed_exception_only_while_it_is_repo
             ["DS401=fail"],
             {("DS401", 3)},
         ),
+        (
+            "@pytest.mark.skipif\ndef test_sync():\n    assert sync() == 1\n",
+            ["DS401=fail", "DS402=fail"],
+            {("DS402", 3)},
+        ),
     ],
     ids=[
         "no-assertion-both-on",
@@ -122,6 +127,7 @@ def test_no_real_assertion_yields_to_a_swallowed_exception_only_while_it_is_repo
         "skip-call-no-reason-unconditional-skip-off",
         "skipif-no-condition-both-on",
         "skipif-no-condition-unconditional-skip-off",
+        "bare-skipif-both-on",
     ],
 )
 def test_check_leaves_an_always_skipped_test_to_ds402_only_while_it_is_reported(

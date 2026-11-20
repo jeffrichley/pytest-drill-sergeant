@@ -1,7 +1,8 @@
-"""Near-misses: a `skipif` whose conditions are strings, which pytest shows as its reason.
+"""Near-misses: a `skipif` or `xfail` on string conditions, or a hidden reason.
 
-pytest skips such a test with `condition: <the string>` as the reason, so it is
-not skipped without one. Analysed, never run.
+pytest shows a string condition as the reason (`condition: <the string>`), so
+such a test has one. A `**kwargs` may hold a reason the file doesn't show.
+Analysed, never run.
 """
 
 import pytest
@@ -25,3 +26,18 @@ def test_shortest_path_on_a_large_graph():
 def test_shortest_path_skips_a_removed_node():
     graph = Graph([(1, 2), (2, 3), (1, 3)]).without(2)
     assert shortest_path(graph, 1, 3) == [1, 3]
+
+
+@pytest.mark.xfail("not Graph.supports_weights()")
+def test_shortest_path_follows_the_lightest_edges():
+    graph = Graph([(1, 2, 5), (2, 3, 5), (1, 3, 20)])
+    assert shortest_path(graph, 1, 3, weighted=True) == [1, 2, 3]
+
+
+SLOW = {"condition": "Graph.is_slow()", "reason": "pure-Python backend, see #4"}
+
+
+@pytest.mark.skipif(**SLOW)
+def test_shortest_path_on_a_complete_graph():
+    graph = Graph.complete(50)
+    assert len(shortest_path(graph, 0, 49)) == 2
