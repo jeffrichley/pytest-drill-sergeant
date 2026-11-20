@@ -148,7 +148,7 @@ def _find_skip_without_reason(file: TestFile) -> Iterator[Hit]:
 SKIP_WITHOUT_REASON = Check(
     code="DS401",
     name="skip-without-reason",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "You benched a soldier and didn't write down WHY, recruit?",
         "A skip with no reason is a deserter with no paperwork! FILL IT OUT!",
@@ -222,7 +222,7 @@ def _find_unconditional_skip(file: TestFile) -> Iterator[Hit]:
 UNCONDITIONAL_SKIP = Check(
     code="DS402",
     name="unconditional-skip",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "Skipping the test doesn't fix the code, recruit! It hides the body!",
         "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!",
@@ -331,7 +331,7 @@ def _find_test_special_casing(file: SourceFile) -> Iterator[Hit]:
 TEST_SPECIAL_CASING = Check(
     code="DS403",
     name="test-special-casing",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "Your code salutes when the inspector walks in and slacks off when he leaves!",
         "Rigging the range so you can't miss is CHEATING, recruit!",

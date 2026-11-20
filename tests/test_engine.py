@@ -11,26 +11,19 @@ from pytest_drill_sergeant.findings import Level
 pytestmark = pytest.mark.unit
 
 
-def test_finding_carries_the_checks_default_level(assertion_free_test):
-    [finding] = analyze([assertion_free_test], Config())
+def test_finding_carries_the_checks_default_level(unseeded_random_test):
+    [finding] = analyze([unseeded_random_test], Config())
 
-    assert (finding.code, finding.level) == ("DS101", Level.FAIL)
+    assert (finding.code, finding.level) == ("DS803", Level.FAIL)
 
 
-@pytest.mark.parametrize(
-    ("corpus_file", "code"),
-    [
-        ("interleaved-act-assert/test_bad_two_behaviours.py", "DS104"),
-        ("mock-without-spec/test_bad_mocker_doubles.py", "DS302"),
-    ],
-    ids=["interleaved-act-assert", "mock-without-spec"],
-)
-def test_check_warns_by_default(corpus_file, code):
-    path = Path(__file__).parent / "corpus" / corpus_file
+@pytest.mark.parametrize("level", [Level.WARN, Level.FAIL])
+def test_check_off_by_default_reports_at_the_level_configured(
+    assertion_free_test, level
+):
+    [finding] = analyze([assertion_free_test], Config(levels={"DS101": level}))
 
-    findings = analyze([path], Config())
-
-    assert {(f.code, f.level) for f in findings} == {(code, Level.WARN)}
+    assert (finding.code, finding.level) == ("DS101", level)
 
 
 @pytest.mark.parametrize(("limit", "codes"), [(2, {"DS303"}), (3, set())])
@@ -48,13 +41,15 @@ def test_max_mock_setup_sets_how_much_mock_setup_a_test_may_have(
         "    assert total(repo) == 3\n" + unit_mark
     )
 
-    findings = analyze([path], Config(max_mock_setup=limit))
+    findings = analyze(
+        [path], Config(max_mock_setup=limit, levels={"DS303": Level.FAIL})
+    )
 
     assert {f.code for f in findings} == codes
 
 
-def test_configured_level_overrides_the_default(assertion_free_test):
-    [finding] = analyze([assertion_free_test], Config(levels={"DS101": Level.WARN}))
+def test_configured_level_overrides_the_default(unseeded_random_test):
+    [finding] = analyze([unseeded_random_test], Config(levels={"DS803": Level.WARN}))
 
     assert finding.level == Level.WARN
 
@@ -72,45 +67,47 @@ def test_aaa_comment_check_is_off_until_enabled_through_levels(raw, codes):
     assert {f.code for f in findings} == codes
 
 
-def test_check_configured_off_reports_nothing(assertion_free_test):
-    assert analyze([assertion_free_test], Config(levels={"DS101": Level.OFF})) == []
+def test_check_configured_off_reports_nothing(unseeded_random_test):
+    assert analyze([unseeded_random_test], Config(levels={"DS803": Level.OFF})) == []
 
 
-def test_warn_mode_reports_fail_findings_as_warn(assertion_free_test):
+def test_warn_mode_reports_fail_findings_as_warn(unseeded_random_test):
     config = resolve({"drill_sergeant_mode": "warn"})
 
-    [finding] = analyze([assertion_free_test], config)
+    [finding] = analyze([unseeded_random_test], config)
 
     assert finding.level == Level.WARN
 
 
-def test_off_mode_reports_nothing(assertion_free_test):
-    assert analyze([assertion_free_test], resolve({"drill_sergeant_mode": "off"})) == []
-
-
-def test_fail_mode_keeps_configured_levels(assertion_free_test):
-    config = resolve(
-        {"drill_sergeant_mode": "fail", "drill_sergeant_levels": "DS101=warn"}
+def test_off_mode_reports_nothing(unseeded_random_test):
+    assert (
+        analyze([unseeded_random_test], resolve({"drill_sergeant_mode": "off"})) == []
     )
 
-    [finding] = analyze([assertion_free_test], config)
+
+def test_fail_mode_keeps_configured_levels(unseeded_random_test):
+    config = resolve(
+        {"drill_sergeant_mode": "fail", "drill_sergeant_levels": "DS803=warn"}
+    )
+
+    [finding] = analyze([unseeded_random_test], config)
 
     assert finding.level == Level.WARN
 
 
-def test_family_prefix_sets_the_level_of_the_whole_family(assertion_free_test):
-    config = resolve({"drill_sergeant_levels": "DS1xx=off"})
+def test_family_prefix_sets_the_level_of_the_whole_family(unseeded_random_test):
+    config = resolve({"drill_sergeant_levels": "DS8xx=off"})
 
-    assert analyze([assertion_free_test], config) == []
+    assert analyze([unseeded_random_test], config) == []
 
 
 @pytest.mark.parametrize(
-    "lines", [["DS1=off", "DS101=warn"], ["DS101=warn", "DS1=off"]]
+    "lines", [["DS8=off", "DS803=warn"], ["DS803=warn", "DS8=off"]]
 )
-def test_most_specific_level_wins_whatever_the_order(assertion_free_test, lines):
+def test_most_specific_level_wins_whatever_the_order(unseeded_random_test, lines):
     config = resolve({"drill_sergeant_levels": lines})
 
-    [finding] = analyze([assertion_free_test], config)
+    [finding] = analyze([unseeded_random_test], config)
 
     assert finding.level == Level.WARN
 
@@ -144,37 +141,37 @@ def test_bad_config_is_refused(raw):
 
 
 @pytest.mark.parametrize(
-    "line", ["legacy/*: DS101", "legacy/**: DS1", "test_old.py: DS101, DS1xx"]
+    "line", ["legacy/*: DS803", "legacy/**: DS8", "test_old.py: DS803, DS8xx"]
 )
 def test_per_file_ignore_skips_the_named_checks_in_matching_files(
-    tmp_path, unit_mark, line
+    tmp_path, unseeded_random_test, line
 ):
     legacy = tmp_path / "legacy" / "test_old.py"
     legacy.parent.mkdir()
-    legacy.write_text("def test_old():\n    run()\n" + unit_mark)
+    unseeded_random_test.rename(legacy)
     config = resolve({"drill_sergeant_per_file_ignores": line}, root=tmp_path)
 
     assert analyze([legacy], config) == []
 
 
-def test_per_file_ignore_leaves_other_files_checked(assertion_free_test, tmp_path):
+def test_per_file_ignore_leaves_other_files_checked(unseeded_random_test, tmp_path):
     config = resolve(
-        {"drill_sergeant_per_file_ignores": "legacy/*: DS101"}, root=tmp_path
+        {"drill_sergeant_per_file_ignores": "legacy/*: DS803"}, root=tmp_path
     )
 
-    [finding] = analyze([assertion_free_test], config)
+    [finding] = analyze([unseeded_random_test], config)
 
-    assert finding.code == "DS101"
+    assert finding.code == "DS803"
 
 
 def test_per_file_ignore_globs_are_relative_to_the_config_root(
-    tmp_path, monkeypatch, unit_mark
+    tmp_path, monkeypatch, unseeded_random_test
 ):
     legacy = tmp_path / "legacy" / "test_old.py"
     legacy.parent.mkdir()
-    legacy.write_text("def test_old():\n    run()\n" + unit_mark)
+    unseeded_random_test.rename(legacy)
     monkeypatch.chdir(legacy.parent)
-    config = resolve({"drill_sergeant_per_file_ignores": "legacy/*: DS101"}, tmp_path)
+    config = resolve({"drill_sergeant_per_file_ignores": "legacy/*: DS803"}, tmp_path)
 
     assert analyze([Path("test_old.py")], config) == []
 
@@ -251,7 +248,10 @@ def test_typed_values_from_toml_or_pytest_resolve_too():
 
 @pytest.mark.parametrize(
     "config",
-    [Config(duplicate_setup_min_tests=2), Config(duplicate_setup_min_statements=2)],
+    [
+        Config(duplicate_setup_min_tests=2, levels={"DS501": Level.FAIL}),
+        Config(duplicate_setup_min_statements=2, levels={"DS501": Level.FAIL}),
+    ],
     ids=["two-tests", "two-statements"],
 )
 def test_copy_paste_setup_thresholds_come_from_the_config(config):
@@ -265,8 +265,10 @@ def test_copy_paste_setup_thresholds_come_from_the_config(config):
 def test_cross_file_findings_do_not_depend_on_the_order_files_are_given(
     pasted_across_files,
 ):
-    assert analyze(pasted_across_files, Config()) == analyze(
-        pasted_across_files[::-1], Config()
+    config = Config(levels={"DS501": Level.FAIL})
+
+    assert analyze(pasted_across_files, config) == analyze(
+        pasted_across_files[::-1], config
     )
 
 
@@ -274,7 +276,13 @@ def test_per_file_ignore_leaves_a_file_out_of_cross_file_comparison(
     pasted_across_files,
 ):
     root = pasted_across_files[0].parent
-    config = resolve({"drill_sergeant_per_file_ignores": "*limits.py: DS501"}, root)
+    config = resolve(
+        {
+            "drill_sergeant_levels": "DS501=fail",
+            "drill_sergeant_per_file_ignores": "*limits.py: DS501",
+        },
+        root,
+    )
 
     assert analyze(pasted_across_files, config) == []
 
@@ -282,9 +290,15 @@ def test_per_file_ignore_leaves_a_file_out_of_cross_file_comparison(
 @pytest.mark.parametrize(
     ("raw", "codes"),
     [
-        ({}, {("DS502", 11)}),
-        ({"drill_sergeant_levels": "DS502=off"}, {("DS501", 12)}),
-        ({"drill_sergeant_per_file_ignores": "*.py: DS502"}, {("DS501", 12)}),
+        ({"drill_sergeant_levels": "DS501=fail"}, {("DS502", 11)}),
+        ({"drill_sergeant_levels": ["DS501=fail", "DS502=off"]}, {("DS501", 12)}),
+        (
+            {
+                "drill_sergeant_levels": "DS501=fail",
+                "drill_sergeant_per_file_ignores": "*.py: DS502",
+            },
+            {("DS501", 12)},
+        ),
     ],
     ids=["both-on", "near-duplicates-off", "near-duplicates-ignored"],
 )
@@ -302,9 +316,15 @@ def test_copy_paste_setup_folds_near_duplicates_only_while_they_are_reported(
 @pytest.mark.parametrize(
     ("raw", "codes"),
     [
-        ({}, {("DS702", 18)}),
-        ({"drill_sergeant_levels": "DS702=off"}, {("DS101", 15)}),
-        ({"drill_sergeant_per_file_ignores": "*.py: DS702"}, {("DS101", 15)}),
+        ({"drill_sergeant_levels": ["DS101=fail", "DS702=fail"]}, {("DS702", 18)}),
+        ({"drill_sergeant_levels": ["DS101=fail", "DS702=off"]}, {("DS101", 15)}),
+        (
+            {
+                "drill_sergeant_levels": ["DS101=fail", "DS702=fail"],
+                "drill_sergeant_per_file_ignores": "*.py: DS702",
+            },
+            {("DS101", 15)},
+        ),
     ],
     ids=["both-on", "swallowed-exception-off", "swallowed-exception-ignored"],
 )
@@ -344,7 +364,7 @@ def test_thresholds_set_how_long_a_test_and_a_file_may_be(
         + unit_mark
     )
 
-    findings = analyze([path], Config(**threshold))
+    findings = analyze([path], Config(**threshold, levels={"DS105": Level.FAIL}))
 
     assert {f.code for f in findings} == codes
 
@@ -454,7 +474,7 @@ def test_loop_finding_says_zero_times_only_when_the_loop_can_run_zero_times(
         f"    for word in {values}:\n        assert word not in text\n"
     )
 
-    [finding] = analyze([path], Config())
+    [finding] = analyze([path], Config(levels={"DS107": Level.FAIL}))
 
     assert finding.code == "DS107"
     assert ("zero times" in finding.found) is can_run_zero_times

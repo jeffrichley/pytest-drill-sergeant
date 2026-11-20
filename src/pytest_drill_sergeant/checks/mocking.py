@@ -388,7 +388,7 @@ def _find_mock_without_spec(file: TestFile) -> Iterator[Hit]:
 MOCK_WITHOUT_SPEC = Check(
     code="DS302",
     name="mock-without-spec",
-    default_level=Level.WARN,
+    default_level=Level.OFF,
     voice=(
         "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!",
         "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!",
@@ -409,7 +409,9 @@ MOCK_WITHOUT_SPEC = Check(
         "interface. Only the mock library counts, known from the imports or a "
         "pytest-mock fixture the test takes; a `Mock` from elsewhere doesn't. Build "
         "the mock with `create_autospec(<Real>, instance=True)` or `spec=<Real>`, "
-        "and patch with `autospec=True`. It warns by default rather than failing: "
+        "and patch with `autospec=True`. Off by default until it is proven; turn "
+        "it on with `drill_sergeant_levels` (`DS302=warn`). It warns rather than "
+        "fails: "
         "a bare `Mock()` standing in for a callback or a sentinel has no real "
         "interface to copy."
     ),
@@ -501,7 +503,7 @@ def _find_overgrown_mock_setup(file: TestFile) -> Iterator[Hit]:
 OVERGROWN_MOCK_SETUP = Check(
     code="DS303",
     name="overgrown-mock-setup",
-    default_level=Level.FAIL,
+    default_level=Level.OFF,
     voice=(
         "More mock setup than test! You're writing a SCREENPLAY, recruit!",
         "Twenty lines of rehearsal for one line of combat! Use a fake, maggot!",

@@ -31,6 +31,40 @@ def unit_mark():
     return UNIT_MARK
 
 
+# The stock finding, DS101, is off by default until it is proven (#171), so a run that
+# reports it turns it on in its config.
+def ini_text(lines, on):
+    """A `[pytest]` section turning DS101 and each `CODE=level` in `on` on, then each
+    line given."""
+    levels = "".join(f"\n    {entry}" for entry in ("DS101=fail", *on))
+    body = "".join(f"{line}\n" for line in lines)
+    return f"[pytest]\ndrill_sergeant_levels ={levels}\n{body}"
+
+
+@pytest.fixture
+def cli_ini(tmp_path):
+    """Write `pytest.ini` in `tmp_path`: DS101 and each `CODE=level` in `on` on, then
+    each line given, and return its path."""
+
+    def write(*lines: str, on: tuple[str, ...] = ()):
+        path = tmp_path / "pytest.ini"
+        path.write_text(ini_text(lines, on))
+        return path
+
+    return write
+
+
+@pytest.fixture
+def drill_ini(pytester):
+    """Write the ini file of `pytester`'s run: DS101 and each `CODE=level` in `on` on,
+    then each line given, and return its path."""
+
+    def write(*lines: str, on: tuple[str, ...] = ()):
+        return pytester.makeini(ini_text(lines, on))
+
+    return write
+
+
 @pytest.fixture
 def cli(tmp_path, monkeypatch):
     """Run `drill-sergeant <args>` as a user would, from a temp dir, and return typer's
@@ -53,9 +87,22 @@ def clean_test(tmp_path):
 
 
 @pytest.fixture
-def assertion_free_test(tmp_path):
+def unseeded_random_test(tmp_path):
+    """A test file in `tmp_path` holding one test whose only finding is from a check
+    on by default: an unseeded random draw (DS803 on line 4)."""
+    path = tmp_path / "test_draw.py"
+    path.write_text(
+        "import random\n\ndef test_draw():\n    assert random.random() < 2\n"
+        + UNIT_MARK
+    )
+    return path
+
+
+@pytest.fixture
+def assertion_free_test(tmp_path, cli_ini):
     """A test file in `tmp_path` holding one test with no real assertion (DS101 on
-    line 1)."""
+    line 1), and a `pytest.ini` beside it that turns DS101 on."""
+    cli_ini()
     path = tmp_path / "test_it.py"
     path.write_text("def test_it():\n    run()\n" + UNIT_MARK)
     return path
@@ -78,10 +125,12 @@ def drill(pytester, monkeypatch):
 
 
 @pytest.fixture
-def lazy_file(pytester):
+def lazy_file(pytester, drill_ini):
     """Write a test file at a path in `pytester`'s temp dir holding one passing test
-    with no real assertion per name given (one DS101 each, the first on line 1).
-    Each test prints its own name, so no two are near-duplicates (DS502)."""
+    with no real assertion per name given (one DS101 each, the first on line 1), and
+    an ini file that turns DS101 on. Each test prints its own name, so no two are
+    near-duplicates (DS502)."""
+    drill_ini()
 
     def write(path: str, *names: str):
         file = pytester.path / path
@@ -113,9 +162,11 @@ def failing_test(pytester):
 
 
 @pytest.fixture
-def long_named_test(tmp_path):
+def long_named_test(tmp_path, cli_ini):
     """A test file in `tmp_path` holding one test with no real assertion (DS101 on
-    line 1) whose name makes its location line longer than a narrow terminal."""
+    line 1) whose name makes its location line longer than a narrow terminal, and a
+    `pytest.ini` beside it that turns DS101 on."""
+    cli_ini()
     path = tmp_path / "test_long.py"
     path.write_text(f"def test_{'very_' * 10}long():\n    run()\n" + UNIT_MARK)
     return path
@@ -175,9 +226,11 @@ def write_test_file(tmp_path):
 
 
 @pytest.fixture
-def waived_test(tmp_path):
+def waived_test(tmp_path, cli_ini):
     """A test file in `tmp_path`, `test_waived.py`, holding one test whose only
-    finding (DS101 on line 1) is waived with the reason `smoke test`."""
+    finding (DS101 on line 1) is waived with the reason `smoke test`, and a
+    `pytest.ini` beside it that turns DS101 on."""
+    cli_ini()
     path = tmp_path / "test_waived.py"
     path.write_text(
         "def test_waived():  # drill: waive DS101 -- smoke test\n    run()\n"

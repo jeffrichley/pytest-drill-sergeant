@@ -1,4 +1,3 @@
-drill-sergeant: skipped DS403 test-special-casing: no src/ and no drill_sergeant_source_dirs.
 DRILL SERGEANT INSPECTION: 3 findings in 3 files. FALL IN!
 
 suite/test_cart.py
