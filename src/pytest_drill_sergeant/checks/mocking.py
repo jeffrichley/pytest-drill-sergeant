@@ -342,3 +342,91 @@ MOCK_ONLY_ASSERTION = Check(
     ),
     find=_find_mock_only_assertion,
 )
+
+
+def _without_spec(call: ast.Call, test: TestFunction) -> bool:
+    """Whether a call makes a mock that accepts any attribute and any signature.
+
+    That is a mock class given no spec (first argument, `spec` or `spec_set`), or
+    a patch that makes its mock with no `autospec`, `spec`, `spec_set` or
+    `new_callable`.
+    """
+    api = _mock_api(call.func, test)
+    if api in _DOUBLES:
+        return not call.args and not any(_given(call, arg) for arg in _SPEC_ARGS)
+    if api in _PATCHES and _makes_mock(call, test):
+        return not any(_given(call, arg) for arg in (*_SPEC_ARGS, "new_callable"))
+    return False
+
+
+def _find_mock_without_spec(file: TestFile) -> Iterator[Hit]:
+    for test in file.tests:
+        nodes = [*test.node.decorator_list, *walk_test(test)]
+        calls = [n for n in nodes if isinstance(n, ast.Call) and _without_spec(n, test)]
+        for call in sorted(calls, key=lambda c: (c.lineno, c.col_offset)):
+            written = ast.unparse(call)
+            api = _mock_api(call.func, test)
+            remedy = (
+                "pass `autospec=True`, so the mock it puts in place has the real "
+                "target's attributes and signature"
+                if api in _PATCHES
+                else "build it from the real class, `mock.create_autospec(<Real>, "
+                "instance=True)`, or pass `spec=<Real>`, so a call the real object "
+                "doesn't support fails"
+            )
+            yield Hit.on(
+                test,
+                call.lineno,
+                found=f"makes a mock with no spec: `{written}`.",
+                fix=f"in `{written}`, {remedy}.",
+            )
+
+
+MOCK_WITHOUT_SPEC = Check(
+    code="DS302",
+    name="mock-without-spec",
+    default_level=Level.WARN,
+    voice=(
+        "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!",
+        "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!",
+        "The real interface changed and your mock never noticed! SPEC IT, maggot!",
+    ),
+    why=(
+        "A mock with no spec accepts any attribute and any call, so the test stays "
+        "green when the real interface changes or when the code calls a method that "
+        "doesn't exist."
+    ),
+    explain=(
+        "Flags a mock made with no spec: `Mock()`, `MagicMock()`, `AsyncMock()`, "
+        "`NonCallableMock()` or `NonCallableMagicMock()` with no first argument, "
+        "`spec` or `spec_set`, and a `patch` or `patch.object` (as a decorator, a "
+        "`with`, or `mocker.patch`) that makes its mock with no `autospec`, `spec`, "
+        "`spec_set` or `new_callable`. A patch told what to put in place (`new`) "
+        "makes no mock, and `create_autospec` and `mocker.spy` carry the real "
+        "interface. Only the mock library counts, known from the imports or a "
+        "pytest-mock fixture the test takes; a `Mock` from elsewhere doesn't. Build "
+        "the mock with `create_autospec(<Real>, instance=True)` or `spec=<Real>`, "
+        "and patch with `autospec=True`. It warns by default rather than failing: "
+        "a bare `Mock()` standing in for a callback or a sentinel has no real "
+        "interface to copy."
+    ),
+    bad_example=(
+        "from unittest import mock\n"
+        "\n"
+        "\n"
+        "def test_process_payment_reports_ok():\n"
+        "    gateway = mock.MagicMock()\n"
+        "    gateway.charge.return_value = {'status': 'ok'}\n"
+        "    assert PaymentHandler(gateway).process(100).status == 'ok'\n"
+    ),
+    good_example=(
+        "from unittest import mock\n"
+        "\n"
+        "\n"
+        "def test_process_payment_reports_ok():\n"
+        "    gateway = mock.create_autospec(Gateway, instance=True)\n"
+        "    gateway.charge.return_value = {'status': 'ok'}\n"
+        "    assert PaymentHandler(gateway).process(100).status == 'ok'\n"
+    ),
+    find=_find_mock_without_spec,
+)

@@ -23,6 +23,14 @@ def test_interleaved_act_assert_warns_by_default():
     assert {(f.code, f.level) for f in findings} == {("DS104", Level.WARN)}
 
 
+def test_mock_without_spec_warns_by_default():
+    corpus = Path(__file__).parent / "corpus" / "mock-without-spec"
+
+    findings = analyze([corpus / "test_bad_mocker_doubles.py"], Config())
+
+    assert {(f.code, f.level) for f in findings} == {("DS302", Level.WARN)}
+
+
 def test_configured_level_overrides_the_default(assertion_free_test):
     [finding] = analyze([assertion_free_test], Config(levels={"DS101": Level.WARN}))
 

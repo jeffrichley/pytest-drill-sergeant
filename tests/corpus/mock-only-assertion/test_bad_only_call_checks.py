@@ -29,6 +29,6 @@ def test_call_count_and_args():  # expect: DS301
 # Moved from no-real-assertion/test_good_assertion_calls.py: a mock verification is
 # a real assertion (DS101 stays quiet), but it is the test's only one.
 def test_mock_verification_is_an_assertion():  # expect: DS301
-    sender = mock.Mock()
+    sender = mock.Mock()  # expect: DS302
     notify(sender, "hi")
     sender.send.assert_called_once_with("hi")

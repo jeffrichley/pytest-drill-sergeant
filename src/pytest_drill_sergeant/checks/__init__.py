@@ -17,7 +17,7 @@ from pytest_drill_sergeant.checks.flakiness import (
     UNSEEDED_RANDOM,
     WALL_CLOCK_READ,
 )
-from pytest_drill_sergeant.checks.mocking import MOCK_ONLY_ASSERTION
+from pytest_drill_sergeant.checks.mocking import MOCK_ONLY_ASSERTION, MOCK_WITHOUT_SPEC
 from pytest_drill_sergeant.checks.structure import (
     ASSERT_BEFORE_ACT,
     INTERLEAVED_ACT_ASSERT,
@@ -34,6 +34,7 @@ CHECKS: tuple[Check, ...] = (
     TAUTOLOGICAL_ASSERTION,
     MIRROR_ASSERTION,
     MOCK_ONLY_ASSERTION,
+    MOCK_WITHOUT_SPEC,
     BRITTLE_STRING_MATCH,
     PRIVATE_STATE_ASSERTION,
     SOURCE_TEXT_GREP,

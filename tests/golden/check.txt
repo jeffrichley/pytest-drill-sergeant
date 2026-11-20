@@ -1,4 +1,4 @@
-DRILL SERGEANT INSPECTION: 207 findings in 53 files. FALL IN!
+DRILL SERGEANT INSPECTION: 225 findings in 56 files. FALL IN!
 
 suite/assert-before-act/test_bad_act_after_the_check.py
   suite/assert-before-act/test_bad_act_after_the_check.py:8: DS103 assert-before-act [fail] in test_register_then_rename
@@ -58,6 +58,15 @@ suite/assert-before-act/test_bad_cleanup_after_the_check.py
            or a `finally`.
 
 suite/assert-before-act/test_bad_inside_a_patch.py
+  suite/assert-before-act/test_bad_inside_a_patch.py:8: DS302 mock-without-spec [warn] in test_refresh_token
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_refresh_token` makes a mock with no spec: `mock.patch('time.time',
+           return_value=0)`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_refresh_token`, line 8: in `mock.patch('time.time', return_value=0)`, pass
+           `autospec=True`, so the mock it puts in place has the real target's attributes and
+           signature.
   suite/assert-before-act/test_bad_inside_a_patch.py:10: DS103 assert-before-act [fail] in test_refresh_token
     "The act runs and NOBODY looks at the result! Eyes on target, maggot!"
     Found: `test_refresh_token` runs `session.refresh()` on line 10 after its last assertion (line
@@ -68,6 +77,13 @@ suite/assert-before-act/test_bad_inside_a_patch.py
     Fix:   In `test_refresh_token`, line 10: assert on what the act on line 10 returns or changes,
            after it runs; keep an assertion before it only as a guard on the starting state. If it
            is cleanup, move it into a fixture (`tmp_path`, a `yield` fixture) or a `finally`.
+  suite/assert-before-act/test_bad_inside_a_patch.py:14: DS302 mock-without-spec [warn] in test_retry
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_retry` makes a mock with no spec: `mock.patch('time.sleep')`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_retry`, line 14: in `mock.patch('time.sleep')`, pass `autospec=True`, so the
+           mock it puts in place has the real target's attributes and signature.
   suite/assert-before-act/test_bad_inside_a_patch.py:16: DS103 assert-before-act [fail] in test_retry
     "Asserting before the action is inspecting your rifle after the battle!"
     Found: `test_retry` runs `fetcher.fetch('/a')` on line 16 after its last assertion (line 15), so
@@ -425,6 +441,15 @@ suite/interleaved-act-assert/test_bad_async_steps.py
            each named for its behaviour, with any shared setup in a fixture.
 
 suite/interleaved-act-assert/test_bad_blocks.py
+  suite/interleaved-act-assert/test_bad_blocks.py:8: DS302 mock-without-spec [warn] in test_counter_under_patch
+    "The real interface changed and your mock never noticed! SPEC IT, maggot!"
+    Found: `test_counter_under_patch` makes a mock with no spec: `mock.patch('time.time',
+           return_value=0)`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_counter_under_patch`, line 8: in `mock.patch('time.time', return_value=0)`, pass
+           `autospec=True`, so the mock it puts in place has the real target's attributes and
+           signature.
   suite/interleaved-act-assert/test_bad_blocks.py:11: DS104 interleaved-act-assert [warn] in test_counter_under_patch
     "When this goes red, which act failed? NOBODY KNOWS! Split it up!"
     Found: `test_counter_under_patch` acts and asserts 2 times: after the assertions on the act at
@@ -668,6 +693,14 @@ suite/mock-only-assertion/test_bad_only_call_checks.py
            returns or changes, preferring a fake you can inspect to `sender`. If the call to
            `sender` is itself the behaviour under test, ask the human for a waiver (`# drill: waive
            DS301 -- <reason>`); don't write one yourself.
+  suite/mock-only-assertion/test_bad_only_call_checks.py:32: DS302 mock-without-spec [warn] in test_mock_verification_is_an_assertion
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_mock_verification_is_an_assertion` makes a mock with no spec: `mock.Mock()`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_mock_verification_is_an_assertion`, line 32: in `mock.Mock()`, build it from the
+           real class, `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so a
+           call the real object doesn't support fails.
 
 suite/mock-only-assertion/test_bad_patch_decorators.py
   suite/mock-only-assertion/test_bad_patch_decorators.py:12: DS301 mock-only-assertion [fail] in test_both_called
@@ -707,6 +740,113 @@ suite/mock-only-assertion/test_bad_patch_decorators.py
            test returns or changes, preferring a fake you can inspect to `write`. If the call to
            `write` is itself the behaviour under test, ask the human for a waiver (`# drill: waive
            DS301 -- <reason>`); don't write one yourself.
+
+suite/mock-without-spec/test_bad_bare_doubles.py
+  suite/mock-without-spec/test_bad_bare_doubles.py:13: DS302 mock-without-spec [warn] in test_notify_counts_deliveries
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_notify_counts_deliveries` makes a mock with no spec: `mock.Mock()`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_notify_counts_deliveries`, line 13: in `mock.Mock()`, build it from the real
+           class, `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so a call
+           the real object doesn't support fails.
+  suite/mock-without-spec/test_bad_bare_doubles.py:18: DS302 mock-without-spec [warn] in test_render_with_magic
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_render_with_magic` makes a mock with no spec: `MagicMock(return_value='<p>')`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_render_with_magic`, line 18: in `MagicMock(return_value='<p>')`, build it from
+           the real class, `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so
+           a call the real object doesn't support fails.
+  suite/mock-without-spec/test_bad_bare_doubles.py:19: DS302 mock-without-spec [warn] in test_render_with_magic
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_render_with_magic` makes a mock with no spec: `Thing()`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_render_with_magic`, line 19: in `Thing()`, build it from the real class,
+           `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so a call the real
+           object doesn't support fails.
+  suite/mock-without-spec/test_bad_bare_doubles.py:24: DS302 mock-without-spec [warn] in test_fetch_retries
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_fetch_retries` makes a mock with no spec: `AsyncMock(side_effect=[TimeoutError,
+           'ok'])`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_fetch_retries`, line 24: in `AsyncMock(side_effect=[TimeoutError, 'ok'])`, build
+           it from the real class, `mock.create_autospec(<Real>, instance=True)`, or pass
+           `spec=<Real>`, so a call the real object doesn't support fails.
+  suite/mock-without-spec/test_bad_bare_doubles.py:29: DS302 mock-without-spec [warn] in test_wrapped_without_spec
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_wrapped_without_spec` makes a mock with no spec:
+           `unittest.mock.Mock(wraps=real_sender)`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_wrapped_without_spec`, line 29: in `unittest.mock.Mock(wraps=real_sender)`,
+           build it from the real class, `mock.create_autospec(<Real>, instance=True)`, or pass
+           `spec=<Real>`, so a call the real object doesn't support fails.
+
+suite/mock-without-spec/test_bad_mocker_doubles.py
+  suite/mock-without-spec/test_bad_mocker_doubles.py:7: DS302 mock-without-spec [warn] in test_notify_with_mocker
+    "The real interface changed and your mock never noticed! SPEC IT, maggot!"
+    Found: `test_notify_with_mocker` makes a mock with no spec: `mocker.Mock()`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_notify_with_mocker`, line 7: in `mocker.Mock()`, build it from the real class,
+           `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so a call the real
+           object doesn't support fails.
+  suite/mock-without-spec/test_bad_mocker_doubles.py:12: DS302 mock-without-spec [warn] in test_label_with_mocker
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_label_with_mocker` makes a mock with no spec: `mocker.patch('shop.today',
+           return_value='2026-01-01')`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_label_with_mocker`, line 12: in `mocker.patch('shop.today',
+           return_value='2026-01-01')`, pass `autospec=True`, so the mock it puts in place has the
+           real target's attributes and signature.
+  suite/mock-without-spec/test_bad_mocker_doubles.py:17: DS302 mock-without-spec [warn] in test_ping_with_mocker
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_ping_with_mocker` makes a mock with no spec: `mocker.patch.object(Mailer,
+           'deliver', return_value=True)`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_ping_with_mocker`, line 17: in `mocker.patch.object(Mailer, 'deliver',
+           return_value=True)`, pass `autospec=True`, so the mock it puts in place has the real
+           target's attributes and signature.
+  suite/mock-without-spec/test_bad_mocker_doubles.py:18: DS302 mock-without-spec [warn] in test_ping_with_mocker
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_ping_with_mocker` makes a mock with no spec: `mocker.MagicMock()`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_ping_with_mocker`, line 18: in `mocker.MagicMock()`, build it from the real
+           class, `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so a call
+           the real object doesn't support fails.
+
+suite/mock-without-spec/test_bad_patches_without_autospec.py
+  suite/mock-without-spec/test_bad_patches_without_autospec.py:11: DS302 mock-without-spec [warn] in test_label_with_a_patched_clock
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `test_label_with_a_patched_clock` makes a mock with no spec: `mock.patch('shop.today',
+           return_value='2026-01-01')`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_label_with_a_patched_clock`, line 11: in `mock.patch('shop.today',
+           return_value='2026-01-01')`, pass `autospec=True`, so the mock it puts in place has the
+           real target's attributes and signature.
+  suite/mock-without-spec/test_bad_patches_without_autospec.py:15: DS302 mock-without-spec [warn] in test_notify_all_counts
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_notify_all_counts` makes a mock with no spec: `patch('shop.send')`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_notify_all_counts`, line 15: in `patch('shop.send')`, pass `autospec=True`, so
+           the mock it puts in place has the real target's attributes and signature.
+  suite/mock-without-spec/test_bad_patches_without_autospec.py:21: DS302 mock-without-spec [warn] in TestNotifier::test_ping_reports
+    "Your mock would salute a method that doesn't EXIST, recruit! Give it a spec!"
+    Found: `TestNotifier::test_ping_reports` makes a mock with no spec: `patch.object(Mailer,
+           'deliver')`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `TestNotifier::test_ping_reports`, line 21: in `patch.object(Mailer, 'deliver')`, pass
+           `autospec=True`, so the mock it puts in place has the real target's attributes and
+           signature.
 
 suite/no-action-under-test/test_bad_constants_only.py
   suite/no-action-under-test/test_bad_constants_only.py:5: DS102 no-action-under-test [fail] in test_discount_rate
@@ -899,6 +1039,15 @@ suite/no-real-assertion/test_bad_final_push.py
     Fix:   In `test_mock_configured_but_never_checked`, line 36: assert on what
            `pytest_drill_sergeant.cli.main(...)` returns or changes, or wrap the call in
            `pytest.raises(..., match=...)` if it should raise.
+  suite/no-real-assertion/test_bad_final_push.py:37: DS302 mock-without-spec [warn] in test_mock_configured_but_never_checked
+    "The real interface changed and your mock never noticed! SPEC IT, maggot!"
+    Found: `test_mock_configured_but_never_checked` makes a mock with no spec:
+           `mocker.patch('pytest_drill_sergeant.cli.main', return_value=0)`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_mock_configured_but_never_checked`, line 37: in
+           `mocker.patch('pytest_drill_sergeant.cli.main', return_value=0)`, pass `autospec=True`,
+           so the mock it puts in place has the real target's attributes and signature.
   suite/no-real-assertion/test_bad_final_push.py:41: DS101 no-real-assertion [fail] in test_fail_method_on_some_object
     "You call that a test, recruit? It runs the code and checks NOTHING!"
     Found: `test_fail_method_on_some_object` has no real assertion: no `assert` that can fail, no
@@ -1019,6 +1168,14 @@ suite/private-state-assertion/test_bad_mangled_and_calls.py
     Fix:   In `test_mangled_balance`, line 11: replace `account._Account__balance` with the public
            behaviour it stands for: a return value, a public attribute or method, or what a fake
            collaborator received.
+  suite/private-state-assertion/test_bad_mangled_and_calls.py:15: DS302 mock-without-spec [warn] in test_private_method_was_called
+    "A mock with no spec answers to ANY order! That's not a soldier, that's a ghost!"
+    Found: `test_private_method_was_called` makes a mock with no spec: `mocker.Mock()`.
+    Why:   A mock with no spec accepts any attribute and any call, so the test stays green when the
+           real interface changes or when the code calls a method that doesn't exist.
+    Fix:   In `test_private_method_was_called`, line 15: in `mocker.Mock()`, build it from the real
+           class, `mock.create_autospec(<Real>, instance=True)`, or pass `spec=<Real>`, so a call
+           the real object doesn't support fails.
   suite/private-state-assertion/test_bad_mangled_and_calls.py:17: DS602 private-state-assertion [fail] in test_private_method_was_called
     "Who gave you clearance to rifle through PRIVATE quarters, recruit?!"
     Found: `test_private_method_was_called` asserts on private state: `service._client`.
@@ -1900,4 +2057,4 @@ suite/weak-assertion/test_bad_ultimate_coverage.py
     Fix:   In `test_async_import`, line 30: replace the weak assertions on line 30 with exact
            checks: assert what `plugin` should equal, as in `assert value == expected`.
 
-207 findings: 198 fail, 9 warn. Fix them, recruit. DISMISSED!
+225 findings: 198 fail, 27 warn. Fix them, recruit. DISMISSED!

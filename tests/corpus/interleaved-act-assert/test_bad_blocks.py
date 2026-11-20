@@ -5,7 +5,7 @@ from unittest import mock
 
 
 def test_counter_under_patch(counter):
-    with mock.patch("time.time", return_value=0):
+    with mock.patch("time.time", return_value=0):  # expect: DS302
         counter.tick()
         assert counter.value == 1
         counter.reset()  # expect: DS104
