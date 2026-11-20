@@ -261,6 +261,8 @@ class Cache:
         try:
             with os.fdopen(handle, "w", encoding="utf-8") as out:
                 json.dump(entries, out, separators=(",", ":"))
+            # mkstemp makes the file private; the cache reads as pytest's own files do.
+            temp.chmod(0o644)
             temp.replace(self.directory / _STORE)
         except OSError:
             temp.unlink(missing_ok=True)
