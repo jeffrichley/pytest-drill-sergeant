@@ -320,14 +320,10 @@ def _is_expect_matcher(call: ast.Call, names: Mapping[str, str]) -> bool:
 
 
 def is_real_assertion(node: ast.AST, names: Mapping[str, str]) -> bool:
-    """Whether a node can fail the test on the outcome it checks.
+    """Whether a node is a real assertion, as GLOSSARY.md's entry defines it.
 
-    An `assert` of anything but a truthy constant or non-empty tuple counts, and so
-    does a call to `pytest.raises`, `pytest.warns`, `pytest.deprecated_call` or
-    `pytest.fail` (through whatever name the imports give it), any `assert*` call,
-    a call made through an assertion library the imports reach (a pytest-check
-    helper such as `check.equal`, a matcher on Playwright's `expect(...)`), and
-    raising `AssertionError`.
+    pytest's helpers and assertion libraries are known through whatever names the
+    file's imports give them.
 
     Args:
         node: The node.

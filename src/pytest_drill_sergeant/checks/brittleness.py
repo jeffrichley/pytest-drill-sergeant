@@ -147,7 +147,7 @@ BRITTLE_STRING_MATCH = Check(
 def _asserted(
     test: TestFunction,
 ) -> Iterator[tuple[ast.Assert | ast.Call, list[ast.expr]]]:
-    """Each real assertion in a test, with the expressions it checks.
+    """Each real assertion (see GLOSSARY.md) in a test, with the expressions it checks.
 
     An `assert` checks its test. An asserting call checks its arguments, keywords
     included, and the object it is called on, but not the exception or warning class
@@ -239,8 +239,8 @@ PRIVATE_STATE_ASSERTION = Check(
     explain=(
         "Flags an assertion (an `assert`, an `assert*` call such as "
         "`self.assertEqual` or a mock's `assert_called_once`, `pytest.raises` and "
-        "kin, a pytest-check helper such as `check.equal`, or a matcher on "
-        "Playwright's `expect(...)`) that reads a private "
+        "kin, a pytest-check helper such as `check.equal`, a matcher on "
+        "Playwright's `expect(...)`, or `raise AssertionError`) that reads a private "
         "attribute: one starting with `_`, such as `cache._store` or a "
         "name-mangled `obj._Class__x`. Dunders such as `__dict__` or `__name__`, "
         "namedtuple's `_asdict`, `_replace`, `_fields`, `_field_defaults` and "
