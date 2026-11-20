@@ -104,6 +104,8 @@ class TestSummary:
         line: The line its `def` is on.
         setup: Its setup statements, in order.
         body: The fingerprint of its whole body.
+        shape: Its whole body's shape: the fingerprint with every name and
+            literal blanked, alike for tests that differ only in their values.
     """
 
     __test__ = False  # Not a pytest test class, despite the name.
@@ -112,6 +114,7 @@ class TestSummary:
     line: int
     setup: tuple[Statement, ...]
     body: str
+    shape: str
 
 
 @dataclass(frozen=True)

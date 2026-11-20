@@ -3,11 +3,14 @@
 A test's setup is its leading statements, before the first one that holds a real
 assertion; a docstring is not one of them. Each statement is recorded by its
 fingerprint, so two statements that read the same, wherever they stand, compare
-equal, and a different name or literal makes them differ. The summary is plain
-data, the same for the same file bytes.
+equal, and a different name or literal makes them differ. A test's whole body is
+recorded twice: by its fingerprint, and by its shape, the fingerprint with every
+name and literal blanked. The summary is plain data, the same for the same file
+bytes.
 """
 
 import ast
+import copy
 import hashlib
 
 from pytest_drill_sergeant.checks.ast_tools import bound_names, is_real_assertion
@@ -28,6 +31,27 @@ def fingerprint(nodes: list[ast.stmt]) -> str:
     """
     text = "\n".join(ast.dump(node) for node in nodes)
     return hashlib.blake2b(text.encode(), digest_size=8).hexdigest()
+
+
+def _blanked(statement: ast.stmt) -> ast.stmt:
+    """A copy of a statement with every name and literal blanked."""
+    blank = copy.deepcopy(statement)
+    for node in ast.walk(blank):
+        if isinstance(node, ast.Name):
+            node.id = "_"
+        elif isinstance(node, ast.arg):
+            node.arg = "_"
+        elif isinstance(node, ast.Constant):
+            node.value = None
+    return blank
+
+
+def shape(nodes: list[ast.stmt]) -> str:
+    """The fingerprint of statements with every name and literal blanked.
+
+    Statements that differ only in their names and values share a shape.
+    """
+    return fingerprint([_blanked(node) for node in nodes])
 
 
 def _is_docstring(statement: ast.stmt) -> bool:
@@ -61,6 +85,7 @@ def _summarize_test(test: TestFunction) -> TestSummary:
         line=test.node.lineno,
         setup=tuple(setup),
         body=fingerprint(body),
+        shape=shape(body),
     )
 
 
