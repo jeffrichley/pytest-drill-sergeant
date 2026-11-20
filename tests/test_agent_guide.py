@@ -16,6 +16,7 @@ def test_agent_guide_teaches_each_check_from_the_registry(cli, check):
 
     assert result.exit_code == 0, result.output
     assert check.why in result.output
+    assert check.bad_example in result.output
     assert check.good_example in result.output
 
 

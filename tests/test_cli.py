@@ -70,13 +70,15 @@ def test_check_skips_the_configs_norecursedirs(cli, tmp_path):
     assert "test_old.py" not in result.output
 
 
-@pytest.mark.parametrize(
-    "args",
-    [("check", "nowhere"), ("explain", "DS999")],
-    ids=["check a missing path", "explain an unknown code"],
-)
-def test_refuses_what_it_cannot_find(cli, args):
-    assert cli(*args).exit_code == 2
+def test_check_refuses_a_missing_path(cli):
+    assert cli("check", "nowhere").exit_code == 2
+
+
+def test_explain_refuses_an_unknown_code_naming_it(cli):
+    result = cli("explain", "DS999")
+
+    assert result.exit_code == 2
+    assert "DS999" in result.stderr
 
 
 def test_check_refuses_a_file_that_does_not_parse(cli, tmp_path):
@@ -464,11 +466,14 @@ def test_warm_check_with_nothing_changed_writes_nothing(
 
 
 @pytest.mark.parametrize("check", CHECKS, ids=lambda c: c.code)
-def test_explain_prints_the_registrys_rationale_and_both_examples(cli, check):
+def test_explain_prints_the_registrys_rationale_explanation_and_both_examples(
+    cli, check
+):
     result = cli("explain", check.code)
 
     assert result.exit_code == 0, result.output
     assert check.why in result.output
+    assert check.explain in result.output
     assert check.bad_example in result.output
     assert check.good_example in result.output
 
