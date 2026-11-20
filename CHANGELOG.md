@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0-alpha.1](https://github.com/jeffrichley/pytest-drill-sergeant/compare/pytest-drill-sergeant-v1.0.0-alpha.1...pytest-drill-sergeant-v1.1.0-alpha.1) (2026-11-20)
+
+
+### Features
+
+* explain, agent guide and DS602 assertion libraries ([#156](https://github.com/jeffrichley/pytest-drill-sergeant/issues/156)) ([88d5a46](https://github.com/jeffrichley/pytest-drill-sergeant/commit/88d5a46c2058c0be8fbfbdf0cf66531389c7ee7e))
+
+
+### Bug Fixes
+
+* compare release versions as PEP 440 in the publish check ([#154](https://github.com/jeffrichley/pytest-drill-sergeant/issues/154)) ([3bcfab5](https://github.com/jeffrichley/pytest-drill-sergeant/commit/3bcfab56e52d8408e76c782c2ca94d8ab97151ce))
+* refuse a test file that can't be read in one line naming it ([#160](https://github.com/jeffrichley/pytest-drill-sergeant/issues/160)) ([71a4e3a](https://github.com/jeffrichley/pytest-drill-sergeant/commit/71a4e3a6e0aadd5d243a64c6b1ea2ed56ad55d12))
+
 ## [1.0.0-alpha.1](https://github.com/jeffrichley/pytest-drill-sergeant/compare/pytest-drill-sergeant-v0.4.0...pytest-drill-sergeant-v1.0.0-alpha.1) (2026-11-20)
 
 
