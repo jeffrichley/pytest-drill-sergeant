@@ -417,8 +417,8 @@ def test_without_pytests_cache_runs_uncached(drill, pytester, lazy_test):
     assert not (pytester.path / ".pytest_cache").exists()
 
 
-def test_cache_follows_pytests_cache_dir(drill, pytester, lazy_test):
-    pytester.makeini("[pytest]\ncache_dir = elsewhere\n")
+def test_cache_follows_pytests_cache_dir(drill, drill_ini, pytester, lazy_test):
+    drill_ini("cache_dir = elsewhere")
 
     drill()
 

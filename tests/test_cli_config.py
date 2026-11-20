@@ -20,7 +20,7 @@ def pkg_under_warn(tmp_path):
     returned so a test can put a config file beside the test."""
     deep = tmp_path / "pkg"
     deep.mkdir()
-    (deep / "test_draw.py").write_text("def test_it():\n    run()\n")
+    (deep / "test_it.py").write_text("def test_it():\n    run()\n")
     (tmp_path / "pytest.ini").write_text(WARN_CONFIGS["pytest.ini"])
     return deep
 
@@ -46,7 +46,7 @@ def test_check_reads_pytest_9_native_toml(cli, tmp_path, unseeded_random_test):
 def test_check_searches_upward_from_the_given_paths(cli, tmp_path):
     deep = tmp_path / "pkg" / "tests"
     deep.mkdir(parents=True)
-    (deep / "test_draw.py").write_text("def test_it():\n    run()\n")
+    (deep / "test_it.py").write_text("def test_it():\n    run()\n")
     (tmp_path / "pytest.ini").write_text(WARN_CONFIGS["pytest.ini"])
 
     assert cli("check", "pkg/tests").exit_code == 0

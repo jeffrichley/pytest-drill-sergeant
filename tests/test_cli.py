@@ -285,7 +285,6 @@ def test_with_inline_waivers_off_the_cli_reports_the_waived_finding(
 def test_check_caches_under_pytests_cache_dir_at_the_config_root(
     cli, tmp_path, assertion_free_test
 ):
-
     cli("check", str(assertion_free_test))
 
     assert (tmp_path / ".pytest_cache" / "d" / "drill-sergeant").is_dir()

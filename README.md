@@ -74,7 +74,9 @@ Turn an off check on with `drill_sergeant_levels`, at `fail` or `warn`:
 drill_sergeant_levels = ["DS101=fail", "DS104=warn"]
 ```
 
-`drill-sergeant explain` lists every check with its default level.
+A family prefix turns on DS108 too: `DS1=fail` asks for AAA comments in every test
+unless `DS108=off` follows it. `drill-sergeant explain` lists every check with its
+default level.
 
 ## Learning a check
 
