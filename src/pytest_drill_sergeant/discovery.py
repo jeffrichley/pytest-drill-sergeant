@@ -84,7 +84,8 @@ def _read_toml(path: Path) -> dict[str, object] | None:
     if path.name in _PYTEST_TOMLS:
         table = data.get("pytest")
         return table if isinstance(table, dict) else None
-    tool = data.get("tool", {}).get("pytest")
+    tools = data.get("tool")
+    tool = tools.get("pytest") if isinstance(tools, dict) else None
     if not isinstance(tool, dict):
         return None
     ini_options = tool.get("ini_options")

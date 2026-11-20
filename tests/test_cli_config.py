@@ -104,6 +104,7 @@ def test_config_option_reads_any_toml_as_pytest_reads_a_pyproject(
     [
         ("ci.toml", '[pytest]\ndrill_sergeant_mode = "warn"\n'),
         ("pyproject.toml", "[tool.ruff]\nline-length = 88\n"),
+        ("ci.toml", 'tool = "pytest"\n'),
         ("pytest.toml", "[tool.pytest]\n"),
         ("ci.ini", "[tool:pytest]\ndrill_sergeant_mode = warn\n"),
         ("pytest.ini", ""),
@@ -112,6 +113,7 @@ def test_config_option_reads_any_toml_as_pytest_reads_a_pyproject(
     ids=[
         "other-toml-pytest-table",
         "pyproject-no-tool-pytest",
+        "tool-not-a-table",
         "pytest-toml-no-pytest-table",
         "ini-cfg-section",
         "empty-pytest-ini",
