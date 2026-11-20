@@ -52,6 +52,10 @@ stress count="5":
 perf:
     uv run pytest -q -p no:randomly -m perf tests/perf
 
+# Rewrite tests/golden/check.txt as the golden test runs it; review `git diff tests/golden`.
+golden:
+    uv run python tests/golden/regenerate.py
+
 # The commit hooks: the fast checks before a commit, the message convention on it.
 install-hooks:
     uv run pre-commit install
