@@ -177,7 +177,8 @@ class _FileResult:
     a changed level or per-file ignore never needs a file analysed again.
 
     Attributes:
-        hits: Each check's hits in the file, by the check's code.
+        hits: Each check's hits in the file, by the check's code; a check with
+            none is left out.
         summary: The file's per-file summary.
         waivers: The file's inline waivers, for applying after cross-file analysis.
     """
@@ -218,7 +219,7 @@ def _analyze_file(path: Path, source: bytes, config: Config) -> _FileResult:
         thresholds=_thresholds(config),
     )
     return _FileResult(
-        hits={check.code: tuple(check.find(file)) for check in CHECKS},
+        hits={c.code: hits for c in CHECKS if (hits := tuple(c.find(file)))},
         summary=summarize(file),
         waivers=FileWaivers(
             waivers=waivers, def_lines={t.name: t.node.lineno for t in tests}

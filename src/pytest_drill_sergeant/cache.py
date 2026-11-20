@@ -94,14 +94,23 @@ def _dataclass_reader(cls: type) -> Callable[[Any], Any]:
     hints = typing.get_type_hints(cls)
     fields = dataclasses.fields(cls)
     names = [f.name for f in fields]
-    reads = [_decoder(hints[f.name]) for f in fields]
     count = len(names)
+    # Only the fields that aren't plain data need reading; the rest stand as read.
+    reads = [
+        (i, field_read)
+        for i, f in enumerate(fields)
+        if (field_read := _decoder(hints[f.name])) is not None
+    ]
 
     def values(data: object) -> list[Any]:
         items = _items(data)
         if len(items) != count:
             raise TypeError(f"expected {count} fields, got {len(items)}")
-        return [v if r is None else r(v) for r, v in zip(reads, items, strict=True)]
+        if reads:
+            items = items.copy()
+            for i, field_read in reads:
+                items[i] = field_read(items[i])
+        return items
 
     direct = (
         all(f.init for f in fields)
@@ -138,6 +147,8 @@ def _decoder(kind: object) -> _Reader:  # noqa: C901, PLR0911  # One branch per 
         return lambda data: None if data is None else read(data)  # type: ignore[misc]  # `read` is a reader here: `other` isn't plain.
     if origin is tuple and len(args) == 2 and args[1] is Ellipsis:  # noqa: PLR2004  # tuple[X, ...]
         each = _each(_decoder(args[0]))
+        if each is _items:
+            return lambda data: tuple(_items(data))
         return lambda data: tuple(each(data))
     if origin is tuple:
         reads = [_decoder(a) for a in args]
