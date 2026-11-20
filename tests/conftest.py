@@ -19,6 +19,17 @@ pytest_plugins = ["pytester"]
 # The corpus is analysed by the engine, never run.
 collect_ignore = ["corpus"]
 
+# Ends a generated test file so its tests carry a category marker (no DS901) while
+# every line above it, and so every finding's line, stays where it was.
+UNIT_MARK = "\nimport pytest\n\npytestmark = pytest.mark.unit\n"
+
+
+@pytest.fixture
+def unit_mark():
+    """The lines that end a generated test file so its tests carry a category marker
+    (no DS901), leaving every line above them in place."""
+    return UNIT_MARK
+
 
 @pytest.fixture
 def cli(tmp_path, monkeypatch):
@@ -34,11 +45,19 @@ def cli(tmp_path, monkeypatch):
 
 
 @pytest.fixture
+def clean_test(tmp_path):
+    """A test file in `tmp_path`, `test_ok.py`, holding one test with no finding."""
+    path = tmp_path / "test_ok.py"
+    path.write_text("def test_ok():\n    assert sum([1, 1]) == 2\n" + UNIT_MARK)
+    return path
+
+
+@pytest.fixture
 def assertion_free_test(tmp_path):
     """A test file in `tmp_path` holding one test with no real assertion (DS101 on
     line 1)."""
     path = tmp_path / "test_it.py"
-    path.write_text("def test_it():\n    run()\n")
+    path.write_text("def test_it():\n    run()\n" + UNIT_MARK)
     return path
 
 
@@ -69,6 +88,7 @@ def lazy_file(pytester):
         file.parent.mkdir(parents=True, exist_ok=True)
         file.write_text(
             "".join(f"def {name}():\n    print({name}.__name__)\n" for name in names)
+            + UNIT_MARK
         )
         return file
 
@@ -88,6 +108,7 @@ def failing_test(pytester):
     test."""
     return pytester.makepyfile(
         test_broken="def test_broken():\n    assert sorted([2, 1]) == [2, 1]\n"
+        + UNIT_MARK
     )
 
 
@@ -96,7 +117,7 @@ def long_named_test(tmp_path):
     """A test file in `tmp_path` holding one test with no real assertion (DS101 on
     line 1) whose name makes its location line longer than a narrow terminal."""
     path = tmp_path / "test_long.py"
-    path.write_text(f"def test_{'very_' * 10}long():\n    run()\n")
+    path.write_text(f"def test_{'very_' * 10}long():\n    run()\n" + UNIT_MARK)
     return path
 
 
@@ -142,11 +163,12 @@ def pasted_across_files():
 
 @pytest.fixture
 def write_test_file(tmp_path):
-    """Write source to `test_it.py` in `tmp_path` and return its path."""
+    """Write source to `test_it.py` in `tmp_path`, ended by `UNIT_MARK`, and return
+    its path."""
 
     def write(source: str):
         path = tmp_path / "test_it.py"
-        path.write_text(source)
+        path.write_text(source + UNIT_MARK)
         return path
 
     return write
@@ -159,5 +181,20 @@ def waived_test(tmp_path):
     path = tmp_path / "test_waived.py"
     path.write_text(
         "def test_waived():  # drill: waive DS101 -- smoke test\n    run()\n"
+        + UNIT_MARK
     )
     return path
+
+
+@pytest.fixture
+def unmarked_test_at(tmp_path):
+    """Write a file at a path under `tmp_path` holding one test whose only finding
+    is its missing category marker (DS901 on line 1), and return its path."""
+
+    def write(relative: str):
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("def test_total():\n    assert total([1, 2]) == 3\n")
+        return path
+
+    return write

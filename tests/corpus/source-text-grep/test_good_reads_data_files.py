@@ -4,7 +4,10 @@ Analysed, never run."""
 import json
 from pathlib import Path
 
+import pytest
 from app import export
+
+pytestmark = pytest.mark.unit
 
 DATA = Path(__file__).parent / "data"
 

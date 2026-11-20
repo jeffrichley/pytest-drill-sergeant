@@ -1,7 +1,10 @@
 """The catalog's weak-assertion example: true for almost any order, wrong ones
 included. Analysed, never run."""
 
+import pytest
 from shop import apply_discount, make_order
+
+pytestmark = pytest.mark.unit
 
 
 def test_apply_discount():

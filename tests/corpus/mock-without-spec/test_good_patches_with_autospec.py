@@ -5,7 +5,10 @@ import os
 from unittest import mock
 from unittest.mock import PropertyMock, patch
 
+import pytest
 from shop import Clock, FakeClock, Mailer, Notifier, greeting, label, notify_all
+
+pytestmark = pytest.mark.unit
 
 
 @patch("shop.send", autospec=True)

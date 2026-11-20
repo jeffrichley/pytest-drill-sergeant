@@ -5,6 +5,8 @@ import sys
 import pytest
 from billing import Invoice
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.skipif(sys.platform == "win32")  # expect: DS401
 def test_invoice_path_uses_forward_slashes():

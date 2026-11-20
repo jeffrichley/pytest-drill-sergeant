@@ -6,6 +6,8 @@ from unittest import mock
 import pytest
 from shop import Repo, Sender, notify, register
 
+pytestmark = pytest.mark.unit
+
 
 def test_send_and_result():
     sender = mock.Mock(spec=Sender)

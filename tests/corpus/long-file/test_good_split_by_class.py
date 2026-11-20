@@ -4,6 +4,8 @@ under the threshold. Analysed, never run."""
 import pytest
 from thermostat import Schedule, Thermostat
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def thermostat():

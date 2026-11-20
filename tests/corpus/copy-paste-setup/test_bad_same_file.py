@@ -1,7 +1,10 @@
 """The headline: one setup block pasted into three tests of one file. Analysed,
 never run."""
 
+import pytest
 from shop import Cart, Catalog, Order
+
+pytestmark = pytest.mark.unit
 
 
 def test_order_total_sums_the_lines():

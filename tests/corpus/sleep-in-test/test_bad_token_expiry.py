@@ -5,7 +5,10 @@ Analysed, never run.
 
 import time
 
+import pytest
 from tokens import is_expired, issue_token
+
+pytestmark = pytest.mark.unit
 
 
 def test_token_expires_after_its_ttl():

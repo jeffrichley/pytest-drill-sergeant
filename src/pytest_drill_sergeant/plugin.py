@@ -75,12 +75,17 @@ def _require_config(config: pytest.Config) -> Config:
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    """Resolve the config and, unless the mode is `off`, start the run.
+    """Resolve the config, register the category markers and start the run.
+
+    The markers are registered whatever the mode, so `--strict-markers` accepts them;
+    the run starts unless the mode is `off`.
 
     An xdist worker only runs tests and tells the controller which files it collected
     them from; the controller analyses.
     """
     resolved = _require_config(config)
+    for marker in resolved.category_markers:
+        config.addinivalue_line("markers", f"{marker}: a category marker")
     if resolved.mode is Level.OFF:
         return
     if hasattr(config, "workerinput"):

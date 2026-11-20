@@ -3,6 +3,8 @@ decorator, and its comments and blank lines count. Analysed, never run."""
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.parametrize("currency", ["GBP", "EUR", "USD"])
 def test_invoice_rendering(currency, invoices, renderer):  # expect: DS105

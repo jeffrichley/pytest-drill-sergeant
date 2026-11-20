@@ -6,6 +6,8 @@ import pytest as pt
 from pytest import raises
 from pytest import raises as expect
 
+pytestmark = pytest.mark.unit
+
 
 def parse(text):
     return int(text)

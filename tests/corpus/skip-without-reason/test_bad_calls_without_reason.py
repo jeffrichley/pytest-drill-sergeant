@@ -8,6 +8,8 @@ import os
 import pytest
 from mailer import Mailer
 
+pytestmark = pytest.mark.unit
+
 
 def test_mailer_sends_over_smtp():
     if "SMTP_HOST" not in os.environ:

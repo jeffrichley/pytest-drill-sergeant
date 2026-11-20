@@ -5,7 +5,10 @@ import os
 from unittest import mock
 from unittest.mock import patch
 
+import pytest
 from shop import Mailer, report
+
+pytestmark = pytest.mark.unit
 
 
 @patch("shop.load_orders", autospec=True)

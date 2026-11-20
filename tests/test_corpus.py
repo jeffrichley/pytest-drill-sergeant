@@ -13,6 +13,8 @@ import pytest
 
 from pytest_drill_sergeant.engine import Config, analyze
 
+pytestmark = pytest.mark.unit
+
 CORPUS = Path(__file__).parent / "corpus"
 CORPUS_FILES = sorted(CORPUS.rglob("*.py"))
 SOURCE_FILES = [p for p in CORPUS_FILES if p.parent.name == "source"]

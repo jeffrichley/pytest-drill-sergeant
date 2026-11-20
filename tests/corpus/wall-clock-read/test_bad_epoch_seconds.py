@@ -6,7 +6,10 @@ Analysed, never run.
 import time
 from time import time_ns
 
+import pytest
 from tokens import issue_token
+
+pytestmark = pytest.mark.unit
 
 
 def test_token_carries_the_issue_time():

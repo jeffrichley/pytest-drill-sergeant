@@ -3,6 +3,8 @@
 import pytest  # drill: waive  # expect: DS001
 from calc import double
 
+pytestmark = pytest.mark.unit
+
 
 def helper():  # drill: waive DS101  # expect: DS001
     return 1

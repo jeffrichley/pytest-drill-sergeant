@@ -3,8 +3,11 @@ to be the mock library. Analysed, never run."""
 
 from unittest import mock
 
+import pytest
 from doubles import Mock, patch
 from shop import label, notify
+
+pytestmark = pytest.mark.unit
 
 
 def make_sender():

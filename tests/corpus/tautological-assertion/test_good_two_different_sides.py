@@ -1,7 +1,10 @@
 """Near-misses: comparisons whose two sides look alike but differ, or can fail.
 Analysed, never run."""
 
+import pytest
 from shop import make_order, parse_price
+
+pytestmark = pytest.mark.unit
 
 
 def test_two_orders_differ():

@@ -5,7 +5,10 @@ numpy seed for a stdlib draw. Analysed, never run.
 import random
 
 import numpy as np
+import pytest
 from cart import Cart
+
+pytestmark = pytest.mark.unit
 
 random.seed()
 np.random.seed(0)

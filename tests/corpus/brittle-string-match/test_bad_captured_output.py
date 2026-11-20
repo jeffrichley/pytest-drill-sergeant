@@ -2,7 +2,10 @@
 
 import logging
 
+import pytest
 from app import cli, greet, main
+
+pytestmark = pytest.mark.unit
 
 
 def test_greeting_printed(capsys):

@@ -8,6 +8,8 @@ import asyncio
 import pytest
 from poller import Poller
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.asyncio
 async def test_poller_runs_after_one_tick():

@@ -1,7 +1,10 @@
 """The pasted block starts after a line each test writes differently, and runs in
 four tests, in a class and at module level. Analysed, never run."""
 
+import pytest
 from inventory import Shelf, Stock, Warehouse
+
+pytestmark = pytest.mark.unit
 
 
 class TestRestock:

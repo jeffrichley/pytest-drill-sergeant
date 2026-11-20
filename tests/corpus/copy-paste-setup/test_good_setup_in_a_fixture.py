@@ -5,6 +5,8 @@ Analysed, never run."""
 import pytest
 from shop import Cart, Catalog, Order
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def order():

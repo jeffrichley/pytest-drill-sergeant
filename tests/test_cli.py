@@ -3,6 +3,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.integration
+
 CORPUS = Path(__file__).parent / "corpus"
 
 
@@ -13,11 +15,7 @@ def test_help_names_the_command(cli):
     assert "drill-sergeant" in result.output
 
 
-def test_check_exits_zero_on_a_clean_file(cli, tmp_path):
-    (tmp_path / "test_ok.py").write_text(
-        "def test_ok():\n    assert sum([1, 1]) == 2\n"
-    )
-
+def test_check_exits_zero_on_a_clean_file(cli, clean_test):
     result = cli("check", "test_ok.py")
 
     assert result.exit_code == 0, result.output
@@ -154,10 +152,12 @@ def test_config_option_overrides_discovery(cli, tmp_path, assertion_free_test):
     assert cli("check", "--config", "ci/pytest.ini", "test_it.py").exit_code == 0
 
 
-def test_per_file_ignore_globs_are_relative_to_the_config_file(cli, tmp_path):
+def test_per_file_ignore_globs_are_relative_to_the_config_file(
+    cli, tmp_path, unit_mark
+):
     legacy = tmp_path / "legacy"
     legacy.mkdir()
-    (legacy / "test_old.py").write_text("def test_old():\n    run()\n")
+    (legacy / "test_old.py").write_text("def test_old():\n    run()\n" + unit_mark)
     (tmp_path / "pytest.ini").write_text(
         "[pytest]\ndrill_sergeant_per_file_ignores =\n    legacy/*: DS101\n"
     )
@@ -322,12 +322,8 @@ def test_check_reads_the_configured_source_dirs_instead_of_src(
 
 
 def test_without_production_code_the_special_casing_check_is_skipped_with_a_note(
-    cli, tmp_path
+    cli, clean_test
 ):
-    (tmp_path / "test_ok.py").write_text(
-        "def test_ok():\n    assert sum([1, 1]) == 2\n"
-    )
-
     result = cli("check", "test_ok.py")
 
     assert result.exit_code == 0, result.output

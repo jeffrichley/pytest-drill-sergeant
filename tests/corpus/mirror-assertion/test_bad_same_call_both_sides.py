@@ -1,7 +1,10 @@
 """The catalog's mirror example: the code under test on both sides of `==`.
 Analysed, never run."""
 
+import pytest
 from shop import serializer, slugify
+
+pytestmark = pytest.mark.unit
 
 
 def test_slugify():

@@ -4,6 +4,8 @@ test itself is short. Analysed, never run."""
 import pytest
 from quantities import parse_quantity
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.parametrize(
     ("raw", "expected"),

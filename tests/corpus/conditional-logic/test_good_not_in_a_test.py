@@ -4,6 +4,8 @@ which swallowed-exception reads. Analysed, never run."""
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def seeded_db(db):

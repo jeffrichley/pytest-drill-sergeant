@@ -3,6 +3,8 @@
 import pytest
 from records import create_record, delete_record
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.skip(reason="Pre-existing FK migration issue")  # expect: DS402
 def test_create_record_assigns_an_id():

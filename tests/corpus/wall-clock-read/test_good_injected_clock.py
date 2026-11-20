@@ -4,7 +4,10 @@ the clock. Analysed, never run.
 
 from datetime import date, datetime
 
+import pytest
 from billing import FakeClock, Invoice
+
+pytestmark = pytest.mark.unit
 
 
 def now():

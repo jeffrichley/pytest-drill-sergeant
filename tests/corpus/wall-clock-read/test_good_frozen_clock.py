@@ -11,6 +11,8 @@ import time_machine
 from billing import Invoice
 from freezegun import freeze_time
 
+pytestmark = pytest.mark.unit
+
 
 @freeze_time("2026-01-01")
 def test_invoice_dated_under_a_frozen_decorator():

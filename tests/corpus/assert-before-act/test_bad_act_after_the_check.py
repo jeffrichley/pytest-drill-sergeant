@@ -1,6 +1,10 @@
 """Tests whose last act runs after every assertion, so its outcome goes unchecked.
 Analysed, never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_register_then_rename(registry):
     registry.register("ada")

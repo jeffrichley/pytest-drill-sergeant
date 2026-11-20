@@ -1,7 +1,10 @@
 """Near-misses: long string literals that aren't compared with rendered text.
 Analysed, never run."""
 
+import pytest
 from app import Profile, send, summarize
+
+pytestmark = pytest.mark.unit
 
 
 def test_bio_is_stored_as_given():

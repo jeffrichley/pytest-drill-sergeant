@@ -1,7 +1,10 @@
 """Near-misses: text compared with `==` against short literals, which pin a value,
 not prose. Analysed, never run."""
 
+import pytest
 from app import Money, Point, User, cli
+
+pytestmark = pytest.mark.unit
 
 
 def test_number_renders():

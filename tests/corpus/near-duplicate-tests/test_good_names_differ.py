@@ -2,7 +2,10 @@
 the class they build) or an attribute, not only in their values. Analysed, never
 run."""
 
+import pytest
 from shop import Cart, Wishlist, parse_price, parse_quantity
+
+pytestmark = pytest.mark.unit
 
 
 def test_parse_price():

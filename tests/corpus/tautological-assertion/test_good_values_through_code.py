@@ -1,7 +1,10 @@
 """Near-misses: literals the test wrote that pass through the code under test
 before the assertion. Analysed, never run."""
 
+import pytest
 from shop import load_config, normalise, price
+
+pytestmark = pytest.mark.unit
 
 
 def test_config_filled_in_place():

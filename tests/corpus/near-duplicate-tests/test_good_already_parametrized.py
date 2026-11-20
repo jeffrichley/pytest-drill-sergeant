@@ -4,6 +4,8 @@ values, beside a plain test of the same body. Analysed, never run."""
 import pytest
 from shop import Cart
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.parametrize("fruit", ["apple", "pear"])
 def test_one_fruit_costs_three(fruit):

@@ -7,7 +7,7 @@ import ast
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from fnmatch import fnmatch
-from pathlib import Path
+from pathlib import Path, PurePath
 
 from pytest_drill_sergeant.checks import (
     CHECKS,
@@ -74,7 +74,10 @@ def _is_collected_class(node: ast.ClassDef) -> bool:
 
 
 def _tests_in(
-    body: list[ast.stmt], names: Mapping[str, str], prefix: str = ""
+    body: list[ast.stmt],
+    names: Mapping[str, str],
+    prefix: str = "",
+    classes: tuple[ast.ClassDef, ...] = (),
 ) -> Iterator[TestFunction]:
     """The tests pytest's default rules collect.
 
@@ -91,9 +94,25 @@ def _tests_in(
                 name=f"{prefix}{node.name}",
                 node=node,
                 imports=imports_seen_by(node, names),
+                classes=classes,
             )
         elif isinstance(node, ast.ClassDef) and _is_collected_class(node):
-            yield from _tests_in(node.body, names, f"{prefix}{node.name}::")
+            yield from _tests_in(
+                node.body, names, f"{prefix}{node.name}::", (*classes, node)
+            )
+
+
+def _relative(path: Path, config: Config) -> PurePath:
+    """A file's path relative to the config root, or as given when outside it."""
+    resolved = path.resolve()
+    root = config.root.resolve()
+    return resolved.relative_to(root) if resolved.is_relative_to(root) else path
+
+
+def _directories(path: PurePath) -> tuple[str, ...]:
+    """The names of the directories a path runs through, outermost first."""
+    parts = path.parent.parts
+    return parts[1:] if path.anchor else parts
 
 
 def _ignored_codes(path: Path, config: Config) -> frozenset[str]:
@@ -102,13 +121,7 @@ def _ignored_codes(path: Path, config: Config) -> frozenset[str]:
     A glob matches the file's path relative to the config root, or, for a glob with
     no `/`, the file's name.
     """
-    resolved = path.resolve()
-    root = config.root.resolve()
-    relative = (
-        resolved.relative_to(root).as_posix()
-        if resolved.is_relative_to(root)
-        else path.as_posix()
-    )
+    relative = _relative(path, config).as_posix()
     ignored: set[str] = set()
     for glob, codes in config.per_file_ignores:
         if fnmatch(relative, glob) or ("/" not in glob and fnmatch(path.name, glob)):
@@ -176,6 +189,8 @@ def _analyze_file(
         lines=len(source.splitlines()),
         waivers=waivers,
         thresholds=_thresholds(config),
+        category_markers=config.category_markers,
+        directories=_directories(_relative(path, config)),
     )
     ignored = _ignored_codes(path, config)
     findings = [

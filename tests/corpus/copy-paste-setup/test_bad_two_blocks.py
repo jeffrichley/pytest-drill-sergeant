@@ -3,7 +3,10 @@ Analysed, never run."""
 
 import json
 
+import pytest
 from reports import Renderer, Report
+
+pytestmark = pytest.mark.unit
 
 
 def test_report_renders_its_title(tmp_path):

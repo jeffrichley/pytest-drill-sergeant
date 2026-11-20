@@ -3,8 +3,11 @@ fixtures, which one parametrized function can't hold. Analysed, never run."""
 
 from datetime import date
 
+import pytest
 from billing import Invoice
 from freezegun import freeze_time
+
+pytestmark = pytest.mark.unit
 
 
 @freeze_time("2026-01-01")

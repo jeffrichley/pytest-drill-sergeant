@@ -8,6 +8,8 @@ import pytest as pt
 from pytest import raises
 from pytest import warns as expect_warning
 
+pytestmark = pytest.mark.unit
+
 
 def parse(text):
     return int(text)

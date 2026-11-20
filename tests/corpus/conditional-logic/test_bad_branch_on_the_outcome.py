@@ -5,6 +5,8 @@ is one: a strong assertion in a branch counts (DS201). Analysed, never run."""
 import pytest
 from shop import make_order
 
+pytestmark = pytest.mark.unit
+
 
 def test_strong_assertion_inside_a_branch_still_counts():
     order = make_order(lines=[1000])

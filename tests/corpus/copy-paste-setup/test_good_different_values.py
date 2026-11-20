@@ -2,7 +2,10 @@
 so no block is pasted. (Tests that differ only in values want `parametrize`, a
 different finding.) Analysed, never run."""
 
+import pytest
 from shop import Cart, Catalog, Order
+
+pytestmark = pytest.mark.unit
 
 
 def test_apple_order_total():

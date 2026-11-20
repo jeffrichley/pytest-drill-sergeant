@@ -3,7 +3,10 @@ Analysed, never run."""
 
 from unittest import mock
 
+import pytest
 from shop import Sender, notify, notify_all
+
+pytestmark = pytest.mark.unit
 
 
 def test_notify_sends():  # expect: DS301

@@ -8,6 +8,8 @@ import random
 import pytest
 from cart import Cart
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture(autouse=True)
 def _seed_random():

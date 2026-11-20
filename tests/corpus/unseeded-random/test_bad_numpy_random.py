@@ -7,6 +7,8 @@ import pytest
 from numpy import random as npr
 from stats import mean
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def seeded():

@@ -9,6 +9,8 @@ import sys
 import pytest
 from records import create_record, export_records
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.skipif(sys.platform == "win32", reason="fork is POSIX only")
 def test_create_record_in_a_forked_worker():

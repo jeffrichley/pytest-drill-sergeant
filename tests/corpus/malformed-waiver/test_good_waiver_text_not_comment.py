@@ -3,7 +3,10 @@
 A docstring may say # drill: waive and still waive nothing.
 """
 
+import pytest
 from waivers import parse_waiver, render_waiver
+
+pytestmark = pytest.mark.unit
 
 # drill: waivers are written per finding, not per file.
 

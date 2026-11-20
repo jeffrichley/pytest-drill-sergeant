@@ -1,6 +1,9 @@
 """Assertions on a module's private globals and loaded flags. Analysed, never run."""
 
+import pytest
 from app import config, registry
+
+pytestmark = pytest.mark.unit
 
 
 def test_registry_starts_empty():  # expect: DS102

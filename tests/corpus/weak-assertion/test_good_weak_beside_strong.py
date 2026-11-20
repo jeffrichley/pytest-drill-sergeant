@@ -9,6 +9,8 @@ from shop import Sender, apply_discount, make_order, notify
 
 import pytest_drill_sergeant
 
+pytestmark = pytest.mark.unit
+
 
 def test_tiny_coverage_boost():
     assert pytest_drill_sergeant.__version__ == "1.0.0-dev"

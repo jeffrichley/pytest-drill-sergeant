@@ -1,6 +1,10 @@
 """Near-misses: a guard assertion on the starting state, then one act and its
 assertions. Analysed, never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_add_item(cart):
     assert cart.items == []

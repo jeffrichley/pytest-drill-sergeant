@@ -9,6 +9,8 @@ from cart import Cart
 
 from . import factories
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def seeded_random():

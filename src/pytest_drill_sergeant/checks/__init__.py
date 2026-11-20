@@ -32,6 +32,7 @@ from pytest_drill_sergeant.checks.flakiness import (
     UNSEEDED_RANDOM,
     WALL_CLOCK_READ,
 )
+from pytest_drill_sergeant.checks.markers import MISSING_CATEGORY_MARKER
 from pytest_drill_sergeant.checks.mocking import (
     MOCK_ONLY_ASSERTION,
     MOCK_WITHOUT_SPEC,
@@ -76,6 +77,7 @@ CHECKS: tuple[Check, ...] = (
     SLEEP_IN_TEST,
     WALL_CLOCK_READ,
     UNSEEDED_RANDOM,
+    MISSING_CATEGORY_MARKER,
 )
 
 

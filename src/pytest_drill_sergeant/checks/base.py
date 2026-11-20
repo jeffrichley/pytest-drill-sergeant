@@ -30,6 +30,8 @@ class TestFunction:
         node: The function's syntax tree.
         imports: The imported names the test sees, each with what it stands for
             in full (`pt` is `pytest` after `import pytest as pt`).
+        classes: The classes it is defined in, outermost first; none for a test
+            at module level.
     """
 
     __test__ = False  # Not a pytest test class, despite the name.
@@ -37,6 +39,7 @@ class TestFunction:
     name: str
     node: FunctionNode
     imports: Mapping[str, str]
+    classes: tuple[ast.ClassDef, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -72,6 +75,10 @@ class TestFile:
         waivers: Its `# drill: waive` comments, complete or not; none when inline
             waivers are off.
         thresholds: The configured thresholds, for checks that measure.
+        category_markers: The configured category markers.
+        directories: The names of the directories the file is in, outermost
+            first, from its path relative to the config root (or as given, when it
+            is outside the root).
     """
 
     __test__ = False  # Not a pytest test class, despite the name.
@@ -82,6 +89,8 @@ class TestFile:
     lines: int
     waivers: tuple[Waiver, ...] = ()
     thresholds: Thresholds = Thresholds()
+    category_markers: tuple[str, ...] = ("unit", "integration", "e2e")
+    directories: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

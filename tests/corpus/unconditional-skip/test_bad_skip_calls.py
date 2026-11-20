@@ -7,6 +7,8 @@ import pytest
 from pytest import skip
 from reports import Report
 
+pytestmark = pytest.mark.unit
+
 
 def test_report_totals_each_column():
     pytest.skip("unrelated failure, fix later")  # expect: DS402

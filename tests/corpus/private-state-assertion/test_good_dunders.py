@@ -1,7 +1,10 @@
 """Near-misses: dunder attributes are Python's public protocol, not private state.
 Analysed, never run."""
 
+import pytest
 from app import Point, load_package
+
+pytestmark = pytest.mark.unit
 
 
 def test_point_fields():

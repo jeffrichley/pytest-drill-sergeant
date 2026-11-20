@@ -4,6 +4,8 @@ Analysed, never run."""
 import pytest
 from shop import Cart
 
+pytestmark = pytest.mark.unit
+
 
 class TestDiscounts:
     @pytest.mark.slow

@@ -3,6 +3,8 @@ test on purpose. Analysed, never run."""
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 def load(path):
     raise FileNotFoundError(path)

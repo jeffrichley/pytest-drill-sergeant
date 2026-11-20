@@ -6,6 +6,10 @@ isn't the module (DS803). Analysed, never run."""
 
 import random  # noqa: F401 -- the module the loop variable shadows
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 ROWS = [{"id": 1}]
 ROWS = [{"id": 1}, {"id": 2}]
 

@@ -3,6 +3,8 @@
 import pytest
 from app import InvalidEmail, ship, validate
 
+pytestmark = pytest.mark.unit
+
 
 def test_invalid_email_message():
     with pytest.raises(ValueError) as excinfo:

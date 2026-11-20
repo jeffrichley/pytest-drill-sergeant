@@ -8,6 +8,8 @@ from datetime import date, timedelta
 import pytest
 from library import Library, LoanError, Member, ReservationError
 
+pytestmark = pytest.mark.unit
+
 OPENING_DAY = date(2026, 1, 5)
 
 

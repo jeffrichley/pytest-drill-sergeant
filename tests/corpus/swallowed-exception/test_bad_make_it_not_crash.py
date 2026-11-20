@@ -3,6 +3,10 @@ never run."""
 
 import logging
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def sync_all():
     raise RuntimeError("sync broke")

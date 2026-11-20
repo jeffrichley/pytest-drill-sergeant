@@ -4,7 +4,10 @@ depending on when they run. Analysed, never run.
 
 from datetime import date, datetime, timedelta
 
+import pytest
 from billing import Invoice, Subscription
+
+pytestmark = pytest.mark.unit
 
 
 def test_invoice_is_due_in_thirty_days():

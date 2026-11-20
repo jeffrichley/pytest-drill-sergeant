@@ -4,6 +4,8 @@ Analysed, never run."""
 import pytest
 from pytest import fixture
 
+pytestmark = pytest.mark.unit
+
 
 def make_user():
     return {"name": "Ada"}

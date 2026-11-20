@@ -4,7 +4,10 @@ run."""
 import re
 from pathlib import Path
 
+import pytest
 from app import client, settings
+
+pytestmark = pytest.mark.unit
 
 
 def test_no_todo_left():

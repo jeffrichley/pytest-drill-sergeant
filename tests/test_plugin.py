@@ -1,12 +1,16 @@
 import pytest
 
+pytestmark = pytest.mark.integration
+
 SECTION = "= drill sergeant ="
 
 
 def test_plugin_is_active_once_installed_and_leaves_a_clean_run_passing(
-    drill, pytester
+    drill, pytester, unit_mark
 ):
-    pytester.makepyfile("def test_ok():\n    assert sorted([2, 1]) == [1, 2]\n")
+    pytester.makepyfile(
+        "def test_ok():\n    assert sorted([2, 1]) == [1, 2]\n" + unit_mark
+    )
 
     result = drill()
 
@@ -278,10 +282,12 @@ def test_findings_section_wraps_to_pytests_terminal_width(
     assert following.lstrip().startswith("Why:")
 
 
-def test_waived_finding_leaves_the_run_passing_and_is_tallied(drill, pytester):
+def test_waived_finding_leaves_the_run_passing_and_is_tallied(
+    drill, pytester, unit_mark
+):
     pytester.makepyfile(
         test_waived="def test_waived():  # drill: waive DS101 -- smoke test\n"
-        "    print('hi')\n"
+        "    print('hi')\n" + unit_mark
     )
 
     result = drill()
@@ -302,3 +308,27 @@ def test_reasonless_waiver_fails_the_run_and_waives_nothing(drill, pytester):
     out = result.stdout.str()
     assert "test_waived.py:1: DS001" in out
     assert "test_waived.py:1: DS101" in out
+
+
+@pytest.mark.parametrize(
+    ("ini", "marker"),
+    [
+        ("", "e2e"),
+        ("drill_sergeant_category_markers = smoke slow\n", "slow"),
+        ("drill_sergeant_mode = off\n", "unit"),
+    ],
+    ids=["default", "configured", "off-mode"],
+)
+def test_category_markers_are_registered_so_strict_markers_accepts_them(
+    drill, pytester, ini, marker
+):
+    pytester.makeini(f"[pytest]\n{ini}")
+    pytester.makepyfile(
+        f"import pytest\n\n@pytest.mark.{marker}\ndef test_ok():\n"
+        "    assert sorted([2, 1]) == [1, 2]\n"
+    )
+
+    result = drill("--strict-markers")
+
+    result.assert_outcomes(passed=1)
+    assert result.ret == pytest.ExitCode.OK

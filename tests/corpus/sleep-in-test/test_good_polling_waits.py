@@ -4,7 +4,10 @@ only yields. Analysed, never run.
 
 import time
 
+import pytest
 from worker import Worker
+
+pytestmark = pytest.mark.unit
 
 
 def test_worker_finishes_within_a_deadline():

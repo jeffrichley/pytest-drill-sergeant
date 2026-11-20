@@ -1,7 +1,10 @@
 """Expected values taken from the code under test through a name.
 Analysed, never run."""
 
+import pytest
 from shop import gross_price, slugify
+
+pytestmark = pytest.mark.unit
 
 
 def test_gross_price():

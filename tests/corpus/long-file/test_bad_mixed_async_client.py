@@ -9,6 +9,8 @@ import pytest
 import weather
 from weather.units import Celsius, Fahrenheit
 
+pytestmark = pytest.mark.unit
+
 LONDON = (51.5072, -0.1276)
 OSLO = (59.9139, 10.7522)
 

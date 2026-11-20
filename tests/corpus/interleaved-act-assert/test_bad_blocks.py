@@ -3,6 +3,10 @@ never run."""
 
 from unittest import mock
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_counter_under_patch(counter):
     with mock.patch("time.time", return_value=0):  # expect: DS302

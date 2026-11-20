@@ -5,6 +5,8 @@ pytest's. Analysed, never run.
 import pytest
 from playlist import Playlist
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.xfail(reason="shuffle repeats songs, #41", strict=True)
 def test_shuffle_never_repeats_a_song():

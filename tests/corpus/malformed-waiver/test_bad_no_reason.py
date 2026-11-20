@@ -1,6 +1,9 @@
 """Waivers that name a check but give no reason after `--`."""
 
+import pytest
 from numbers_parser import parse
+
+pytestmark = pytest.mark.unit
 
 
 def test_parses_numbers():  # drill: waive DS201  # expect: DS001

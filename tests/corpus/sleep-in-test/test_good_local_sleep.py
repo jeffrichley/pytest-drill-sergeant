@@ -3,7 +3,10 @@
 Analysed, never run.
 """
 
+import pytest
 from worker import Worker
+
+pytestmark = pytest.mark.unit
 
 
 def sleep(seconds):

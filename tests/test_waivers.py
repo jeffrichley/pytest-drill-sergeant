@@ -9,6 +9,8 @@ import pytest
 from pytest_drill_sergeant.config import resolve
 from pytest_drill_sergeant.engine import Config, inspect
 
+pytestmark = pytest.mark.unit
+
 # A test with no real assertion (DS101 on line 1), waived on its `def` line.
 WAIVED_ON_DEF = "def test_it():  # drill: waive DS101 -- smoke test\n    run()\n"
 

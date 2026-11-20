@@ -6,6 +6,8 @@ Analysed, never run.
 import pytest
 from frames import to_frame
 
+pytestmark = pytest.mark.unit
+
 
 def test_frame_from_numpy_array():
     numpy = pytest.importorskip("numpy")

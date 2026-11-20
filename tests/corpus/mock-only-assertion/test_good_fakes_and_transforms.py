@@ -4,7 +4,10 @@ fake, and a `patch.dict`. Analysed, never run."""
 import os
 from unittest import mock
 
+import pytest
 from shop import Clock, CustomerService, FakeClock, Repo, greeting, tick
+
+pytestmark = pytest.mark.unit
 
 
 def test_display_name_from_the_repo():

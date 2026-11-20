@@ -1,7 +1,10 @@
 """Tests that assert only what a mock was told to return, so they test the mock.
 Analysed, never run."""
 
+import pytest
 from shop import Clock, CustomerService, Repo, label
+
+pytestmark = pytest.mark.unit
 
 
 def test_get_customer(mocker):  # expect: DS301

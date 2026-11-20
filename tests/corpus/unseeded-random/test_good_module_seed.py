@@ -4,7 +4,10 @@
 
 import random
 
+import pytest
 from cart import Cart
+
+pytestmark = pytest.mark.unit
 
 try:
     import numpy as np

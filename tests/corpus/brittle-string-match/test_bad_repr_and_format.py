@@ -1,7 +1,10 @@
 """Rendered `repr`, `str` and `format` output compared with `==`. Analysed, never
 run."""
 
+import pytest
 from app import Money, Report, User
+
+pytestmark = pytest.mark.unit
 
 
 def test_user_repr():

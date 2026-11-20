@@ -1,5 +1,9 @@
 """Awaited acts interleaved with assertions. Analysed, never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 async def test_connection(conn):
     await conn.open()

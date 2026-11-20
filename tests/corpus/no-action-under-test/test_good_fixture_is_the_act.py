@@ -3,6 +3,8 @@ the value under test. Analysed, never run."""
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 def test_default_timeout(settings):
     assert settings.timeout == 30

@@ -3,6 +3,8 @@ Analysed, never run."""
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 def connect():
     return object()

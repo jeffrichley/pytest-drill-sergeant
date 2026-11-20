@@ -1,6 +1,9 @@
 """pytest-mock's fixture making spec-less mocks. Analysed, never run."""
 
+import pytest
 from shop import Mailer, Notifier, label, notify
+
+pytestmark = pytest.mark.unit
 
 
 def test_notify_with_mocker(mocker):

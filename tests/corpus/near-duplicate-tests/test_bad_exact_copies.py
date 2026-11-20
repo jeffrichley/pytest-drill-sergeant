@@ -1,7 +1,10 @@
 """Two tests alike in every name and literal too: a copy under a second name, and
 a pair of tests apart only in a negative number. Analysed, never run."""
 
+import pytest
 from shop import Cart
+
+pytestmark = pytest.mark.unit
 
 
 def test_empty_cart_totals_zero():  # expect: DS502

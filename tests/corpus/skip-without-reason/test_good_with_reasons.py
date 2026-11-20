@@ -9,6 +9,8 @@ import sys
 import pytest
 from billing import Invoice
 
+pytestmark = pytest.mark.unit
+
 WINDOWS_PATHS = "Windows paths use backslashes, see #88"
 
 

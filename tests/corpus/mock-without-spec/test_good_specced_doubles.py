@@ -3,7 +3,10 @@
 from unittest import mock
 from unittest.mock import MagicMock, create_autospec
 
+import pytest
 from shop import Mailer, Sender, notify, render
+
+pytestmark = pytest.mark.unit
 
 
 def test_spec_keyword():

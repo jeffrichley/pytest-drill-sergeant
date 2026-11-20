@@ -1,7 +1,10 @@
 """The classic: three tests alike in every name, apart only in their values (one
 long enough for the fix to cut it short). Analysed, never run."""
 
+import pytest
 from shop import Cart
+
+pytestmark = pytest.mark.unit
 
 
 def test_one_apple_costs_three():  # expect: DS502

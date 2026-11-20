@@ -1,7 +1,10 @@
 """Near-misses: long setup on fakes and on a fixture named like a mock, whose kind
 the file never shows. Analysed, never run."""
 
+import pytest
 from shop import Checkout, FakeGateway, FakeRepo
+
+pytestmark = pytest.mark.unit
 
 
 def test_checkout_with_fakes():

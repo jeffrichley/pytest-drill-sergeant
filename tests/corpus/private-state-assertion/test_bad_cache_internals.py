@@ -1,7 +1,10 @@
 """Assertions that reach into an object's private attributes. Seeded from the
 failure-modes catalog (#22). Analysed, never run."""
 
+import pytest
 from app import Cache, Queue
+
+pytestmark = pytest.mark.unit
 
 
 def test_cache_stores_the_key():

@@ -1,6 +1,9 @@
 """Near-misses: shapes DS201 leaves alone. Analysed, never run."""
 
+import pytest
 from shop import make_order, render
+
+pytestmark = pytest.mark.unit
 
 
 def test_membership_is_not_weak():

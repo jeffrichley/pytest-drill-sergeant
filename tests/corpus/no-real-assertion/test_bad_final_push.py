@@ -9,6 +9,8 @@ import pytest
 
 import pytest_drill_sergeant
 
+pytestmark = pytest.mark.unit
+
 
 def test_final_coverage_push():  # expect: DS101
     """Final test to push coverage to 50%."""

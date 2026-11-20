@@ -3,6 +3,10 @@ never run."""
 
 from unittest import mock
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_refresh_token(session):
     with mock.patch("time.time", return_value=0):  # expect: DS302

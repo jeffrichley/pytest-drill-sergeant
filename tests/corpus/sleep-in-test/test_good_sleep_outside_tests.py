@@ -8,6 +8,8 @@ import time
 import pytest
 from worker import Worker
 
+pytestmark = pytest.mark.unit
+
 
 def wait_for_worker(worker):
     while not worker.done:

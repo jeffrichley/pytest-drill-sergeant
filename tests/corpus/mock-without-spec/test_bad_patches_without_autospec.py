@@ -4,7 +4,10 @@ class. Analysed, never run."""
 from unittest import mock
 from unittest.mock import patch
 
+import pytest
 from shop import Mailer, Notifier, label, notify_all
+
+pytestmark = pytest.mark.unit
 
 
 def test_label_with_a_patched_clock():

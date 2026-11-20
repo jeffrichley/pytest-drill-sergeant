@@ -6,6 +6,8 @@ import logging
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 def test_withdraw(account):
     account.withdraw(5)

@@ -3,7 +3,10 @@ Analysed, never run."""
 
 import unittest
 
+import pytest
 from app import Account, Service
+
+pytestmark = pytest.mark.unit
 
 
 def test_mangled_balance():

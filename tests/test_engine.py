@@ -8,6 +8,8 @@ from pytest_drill_sergeant.config import ConfigError, resolve
 from pytest_drill_sergeant.engine import Config, analyze
 from pytest_drill_sergeant.findings import Level
 
+pytestmark = pytest.mark.unit
+
 
 def test_finding_carries_the_checks_default_level(assertion_free_test):
     [finding] = analyze([assertion_free_test], Config())
@@ -33,7 +35,7 @@ def test_check_warns_by_default(corpus_file, code):
 
 @pytest.mark.parametrize(("limit", "codes"), [(2, {"DS303"}), (3, set())])
 def test_max_mock_setup_sets_how_much_mock_setup_a_test_may_have(
-    tmp_path, limit, codes
+    tmp_path, unit_mark, limit, codes
 ):
     path = tmp_path / "test_setup.py"
     path.write_text(
@@ -43,7 +45,7 @@ def test_max_mock_setup_sets_how_much_mock_setup_a_test_may_have(
         "    repo = mock.create_autospec(Repo, instance=True)\n"
         "    repo.find.return_value = [1, 2]\n"
         "    repo.count.return_value = 2\n"
-        "    assert total(repo) == 3\n"
+        "    assert total(repo) == 3\n" + unit_mark
     )
 
     findings = analyze([path], Config(max_mock_setup=limit))
@@ -131,10 +133,12 @@ def test_bad_config_is_refused(raw):
 @pytest.mark.parametrize(
     "line", ["legacy/*: DS101", "legacy/**: DS1", "test_old.py: DS101, DS1xx"]
 )
-def test_per_file_ignore_skips_the_named_checks_in_matching_files(tmp_path, line):
+def test_per_file_ignore_skips_the_named_checks_in_matching_files(
+    tmp_path, unit_mark, line
+):
     legacy = tmp_path / "legacy" / "test_old.py"
     legacy.parent.mkdir()
-    legacy.write_text("def test_old():\n    run()\n")
+    legacy.write_text("def test_old():\n    run()\n" + unit_mark)
     config = resolve({"drill_sergeant_per_file_ignores": line}, root=tmp_path)
 
     assert analyze([legacy], config) == []
@@ -150,10 +154,12 @@ def test_per_file_ignore_leaves_other_files_checked(assertion_free_test, tmp_pat
     assert finding.code == "DS101"
 
 
-def test_per_file_ignore_globs_are_relative_to_the_config_root(tmp_path, monkeypatch):
+def test_per_file_ignore_globs_are_relative_to_the_config_root(
+    tmp_path, monkeypatch, unit_mark
+):
     legacy = tmp_path / "legacy" / "test_old.py"
     legacy.parent.mkdir()
-    legacy.write_text("def test_old():\n    run()\n")
+    legacy.write_text("def test_old():\n    run()\n" + unit_mark)
     monkeypatch.chdir(legacy.parent)
     config = resolve({"drill_sergeant_per_file_ignores": "legacy/*: DS101"}, tmp_path)
 
@@ -240,7 +246,7 @@ def test_copy_paste_setup_thresholds_come_from_the_config(config):
 
     findings = analyze([corpus / "test_good_below_the_thresholds.py"], config)
 
-    assert {(f.code, f.line) for f in findings} == {("DS501", 8)}
+    assert {(f.code, f.line) for f in findings} == {("DS501", 11)}
 
 
 def test_cross_file_findings_do_not_depend_on_the_order_files_are_given(
@@ -271,16 +277,65 @@ def test_configured_level_applies_to_cross_file_findings(pasted_across_files):
     [
         ({"max_test_lines": 3}, set()),
         ({"max_test_lines": 2}, {"DS105"}),
-        ({"max_file_lines": 3}, set()),
-        ({"max_file_lines": 2}, {"DS106"}),
+        ({"max_file_lines": 7}, set()),
+        ({"max_file_lines": 6}, {"DS106"}),
     ],
 )
-def test_thresholds_set_how_long_a_test_and_a_file_may_be(tmp_path, threshold, codes):
+def test_thresholds_set_how_long_a_test_and_a_file_may_be(
+    tmp_path, unit_mark, threshold, codes
+):
+    """The file is the test's three lines and the four of `unit_mark`."""
     path = tmp_path / "test_add.py"
     path.write_text(
         "def test_add(calc):\n    total = calc.add(1, 2)\n    assert total == 3\n"
+        + unit_mark
     )
 
     findings = analyze([path], Config(**threshold))
 
     assert {f.code for f in findings} == codes
+
+
+@pytest.mark.parametrize(
+    ("markers", "codes"), [(("e2e",), {"DS901"}), (("smoke",), set())]
+)
+def test_category_markers_come_from_the_config(write_test_file, markers, codes):
+    path = write_test_file(
+        "import pytest\n\n@pytest.mark.smoke\ndef test_total():\n"
+        "    assert total([1, 2]) == 3\n"
+    )
+
+    findings = analyze([path], Config(category_markers=markers))
+
+    assert {f.code for f in findings} == codes
+
+
+def test_no_configured_category_markers_flags_nothing(unmarked_test_at):
+    path = unmarked_test_at("test_total.py")
+
+    assert analyze([path], Config(category_markers=())) == []
+
+
+def test_category_marker_fix_names_the_nearest_category_directory(
+    tmp_path, unmarked_test_at
+):
+    path = unmarked_test_at("e2e/integration/test_total.py")
+
+    [finding] = analyze([path], Config(root=tmp_path))
+
+    assert finding.code == "DS901"
+    assert "`@pytest.mark.integration`" in finding.fix
+    assert "e2e" not in finding.fix
+
+
+def test_category_marker_fix_lists_every_marker_when_no_directory_below_the_root_names_one(
+    tmp_path, unmarked_test_at
+):
+    """The config root's own name is not a directory the file is in."""
+    path = unmarked_test_at("unit/checks/test_total.py")
+
+    [finding] = analyze([path], Config(root=tmp_path / "unit"))
+
+    assert all(
+        f"`@pytest.mark.{m}`" in finding.fix for m in ("unit", "integration", "e2e")
+    )

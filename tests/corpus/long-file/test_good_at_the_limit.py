@@ -4,6 +4,8 @@ Most of it is one long `parametrize` table. Analysed, never run."""
 import pytest
 from numerals import from_roman, to_roman
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.parametrize(
     ("number", "numeral"),
@@ -478,8 +480,6 @@ from numerals import from_roman, to_roman
         (468, "CDLXVIII"),
         (469, "CDLXIX"),
         (470, "CDLXX"),
-        (471, "CDLXXI"),
-        (472, "CDLXXII"),
     ],
 )
 def test_to_roman(number, numeral):

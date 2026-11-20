@@ -5,8 +5,11 @@ a frozen block that doesn't cover it. Analysed, never run.
 import datetime
 import datetime as dt
 
+import pytest
 from freezegun import freeze_time
 from reports import build_report
+
+pytestmark = pytest.mark.unit
 
 
 def test_report_is_dated_today():

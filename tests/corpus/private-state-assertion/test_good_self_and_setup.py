@@ -1,7 +1,10 @@
 """Near-misses: private names that are the test's own, or used in setup rather than
 asserted. Analysed, never run."""
 
+import pytest
 from app import Cache
+
+pytestmark = pytest.mark.unit
 
 
 class TestCache:

@@ -1,6 +1,10 @@
 """Swallowed exceptions with real assertions elsewhere in the test, so only the
 handler gives them away. Analysed, never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def load(path):
     raise FileNotFoundError(path)

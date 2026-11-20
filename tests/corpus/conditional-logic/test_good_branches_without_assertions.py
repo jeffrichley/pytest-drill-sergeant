@@ -6,6 +6,8 @@ import sys
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 def test_git_status(repo):
     if shutil.which("git") is None:

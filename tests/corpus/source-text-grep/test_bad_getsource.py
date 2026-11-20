@@ -4,7 +4,10 @@ import inspect
 import re
 from inspect import getsource
 
+import pytest
 from app import Client, jobs
+
+pytestmark = pytest.mark.unit
 
 
 def test_no_sleep_in_fetch():

@@ -6,6 +6,8 @@ from unittest import mock
 import pytest
 from shop import Checkout, Gateway, Repo
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def repo():

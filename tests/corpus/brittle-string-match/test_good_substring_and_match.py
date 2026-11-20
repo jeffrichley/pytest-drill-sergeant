@@ -6,6 +6,8 @@ import re
 import pytest
 from app import greet, validate
 
+pytestmark = pytest.mark.unit
+
 
 def test_invalid_email_mentions_the_at_sign():
     with pytest.raises(ValueError) as excinfo:

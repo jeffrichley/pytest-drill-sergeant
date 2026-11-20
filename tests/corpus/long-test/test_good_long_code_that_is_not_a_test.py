@@ -5,6 +5,8 @@ run."""
 import pytest
 from inventory import Warehouse
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def warehouse(tmp_path):

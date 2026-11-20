@@ -1,6 +1,9 @@
 """Waivers that give no check code, or nothing at all."""
 
+import pytest
 from calc import add, multiply, subtract
+
+pytestmark = pytest.mark.unit
 
 
 def test_adds():  # drill: waive -- just a smoke test  # expect: DS001

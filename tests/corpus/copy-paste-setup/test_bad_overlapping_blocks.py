@@ -2,7 +2,10 @@
 fourth test pastes too: one finding, for the first block, since a statement is
 reported in one block at most. Analysed, never run."""
 
+import pytest
 from hosts import FakeRepo, Issue, Provider
+
+pytestmark = pytest.mark.unit
 
 
 def test_provider_reads_the_issue_title():

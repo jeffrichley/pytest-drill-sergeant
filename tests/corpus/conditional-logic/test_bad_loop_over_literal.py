@@ -6,6 +6,8 @@ are: an assertion in a loop is real (DS101), and a handler that `continue`s with
 import pytest
 from quantities import parse
 
+pytestmark = pytest.mark.unit
+
 UNITS = ("k", "m", "b")
 CASES = [
     ("1k", 1_000),

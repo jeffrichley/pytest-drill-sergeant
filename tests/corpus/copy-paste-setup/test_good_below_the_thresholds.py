@@ -1,7 +1,10 @@
 """Near-misses under the default thresholds: a three-statement block in only two
 tests, and a two-statement block in three. Analysed, never run."""
 
+import pytest
 from queues import Broker, Queue
+
+pytestmark = pytest.mark.unit
 
 
 def test_publish_enqueues_the_message():

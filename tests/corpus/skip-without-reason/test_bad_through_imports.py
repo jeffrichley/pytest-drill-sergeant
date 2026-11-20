@@ -10,7 +10,7 @@ from pytest import mark as m
 from pytest import xfail
 from queueing import Queue
 
-pytestmark = [m.skipif(sys.platform == "darwin")]  # expect: DS401
+pytestmark = [m.skipif(sys.platform == "darwin"), m.unit]  # expect: DS401
 
 
 @pt.mark.xfail(sys.version_info < (3, 12))  # expect: DS401

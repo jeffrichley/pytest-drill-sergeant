@@ -4,6 +4,8 @@ one, with or without `match=`. Analysed, never run."""
 import pytest
 from pytest import raises
 
+pytestmark = pytest.mark.unit
+
 
 def parse(text):
     return int(text)

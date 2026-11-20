@@ -5,6 +5,8 @@ import asyncio
 import pytest
 from poller import Poller
 
+pytestmark = pytest.mark.unit
+
 DELAY = 0.2
 
 

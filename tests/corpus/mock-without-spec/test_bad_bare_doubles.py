@@ -6,7 +6,10 @@ from unittest import mock
 from unittest.mock import AsyncMock, MagicMock
 from unittest.mock import NonCallableMagicMock as Thing
 
+import pytest
 from shop import fetch, notify, render
+
+pytestmark = pytest.mark.unit
 
 
 def test_notify_counts_deliveries():

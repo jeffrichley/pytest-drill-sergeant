@@ -332,13 +332,22 @@ SKIP_CALL = "pytest.skip"
 XFAIL_CALL = "pytest.xfail"
 
 
+def mark_name(expr: ast.expr, names: Mapping[str, str]) -> str | None:
+    """What a decorator or `pytestmark` entry names in full, called or not, or `None`.
+
+    `m.unit()` is `pytest.mark.unit` after `from pytest import mark as m`; a mark no
+    import reaches is `None`.
+    """
+    return qualified(expr.func if isinstance(expr, ast.Call) else expr, names)
+
+
 def skip_mark(expr: ast.expr, names: Mapping[str, str]) -> str | None:
     """Which of pytest's skip marks a decorator or `pytestmark` entry is, or `None`.
 
     That is `pytest.mark.skip`, `pytest.mark.skipif` or `pytest.mark.xfail`, called
     or not, through whatever name the imports give it.
     """
-    mark = qualified(expr.func if isinstance(expr, ast.Call) else expr, names)
+    mark = mark_name(expr, names)
     return mark if mark in _SKIP_MARKS else None
 
 

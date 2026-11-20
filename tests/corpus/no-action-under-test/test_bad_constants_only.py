@@ -1,6 +1,10 @@
 """Tests that assert on values they wrote themselves and call nothing. Analysed,
 never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_discount_rate():  # expect: DS102
     rate = 0.1

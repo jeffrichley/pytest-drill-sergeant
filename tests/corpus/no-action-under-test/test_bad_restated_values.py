@@ -1,6 +1,10 @@
 """Tests that build the expected value and the "actual" value the same way, with
 nothing run in between. Analysed, never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 class TestUser:
     def test_default_name(self):  # expect: DS102

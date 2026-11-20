@@ -3,6 +3,8 @@ expressions, with every assertion outside them. Analysed, never run."""
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 def test_cart_total(cart):
     for sku in ["apple", "pear", "plum"]:

@@ -3,7 +3,10 @@ identity, not the code against itself. Analysed, never run."""
 
 from dataclasses import dataclass
 
+import pytest
 from shop import get_registry
+
+pytestmark = pytest.mark.unit
 
 
 @dataclass(frozen=True)

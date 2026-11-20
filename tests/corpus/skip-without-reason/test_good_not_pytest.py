@@ -6,6 +6,8 @@ Analysed, never run.
 import pytest
 from shipping import Parcel
 
+pytestmark = pytest.mark.unit
+
 
 def skip(parcel):
     return parcel.next_stop()

@@ -6,6 +6,8 @@ run."""
 import pytest
 from durations import Duration, format_duration, parse_duration
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.parametrize(
     ("text", "seconds"),

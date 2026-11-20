@@ -7,6 +7,8 @@ import shutil
 import pytest
 from archive import pack
 
+pytestmark = pytest.mark.unit
+
 
 def needs(tool):
     if shutil.which(tool) is None:

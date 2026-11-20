@@ -1,6 +1,10 @@
 """An agent's end-to-end test: every setup step, the act and every check inline, 52
 lines from `def` to its last line. Analysed, never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_checkout_flow(shop, payments, mailer):  # expect: DS105
     catalog = shop.catalog()

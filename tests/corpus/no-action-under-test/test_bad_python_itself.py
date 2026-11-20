@@ -3,6 +3,8 @@ test. Analysed, never run."""
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 
 def test_division_by_zero_raises():  # expect: DS102
     with pytest.raises(ZeroDivisionError, match="division"):

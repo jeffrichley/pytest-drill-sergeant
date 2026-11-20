@@ -1,6 +1,10 @@
 """Near-miss: a test exactly 50 lines long, `def` to last line, is at the threshold,
 not over it. Analysed, never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_report_summarises_a_quarter(reports):
     rows = [

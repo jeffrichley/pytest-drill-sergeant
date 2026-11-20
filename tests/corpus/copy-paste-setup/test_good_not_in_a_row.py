@@ -2,7 +2,10 @@
 sits between them each time, so no block of three runs unbroken. Analysed, never
 run."""
 
+import pytest
 from mail import Inbox, Message, Server
+
+pytestmark = pytest.mark.unit
 
 
 def test_inbox_receives_a_message():

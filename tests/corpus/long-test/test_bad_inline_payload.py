@@ -1,6 +1,10 @@
 """An async test in a class whose request payload is written out inline, pushing it
 past 50 lines. Analysed, never run."""
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 class TestImportApi:
     async def test_import_accepts_a_full_batch(self, client):  # expect: DS105

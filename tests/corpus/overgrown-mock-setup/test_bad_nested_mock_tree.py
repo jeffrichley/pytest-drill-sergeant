@@ -1,7 +1,10 @@
 """Configuring a tree of child mocks, through aliases and subscripts. Analysed,
 never run."""
 
+import pytest
 from shop import Client, sync
+
+pytestmark = pytest.mark.unit
 
 
 def test_sync_counts_pages(mocker):  # expect: DS303

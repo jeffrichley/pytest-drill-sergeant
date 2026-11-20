@@ -2,7 +2,10 @@
 finding, for parametrize, which takes the pasted setup with it; no copy-paste-setup
 finding. Analysed, never run."""
 
+import pytest
 from shop import Cart, Catalog, Order
+
+pytestmark = pytest.mark.unit
 
 
 def test_order_of_one_apple():  # expect: DS502

@@ -4,7 +4,10 @@ never run."""
 from unittest import mock
 from unittest.mock import patch
 
+import pytest
 from shop import Mailer, Notifier, notify_all
+
+pytestmark = pytest.mark.unit
 
 
 @mock.patch("shop.audit", autospec=True)

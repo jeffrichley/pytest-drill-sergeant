@@ -5,9 +5,12 @@ test_ultimate_coverage.py), with the assertions an agent would leave out.
 Analysed, never run.
 """
 
+import pytest
 import pytest_drill_sergeant.core.scoring_models
 
 import pytest_drill_sergeant
+
+pytestmark = pytest.mark.unit
 
 
 def test_tiny_coverage_boost():  # expect: DS101

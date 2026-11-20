@@ -4,6 +4,8 @@ import pytest
 from app import load, main, start_server
 from calc import add
 
+pytestmark = pytest.mark.unit
+
 
 def test_cli_smoke():  # drill: waive DS101 -- the exit code is checked by CI
     main(["--help"])

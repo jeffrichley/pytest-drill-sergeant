@@ -4,7 +4,10 @@ import time as t
 from time import sleep
 from time import sleep as pause
 
+import pytest
 from worker import Worker
+
+pytestmark = pytest.mark.unit
 
 
 def test_worker_finishes():

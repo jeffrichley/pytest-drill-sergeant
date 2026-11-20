@@ -2,7 +2,10 @@
 assertion, or a call compared to a value worked out by hand.
 Analysed, never run."""
 
+import pytest
 from shop import Counter, gross_price
+
+pytestmark = pytest.mark.unit
 
 
 def test_value_read_before_a_change():

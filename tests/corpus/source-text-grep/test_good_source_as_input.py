@@ -4,7 +4,10 @@ gets asserted. Analysed, never run."""
 import inspect
 from pathlib import Path
 
+import pytest
 from app import Client, format_code, lint
+
+pytestmark = pytest.mark.unit
 
 
 def test_sample_module_lints_clean():

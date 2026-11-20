@@ -6,17 +6,30 @@ from pathlib import Path
 import pytest
 
 from pytest_drill_sergeant.checks import CHECKS
+from pytest_drill_sergeant.checks.markers import MISSING_CATEGORY_MARKER
 from pytest_drill_sergeant.engine import Config, analyze
+from pytest_drill_sergeant.findings import Level
+
+pytestmark = pytest.mark.unit
 
 CORPUS = Path(__file__).parent / "corpus"
 
 
 def analyze_as_read_by(check, path):
     """The findings for a file, handed to the engine as the check reads it: as
-    production code or as a test file."""
+    production code or as a test file.
+
+    An example shows one failure mode, so only the category-marker check's own
+    examples are read with that check on: a category marker belongs to the project's
+    file, not to an example of another check."""
+    config = (
+        Config()
+        if check is MISSING_CATEGORY_MARKER
+        else Config(levels={MISSING_CATEGORY_MARKER.code: Level.OFF})
+    )
     if check.find_in_source:
-        return analyze([], Config(), sources=[path])
-    return analyze([path], Config())
+        return analyze([], config, sources=[path])
+    return analyze([path], config)
 
 
 def corpus_folder(check):

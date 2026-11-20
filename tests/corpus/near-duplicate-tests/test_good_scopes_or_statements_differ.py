@@ -1,7 +1,10 @@
 """Near-miss: tests alike but for their values in different classes, or at module
 level and in a class, and tests with one statement more. Analysed, never run."""
 
+import pytest
 from shop import Cart
+
+pytestmark = pytest.mark.unit
 
 
 def test_one_apple_costs_three():

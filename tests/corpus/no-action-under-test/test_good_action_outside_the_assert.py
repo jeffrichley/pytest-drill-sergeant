@@ -3,6 +3,10 @@ operator inside a `with`, not in the assertion. Analysed, never run."""
 
 from unittest import mock
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def register(registry, name):
     registry.append(name)

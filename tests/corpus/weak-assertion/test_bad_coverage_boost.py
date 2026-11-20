@@ -5,7 +5,11 @@ exist, lengths are positive, values are truthy, and nothing is pinned.
 Analysed, never run.
 """
 
+import pytest
+
 import pytest_drill_sergeant
+
+pytestmark = pytest.mark.unit
 
 
 class TestCoverageBoost:
