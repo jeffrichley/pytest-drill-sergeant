@@ -6,7 +6,7 @@ from app import config, registry
 pytestmark = pytest.mark.unit
 
 
-def test_registry_starts_empty():  # expect: DS102
+def test_registry_starts_empty():
     assert registry._registry == {}  # expect: DS602
 
 
