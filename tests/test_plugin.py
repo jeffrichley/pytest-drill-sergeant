@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 SECTION = "= drill sergeant ="
@@ -275,3 +277,53 @@ def test_reasonless_waiver_fails_the_run_and_waives_nothing(drill, pytester):
     out = result.stdout.str()
     assert "test_waived.py:1: DS001" in out
     assert "test_waived.py:1: DS101" in out
+
+
+DRILL_CACHE = Path(".pytest_cache") / "d" / "drill-sergeant"
+
+
+def test_second_run_reuses_the_cache_and_writes_nothing(
+    drill, pytester, lazy_test, snapshot
+):
+    drill()
+    before = snapshot(pytester.path / DRILL_CACHE)
+
+    result = drill()
+
+    assert before
+    assert snapshot(pytester.path / DRILL_CACHE) == before
+    assert "test_lazy.py:1: DS101" in result.stdout.str()
+
+
+def test_file_changed_since_the_last_run_is_analysed_again(drill, pytester, lazy_test):
+    drill()
+    lazy_test.write_text("def test_lazy():\n    assert sorted([2, 1]) == [1, 2]\n")
+
+    result = drill()
+
+    assert result.ret == pytest.ExitCode.OK
+    assert "DS101" not in result.stdout.str()
+
+
+def test_cache_off_runs_uncached(drill, pytester, lazy_test):
+    pytester.makeini("[pytest]\ndrill_sergeant_cache = false\n")
+
+    result = drill()
+
+    assert "test_lazy.py:1: DS101" in result.stdout.str()
+    assert not (pytester.path / DRILL_CACHE).exists()
+
+
+def test_without_pytests_cache_runs_uncached(drill, pytester, lazy_test):
+    result = drill("-p", "no:cacheprovider")
+
+    assert "test_lazy.py:1: DS101" in result.stdout.str()
+    assert not (pytester.path / ".pytest_cache").exists()
+
+
+def test_cache_follows_pytests_cache_dir(drill, pytester, lazy_test):
+    pytester.makeini("[pytest]\ncache_dir = elsewhere\n")
+
+    drill()
+
+    assert (pytester.path / "elsewhere" / "d" / "drill-sergeant").is_dir()

@@ -32,6 +32,10 @@ from typing import Any, TypeVar
 
 _T = TypeVar("_T")
 
+# The cache's directory name under pytest's cache directory, where pytest's
+# `cache.mkdir` puts it: `<cache_dir>/d/drill-sergeant`. The CLI finds it there too.
+CACHE_NAME = "drill-sergeant"
+
 # The file under the cache directory that holds every entry.
 _STORE = "results.json"
 
