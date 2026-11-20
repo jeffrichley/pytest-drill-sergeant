@@ -2,7 +2,7 @@
 or to code the check can't see. Analysed, never run."""
 
 import pytest
-from orders import in_stock, overdue
+from orders import confirmed, has_lines, in_stock, overdue
 from shop import validate
 from stocklib import lookup
 
@@ -34,4 +34,19 @@ def test_third_party_call():
 
 def test_method_on_code_the_check_cannot_see():
     ok = validate.is_valid({"lines": [1]})
+    assert ok
+
+
+async def test_async_predicate_awaited(order):
+    ok = await confirmed(order)
+    assert ok
+
+
+def test_predicate_annotated_bool_as_a_string(order):
+    ok = has_lines(order)
+    assert ok
+
+
+def test_builtin_that_answers_yes_or_no():
+    ok = any(n > 1 for n in [1, 2])
     assert ok

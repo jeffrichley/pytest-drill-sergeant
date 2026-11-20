@@ -99,11 +99,13 @@ class _Module:
         names: Its imports as `module_imports` gives them, for `is_real_assertion`.
         bindings: Each name its top level binds, to the statement or import that
             binds it last: a `def`, a `class`, a value or an `_Import`.
+        star: Whether its top level imports `*`, which may bind any name.
     """
 
     key: str
     names: dict[str, str]
     bindings: dict[str, "_Binding"]
+    star: bool = False
 
 
 @dataclass(frozen=True)
@@ -199,16 +201,18 @@ class CallKind(Enum):
 
 @dataclass(frozen=True)
 class Definition:
-    """What a call is, and the function it runs when the files show one.
+    """What a call is, and its definition when the files show one.
 
     Attributes:
         kind: Function, class or not known.
-        node: The function's `def` or lambda; `None` for a builtin or anything
-            not a function.
+        node: The function's `def` or lambda, or the `class`; `None` for a
+            builtin or a call not known.
+        builtin: The builtin's name, when the call is Python's own.
     """
 
     kind: CallKind
-    node: FunctionNode | ast.Lambda | None = None
+    node: FunctionNode | ast.Lambda | ast.ClassDef | None = None
+    builtin: str | None = None
 
 
 _UNKNOWN = Definition(CallKind.UNKNOWN)
@@ -300,17 +304,30 @@ def _body(node: FunctionNode | ast.Lambda) -> Iterator[ast.AST]:
         yield from ast.walk(statement)
 
 
-def _is_builtin(name: str, scope: _Scope) -> bool:
-    """Whether a name is Python's builtin: one nothing in the scope or module binds."""
+def _is_builtin(name: str, scope: _Scope, node: FunctionNode) -> bool:
+    """Whether a name is Python's builtin: one nothing in the function or module binds.
+
+    A module that imports `*` may bind any name, so no name is surely a builtin
+    there.
+    """
     return (
         hasattr(builtins, name)
+        and not scope.module.star
         and name not in scope.params
-        and name not in scope.values
-        and name not in scope.functions
         and name not in scope.imports
         and name not in scope.names
         and name not in scope.module.bindings
+        and not any(_binds(child, name) for child in _body(node))
     )
+
+
+def _binds(node: ast.AST, name: str) -> bool:
+    """Whether a node binds a name: a target, a `def`, a `class` or `except ... as`."""
+    if isinstance(node, ast.Name):
+        return isinstance(node.ctx, ast.Store) and node.id == name
+    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
+        return node.name == name
+    return isinstance(node, ast.ExceptHandler) and node.name == name
 
 
 def _final_name(expr: ast.expr) -> str | None:
@@ -451,7 +468,14 @@ class TestTree:
             parsed = None
         if parsed is not None:
             found = _Module(
-                key=key, names=module_imports(parsed), bindings=_bindings(parsed)
+                key=key,
+                names=module_imports(parsed),
+                bindings=_bindings(parsed),
+                star=any(
+                    isinstance(s, ast.ImportFrom)
+                    and any(a.name == "*" for a in s.names)
+                    for s in _top_level(parsed.body)
+                ),
             )
         self._modules[key] = found
         return found
@@ -931,11 +955,12 @@ class TestTree:
         if isinstance(target, _Callee):
             return Definition(CallKind.FUNCTION, target.function.node), keys
         if isinstance(target, _Class):
-            return Definition(CallKind.CLASS), keys
+            return Definition(CallKind.CLASS, target.node), keys
         func = call.func
-        if isinstance(func, ast.Name) and _is_builtin(func.id, scope):
+        if isinstance(func, ast.Name) and _is_builtin(func.id, scope, test.node):
             is_type = isinstance(getattr(builtins, func.id), type)
-            return Definition(CallKind.CLASS if is_type else CallKind.FUNCTION), keys
+            kind = CallKind.CLASS if is_type else CallKind.FUNCTION
+            return Definition(kind, builtin=func.id), keys
         return _UNKNOWN, keys
 
     def _test_scope(self, test: TestFunction, module: _Module) -> _Scope:

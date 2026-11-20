@@ -119,46 +119,70 @@ def _is_yes_or_no(node: ast.expr) -> bool:
     return False
 
 
-def _returns(node: FunctionNode) -> Iterator[ast.Return]:
-    """A function's own `return` statements, none of a function nested in it."""
+# Builtins that answer yes or no exactly about what they are given.
+_EXACT_BUILTINS = frozenset({"any", "all"})
+
+
+def _own_nodes(node: FunctionNode) -> Iterator[ast.AST]:
+    """A function's own nodes, none of a function or class nested in it."""
     stack: list[ast.AST] = list(node.body)
     while stack:
         child = stack.pop()
-        if isinstance(child, ast.Return):
-            yield child
+        yield child
         if not isinstance(child, FunctionNode | ast.Lambda | ast.ClassDef):
             stack.extend(ast.iter_child_nodes(child))
 
 
-def _answers_yes_or_no(node: FunctionNode | ast.Lambda) -> bool:
-    """Whether a function answers yes or no exactly, by its definition.
+def _is_bool(annotation: ast.expr | None) -> bool:
+    """Whether a return annotation is `bool`, written as a name or a string."""
+    if isinstance(annotation, ast.Constant):
+        return annotation.value == "bool"
+    return isinstance(annotation, ast.Name) and annotation.id == "bool"
 
-    It does when it is annotated `-> bool`, or when it returns, every time, a
-    comparison or a boolean.
+
+def _answers_yes_or_no(node: FunctionNode | ast.Lambda, *, awaited: bool) -> bool:
+    """Whether a call to a function answers yes or no exactly, by its definition.
+
+    It does when the function is annotated `-> bool`, or returns, every time, a
+    comparison or a boolean. A generator never does, nor an `async def` not
+    awaited: what the call gives is a generator or a coroutine, always truthy.
     """
     if isinstance(node, ast.Lambda):
         return _is_yes_or_no(node.body)
-    if isinstance(node.returns, ast.Name) and node.returns.id == "bool":
+    own = list(_own_nodes(node))
+    if any(isinstance(n, ast.Yield | ast.YieldFrom) for n in own):
+        return False
+    if isinstance(node, ast.AsyncFunctionDef) and not awaited:
+        return False
+    if _is_bool(node.returns):
         return True
-    returns = list(_returns(node))
+    returns = [n for n in own if isinstance(n, ast.Return)]
     return bool(returns) and all(
         r.value is not None and _is_yes_or_no(r.value) for r in returns
     )
 
 
 def _is_exact_answer(node: ast.expr, test: TestFunction, calls: Assertions) -> bool:
-    """Whether an expression is a call whose truthiness is not weak.
+    """Whether an expression is a call, awaited or not, whose truthiness is not weak.
 
     That is a call to a function that answers yes or no exactly
-    (`_answers_yes_or_no`), or to code whose definition the files don't show,
-    which may. A builtin's or a class's result is a value like any other.
+    (`_answers_yes_or_no`), to `any` or `all`, or to code whose definition the
+    files don't show, which may. Any other builtin's or a class's result is a
+    value like any other.
     """
+    awaited = isinstance(node, ast.Await)
+    if isinstance(node, ast.Await):
+        node = node.value
     if not isinstance(node, ast.Call):
         return False
     found = calls.definition(test, node)
     if found.kind is CallKind.UNKNOWN:
         return True
-    return found.node is not None and _answers_yes_or_no(found.node)
+    if found.builtin is not None:
+        return found.builtin in _EXACT_BUILTINS
+    return isinstance(found.node, FunctionNode | ast.Lambda) and _answers_yes_or_no(
+        found.node, awaited=awaited
+    )
 
 
 def _is_constant_none(node: ast.AST) -> bool:
@@ -168,17 +192,19 @@ def _is_constant_none(node: ast.AST) -> bool:
 def _calls_code_under_test(
     node: ast.expr, test: TestFunction, calls: Assertions
 ) -> bool:
-    """Whether an expression calls a function, and constructs nothing.
+    """Whether an expression calls a function, and constructs no class of the project.
 
-    What each call is comes from its definition (`Assertions.definition`): a
-    class's call is a constructor; a call the files don't show is not known.
+    What each call is comes from its definition (`Assertions.definition`). A
+    class's call is a constructor, whose `__eq__` is what `==` then tests; a
+    builtin type's (`list(f(x))`) is neither that nor the code under test, and
+    neither is a call the files don't show.
     """
-    kinds = {
-        calls.definition(test, n).kind
-        for n in ast.walk(node)
-        if isinstance(n, ast.Call)
-    }
-    return CallKind.FUNCTION in kinds and CallKind.CLASS not in kinds
+    found = [
+        calls.definition(test, n) for n in ast.walk(node) if isinstance(n, ast.Call)
+    ]
+    return any(d.kind is CallKind.FUNCTION for d in found) and not any(
+        d.kind is CallKind.CLASS and d.builtin is None for d in found
+    )
 
 
 def _names(
@@ -584,7 +610,9 @@ WEAK_ASSERTION = Check(
         "beside it. Membership (`x in y`) and `> 0` on anything but a length are left "
         "alone, and so is a name bound to a call that answers yes or no exactly "
         "(`ok = in_stock(...)`, then `assert ok`): one whose definition is annotated "
-        "`-> bool` or returns only comparisons and booleans. A call whose definition "
+        "`-> bool` or returns only comparisons and booleans, or `any` or `all`. An "
+        "`async def` called without `await`, or a generator, gives a value that is "
+        "always truthy, so it is weak whatever it is annotated. A call whose definition "
         "the files don't show, such as a third-party library's, may be one, so it is "
         "left alone too; a function's name never decides. Assert the exact value the "
         "code should produce."
