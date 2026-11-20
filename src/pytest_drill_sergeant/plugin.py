@@ -27,7 +27,7 @@ from pytest_drill_sergeant.config import (
     refusal,
     resolve,
 )
-from pytest_drill_sergeant.engine import Inspection, inspect
+from pytest_drill_sergeant.engine import Inspection, UnreadableFileError, inspect
 from pytest_drill_sergeant.findings import Level
 from pytest_drill_sergeant.paths import relative
 from pytest_drill_sergeant.production import production_code
@@ -131,15 +131,24 @@ class _Run:
         self.production = production_code(resolved, config.invocation_params.dir)
 
     def _analyze(self, paths: set[Path]) -> None:
+        """Analyse the files, once.
+
+        Raises:
+            pytest.UsageError: When a file can't be read, naming it in one line, as
+                the CLI does.
+        """
         if self.inspection is not None:
             return
         here = self.config.invocation_params.dir
-        self.inspection = inspect(
-            sorted(relative(p, here) for p in paths),
-            self.resolved,
-            self.production.files,
-            cache_dir=self._cache_dir(),
-        )
+        try:
+            self.inspection = inspect(
+                sorted(relative(p, here) for p in paths),
+                self.resolved,
+                self.production.files,
+                cache_dir=self._cache_dir(),
+            )
+        except UnreadableFileError as error:
+            raise pytest.UsageError(str(error)) from None
 
     def _cache_dir(self) -> Path | None:
         """The cache's directory under pytest's cache directory, if pytest has one.

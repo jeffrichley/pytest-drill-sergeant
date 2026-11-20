@@ -46,7 +46,30 @@ from pytest_drill_sergeant.waivers import (
     parse,
 )
 
-__all__ = ["Config", "Inspection", "analyze", "inspect"]
+__all__ = ["Config", "Inspection", "UnreadableFileError", "analyze", "inspect"]
+
+
+class UnreadableFileError(Exception):
+    """A file the run was given can't be read; the message names it, in one line.
+
+    The message is the one line both front ends print when they refuse.
+    """
+
+
+def _require_source(path: Path) -> bytes:
+    """A file's bytes.
+
+    Raises:
+        UnreadableFileError: When reading it fails in any way, gone since it was
+            found or otherwise.
+    """
+    try:
+        return path.read_bytes()
+    except OSError as error:
+        reason = error.strerror or type(error).__name__
+        raise UnreadableFileError(
+            f"drill-sergeant: cannot read {path}: {reason}"
+        ) from None
 
 
 def _is_fixture(node: FunctionNode, names: Mapping[str, str]) -> bool:
@@ -255,7 +278,7 @@ def _file_result(
     path: Path, config: Config, cache: Cache | None, shared: str
 ) -> _FileResult:
     """A file's per-file result: from the cache when its key still matches."""
-    source = path.read_bytes()
+    source = _require_source(path)
     if cache is None:
         return _analyze_file(path, source, config)
     key = f"{content_hash(source)}:{shared}"
@@ -316,7 +339,7 @@ def _analyze_source(
     The findings are those of the checks that read production code; a waiver
     silences a finding on its own line.
     """
-    source = path.read_bytes()
+    source = _require_source(path)
     file = SourceFile(path=path, module=ast.parse(source, filename=str(path)))
     findings = [
         _finding(check, path, hit, levels[check.code])
@@ -400,6 +423,9 @@ def inspect(
         ignore names for a file, and none run in `off` mode; in `warn` mode every
         finding is reported as `warn`. With inline waivers off, no finding is
         waived and malformed waivers (DS001) aren't reported.
+
+    Raises:
+        UnreadableFileError: When a test or production file can't be read.
     """
     findings: list[Finding] = []
     files: dict[Path, FileWaivers] = {}
