@@ -40,11 +40,6 @@ _DEPRECATED_CALL = frozenset({"pytest.deprecated_call"})
 _PYTEST_FAIL = frozenset({"pytest.fail"})
 
 
-def _has_real_assertion(test: TestFunction) -> bool:
-    """Whether anything in the test, nested code included, is a real assertion."""
-    return any(is_real_assertion(node, test.imports) for node in walk_test(test))
-
-
 def _last_call(test: TestFunction) -> ast.Call | None:
     """The call the test's last statement makes, if it makes one."""
     last = test.node.body[-1]
@@ -58,7 +53,7 @@ def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         # A test that skips on every run is left to DS402, and one that loses an
         # exception it catches to DS702 by `yields_to`: each only where it reports.
-        if _has_real_assertion(test):
+        if file.assertions.holds(test):
             continue
         left_to = (
             UNCONDITIONAL_SKIP.code
@@ -175,7 +170,7 @@ def _runs_anything(test: TestFunction) -> bool:
 def _find_no_action_under_test(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         if (
-            not _has_real_assertion(test)
+            not file.assertions.holds(test)
             or _takes_values_in(test)
             or _runs_anything(test)
         ):

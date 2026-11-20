@@ -15,10 +15,14 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from pytest_drill_sergeant.findings import MODULE, Level
 from pytest_drill_sergeant.tokens import Comment
 from pytest_drill_sergeant.waivers import Waiver
+
+if TYPE_CHECKING:
+    from pytest_drill_sergeant.checks.helpers import Assertions
 
 FunctionNode = ast.FunctionDef | ast.AsyncFunctionDef
 
@@ -100,6 +104,8 @@ class TestFile:
         comments: Its comments, in line order.
         code_lines: The lines holding code: every line but blank and comment-only
             ones.
+        assertions: Whether its tests hold real assertions, following their calls
+            into the test tree (`checks.helpers`).
     """
 
     __test__ = False  # Not a pytest test class, despite the name.
@@ -114,6 +120,7 @@ class TestFile:
     directories: tuple[str, ...]
     comments: tuple[Comment, ...]
     code_lines: frozenset[int]
+    assertions: "Assertions"
 
 
 @dataclass(frozen=True)

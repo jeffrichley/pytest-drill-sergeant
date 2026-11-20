@@ -34,10 +34,12 @@ from pytest_drill_sergeant.checks.base import (
     FunctionNode,
     Thresholds,
 )
+from pytest_drill_sergeant.checks.helpers import TestTree
 from pytest_drill_sergeant.checks.summary import summarize
 from pytest_drill_sergeant.config import Config
 from pytest_drill_sergeant.findings import MODULE, Finding, Level
 from pytest_drill_sergeant.paths import relative
+from pytest_drill_sergeant.production import source_directories
 from pytest_drill_sergeant.tokens import read
 from pytest_drill_sergeant.waivers import (
     FileWaivers,
@@ -216,11 +218,15 @@ class _FileResult:
             none is left out.
         summary: The file's per-file summary.
         waivers: The file's inline waivers, for applying after cross-file analysis.
+        follows: Each other module of the test tree its analysis followed a call
+            into, or looked for there, by absolute path, with the module's digest
+            then (`TestTree.digest`); the result stands only while each is the same.
     """
 
     hits: Mapping[str, tuple[Hit, ...]]
     summary: FileSummary
     waivers: FileWaivers
+    follows: tuple[tuple[str, str], ...] = ()
 
 
 # The config fields per-file analysis never reads: changing one of them keeps every
@@ -241,9 +247,16 @@ def _per_file_settings(config: Config) -> dict[str, object]:
     }
 
 
-def _analyze_file(path: Path, source: bytes, config: Config) -> _FileResult:
-    """Per-file analysis: every check's hits in a file, its summary and waivers."""
+def _analyze_file(
+    path: Path, source: bytes, config: Config, tree: TestTree
+) -> _FileResult:
+    """Per-file analysis: every check's hits in a file, its summary and waivers.
+
+    A test's calls are followed into the test tree's modules, which the result
+    names with their digests.
+    """
     module = ast.parse(source, filename=str(path))
+    assertions = tree.assertions(path, module)
     tests = tuple(_tests_in(module.body, module_imports(module)))
     tokens = read(source)
     waivers = parse(tokens.comments) if config.inline_waivers else ()
@@ -258,9 +271,11 @@ def _analyze_file(path: Path, source: bytes, config: Config) -> _FileResult:
         directories=_directories(relative(path, config.root)),
         comments=tokens.comments,
         code_lines=tokens.code_lines,
+        assertions=assertions,
     )
+    hits = {c.code: hits for c in CHECKS if (hits := tuple(c.find(file)))}
     return _FileResult(
-        hits={c.code: hits for c in CHECKS if (hits := tuple(c.find(file)))},
+        hits=hits,
         summary=summarize(file),
         waivers=FileWaivers(
             waivers=waivers,
@@ -272,20 +287,25 @@ def _analyze_file(path: Path, source: bytes, config: Config) -> _FileResult:
                 for t in tests
             },
         ),
+        follows=tuple(assertions.followed.items()),
     )
 
 
 def _file_result(
-    path: Path, config: Config, cache: Cache | None, shared: str
+    path: Path, config: Config, cache: Cache | None, shared: str, tree: TestTree
 ) -> _FileResult:
-    """A file's per-file result: from the cache when its key still matches."""
+    """A file's per-file result: from the cache when its key still matches.
+
+    A cached result stands only while every module it followed has the digest it
+    had then.
+    """
     source = _require_source(path)
     if cache is None:
-        return _analyze_file(path, source, config)
+        return _analyze_file(path, source, config, tree)
     key = f"{content_hash(source)}:{shared}"
     result = cache.get(path, key, _FileResult)
-    if result is None:
-        result = _analyze_file(path, source, config)
+    if result is None or any(tree.digest(m) != d for m, d in result.follows):
+        result = _analyze_file(path, source, config, tree)
         cache.put(path, key, result)
     return result
 
@@ -443,8 +463,9 @@ def inspect(
         ordered = sorted(paths, key=lambda p: p.as_posix())
         production = list(sources)
         levels = _levels_by_file([*ordered, *production], config)
+        tree = TestTree(ordered, [*production, *source_directories(config)])
         for path in ordered:
-            result = _file_result(path, config, cache, shared)
+            result = _file_result(path, config, cache, shared, tree)
             findings.extend(_file_findings(path, result, levels[path]))
             files[path] = result.waivers
             summaries.append((path, result.summary))
