@@ -25,10 +25,14 @@ these rules started.
 ## Code
 
 - **A check knows a thing; it never guesses from a name.** A check decides what a
-  variable, parameter or call is only from what the file shows: its imports, an
-  assignment traced to its source, pytest's built-in fixtures taken as parameters, or
-  its position (a method's first parameter). A name (`mock_db`, `log`, `self`,
-  `expected`, a method called `close`) is never evidence. A pattern that is sometimes
+  variable, parameter or call is only from what the file shows: its imports or
+  Python's builtins resolving it to a known API, an assignment traced to its source,
+  pytest's built-in fixtures taken as parameters, its position (a method's first
+  parameter), or a name whose meaning the language itself defines (underscore privacy
+  per PEP 8, dunder protocols, exact documented protocol names such as `_asdict`).
+  Inferring what a user-defined function, class, attribute or variable is from how it
+  is spelled is guessing: a name (`mock_db`, `log`, `self`, `expected`, a method called
+  `close`, an `is_` prefix, CapWords) is never evidence. A pattern that is sometimes
   legitimate defaults to `warn` instead of gaining an exception list.
 - **A check's kind is argued, not assumed.** A new check, or one whose kind changes,
   says in its PR why it is that kind. Defect means a test it flags can't catch the bug
