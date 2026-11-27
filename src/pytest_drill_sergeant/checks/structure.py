@@ -147,7 +147,8 @@ NO_REAL_ASSERTION = Check(
         "that skips on every run, by a `pytest.mark.skip` (or `skipif()`, or "
         "`skipif` on a truthy constant) on it, its class or the module's "
         "`pytestmark`, or a `pytest.skip()` in its own body or the module's, is "
-        "left to DS402 unconditional-skip; one with an `except` that loses the error, "
+        "left to DS402 unconditional-skip, an opt-out of an inherited test too; one "
+        "with an `except` that loses the error, "
         "to DS702 swallowed-exception, while DS702 reports in that file."
     ),
     bad_example=(

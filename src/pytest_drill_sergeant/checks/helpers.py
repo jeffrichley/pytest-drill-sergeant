@@ -57,6 +57,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
     bound_names,
     imports_seen_by,
     instance_param,
+    is_collected_function,
     is_real_assertion,
     module_imports,
     qualified,
@@ -963,6 +964,46 @@ class TestTree:
             return Definition(kind, builtin=func.id), keys
         return _UNKNOWN, keys
 
+    def overrides_inherited_test(
+        self, test: TestFunction, module: _Module
+    ) -> tuple[bool, set[str]]:
+        """Whether a test method overrides a test a base class of its class defines.
+
+        Its class's bases are read through the module's imports into the test tree,
+        at any depth; a base the files don't show (third-party, the standard
+        library, a module not found) defines nothing here. A base defines the test
+        when its body holds a `def` of the same name that pytest collects.
+
+        Returns:
+            The answer, and every module it relied on.
+        """
+        if not test.classes:
+            return False, set()
+        keys: set[str] = set()
+        self._deps.append(keys)
+        try:
+            found = self._base_defines_test(
+                _Class(test.classes[-1], module), test.node.name, set()
+            )
+        finally:
+            self._deps.pop()
+        return found, keys
+
+    def _base_defines_test(self, cls: _Class, name: str, seen: set[_Class]) -> bool:
+        scope = self._module_scope(cls.module)
+        for base_expr in cls.node.bases:
+            base = self._target(base_expr, scope, frozenset())
+            if not isinstance(base, _Class) or base in seen:
+                continue
+            seen.add(base)
+            if any(
+                is_collected_function(statement, base.module.names)
+                and statement.name == name
+                for statement in base.node.body
+            ) or self._base_defines_test(base, name, seen):
+                return True
+        return False
+
     def _test_scope(self, test: TestFunction, module: _Module) -> _Scope:
         cls = _Class(test.classes[-1], module) if test.classes else None
         scope = self._scope(test.node, module, cls, cls, dict(test.imports))
@@ -1013,6 +1054,16 @@ class Assertions:
         builtin; never from its name.
         """
         found, keys = self._tree.definition(test, self._module, call)
+        self._followed |= keys
+        return found
+
+    def overrides_inherited_test(self, test: TestFunction) -> bool:
+        """Whether a test method overrides a test a base class of its class defines.
+
+        Read from the bases' definitions in the test tree; a base it can't see
+        defines nothing. Never from a name.
+        """
+        found, keys = self._tree.overrides_inherited_test(test, self._module)
         self._followed |= keys
         return found
 

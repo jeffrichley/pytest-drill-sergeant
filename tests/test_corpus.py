@@ -17,7 +17,6 @@ from pathlib import Path
 import pytest
 
 from pytest_drill_sergeant.checks import CHECKS
-from pytest_drill_sergeant.checks.cheating import UNCONDITIONAL_SKIP
 from pytest_drill_sergeant.checks.structure import AAA_COMMENTS, NO_REAL_ASSERTION
 from pytest_drill_sergeant.engine import Config, analyze
 from pytest_drill_sergeant.findings import Level
@@ -77,12 +76,10 @@ def test_corpus_file_yields_exactly_its_expected_findings(path):
 
 
 # The checks DS101 leaves a test to where they report: DS702 (`yields_to`) and
-# DS402 (a hit's `left_to`). Both are off by default; the whole-corpus run turns them
-# on so each of those tests stays with the check its marker names.
-LEFT_TO_BY_DS101 = {
-    NO_REAL_ASSERTION.yields_to: Level.WARN,
-    UNCONDITIONAL_SKIP.code: Level.WARN,
-}
+# DS402 (a hit's `left_to`). DS402 is on by default; DS702 is off, and the
+# whole-corpus run turns it on so each of those tests stays with the check its
+# marker names.
+LEFT_TO_BY_DS101 = {NO_REAL_ASSERTION.yields_to: Level.WARN}
 
 
 def test_whole_corpus_as_one_run_yields_exactly_the_expected_findings():

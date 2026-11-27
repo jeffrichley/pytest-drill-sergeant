@@ -73,12 +73,12 @@ def test_no_real_assertion_yields_to_a_swallowed_exception_only_while_it_is_repo
         ),
         (
             "@pytest.mark.skip\ndef test_sync():\n    sync()\n",
-            ["DS101=fail", "DS401=off"],
+            ["DS101=fail", "DS401=off", "DS402=off"],
             {("DS101", 4)},
         ),
         (
             "pytestmark = pytest.mark.skip\n\ndef test_sync():\n    sync()\n",
-            ["DS101=fail", "DS401=off"],
+            ["DS101=fail", "DS401=off", "DS402=off"],
             {("DS101", 5)},
         ),
         (
@@ -88,7 +88,7 @@ def test_no_real_assertion_yields_to_a_swallowed_exception_only_while_it_is_repo
         ),
         (
             "@pytest.mark.skip\ndef test_sync():\n    assert sync() == 1\n",
-            ["DS401=fail"],
+            ["DS401=fail", "DS402=off"],
             {("DS401", 3)},
         ),
         (
@@ -98,7 +98,7 @@ def test_no_real_assertion_yields_to_a_swallowed_exception_only_while_it_is_repo
         ),
         (
             "def test_sync():\n    pytest.skip()\n    assert sync() == 1\n",
-            ["DS401=fail"],
+            ["DS401=fail", "DS402=off"],
             {("DS401", 4)},
         ),
         (
@@ -108,7 +108,7 @@ def test_no_real_assertion_yields_to_a_swallowed_exception_only_while_it_is_repo
         ),
         (
             "@pytest.mark.skipif()\ndef test_sync():\n    assert sync() == 1\n",
-            ["DS401=fail"],
+            ["DS401=fail", "DS402=off"],
             {("DS401", 3)},
         ),
         (

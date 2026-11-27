@@ -22,16 +22,14 @@ from pytest_drill_sergeant.checks import (
     TestFunction,
 )
 from pytest_drill_sergeant.checks.ast_tools import (
-    FIXTURE_DECORATORS,
     TEST_PATH,
     imports_seen_by,
     inside,
+    is_collected_function,
     module_imports,
-    qualified,
 )
 from pytest_drill_sergeant.checks.base import (
     FileSummary,
-    FunctionNode,
     Thresholds,
 )
 from pytest_drill_sergeant.checks.helpers import TestTree
@@ -74,18 +72,6 @@ def _require_source(path: Path) -> bytes:
         ) from None
 
 
-def _is_fixture(node: FunctionNode, names: Mapping[str, str]) -> bool:
-    """Whether a function is a pytest fixture, which pytest never collects as a test.
-
-    Its decorator is `pytest.fixture` (or `pytest_asyncio.fixture`), called or not,
-    through whatever name the imports give it.
-    """
-    return any(
-        qualified(d.func if isinstance(d, ast.Call) else d, names) in FIXTURE_DECORATORS
-        for d in node.decorator_list
-    )
-
-
 def _is_collected_class(node: ast.ClassDef) -> bool:
     """Whether pytest collects a class.
 
@@ -122,11 +108,7 @@ def _tests_in(
     classes pytest collects, nested ones included.
     """
     for node in body:
-        if (
-            isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
-            and node.name.startswith("test")
-            and not _is_fixture(node, names)
-        ):
+        if is_collected_function(node, names):
             yield TestFunction(
                 name=inside(where, node.name, TEST_PATH),
                 node=node,
