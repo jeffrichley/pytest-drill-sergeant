@@ -996,28 +996,271 @@ def _is_a_hand_written_assert(statement: ast.stmt, test: TestFunction) -> bool:
     )
 
 
-def _asserting_conditionals(
-    body: list[ast.stmt], test: TestFunction
-) -> Iterator[ast.stmt]:
-    """The outermost branches and loops in a body that hold a real assertion.
+_SCOPE = ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef | ast.Lambda
+_COMPREHENSION = ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp
+# What ends a path through a block before the statements after it run.
+_LEAVES = ast.Return | ast.Raise | ast.Break | ast.Continue
 
-    Nested code (a helper `def` in the test) is searched too, as part of the test.
+
+def _ends_in_return_or_raise(body: list[ast.stmt]) -> bool:
+    return bool(body) and isinstance(body[-1], ast.Return | ast.Raise)
+
+
+def _is_wildcard(case: ast.match_case) -> bool:
+    """Whether a `match` case takes every value: `case _:` or a bare capture."""
+    pattern = case.pattern
+    return (
+        case.guard is None
+        and isinstance(pattern, ast.MatchAs)
+        and pattern.pattern is None
+    )
+
+
+def _if_chain(statement: ast.If) -> tuple[list[list[ast.stmt]], list[ast.stmt]]:
+    """An `if`'s branch bodies, its `elif`s' in order, and its final `else` body."""
+    branches = [statement.body]
+    while len(statement.orelse) == 1 and isinstance(statement.orelse[0], ast.If):
+        statement = statement.orelse[0]
+        branches.append(statement.body)
+    return branches, statement.orelse
+
+
+def _every_branch_asserts(
+    statement: ast.If | ast.Match,
+    rest: list[ast.stmt],
+    file: TestFile,
+    test: TestFunction,
+) -> bool:
+    """Whether every path through an `if` or `match` reaches a real assertion.
+
+    An `if`'s paths are its body and its whole `elif`/`else` chain. A missing
+    `else` is a path with no assertion, unless a branch ends in `return` or
+    `raise`: then the statements after the `if` in the same block (`rest`) are
+    that path. A `match` needs a wildcard case, and every case to assert.
     """
-    for statement in body:
+    if isinstance(statement, ast.Match):
+        return any(_is_wildcard(case) for case in statement.cases) and all(
+            _asserts_on_every_path(case.body, file, test) for case in statement.cases
+        )
+    branches, final = _if_chain(statement)
+    if not final:
+        if not any(_ends_in_return_or_raise(branch) for branch in branches):
+            return False
+        final = rest
+    return all(
+        _asserts_on_every_path(branch, file, test) for branch in [*branches, final]
+    )
+
+
+def _asserts_on_every_path(
+    statements: list[ast.stmt], file: TestFile, test: TestFunction
+) -> bool:
+    """Whether a block reaches a real assertion on every path through it.
+
+    A real assertion is what DS101 counts (`Assertions.holds`), calls into helpers
+    that assert included. A `return`, `raise`, `break` or `continue` reached before
+    any assertion ends the path unchecked; a nested `def` or `class` only defines.
+    """
+    for index, statement in enumerate(statements):
+        if isinstance(statement, _SCOPE):
+            continue
+        if _statement_asserts(statement, statements[index + 1 :], file, test):
+            return True
+        if isinstance(statement, _LEAVES):
+            return False
+    return False
+
+
+def _statement_asserts(
+    statement: ast.stmt, rest: list[ast.stmt], file: TestFile, test: TestFunction
+) -> bool:
+    """Whether one statement reaches a real assertion on every path through it.
+
+    `rest` is the statements after it in its block. A loop counts only when it
+    surely runs: a deliberate repeat, or a literal written in place with a value
+    in it.
+    """
+    if isinstance(statement, ast.If | ast.Match):
+        return _is_a_hand_written_assert(statement, test) or _every_branch_asserts(
+            statement, rest, file, test
+        )
+    if isinstance(statement, _LOOP):
+        return (
+            _repeats_on_purpose(statement, file, test) or _runs_at_least_once(statement)
+        ) and _asserts_on_every_path(statement.body, file, test)
+    if isinstance(statement, ast.With | ast.AsyncWith):
+        items = [node for item in statement.items for node in ast.walk(item)]
+        return file.assertions.holds(test, items) or _asserts_on_every_path(
+            statement.body, file, test
+        )
+    if isinstance(statement, ast.Try | ast.TryStar):
+        return _asserts_on_every_path(statement.finalbody, file, test) or (
+            _asserts_on_every_path(statement.body, file, test)
+            and all(
+                _asserts_on_every_path(handler.body, file, test)
+                for handler in statement.handlers
+            )
+        )
+    return file.assertions.holds(test, ast.walk(statement))
+
+
+def _target_names(loop: ast.For | ast.AsyncFor) -> set[str]:
+    return {node.id for node in ast.walk(loop.target) if isinstance(node, ast.Name)}
+
+
+def _reads_its_target(loop: ast.For | ast.AsyncFor) -> bool:
+    """Whether a loop's body reads any name its `for` binds."""
+    names = _target_names(loop)
+    return any(
+        isinstance(node, ast.Name)
+        and isinstance(node.ctx, ast.Load)
+        and node.id in names
+        for statement in [*loop.body, *loop.orelse]
+        for node in ast.walk(statement)
+    )
+
+
+def _own_scope(node: ast.AST) -> Iterator[ast.AST]:
+    """A node and every node under it in its own scope.
+
+    A nested `def`, `class`, lambda or comprehension is a scope of its own.
+    """
+    yield node
+    for child in ast.iter_child_nodes(node):
+        if not isinstance(child, _SCOPE | _COMPREHENSION):
+            yield from _own_scope(child)
+
+
+class _OnePass:
+    """One pass of a loop's body, read in the order it runs.
+
+    It finds a name the pass reads before assigning it.
+    """
+
+    def __init__(self, stored: set[str]) -> None:
+        """A pass of a body that assigns the names in `stored`."""
+        self._stored = stored
+        self._assigned: set[str] = set()
+
+    def reads_early(self, node: ast.AST) -> bool:
+        """Whether a node reads a name of `stored` before this pass assigns it."""
+        if isinstance(node, ast.Name):
+            if isinstance(node.ctx, ast.Load):
+                return node.id in self._stored and node.id not in self._assigned
+            self._assigned.add(node.id)
+            return False
+        if isinstance(node, _SCOPE | _COMPREHENSION):
+            return False
+        return any(self.reads_early(child) for child in self._in_order(node))
+
+    def _in_order(self, node: ast.AST) -> list[ast.AST]:
+        """A node's children, in the order they run: a value before its target."""
+        if isinstance(node, ast.AugAssign):
+            target = node.target
+            read = (
+                ast.Name(target.id, ast.Load())
+                if isinstance(target, ast.Name)
+                else target
+            )
+            return [read, node.value, target]
+        if isinstance(node, ast.Assign):
+            return [node.value, *node.targets]
+        if isinstance(node, ast.AnnAssign | ast.NamedExpr):
+            return [n for n in (node.value, node.target) if n is not None]
+        if isinstance(node, ast.For | ast.AsyncFor):
+            return [node.iter, node.target, *node.body, *node.orelse]
+        return list(ast.iter_child_nodes(node))
+
+
+def _carries_state(loop: ast.For | ast.AsyncFor) -> bool:
+    """Whether a pass of a loop reads a name an earlier pass assigned.
+
+    That is a name the body assigns and also reads before assigning it in the
+    same pass (`start += n`). The loop's own target is set fresh each pass.
+    """
+    stored = {
+        node.id
+        for statement in loop.body
+        for node in _own_scope(statement)
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store)
+    } - _target_names(loop)
+    one_pass = _OnePass(stored)
+    return any(one_pass.reads_early(statement) for statement in loop.body)
+
+
+def _repeats_on_purpose(loop: ast.stmt, file: TestFile, test: TestFunction) -> bool:
+    """Whether a loop repeats the same pass a fixed number of times on purpose.
+
+    That is `for <target> in range(<positive int literal>)`, Python's own `range`
+    by the file's bindings, whose body never reads its target and carries no state
+    from one pass to the next.
+    """
+    if not isinstance(loop, ast.For):
+        return False
+    count = loop.iter
+    return (
+        isinstance(count, ast.Call)
+        and not count.keywords
+        and len(count.args) == 1
+        and isinstance(count.args[0], ast.Constant)
+        and type(count.args[0].value) is int
+        and count.args[0].value > 0
+        and file.assertions.definition(test, count).builtin == "range"
+        and not _reads_its_target(loop)
+        and not _carries_state(loop)
+    )
+
+
+def _leaves_a_path_unchecked(
+    statement: ast.stmt, rest: list[ast.stmt], file: TestFile, test: TestFunction
+) -> bool:
+    """Whether a branch or loop with an assertion in it lets a path pass unchecked."""
+    if isinstance(statement, ast.If | ast.Match):
+        return not _every_branch_asserts(statement, rest, file, test)
+    return not _repeats_on_purpose(statement, file, test)
+
+
+def _blocks(statement: ast.stmt) -> Iterator[list[ast.stmt]]:
+    """The blocks of statements directly inside a statement.
+
+    An `if`'s `elif`s are its own blocks, not an `if` nested in its `else`.
+    """
+    if isinstance(statement, ast.If):
+        branches, final = _if_chain(statement)
+        yield from branches
+        yield final
+        return
+    for field in ("body", "orelse", "finalbody"):
+        block = getattr(statement, field, None)
+        if isinstance(block, list):
+            yield block
+    for child in ast.iter_child_nodes(statement):
+        if isinstance(child, ast.ExceptHandler | ast.match_case):
+            yield child.body
+
+
+def _asserting_conditionals(
+    body: list[ast.stmt], file: TestFile, test: TestFunction
+) -> Iterator[ast.stmt]:
+    """The outermost branches and loops in a body that let a path pass unchecked.
+
+    That is one holding a real assertion that some path skips. One that leaves no
+    path unchecked is searched inside instead. Nested code (a
+    helper `def` in the test) is searched too, as part of the test.
+    """
+    for index, statement in enumerate(body):
         if (
             isinstance(statement, _CONDITIONAL)
             and not _is_a_hand_written_assert(statement, test)
             and any(
                 is_real_assertion(node, test.imports) for node in ast.walk(statement)
             )
+            and _leaves_a_path_unchecked(statement, body[index + 1 :], file, test)
         ):
             yield statement
             continue
-        for child in ast.iter_child_nodes(statement):
-            if isinstance(child, ast.stmt):
-                yield from _asserting_conditionals([child], test)
-            elif isinstance(child, ast.ExceptHandler | ast.match_case):
-                yield from _asserting_conditionals(child.body, test)
+        for block in _blocks(statement):
+            yield from _asserting_conditionals(block, file, test)
 
 
 def _module_literals(module: ast.Module) -> dict[str, ast.expr]:
@@ -1052,18 +1295,30 @@ def _binds_in_test(name: str, test: TestFunction) -> bool:
     )
 
 
+def _is_literal_value(node: ast.expr) -> bool:
+    """Whether `ast.literal_eval` reads a node: a value written out in full."""
+    try:
+        ast.literal_eval(node)
+    except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+        return False
+    return True
+
+
 def _parametrize_values(
     loop: ast.For | ast.AsyncFor, file: TestFile, test: TestFunction
 ) -> tuple[str, str] | None:
     """The values a loop runs over, when the file writes them out.
 
-    That is a literal in place, or a top-level name bound once to one. Returned as
-    `parametrize` would take them, with where they are when they are too long to
-    quote (`[...]`, the values from line 12). A set becomes a list, which keeps its
-    order.
+    That is a literal in place whose every item is a literal too
+    (`ast.literal_eval` reads it, so no local name is in it), or a top-level name
+    bound once to a literal. Returned as `parametrize` would take them, with where
+    they are when they are too long to quote (`[...]`, the values from line 12). A
+    set becomes a list, which keeps its order.
     """
     values = loop.iter
     if isinstance(values, _LITERAL_COLLECTION):
+        if not all(_is_literal_value(item) for item in values.elts):
+            return None
         text = ast.unparse(ast.List(elts=values.elts, ctx=ast.Load()))
         if len(text) <= _QUOTE_LIMIT:
             return text, ""
@@ -1115,7 +1370,12 @@ def _conditional_fix(
             f"asserts inside a `{kind}` loop on line {statement.lineno}: if the loop "
             "runs zero times, nothing is checked and the test still passes."
         )
-    if isinstance(statement, ast.For | ast.AsyncFor):
+    may_be_empty = not _runs_at_least_once(statement)
+    if (
+        isinstance(statement, ast.For | ast.AsyncFor)
+        and _reads_its_target(statement)
+        and not _carries_state(statement)
+    ):
         values = _parametrize_values(statement, file, test)
         if values is not None:
             names = ast.unparse(statement.target)
@@ -1132,18 +1392,18 @@ def _conditional_fix(
             target = ast.unparse(statement.target)
             return found, (
                 f"assert once on everything `{source}` gives, as a whole (`assert "
-                f"[... {kind} {target} in {source}] == [...]`), so an empty result "
-                "fails the test; or `parametrize` over known inputs."
+                f"[... {kind} {target} in {source}] == [...]`)"
+                + (", so an empty result fails the test." if may_be_empty else ".")
             )
     return found, (
-        "assert once, after the loop, on the whole outcome, so a loop that runs "
-        "zero times fails the test; or `parametrize` over known inputs."
+        "assert once, after the loop, on the whole outcome"
+        + (", so a loop that runs zero times fails the test." if may_be_empty else ".")
     )
 
 
 def _find_conditional_logic(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        for statement in _asserting_conditionals(test.node.body, test):
+        for statement in _asserting_conditionals(test.node.body, file, test):
             found, fix = _conditional_fix(statement, file, test)
             yield Hit.on(test, statement.lineno, found=found, fix=fix)
 
@@ -1152,7 +1412,7 @@ CONDITIONAL_LOGIC = Check(
     code="DS107",
     name="conditional-logic",
     kind=Kind.SMELL,
-    default_level=Level.OFF,
+    default_level=Level.WARN,
     voice=(
         "IF? There is no IF in a test, recruit! You know the outcome or you don't!",
         "A test that takes whichever path is open passes on every path, maggot!",
@@ -1165,22 +1425,31 @@ CONDITIONAL_LOGIC = Check(
     ),
     explain=(
         "Flags an `if`, `match`, `for` or `while` in a test with a real assertion "
-        "inside it, once for the outermost one. An `if` with no assertion inside it, "
-        "such as one that calls `pytest.skip`, a loop that only builds data, and a "
-        "conditional expression or comprehension are left alone, and so is a `try`, "
-        "which swallowed-exception reads. Branching: set up the case so the outcome "
-        "is known, assert it unconditionally, and write one test per path. A loop "
-        "over values the file writes out (a list, tuple or set literal, or a "
-        "top-level name bound to one) gets a `parametrize` suggestion naming them. "
-        "A loop over a literal written in place with a value in it can't run zero "
-        "times, so its finding says what it costs instead: the first value to fail "
-        "stops the test and hides the rest. "
-        "Any other loop: assert on the whole collection at once, which fails when "
-        "it's empty. Off by default until it is proven; turn it on with "
-        "`drill_sergeant_levels` (`DS107=warn`). It warns rather than fails: "
-        "asserting on each item "
-        "of a collection the code returns is sometimes the clearest test, and a "
-        "waiver records that it is."
+        "inside it that lets a path pass unchecked, once for the outermost one. An "
+        "`if` with no assertion inside it, such as one that calls `pytest.skip`, a "
+        "loop that only builds data, and a conditional expression or comprehension "
+        "are left alone, and so is a `try`, which swallowed-exception reads. "
+        "An `if` or `match` where every path reaches a real assertion, as DS101 "
+        "counts one (a call into a helper that asserts included), is left alone: "
+        "the `if` body and its whole `elif`/`else` chain each assert. A missing "
+        "`else` is a path with no assertion, unless a branch ends in `return` or "
+        "`raise`: then the statements after the `if` in the same block are that "
+        "path. A `match` needs every case to assert and a wildcard case (`case _:`). "
+        "A deliberate repeat is left alone too: `for _ in range(2)`, Python's own "
+        "`range` over a positive whole number written out, whose body never reads "
+        "its target and carries nothing from one pass to the next. Branching: set "
+        "up the case so the outcome is known, assert it unconditionally, and write "
+        "one test per path. A loop over values the file writes out in full (a "
+        "list, tuple or set literal whose items are literals too, or a top-level "
+        "name bound to a literal) gets a `parametrize` suggestion naming them, "
+        "when it reads its target and carries nothing from one pass to the next "
+        "(`start += n`). A loop over a literal written in place with a value in it "
+        "can't run zero times, so its finding says what it costs instead: the "
+        "first value to fail stops the test and hides the rest. Any other loop: "
+        "assert once on the whole outcome, which fails when it's empty. It warns "
+        "rather than fails: asserting on each item of a collection the code "
+        "returns, or walking a sequence of steps in a loop, is sometimes the "
+        "clearest test, and a waiver records that it is."
     ),
     bad_example=(
         "def test_parse_quantity():\n"

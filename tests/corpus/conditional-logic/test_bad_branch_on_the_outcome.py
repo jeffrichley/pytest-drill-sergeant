@@ -15,14 +15,6 @@ def test_strong_assertion_inside_a_branch_still_counts():
     assert order is not None
 
 
-def test_refund(order, payments):
-    result = payments.refund(order)
-    if result.success:  # expect: DS107
-        assert result.amount == order.total
-    else:
-        assert result.error_code == "card_expired"
-
-
 def test_parse_reply(parser):
     reply = parser.parse(b"OK 3\r\n")
     match reply.kind:  # expect: DS107
