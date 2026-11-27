@@ -10,9 +10,9 @@ pytestmark = pytest.mark.unit
 
 def test_strong_assertion_inside_a_branch_still_counts():
     order = make_order(lines=[1000])
+    assert order is not None
     if order.total:  # expect: DS107
         assert order.total == 1000
-    assert order is not None
 
 
 def test_parse_reply(parser):
@@ -29,15 +29,6 @@ def test_upgrade_path(db):
 
     if version >= 3:  # expect: DS107
         assert db.has_table("events")
-
-
-def test_retry_until_it_works(client):
-    response = client.get("/health")
-    if response.status_code != 200:  # expect: DS107
-        response = client.get("/health")
-        if response.status_code != 200:
-            raise AssertionError(response.text)
-    assert response.json() == {"status": "up"}
 
 
 class TestExport:

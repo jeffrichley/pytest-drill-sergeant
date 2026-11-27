@@ -1000,10 +1000,6 @@ _SCOPE = ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef | ast.Lambda
 _COMPREHENSION = ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp
 
 
-def _ends_in_return_or_raise(body: list[ast.stmt]) -> bool:
-    return bool(body) and isinstance(body[-1], ast.Return | ast.Raise)
-
-
 def _is_wildcard(case: ast.match_case) -> bool:
     """Whether a `match` case takes every value: `case _:` or a bare capture."""
     pattern = case.pattern
@@ -1031,22 +1027,21 @@ def _every_branch_asserts(
 ) -> bool:
     """Whether every path through an `if` or `match` reaches a real assertion.
 
-    An `if`'s paths are its body and its whole `elif`/`else` chain. A missing
-    `else` is a path with no assertion, unless a branch ends in `return` or
-    `raise`: then the statements after the `if` in the same block (`rest`) are
-    that path. A `match` needs a wildcard case, and every case to assert.
+    An `if`'s paths are its body and its whole `elif`/`else` chain, a missing
+    `else` being an empty one; a `match`'s are its cases, and an empty one when
+    no case is a wildcard. A path that doesn't end in `return` or `raise` falls
+    through to the statements after it in the same block (`rest`), so it is
+    asserted when it asserts in its own branch or when that code does.
     """
     if isinstance(statement, ast.Match):
-        return any(_is_wildcard(case) for case in statement.cases) and all(
-            _asserts_on_every_path(case.body, file, test) for case in statement.cases
-        )
-    branches, final = _if_chain(statement)
-    if not final:
-        if not any(_ends_in_return_or_raise(branch) for branch in branches):
-            return False
-        final = rest
+        branches = [case.body for case in statement.cases]
+        if not any(_is_wildcard(case) for case in statement.cases):
+            branches.append([])
+    else:
+        chain, final = _if_chain(statement)
+        branches = [*chain, final]
     return all(
-        _asserts_on_every_path(branch, file, test) for branch in [*branches, final]
+        _asserts_on_every_path([*branch, *rest], file, test) for branch in branches
     )
 
 
@@ -1254,27 +1249,37 @@ def _blocks(statement: ast.stmt) -> Iterator[list[ast.stmt]]:
 
 
 def _unchecked_conditionals(
-    body: list[ast.stmt], file: TestFile, test: TestFunction
+    body: list[ast.stmt],
+    after: list[ast.stmt],
+    file: TestFile,
+    test: TestFunction,
 ) -> Iterator[ast.stmt]:
     """The outermost branches and loops in a body that let a path pass unchecked.
 
     That is one holding a real assertion that some path skips. One that leaves no
-    path unchecked is searched inside instead. Nested code (a helper `def` in the
-    test) is searched too, as part of the test.
+    path unchecked is searched inside instead. `after` is what a path through the
+    body falls through to once the body ends (the code after an `if` around it).
+    Nested code (a helper `def` in the test) is searched too, as part of the test.
     """
     for index, statement in enumerate(body):
+        rest = [*body[index + 1 :], *after]
         if (
             isinstance(statement, _CONDITIONAL)
             and not _is_a_hand_written_assert(statement, test)
             and any(
                 is_real_assertion(node, test.imports) for node in ast.walk(statement)
             )
-            and _leaves_a_path_unchecked(statement, body[index + 1 :], file, test)
+            and _leaves_a_path_unchecked(statement, rest, file, test)
         ):
             yield statement
             continue
+        # A loop's body goes round again, and a `def` or `class` body runs
+        # elsewhere: neither falls through to the code after it.
+        falls_through = not isinstance(statement, _LOOP | _SCOPE)
         for block in _blocks(statement):
-            yield from _unchecked_conditionals(block, file, test)
+            yield from _unchecked_conditionals(
+                block, rest if falls_through else [], file, test
+            )
 
 
 def _module_literals(module: ast.Module) -> dict[str, ast.expr]:
@@ -1417,7 +1422,7 @@ def _conditional_fix(
 
 def _find_conditional_logic(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        for statement in _unchecked_conditionals(test.node.body, file, test):
+        for statement in _unchecked_conditionals(test.node.body, [], file, test):
             found, fix = _conditional_fix(statement, file, test)
             yield Hit.on(test, statement.lineno, found=found, fix=fix)
 
@@ -1445,10 +1450,13 @@ CONDITIONAL_LOGIC = Check(
         "are left alone, and so is a `try`, which swallowed-exception reads. "
         "An `if` or `match` where every path reaches a real assertion, as DS101 "
         "counts one (a call into a helper that asserts included), is left alone: "
-        "the `if` body and its whole `elif`/`else` chain each assert. A missing "
-        "`else` is a path with no assertion, unless a branch ends in `return` or "
-        "`raise`: then the statements after the `if` in the same block are that "
-        "path. A `match` needs every case to assert and a wildcard case (`case _:`). "
+        "the `if` body and each branch of its `elif`/`else` chain is a path, and so "
+        "is a missing `else`; a `match`'s paths are its cases, and a missing "
+        "wildcard (`case _:`). A path that doesn't end in `return` or `raise` "
+        "falls through to the statements after the `if` in the same block, so it "
+        "is asserted when its own branch asserts or when that code does: an `if` "
+        "with no `else` and an assertion after it is left alone, and one with "
+        "nothing asserted after it is flagged. "
         "A deliberate repeat is left alone too: `for _ in range(2)`, Python's own "
         "`range` over a positive whole number written out, whose body never reads "
         "its target and carries nothing from one pass to the next. Branching: set "

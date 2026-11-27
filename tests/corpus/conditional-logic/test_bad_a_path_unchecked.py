@@ -15,11 +15,11 @@ def test_refund_with_a_bare_else(order, payments):
         payments.log(result)
 
 
-def test_no_else_and_no_return_before_the_last_assertion(order, payments):
+def test_no_else_and_nothing_asserted_after(order, payments):
     result = payments.refund(order)
     if result.success:  # expect: DS107
         assert result.amount == order.total
-    assert payments.balance == 0
+    print(payments.balance)
 
 
 def test_line_comment_returns_with_nothing_after(parser, data):
