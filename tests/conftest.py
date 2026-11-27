@@ -238,6 +238,26 @@ def helper_caller(write_test_file, tmp_path):
 
 
 @pytest.fixture
+def production_caller(tmp_path):
+    """Write `tests/test_it.py` in `tmp_path`, whose one test runs `body`, and the
+    production module `src/shop.py` it imports from; returns the test file.
+
+    `src/` beside the root is production code, out of the test tree."""
+
+    def write(body: str, shop: str):
+        (tmp_path / "src").mkdir(exist_ok=True)
+        (tmp_path / "src" / "shop.py").write_text(shop)
+        (tmp_path / "tests").mkdir(exist_ok=True)
+        path = tmp_path / "tests" / "test_it.py"
+        path.write_text(
+            "from shop import call\n\ndef test_it(order):\n" + body + UNIT_MARK
+        )
+        return path
+
+    return write
+
+
+@pytest.fixture
 def waived_test(tmp_path, cli_ini):
     """A test file in `tmp_path`, `test_waived.py`, holding one test whose only
     finding (DS101 on line 1) is waived with the reason `smoke test`, and a

@@ -30,4 +30,4 @@ def test_plugin_init_import():
 
 async def test_async_import():
     plugin = await pytest_drill_sergeant.plugin.load()
-    assert plugin  # expect: DS201
+    assert plugin is not None  # expect: DS201
