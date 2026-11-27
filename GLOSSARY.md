@@ -72,6 +72,10 @@ _Avoid_: Arrange block, preamble
 A statement of a test that is a bare call or `await` made for its effect, not an assertion, output known from the code (`print()`, `logging`) or a method of a pytest built-in fixture the test takes (`caplog.clear()`); cleanup is one. An assignment from a call sets up or reads a result, so it isn't one. For DS103, a bare call into a test-tree function that holds a real assertion is an assertion, and a bare call into a third-party package may assert, so neither is an act; DS104 doesn't follow calls yet. The act-and-assert order checks (DS103, DS104) count acts; DS102 asks a wider question, whether a test runs code under test at all, and never calls what it counts an act.
 _Avoid_: Exercise step, when step
 
+**Deliberate repeat**:
+A loop in a test that runs the same pass a fixed number of times on purpose: `for _ in range(2)`, Python's own `range` (by the file's bindings) over a positive whole number written out, whose body never reads its target and carries nothing from one pass to the next. Every pass checks the same outcome, so DS107 leaves it alone.
+_Avoid_: Retry loop (a retry stops early), parametrize
+
 **AAA comment**:
 A comment alone on its line that heads a section of a test: `# Arrange`, `# Act`, `# Assert`, or `# Act and assert` for both, alone or followed by `:` or a dash and any text. It heads the statements below it, up to the next one. Only the opt-in AAA comment check (DS108) reads them.
 _Avoid_: Section marker, given/when/then

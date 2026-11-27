@@ -74,8 +74,8 @@ A check's default level is the lower of two answers
 On by default, at `fail`: DS001 malformed-waiver, DS102 no-action-under-test, DS301
 mock-only-assertion, DS401 skip-without-reason, DS402 unconditional-skip, DS603 source-text-grep, DS801
 sleep-in-test, DS802 wall-clock-read and DS803 unseeded-random. At `warn`: DS101
-no-real-assertion, DS103 assert-before-act, DS105 long-test, DS106 long-file and
-DS502 near-duplicate-tests. Every other check is off: DS104, DS107, DS201-DS203, DS302, DS303, DS403,
+no-real-assertion, DS103 assert-before-act, DS105 long-test, DS106 long-file, DS107
+conditional-logic and DS502 near-duplicate-tests. Every other check is off: DS104, DS201-DS203, DS302, DS303, DS403,
 DS501, DS601, DS602, DS701 and DS702 until each is proven, and the two conventions:
 DS108 (AAA comments) and DS901 (category markers).
 

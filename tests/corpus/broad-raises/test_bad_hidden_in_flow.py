@@ -16,7 +16,7 @@ async def fetch(url):
 
 @pytest.mark.parametrize("text", [None, [], {}])
 def test_every_bad_input_raises(text):
-    for _ in range(2):  # expect: DS107
+    for _ in range(2):
         with pytest.raises(Exception):  # expect: DS701
             parse(text)
 

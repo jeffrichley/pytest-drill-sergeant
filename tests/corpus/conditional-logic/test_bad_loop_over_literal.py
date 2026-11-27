@@ -59,3 +59,9 @@ def test_rejects_garbage():
 def test_law_names_every_kind(law):
     for text in ("WOMENS-LAW", "CLUB-LAW", "CREW-LAW"):  # expect: DS107
         assert text in law
+
+
+def test_notes_are_out_of_character(lines):
+    asked, sent, answered = lines.index("Q"), lines.index("N"), lines.index("A")
+    for i in (asked, sent, answered):  # expect: DS107
+        assert "out of character" in lines[i]
