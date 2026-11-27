@@ -104,15 +104,48 @@ def _marks(module: ast.Module) -> Iterator[tuple[str, ast.expr, Mapping[str, str
                 yield where, entry, names
 
 
-def _unconditional_skip_calls(file: TestFile) -> list[tuple[str, ast.Call]]:
+def _opt_outs(file: TestFile) -> set[str]:
+    """The tests that opt out of a test they inherit, by name.
+
+    A test method, skipped on every run by a mark on it or a `pytest.skip(...)` in
+    its own body, overriding a test a base class of its class defines, where the
+    test tree shows that base (`Assertions.overrides_inherited_test`): skipping it
+    leaves the base's test running for every other subclass.
+    """
+    names = module_imports(file.module)
+    return {
+        test.name
+        for test in file.tests
+        if test.classes
+        and (
+            any(is_always_skipped_by(d, names) for d in test.node.decorator_list)
+            or top_level_skips(test.node.body, test.imports)
+        )
+        and file.assertions.overrides_inherited_test(test)
+    }
+
+
+def _always_skipping_marks(
+    file: TestFile, opt_outs: set[str]
+) -> Iterator[tuple[str, ast.expr]]:
+    """The marks that skip on every run, each with what it marks, but an opt-out's."""
+    for where, expr, names in _marks(file.module):
+        if is_always_skipped_by(expr, names) and where not in opt_outs:
+            yield where, expr
+
+
+def _unconditional_skip_calls(
+    file: TestFile, opt_outs: set[str]
+) -> list[tuple[str, ast.Call]]:
     """The `pytest.skip(...)` calls that skip on every run, each with where it is.
 
-    Those are the statements of a test's own body, or of the module's, under no
-    condition.
+    Those are the statements of a test's own body, but an opt-out's, or of the
+    module's, under no condition.
     """
     calls = [
         (test.name, call)
         for test in file.tests
+        if test.name not in opt_outs
         for call in top_level_skips(test.node.body, test.imports)
     ]
     return calls + [
@@ -123,7 +156,9 @@ def _unconditional_skip_calls(file: TestFile) -> list[tuple[str, ast.Call]]:
 
 def _find_skip_without_reason(file: TestFile) -> Iterator[Hit]:
     # A skip that happens on every run is left to DS402, reason or not, only where
-    # DS402 reports.
+    # DS402 reports: an opt-out of an inherited test still needs its reason.
+    opt_outs = _opt_outs(file)
+    always = {id(expr) for _, expr in _always_skipping_marks(file, opt_outs)}
     fix = (
         'give it `reason="..."` saying what is wrong and when the test can run '
         "again, such as a ticket link."
@@ -137,13 +172,9 @@ def _find_skip_without_reason(file: TestFile) -> Iterator[Hit]:
                 expr.lineno,
                 found=f"{what} with no reason: `@{ast.unparse(expr)}`.",
                 fix=fix,
-                left_to=(
-                    UNCONDITIONAL_SKIP.code
-                    if is_always_skipped_by(expr, names)
-                    else None
-                ),
+                left_to=UNCONDITIONAL_SKIP.code if id(expr) in always else None,
             )
-    unconditional = {id(call) for _, call in _unconditional_skip_calls(file)}
+    unconditional = {id(call) for _, call in _unconditional_skip_calls(file, opt_outs)}
     for where, node, names in scoped_walk(file.module, TEST_PATH):
         if (
             isinstance(node, ast.Call)
@@ -185,7 +216,8 @@ SKIP_WITHOUT_REASON = Check(
         "`skip` is not pytest's, and `pytest.importorskip` names its module itself. "
         "Say what is wrong and when the test can run again. A skip on every run "
         "(`pytest.mark.skip`, `skipif()` with no condition or on a truthy "
-        "constant, `pytest.skip()` under no condition) is left to DS402 unconditional-skip."
+        "constant, `pytest.skip()` under no condition) is left to DS402 unconditional-skip, "
+        "but an opt-out of an inherited test, which DS402 doesn't report, still needs its reason."
     ),
     bad_example=(
         "import sys\n"
@@ -210,19 +242,19 @@ SKIP_WITHOUT_REASON = Check(
 
 
 def _find_unconditional_skip(file: TestFile) -> Iterator[Hit]:
-    for where, expr, names in _marks(file.module):
-        if is_always_skipped_by(expr, names):
-            yield Hit.at(
-                where,
-                expr.lineno,
-                found=f"is skipped on every run: `@{ast.unparse(expr)}`.",
-                fix=(
-                    "fix what makes it fail and delete the mark; if it can't run "
-                    "somewhere, use `pytest.mark.skipif` on that condition, with a "
-                    "reason."
-                ),
-            )
-    for where, call in _unconditional_skip_calls(file):
+    opt_outs = _opt_outs(file)
+    for where, expr in _always_skipping_marks(file, opt_outs):
+        yield Hit.at(
+            where,
+            expr.lineno,
+            found=f"is skipped on every run: `@{ast.unparse(expr)}`.",
+            fix=(
+                "fix what makes it fail and delete the mark; if it can't run "
+                "somewhere, use `pytest.mark.skipif` on that condition, with a "
+                "reason."
+            ),
+        )
+    for where, call in _unconditional_skip_calls(file, opt_outs):
         written = ast.unparse(call)
         yield Hit.at(
             where,
@@ -240,7 +272,7 @@ UNCONDITIONAL_SKIP = Check(
     code="DS402",
     name="unconditional-skip",
     kind=Kind.DEFECT,
-    default_level=Level.OFF,
+    default_level=Level.FAIL,
     voice=(
         "Skipping the test doesn't fix the code, recruit! It hides the body!",
         "A test that never runs is a soldier who never shows up! GET IT BACK IN LINE!",
@@ -256,9 +288,19 @@ UNCONDITIONAL_SKIP = Check(
         "(`skipif()`) or on a truthy constant (`skipif(True)`), or `pytest.skip(...)` as a statement of the "
         "test's own body, or of the module's, under no `if`, loop, `try` or `with`. "
         "A skip under a condition, `skipif` on a real condition and "
-        "`pytest.importorskip` run only sometimes, and are not flagged. Fix what "
-        "makes the test fail, or skip it only where it can't run. Such a test is "
-        "left to this check, not DS101 no-real-assertion."
+        "`pytest.importorskip` run only sometimes, and are not flagged. Nor is an "
+        "opt-out: a skip, by a mark on the method or a `pytest.skip(...)` in its "
+        "body, on a test method that overrides a test a base class of its class "
+        "defines, as pytest collects it, since the base's test still runs for every "
+        "other subclass. The bases are followed through the classes around it and "
+        "the file's imports into the test tree, depth first, and the first base "
+        "that binds the name decides: a base that binds it to anything but a "
+        "collected test (a fixture, `test_x = None`) hides the test, so there is "
+        "nothing to opt out of. A base the files don't show (third-party, the "
+        "standard library, a module not found) gives no exemption, and neither "
+        "does a skip on the whole class or module. Fix what makes the test fail, or skip it only where "
+        "it can't run. Such a test is left to this check, not DS101 "
+        "no-real-assertion."
     ),
     bad_example=(
         "import pytest\n"

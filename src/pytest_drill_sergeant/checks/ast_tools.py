@@ -13,6 +13,7 @@ or `expected` is the author's word, not the code's.
 
 import ast
 from collections.abc import Iterator, Mapping
+from typing import TypeGuard
 
 from pytest_drill_sergeant.checks.base import FunctionNode, TestFunction
 from pytest_drill_sergeant.findings import MODULE
@@ -527,6 +528,26 @@ def mark_conditions(call: ast.Call) -> list[ast.expr] | None:
         return None
     condition = next((k.value for k in call.keywords if k.arg == "condition"), None)
     return list(call.args) if condition is None else [condition]
+
+
+def is_collected_function(
+    node: ast.AST, names: Mapping[str, str]
+) -> TypeGuard[FunctionNode]:
+    """Whether pytest's default rules collect a function as a test, in a collected scope.
+
+    It does a `test*` function that isn't a fixture: one whose decorator is
+    `pytest.fixture` (or `pytest_asyncio.fixture`), called or not, through whatever
+    name the imports give it.
+    """
+    return (
+        isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
+        and node.name.startswith("test")
+        and not any(
+            qualified(d.func if isinstance(d, ast.Call) else d, names)
+            in FIXTURE_DECORATORS
+            for d in node.decorator_list
+        )
+    )
 
 
 def is_always_skipped_by(expr: ast.expr, names: Mapping[str, str]) -> bool:

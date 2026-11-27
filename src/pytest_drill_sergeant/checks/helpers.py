@@ -57,6 +57,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
     bound_names,
     imports_seen_by,
     instance_param,
+    is_collected_function,
     is_real_assertion,
     module_imports,
     qualified,
@@ -328,6 +329,23 @@ def _binds(node: ast.AST, name: str) -> bool:
     if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
         return node.name == name
     return isinstance(node, ast.ExceptHandler) and node.name == name
+
+
+def _binds_in_scope(node: ast.AST, name: str) -> bool:
+    """Whether a statement binds a name in the scope it runs in.
+
+    A `def` or `class` binds its own name; what is inside one is its own scope. An
+    import binds what it names.
+    """
+    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
+        return node.name == name
+    if isinstance(node, ast.Import | ast.ImportFrom):
+        return any(
+            (alias.asname or alias.name.split(".")[0]) == name for alias in node.names
+        )
+    return _binds(node, name) or any(
+        _binds_in_scope(child, name) for child in ast.iter_child_nodes(node)
+    )
 
 
 def _final_name(expr: ast.expr) -> str | None:
@@ -963,6 +981,81 @@ class TestTree:
             return Definition(kind, builtin=func.id), keys
         return _UNKNOWN, keys
 
+    def overrides_inherited_test(
+        self, test: TestFunction, module: _Module
+    ) -> tuple[bool, set[str]]:
+        """Whether a test method overrides a test a base class of its class defines.
+
+        Its class's bases are read through the classes around it and the module's
+        imports into the test tree, at any depth; a base the files don't show
+        (third-party, the standard library, a module not found) defines nothing
+        here. The bases are walked depth first, left to right, and the first that
+        binds the name in its body decides: it defines the test when that binding
+        is a `def` pytest collects, and not when it is anything else (a fixture, an
+        assignment), which hides any test further up.
+
+        Returns:
+            The answer, and every module it relied on.
+        """
+        if not test.classes:
+            return False, set()
+        keys: set[str] = set()
+        self._deps.append(keys)
+        try:
+            found = self._inherited_binding(
+                _Class(test.classes[-1], module),
+                test.node.name,
+                test.classes[:-1],
+                set(),
+            )
+        finally:
+            self._deps.pop()
+        inherits = found is not None and is_collected_function(*found)
+        return inherits, keys
+
+    def _inherited_binding(
+        self,
+        cls: _Class,
+        name: str,
+        around: tuple[ast.ClassDef, ...],
+        seen: set[_Class],
+    ) -> tuple[ast.stmt, dict[str, str]] | None:
+        """The first statement a base of `cls` binds `name` with, and its module's imports.
+
+        `around` are the classes `cls` is defined in, outermost first: a base named
+        bare may be a class one of their bodies defines.
+        """
+        scope = self._module_scope(cls.module)
+        for base_expr in cls.node.bases:
+            base = self._around(base_expr, around, cls.module) or self._target(
+                base_expr, scope, frozenset()
+            )
+            if not isinstance(base, _Class) or base in seen:
+                continue
+            seen.add(base)
+            binding = next(
+                (s for s in base.node.body if _binds_in_scope(s, name)), None
+            )
+            if binding is not None:
+                return binding, base.module.names
+            found = self._inherited_binding(base, name, (), seen)
+            if found is not None:
+                return found
+        return None
+
+    @staticmethod
+    def _around(
+        expr: ast.expr, around: tuple[ast.ClassDef, ...], module: _Module
+    ) -> _Class | None:
+        """The class a bare name stands for in the bodies of the classes around."""
+        if not isinstance(expr, ast.Name):
+            return None
+        for outer in reversed(around):
+            for statement in outer.body:
+                if isinstance(statement, ast.ClassDef) and statement.name == expr.id:
+                    return _Class(statement, module)
+        return None
+
     def _test_scope(self, test: TestFunction, module: _Module) -> _Scope:
         cls = _Class(test.classes[-1], module) if test.classes else None
         scope = self._scope(test.node, module, cls, cls, dict(test.imports))
@@ -1013,6 +1106,16 @@ class Assertions:
         builtin; never from its name.
         """
         found, keys = self._tree.definition(test, self._module, call)
+        self._followed |= keys
+        return found
+
+    def overrides_inherited_test(self, test: TestFunction) -> bool:
+        """Whether a test method overrides a test a base class of its class defines.
+
+        Read from the bases' definitions in the test tree; a base it can't see
+        defines nothing. Never from a name.
+        """
+        found, keys = self._tree.overrides_inherited_test(test, self._module)
         self._followed |= keys
         return found
 

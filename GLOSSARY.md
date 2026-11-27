@@ -60,6 +60,10 @@ _Avoid_: Source (alone), app code, implementation
 A skip that happens on every run: `pytest.mark.skip`, `skipif()` with no condition or on a truthy constant, or `pytest.skip(...)` as a statement of a test's own body under no condition.
 _Avoid_: Disabled test
 
+**Opt-out**:
+An unconditional skip on a test method, by a mark on the method or a `pytest.skip(...)` in its own body, where the method overrides a test that a base class of its class defines: a `def` of the same name that pytest collects, in a base the test tree shows, followed through the classes around it and the file's imports. The first base that binds the name, depth first, decides; one that binds it to anything else (a fixture, `test_x = None`) hides the test. The base's test still runs for every other subclass, so DS402 doesn't report it; DS401 still asks for its reason. A base outside the test tree (third-party, the standard library, a module not found) shows nothing, so a skip under it is no opt-out. Nothing about it is read from the skip's reason or a name.
+_Avoid_: Override skip, inherited skip
+
 **Setup**:
 A test's statements before the first one that holds a real assertion, its docstring aside.
 _Avoid_: Arrange block, preamble
