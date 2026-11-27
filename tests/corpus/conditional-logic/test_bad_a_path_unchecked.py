@@ -58,3 +58,13 @@ def test_branch_that_returns_before_it_asserts(payments, order):
     else:
         assert result.error_code == "card_expired"
     assert payments.balance == 0
+
+
+def test_nested_branch_that_returns_before_the_assertion(payments, order):
+    result = payments.refund(order)
+    if result.success:  # expect: DS107
+        if result.cached:
+            return
+        assert result.amount == order.total
+    else:
+        assert result.error_code == "card_expired"

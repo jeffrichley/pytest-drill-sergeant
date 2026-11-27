@@ -998,8 +998,6 @@ def _is_a_hand_written_assert(statement: ast.stmt, test: TestFunction) -> bool:
 
 _SCOPE = ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef | ast.Lambda
 _COMPREHENSION = ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp
-# What ends a path through a block before the statements after it run.
-_LEAVES = ast.Return | ast.Raise | ast.Break | ast.Continue
 
 
 def _ends_in_return_or_raise(body: list[ast.stmt]) -> bool:
@@ -1066,9 +1064,25 @@ def _asserts_on_every_path(
             continue
         if _statement_asserts(statement, statements[index + 1 :], file, test):
             return True
-        if isinstance(statement, _LEAVES):
+        if _may_leave(statement, in_loop=False):
             return False
     return False
+
+
+def _may_leave(node: ast.AST, *, in_loop: bool) -> bool:
+    """Whether a statement may end the path through its block on some path.
+
+    That is a `return` or `raise` anywhere in it, or a `break` or `continue` not
+    inside a loop of its own. A nested `def` or `class` only defines.
+    """
+    if isinstance(node, ast.Return | ast.Raise):
+        return True
+    if isinstance(node, ast.Break | ast.Continue):
+        return not in_loop
+    if isinstance(node, _SCOPE):
+        return False
+    inner = in_loop or isinstance(node, _LOOP)
+    return any(_may_leave(child, in_loop=inner) for child in ast.iter_child_nodes(node))
 
 
 def _statement_asserts(
@@ -1239,14 +1253,14 @@ def _blocks(statement: ast.stmt) -> Iterator[list[ast.stmt]]:
             yield child.body
 
 
-def _asserting_conditionals(
+def _unchecked_conditionals(
     body: list[ast.stmt], file: TestFile, test: TestFunction
 ) -> Iterator[ast.stmt]:
     """The outermost branches and loops in a body that let a path pass unchecked.
 
     That is one holding a real assertion that some path skips. One that leaves no
-    path unchecked is searched inside instead. Nested code (a
-    helper `def` in the test) is searched too, as part of the test.
+    path unchecked is searched inside instead. Nested code (a helper `def` in the
+    test) is searched too, as part of the test.
     """
     for index, statement in enumerate(body):
         if (
@@ -1260,7 +1274,7 @@ def _asserting_conditionals(
             yield statement
             continue
         for block in _blocks(statement):
-            yield from _asserting_conditionals(block, file, test)
+            yield from _unchecked_conditionals(block, file, test)
 
 
 def _module_literals(module: ast.Module) -> dict[str, ast.expr]:
@@ -1403,7 +1417,7 @@ def _conditional_fix(
 
 def _find_conditional_logic(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        for statement in _asserting_conditionals(test.node.body, file, test):
+        for statement in _unchecked_conditionals(test.node.body, file, test):
             found, fix = _conditional_fix(statement, file, test)
             yield Hit.on(test, statement.lineno, found=found, fix=fix)
 
