@@ -76,6 +76,7 @@ def _find_no_real_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         # A test that skips on every run is left to DS402, and one that loses an
         # exception it catches to DS702 by `yields_to`: each only where it reports.
+        # DS402 also judges an opt-out of an inherited test, which it lets pass.
         if file.assertions.holds(test):
             continue
         left_to = (

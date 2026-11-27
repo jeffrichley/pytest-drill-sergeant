@@ -1,12 +1,13 @@
 """Skips on every run that inherit nothing they opt out of: a test the class
 defines itself, a name the base gives only to a fixture, a base the check can't
-see, a whole class, and a standalone test; and an opt-out with no reason, which
-DS401 still reports. Analysed, never run."""
+see, a base that hides the test it inherits, a whole class, and a standalone
+test; and an opt-out with no reason, which DS401 still reports. Analysed, never
+run."""
 
 import unittest
 
 import pytest
-from shape_tests import ShapeTests
+from shape_tests import FlatShapeTests, ShapeTests
 from shapes import Circle, Square
 from third_party_shapes import ShapeContract
 
@@ -45,6 +46,12 @@ class TestCircleCase(unittest.TestCase):
     @pytest.mark.skip(reason="radius is a property now")  # expect: DS402
     def test_radius(self):
         assert Circle(1).radius == 1
+
+
+class TestTriangle(FlatShapeTests):
+    @pytest.mark.skip(reason="area is signed now")  # expect: DS402
+    def test_area_is_positive(self, shape):
+        assert shape.area() > 0
 
 
 @pytest.mark.skip(reason="rewriting the circle")  # expect: DS402

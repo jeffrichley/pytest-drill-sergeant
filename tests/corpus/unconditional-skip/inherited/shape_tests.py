@@ -23,3 +23,7 @@ class BasePerimeterTests:
 
 class ShapeTests(BaseAreaTests, BasePerimeterTests):
     pass
+
+
+class FlatShapeTests(ShapeTests):
+    test_area_is_positive = None

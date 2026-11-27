@@ -1,7 +1,7 @@
 """Near-misses: a subclass opting out of a test it inherits from a base class in
 the test tree, modelled on pandas' `tests/extension/test_datetime.py` and
-`test_numpy.py`. The base's test still runs for every other subclass. Analysed,
-never run."""
+`test_numpy.py`, the base imported or a class beside it in the class around.
+The base's test still runs for every other subclass. Analysed, never run."""
 
 import pytest
 import shape_tests
@@ -32,3 +32,14 @@ class TestPoint(shape_tests.ShapeTests):
     @pytest.mark.skip(reason="a point has no perimeter")
     def test_perimeter_is_positive(self, shape):
         pass
+
+
+class TestPolygons:
+    class SideTests:
+        def test_has_sides(self, shape):
+            assert shape.sides() > 0
+
+    class TestHexagon(SideTests):
+        @pytest.mark.skip(reason="sides are counted per edge")
+        def test_has_sides(self, shape):
+            pass
