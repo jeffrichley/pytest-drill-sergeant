@@ -65,7 +65,7 @@ A test's statements before the first one that holds a real assertion, its docstr
 _Avoid_: Arrange block, preamble
 
 **Act**:
-A statement of a test that is a bare call or `await` made for its effect, not an assertion, output known from the code (`print()`, `logging`) or a method of a pytest built-in fixture the test takes (`caplog.clear()`); cleanup is one. An assignment from a call sets up or reads a result, so it isn't one. The act-and-assert order checks (DS103, DS104) count acts; DS102 asks a wider question, whether a test runs code under test at all, and never calls what it counts an act.
+A statement of a test that is a bare call or `await` made for its effect, not an assertion, output known from the code (`print()`, `logging`) or a method of a pytest built-in fixture the test takes (`caplog.clear()`); cleanup is one. An assignment from a call sets up or reads a result, so it isn't one. For DS103, a bare call into a test-tree function that holds a real assertion is an assertion, and a bare call into a third-party package may assert, so neither is an act; DS104 doesn't follow calls yet. The act-and-assert order checks (DS103, DS104) count acts; DS102 asks a wider question, whether a test runs code under test at all, and never calls what it counts an act.
 _Avoid_: Exercise step, when step
 
 **AAA comment**:
