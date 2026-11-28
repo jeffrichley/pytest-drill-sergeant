@@ -1,0 +1,4 @@
+# The corpus project these tests are in declares pytest-mock, so `mocker` and the
+# rest are its fixtures. Analysed, never installed.
+pytest>=8
+pytest-mock==3.14.0  # the fixtures

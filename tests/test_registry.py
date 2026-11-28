@@ -69,8 +69,8 @@ def test_bad_example_is_flagged_and_good_example_is_clean(check, tmp_path):
 def test_check_has_at_least_three_bad_and_three_good_corpus_files(check):
     folder, prefix = corpus_folder(check)
 
-    assert len(list(folder.glob(f"{prefix}bad_*.py"))) >= 3
-    assert len(list(folder.glob(f"{prefix}good_*.py"))) >= 3
+    assert len(list(folder.rglob(f"{prefix}bad_*.py"))) >= 3
+    assert len(list(folder.rglob(f"{prefix}good_*.py"))) >= 3
 
 
 # Proven: zero false positives in a hand-judged sample of real suites (#171), each at
