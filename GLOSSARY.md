@@ -45,7 +45,7 @@ An `assert` that holds for almost any value, wrong ones included: a bare name's 
 _Avoid_: Loose assertion, shallow assertion
 
 **Tautological assertion**:
-An `assert` that can't fail whatever the code under test does: it compares only values the test wrote itself, or asks whether a bare name `is` itself; or a `pytest.raises(X)` block whose only statement raises `X` itself. A name stands for a value the test wrote only when the test binds it once, outside any `if`, loop, `try` or `match`, passes it to no call, and rebinds nothing it names before the assert. `x == x` isn't one: `__eq__` may be what is under test, and NaN isn't equal to itself.
+An `assert` that can't fail whatever the code under test does: it compares only values the test wrote itself, or asks whether a bare name `is` itself; or a `pytest.raises(X)` block whose only statement raises `X` itself, with no `match=` to check the message its class builds. A name stands for a value the test wrote only when the test binds it once, outside any `if`, loop, `try` or `match`, passes it to no call, and rebinds nothing it names before the assert. `x == x` isn't one: `__eq__` may be what is under test, and NaN isn't equal to itself.
 _Avoid_: Trivial assertion, always-true assertion
 
 **Mirror assertion**:

@@ -23,3 +23,10 @@ def test_raise_under_a_branch(stock):
     with pytest.raises(OutOfStock):
         if reserve("apple", stock) is None:
             raise OutOfStock
+
+
+def test_raise_checked_against_its_message():
+    # pandas `tests/test_errors.py:80`: `match=` checks the message the
+    # exception's class builds from its arguments.
+    with pytest.raises(OutOfStock, match="apple is sold out"):
+        raise OutOfStock("apple", 0)

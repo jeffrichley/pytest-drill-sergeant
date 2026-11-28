@@ -21,8 +21,8 @@ def test_raises_through_the_module():
         raise shop.OutOfStock("sold out")
 
 
-def test_raises_by_keyword_with_match():
-    with pytest.raises(expected_exception=OutOfStock, match="sold"):  # expect: DS202
+def test_raises_by_keyword():
+    with pytest.raises(expected_exception=OutOfStock):  # expect: DS202
         raise OutOfStock("sold out")
 
 

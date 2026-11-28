@@ -720,7 +720,9 @@ def _raises_what_it_raises(test: TestFunction) -> Iterator[tuple[ast.With, ast.e
 
     The `raise` names the same expression as the expected class, compared
     structurally, bare or called (`raise OutOfStock`, `raise OutOfStock("x")`).
-    Yields the `with` and the expected class.
+    A `match=` makes the exception's message, which its class's code builds, what
+    the block checks, so a block given one can fail and isn't yielded. Yields the
+    `with` and the expected class.
     """
     for node in walk_test(test):
         if not (
@@ -732,7 +734,9 @@ def _raises_what_it_raises(test: TestFunction) -> Iterator[tuple[ast.With, ast.e
             continue
         call = node.items[0].context_expr
         if not (
-            isinstance(call, ast.Call) and calls_to(call, PYTEST_RAISES, test.imports)
+            isinstance(call, ast.Call)
+            and calls_to(call, PYTEST_RAISES, test.imports)
+            and not any(k.arg == "match" for k in call.keywords)
         ):
             continue
         expected = expected_class(call, test.imports)
@@ -875,7 +879,9 @@ TAUTOLOGICAL_ASSERTION = Check(
         "`assert 2 == 2`), or one asking whether a bare name `is` itself (`assert "
         "order is order`), directly or through names bound to it; and a "
         "`pytest.raises(X)` block whose only statement raises `X` or `X(...)` "
-        "itself, which nothing but the test can raise. A name stands for the value it "
+        "itself with no `match=`, which nothing but the test can raise (a "
+        "`match=` checks the message the exception's class builds, so it can "
+        "fail). A name stands for the value it "
         "was bound to only when the test binds it once, outside any `if`, loop, "
         "`try` or `match`, passes it to no call, and rebinds nothing it names before "
         "the assert: a flag set in a loop's branch, a dict a call fills in "
