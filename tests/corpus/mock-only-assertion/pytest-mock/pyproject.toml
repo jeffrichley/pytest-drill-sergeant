@@ -1,0 +1,8 @@
+# The corpus project these tests are in declares pytest-mock, so `mocker` and the
+# rest are its fixtures. Analysed, never installed.
+[project]
+name = "shop"
+version = "0"
+
+[dependency-groups]
+test = ["pytest>=8", "pytest-mock>=3.14"]

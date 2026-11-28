@@ -1,15 +1,22 @@
 """The mocking family (DS3xx): mocks that stand in for the behaviour under test.
 
-A mock is known from what the file says, never from what a variable is called: a
+A mock is known from what the files say, never from what a variable is called: a
 call to `unittest.mock` (or the `mock` backport) resolved through the imports, a
 call on a pytest-mock fixture the test takes (`mocker.patch(...)`), a parameter a
 `patch` decorator hands in, or a name bound to any of those, an attribute of one,
 or a call on one. `mock_db` taken as a fixture is not known to be a mock.
+
+A parameter named for a pytest-mock fixture (`mocker`, `class_mocker` and the rest)
+is that fixture only when the test's project declares pytest-mock among its
+dependencies (`TestFile.dependencies`) and the test sees no fixture of that name
+defined in the files: in its module, a class around it, or a `conftest.py` above
+it. Without the declaration, the parameter is not known to be a mock.
 """
 
 import ast
 import builtins
 from collections.abc import Iterator
+from dataclasses import dataclass
 
 from pytest_drill_sergeant.checks.ast_tools import (
     is_assert_call,
@@ -25,10 +32,12 @@ from pytest_drill_sergeant.findings import Level
 # Where the mock library lives, by the prefix its names resolve to.
 _MOCK_MODULES = ("unittest.mock.", "mock.")
 
-# pytest-mock's fixtures, each a `MockerFixture` whose methods are the library's.
+# pytest-mock's fixtures, each a `MockerFixture` whose methods are the library's,
+# and the package that provides them, as a declared dependency names it.
 _MOCKER_FIXTURES = frozenset(
     {"mocker", "class_mocker", "module_mocker", "package_mocker", "session_mocker"}
 )
+_PYTEST_MOCK = "pytest-mock"
 
 # The mock classes, which take a spec as their first argument or `spec=`.
 _DOUBLES = frozenset(
@@ -49,13 +58,44 @@ _SETUP = _DOUBLES | _PATCHES.keys() | _SPECCED | {"patch.dict", "patch.multiple"
 _SPEC_ARGS = frozenset({"spec", "spec_set", "autospec"})
 
 
-def _mock_api(expr: ast.expr, test: TestFunction) -> str | None:
+@dataclass(frozen=True)
+class _Test:
+    """A test as the mocking checks read it.
+
+    Attributes:
+        of: The test.
+        mockers: The parameters it takes that are pytest-mock's fixtures.
+    """
+
+    of: TestFunction
+    mockers: frozenset[str]
+
+
+def _read(test: TestFunction, file: TestFile) -> _Test:
+    """A test with the pytest-mock fixtures it takes.
+
+    A parameter named for one is it when the project declares pytest-mock and the
+    test sees no fixture of that name defined in the files.
+    """
+    if _PYTEST_MOCK not in file.dependencies:
+        return _Test(test, frozenset())
+    return _Test(
+        test,
+        frozenset(
+            name
+            for name in _MOCKER_FIXTURES & value_params(test)
+            if not file.assertions.sees_fixture(test, name)
+        ),
+    )
+
+
+def _mock_api(expr: ast.expr, test: _Test) -> str | None:
     """What a name stands for in the mock library (`Mock`, `patch.object`), if it does.
 
     Through the imports (`mock.patch` after `from unittest import mock`), or as a
     method of a pytest-mock fixture the test takes (`mocker.patch.object`).
     """
-    full = qualified(expr, test.imports)
+    full = qualified(expr, test.of.imports)
     if full is not None:
         for prefix in _MOCK_MODULES:
             if full.startswith(prefix):
@@ -65,12 +105,7 @@ def _mock_api(expr: ast.expr, test: TestFunction) -> str | None:
     while isinstance(expr, ast.Attribute):
         parts.append(expr.attr)
         expr = expr.value
-    if (
-        parts
-        and isinstance(expr, ast.Name)
-        and expr.id in _MOCKER_FIXTURES
-        and expr.id in value_params(test)
-    ):
+    if parts and isinstance(expr, ast.Name) and expr.id in test.mockers:
         return ".".join(reversed(parts))
     return None
 
@@ -90,7 +125,7 @@ def _replaces(call: ast.Call, api: str) -> bool:
     return _given(call, "new", _PATCHES[api])
 
 
-def _makes_mock(call: ast.Call, test: TestFunction) -> bool:
+def _makes_mock(call: ast.Call, test: _Test) -> bool:
     """Whether a call makes a mock or patches one in."""
     api = _mock_api(call.func, test)
     if api in _DOUBLES or api in _SPECCED:
@@ -98,11 +133,11 @@ def _makes_mock(call: ast.Call, test: TestFunction) -> bool:
     return api in _PATCHES and not _replaces(call, api)
 
 
-def _patch_decorators(test: TestFunction) -> list[ast.Call]:
+def _patch_decorators(test: _Test) -> list[ast.Call]:
     """The test's decorators that patch a mock in and hand it to the test."""
     return [
         dec
-        for dec in test.node.decorator_list
+        for dec in test.of.node.decorator_list
         if isinstance(dec, ast.Call)
         and _mock_api(dec.func, test) in _PATCHES
         and _makes_mock(dec, test)
@@ -127,19 +162,19 @@ def _bindings(node: ast.AST) -> Iterator[tuple[str, ast.expr]]:
 class _Mocks:
     """What a test's code shows to be a mock."""
 
-    def __init__(self, test: TestFunction) -> None:
+    def __init__(self, test: _Test) -> None:
         self.test = test
         injected = len(_patch_decorators(test))
-        self.names = set(positional_params(test)[:injected])
-        self.bound = value_params(test) | {
+        self.names = set(positional_params(test.of)[:injected])
+        self.bound = value_params(test.of) | {
             n.id
-            for n in walk_test(test)
+            for n in walk_test(test.of)
             if isinstance(n, ast.Name) and not isinstance(n.ctx, ast.Load)
         }
         changed = True
         while changed:
             changed = False
-            for node in walk_test(test):
+            for node in walk_test(test.of):
                 for name, value in _bindings(node):
                     if name not in self.names and self.is_mock(value):
                         self.names.add(name)
@@ -172,7 +207,7 @@ class _Mocks:
         Each maps to how to name the mock told to return it.
         """
         returns: dict[str, str] = {}
-        nodes: list[ast.AST] = [*_patch_decorators(self.test), *walk_test(self.test)]
+        nodes: list[ast.AST] = [*_patch_decorators(self.test), *walk_test(self.test.of)]
         for node in nodes:
             if isinstance(node, ast.Call) and _makes_mock(node, self.test):
                 for k in node.keywords:
@@ -205,7 +240,7 @@ class _Mocks:
         return (
             isinstance(expr, ast.Name)
             and expr.id in vars(builtins)
-            and expr.id not in self.test.imports
+            and expr.id not in self.test.of.imports
             and expr.id not in self.bound
         )
 
@@ -273,18 +308,21 @@ def _mock_only_roots(
 
 
 def _find_mock_only_assertion(file: TestFile) -> Iterator[Hit]:
-    for test in file.tests:
+    for function in file.tests:
+        test = _read(function, file)
         mocks = _Mocks(test)
         returns = mocks.configured_returns()
-        assertions = [n for n in walk_test(test) if is_real_assertion(n, test.imports)]
+        assertions = [
+            n for n in walk_test(test.of) if is_real_assertion(n, test.of.imports)
+        ]
         about = [_mock_only_roots(n, mocks, returns) for n in assertions]
         if not assertions or any(roots is None for roots in about):
             continue
         roots = list(dict.fromkeys(r for rs in about for r in rs or ()))
         named = ", ".join(roots)
         yield Hit.on(
-            test,
-            test.node.lineno,
+            function,
+            function.node.lineno,
             found=(
                 f"asserts only on mocks ({named}): how they were called, or what "
                 "they were told to return, never what the code under test returns "
@@ -322,7 +360,10 @@ MOCK_ONLY_ASSERTION = Check(
         "reading nothing but mocks (`send.called`, `send.call_count == 2`), or an "
         "`==` or `is` against what a mock was told to return (`return_value`). A "
         "mock is known from the file: made by `unittest.mock` or a pytest-mock "
-        "fixture such as `mocker`, or handed in by a `patch` decorator. A name such "
+        "fixture such as `mocker`, or handed in by a `patch` decorator. A `mocker` "
+        "parameter is pytest-mock's only when the project declares pytest-mock "
+        "(in `pyproject.toml` or a `requirements` file) and no `mocker` fixture of "
+        "its own, in the module or a `conftest.py`, takes its place. A name such "
         "as `mock_db` never makes a value one, so a mock built in a fixture isn't "
         "seen. Assert on what the code under test returns or changes, best through "
         "a fake you can inspect. Sometimes the call is the behaviour (an email sent, "
@@ -348,7 +389,7 @@ MOCK_ONLY_ASSERTION = Check(
 )
 
 
-def _without_spec(call: ast.Call, test: TestFunction) -> bool:
+def _without_spec(call: ast.Call, test: _Test) -> bool:
     """Whether a call makes a mock that accepts any attribute and any signature.
 
     That is a mock class given no spec (first argument, `spec` or `spec_set`), or
@@ -364,8 +405,9 @@ def _without_spec(call: ast.Call, test: TestFunction) -> bool:
 
 
 def _find_mock_without_spec(file: TestFile) -> Iterator[Hit]:
-    for test in file.tests:
-        nodes = [*test.node.decorator_list, *walk_test(test)]
+    for function in file.tests:
+        test = _read(function, file)
+        nodes = [*function.node.decorator_list, *walk_test(function)]
         calls = [n for n in nodes if isinstance(n, ast.Call) and _without_spec(n, test)]
         for call in sorted(calls, key=lambda c: (c.lineno, c.col_offset)):
             written = ast.unparse(call)
@@ -379,7 +421,7 @@ def _find_mock_without_spec(file: TestFile) -> Iterator[Hit]:
                 "doesn't support fails"
             )
             yield Hit.on(
-                test,
+                function,
                 call.lineno,
                 found=f"makes a mock with no spec: `{written}`.",
                 fix=f"in `{written}`, {remedy}.",
@@ -409,7 +451,8 @@ MOCK_WITHOUT_SPEC = Check(
         "`spec_set` or `new_callable`. A patch told what to put in place (`new`) "
         "makes no mock, and `create_autospec` and `mocker.spy` carry the real "
         "interface. Only the mock library counts, known from the imports or a "
-        "pytest-mock fixture the test takes; a `Mock` from elsewhere doesn't. Build "
+        "pytest-mock fixture the test takes (as DS301 knows one); a `Mock` from "
+        "elsewhere doesn't. Build "
         "the mock with `create_autospec(<Real>, instance=True)` or `spec=<Real>`, "
         "and patch with `autospec=True`. Off by default until it is proven; turn "
         "it on with `drill_sergeant_levels` (`DS302=warn`). It warns rather than "
@@ -439,12 +482,12 @@ MOCK_WITHOUT_SPEC = Check(
 )
 
 
-def _sets_up(call: ast.expr, test: TestFunction) -> bool:
+def _sets_up(call: ast.expr, test: _Test) -> bool:
     """Whether an expression is a call that makes or patches in mocks."""
     return isinstance(call, ast.Call) and _mock_api(call.func, test) in _SETUP
 
 
-def _setup_lines(test: TestFunction) -> list[int]:
+def _setup_lines(test: _Test) -> list[int]:
     """The line of each mock-setup statement in a test, decorators first.
 
     That is a decorator or `with` item that makes or patches in mocks, a
@@ -453,8 +496,8 @@ def _setup_lines(test: TestFunction) -> list[int]:
     (`repo.configure_mock(...)`) other than an `assert*`.
     """
     mocks = _Mocks(test)
-    lines = [d.lineno for d in test.node.decorator_list if _sets_up(d, test)]
-    for node in walk_test(test):
+    lines = [d.lineno for d in test.of.node.decorator_list if _sets_up(d, test)]
+    for node in walk_test(test.of):
         if isinstance(node, ast.With | ast.AsyncWith):
             lines.extend(
                 i.context_expr.lineno
@@ -482,14 +525,14 @@ def _setup_lines(test: TestFunction) -> list[int]:
 
 def _find_overgrown_mock_setup(file: TestFile) -> Iterator[Hit]:
     limit = file.thresholds.max_mock_setup
-    for test in file.tests:
-        lines = _setup_lines(test)
+    for function in file.tests:
+        lines = _setup_lines(_read(function, file))
         if len(lines) <= limit:
             continue
         where = ", ".join(str(n) for n in lines)
         yield Hit.on(
-            test,
-            test.node.lineno,
+            function,
+            function.node.lineno,
             found=(
                 f"has {len(lines)} mock-setup statements, more than the {limit} "
                 "allowed: it scripts its collaborators' calls instead of using them."

@@ -36,6 +36,12 @@ definition the same way, with one difference: the definition may be in productio
 code too, anywhere under the project. A builtin name nothing rebinds is Python's
 own; a call the files don't show the definition of is not known.
 
+Which fixtures a test sees defined (`Assertions.sees_fixture`) is read the same way:
+a fixture `def`, or an import, of that name in the test's module, a `def` in a class
+around the test, or one in a `conftest.py` in the test's directory or a directory
+above it, up to the project root. A `*` import may bring in any name, so it counts;
+an import from pytest-mock itself doesn't.
+
 Each function's answer is worked out once per run and kept with the modules it
 relied on, so a test file's result can name every module it followed (`followed`)
 for the cache to check.
@@ -53,6 +59,7 @@ from pathlib import Path
 from pytest_drill_sergeant.cache import content_hash
 from pytest_drill_sergeant.checks.ast_tools import (
     EXPECT_FUNCTIONS,
+    FIXTURE_DECORATORS,
     KNOWN_PACKAGES,
     bound_names,
     imports_seen_by,
@@ -64,7 +71,7 @@ from pytest_drill_sergeant.checks.ast_tools import (
     walk_test,
 )
 from pytest_drill_sergeant.checks.base import FunctionNode, TestFunction
-from pytest_drill_sergeant.paths import absolute
+from pytest_drill_sergeant.paths import absolute, up_to
 
 _PARTIAL = "functools.partial"
 _METHOD_WRAPPERS = frozenset({"staticmethod", "classmethod"})
@@ -345,6 +352,41 @@ def _binds_in_scope(node: ast.AST, name: str) -> bool:
         )
     return _binds(node, name) or any(
         _binds_in_scope(child, name) for child in ast.iter_child_nodes(node)
+    )
+
+
+def _fixture_name(node: object, names: dict[str, str]) -> str | None:
+    """The name a fixture `def` gives its fixture, or `None` for anything else.
+
+    That is its `name=`, when its `pytest.fixture` decorator passes one, or its own.
+    """
+    if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
+        return None
+    for decorator in node.decorator_list:
+        call = decorator if isinstance(decorator, ast.Call) else None
+        if qualified(call.func if call else decorator, names) not in FIXTURE_DECORATORS:
+            continue
+        for keyword in call.keywords if call else ():
+            if keyword.arg == "name" and isinstance(keyword.value, ast.Constant):
+                return str(keyword.value.value)
+        return node.name
+    return None
+
+
+def _module_defines_fixture(module: _Module, name: str) -> bool:
+    """Whether a module's top level may define a fixture of a name.
+
+    It does with a fixture `def`, an import of the name from anywhere but
+    pytest-mock itself, or a `*` import, which may bring in any name.
+    """
+    imported = module.bindings.get(name)
+    if isinstance(imported, _Import):
+        return imported.module.split(".")[0] != "pytest_mock"
+    if module.star:
+        return True
+    return any(
+        _fixture_name(binding, module.names) == name
+        for binding in module.bindings.values()
     )
 
 
@@ -1070,6 +1112,33 @@ class TestTree:
                     return _Class(statement, module)
         return None
 
+    def sees_fixture(
+        self, test: TestFunction, module: _Module, name: str
+    ) -> tuple[bool, set[str]]:
+        """Whether a test sees a fixture of a name that the files define.
+
+        One defined or imported at the top of its module, defined in a class
+        around it, or defined or imported at the top of a `conftest.py` in its
+        directory or one above it, up to the project root.
+
+        Returns:
+            The answer, and every `conftest.py` it looked for, found or not.
+        """
+        if _module_defines_fixture(module, name) or any(
+            _fixture_name(statement, module.names) == name
+            for cls in test.classes
+            for statement in cls.body
+        ):
+            return True, set()
+        keys: set[str] = set()
+        for directory in up_to(os.path.dirname(module.key), self._root):
+            key = os.path.join(directory, _CONFTEST)
+            keys.add(key)
+            conftest = self.module(key) if self._is_file(key) else None
+            if conftest is not None and _module_defines_fixture(conftest, name):
+                return True, keys
+        return False, keys
+
     def _test_scope(self, test: TestFunction, module: _Module) -> _Scope:
         cls = _Class(test.classes[-1], module) if test.classes else None
         scope = self._scope(test.node, module, cls, cls, dict(test.imports))
@@ -1080,7 +1149,7 @@ class TestTree:
 
 
 class Assertions:
-    """Whether a test file's tests hold real assertions, and what their calls are.
+    """Whether a test file's tests hold real assertions; what their calls and fixtures are.
 
     Made by `TestTree.assertions`, one per test file; checks reach it on
     `TestFile.assertions`.
@@ -1140,6 +1209,16 @@ class Assertions:
         defines nothing. Never from a name.
         """
         found, keys = self._tree.overrides_inherited_test(test, self._module)
+        self._followed |= keys
+        return found
+
+    def sees_fixture(self, test: TestFunction, name: str) -> bool:
+        """Whether a test sees a fixture of a name defined in the files.
+
+        Defined or imported in its module, defined in a class around it, or in a
+        `conftest.py` from its directory up to the project root; never a plugin's.
+        """
+        found, keys = self._tree.sees_fixture(test, self._module, name)
         self._followed |= keys
         return found
 

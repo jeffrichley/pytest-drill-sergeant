@@ -4,7 +4,7 @@ One JSON file in a directory the front end names (under pytest's cache directory
 holds one entry per test file, by the file's resolved path. An entry is the file's
 per-file result and the key it was made under: the hash of the file's bytes, plus
 drill-sergeant's own code (which fixes its version), plus the config that shapes per-file
-analysis. The result names each module of the test tree its analysis followed,
+analysis, plus what the file's project declares. The result names each module of the test tree its analysis followed,
 with that module's digest then; the engine checks those too. A key that no longer
 matches, a followed module that changed, or an entry that doesn't read back, is
 simply a miss: the file is analysed again and its entry replaced.

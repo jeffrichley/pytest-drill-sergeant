@@ -109,8 +109,10 @@ class TestFile:
         code_lines: The lines holding code: every line but blank and comment-only
             ones.
         assertions: Whether its tests hold real assertions, following their calls
-            into the test tree, and what a call is, read from its definition
-            (`checks.helpers`).
+            into the test tree, what a call is, read from its definition, and
+            which fixtures a test sees defined (`checks.helpers`).
+        dependencies: The packages its project declares, PEP 503 normalised
+            (`dependencies`).
     """
 
     __test__ = False  # Not a pytest test class, despite the name.
@@ -126,6 +128,7 @@ class TestFile:
     comments: tuple[Comment, ...]
     code_lines: frozenset[int]
     assertions: "Assertions"
+    dependencies: frozenset[str]
 
 
 @dataclass(frozen=True)

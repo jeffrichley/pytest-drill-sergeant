@@ -35,6 +35,7 @@ from pytest_drill_sergeant.checks.base import (
 from pytest_drill_sergeant.checks.helpers import TestTree
 from pytest_drill_sergeant.checks.summary import summarize
 from pytest_drill_sergeant.config import Config
+from pytest_drill_sergeant.dependencies import Dependencies
 from pytest_drill_sergeant.findings import MODULE, Finding, Level
 from pytest_drill_sergeant.paths import relative
 from pytest_drill_sergeant.production import source_directories
@@ -231,12 +232,16 @@ def _per_file_settings(config: Config) -> dict[str, object]:
 
 
 def _analyze_file(
-    path: Path, source: bytes, config: Config, tree: TestTree
+    path: Path,
+    source: bytes,
+    config: Config,
+    tree: TestTree,
+    dependencies: frozenset[str],
 ) -> _FileResult:
     """Per-file analysis: every check's hits in a file, its summary and waivers.
 
     A test's calls are followed into the test tree's modules, which the result
-    names with their digests.
+    names with their digests. `dependencies` are what the file's project declares.
     """
     module = ast.parse(source, filename=str(path))
     assertions = tree.assertions(path, module)
@@ -255,6 +260,7 @@ def _analyze_file(
         comments=tokens.comments,
         code_lines=tokens.code_lines,
         assertions=assertions,
+        dependencies=dependencies,
     )
     hits = {c.code: hits for c in CHECKS if (hits := tuple(c.find(file)))}
     return _FileResult(
@@ -274,21 +280,30 @@ def _analyze_file(
     )
 
 
-def _file_result(
-    path: Path, config: Config, cache: Cache | None, shared: str, tree: TestTree
+def _file_result(  # noqa: PLR0913  # The run's shared state, each part used here.
+    path: Path,
+    config: Config,
+    cache: Cache | None,
+    shared: str,
+    *,
+    tree: TestTree,
+    dependencies: Dependencies,
 ) -> _FileResult:
     """A file's per-file result: from the cache when its key still matches.
 
-    A cached result stands only while every module it followed has the digest it
+    The key holds what the file's project declares, read afresh every run. A
+    cached result stands only while every module it followed has the digest it
     had then.
     """
     source = _require_source(path)
+    declared = dependencies.declared(path)
     if cache is None:
-        return _analyze_file(path, source, config, tree)
-    key = f"{content_hash(source)}:{shared}"
+        return _analyze_file(path, source, config, tree, declared)
+    names = "\n".join(sorted(declared)).encode()
+    key = f"{content_hash(source)}:{shared}:{content_hash(names)}"
     result = cache.get(path, key, _FileResult)
     if result is None or any(tree.digest(m) != d for m, d in result.followed):
-        result = _analyze_file(path, source, config, tree)
+        result = _analyze_file(path, source, config, tree, declared)
         cache.put(path, key, result)
     return result
 
@@ -420,8 +435,8 @@ def inspect(
             read in full every run.
         cache_dir: The directory the cache is kept in, or `None` to run uncached.
             With `config.cache` off the run is uncached too. A test file whose
-            bytes, drill-sergeant and per-file settings are unchanged since a
-            cached run isn't analysed again; cross-file analysis always reruns,
+            bytes, drill-sergeant, per-file settings and declared dependencies
+            are unchanged since a cached run isn't analysed again; cross-file analysis always reruns,
             from the summaries.
 
     Returns:
@@ -450,8 +465,11 @@ def inspect(
         tree = TestTree(
             ordered, [*production, *source_directories(config)], config.root
         )
+        dependencies = Dependencies(config.root)
         for path in ordered:
-            result = _file_result(path, config, cache, shared, tree)
+            result = _file_result(
+                path, config, cache, shared, tree=tree, dependencies=dependencies
+            )
             findings.extend(_file_findings(path, result, levels[path]))
             files[path] = result.waivers
             summaries.append((path, result.summary))

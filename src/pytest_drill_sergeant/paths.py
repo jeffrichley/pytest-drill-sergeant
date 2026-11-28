@@ -6,6 +6,7 @@ so one file is written one way wherever it shows up.
 """
 
 import os
+from collections.abc import Iterator
 from pathlib import Path
 
 
@@ -23,3 +24,17 @@ def relative(path: Path, base: Path) -> Path:
 def absolute(path: Path) -> str:
     """A path made absolute without resolving links, as a string key."""
     return os.path.abspath(path)
+
+
+def up_to(directory: str, root: str | None) -> Iterator[str]:
+    """An absolute directory, then each one above it, ending at `root` if it meets it.
+
+    Plain string work, as `absolute` writes paths; with no `root` met, it ends at
+    the filesystem's root.
+    """
+    while True:
+        yield directory
+        parent = os.path.dirname(directory)
+        if directory == root or parent == directory:  # noqa: PLR1714  # Two different stops.
+            return
+        directory = parent

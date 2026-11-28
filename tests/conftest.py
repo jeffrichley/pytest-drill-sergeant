@@ -258,6 +258,22 @@ def production_caller(tmp_path):
 
 
 @pytest.fixture
+def mocker_test(tmp_path):
+    """A test file in `tmp_path`, `tests/test_it.py`, whose one test asserts only on
+    what it patched through a `mocker` parameter: DS301 on line 1 when that is
+    pytest-mock's fixture, nothing otherwise."""
+    path = tmp_path / "tests" / "test_it.py"
+    path.parent.mkdir()
+    path.write_text(
+        "def test_it(mocker):\n"
+        "    send = mocker.patch('shop.send', autospec=True)\n"
+        "    run()\n"
+        "    assert send.called\n" + UNIT_MARK
+    )
+    return path
+
+
+@pytest.fixture
 def waived_test(tmp_path, cli_ini):
     """A test file in `tmp_path`, `test_waived.py`, holding one test whose only
     finding (DS101 on line 1) is waived with the reason `smoke test`, and a
