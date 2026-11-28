@@ -109,7 +109,7 @@ A test double made by `unittest.mock` or a pytest-mock fixture such as `mocker` 
 _Avoid_: Stub, fake (a fake is a working substitute, not a mock)
 
 **Declared dependency**:
-A package a test file's project names as one, in its directory or a directory above it up to the config root: in `pyproject.toml` (`[project]` dependencies and optional dependencies, `[dependency-groups]`, `[tool.uv]` dev-dependencies, PDM's dev-dependencies, Hatch's environment dependencies, Poetry's dependency tables) or in a `.txt` whose name holds `requirements` or one in `requirements/`, its name normalised as PEP 503 does. Read from the files, never from what is installed, so the plugin and the CLI agree.
+A package a test file's project names as one, in its directory or a directory above it up to the config root, or, when the config root holds no `pyproject.toml`, on up to the nearest directory that does: in `pyproject.toml` (`[project]` dependencies and optional dependencies, `[dependency-groups]`, `[tool.uv]` dev-dependencies, PDM's dev-dependencies, Hatch's environment dependencies, Poetry's dependency tables) or in a `.txt` whose name holds `requirements` or one in `requirements/`, its name normalised as PEP 503 does. Read from the files, never from what is installed, so the plugin and the CLI agree.
 _Avoid_: Requirement, installed package
 
 **Stand-in**:

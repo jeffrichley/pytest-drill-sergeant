@@ -109,10 +109,26 @@ def test_mocker_is_not_a_mock_with_no_declaration_file_at_all(mocker_test, tmp_p
     assert analyze([mocker_test], Config(root=tmp_path)) == []
 
 
-def test_a_declaration_above_the_config_root_is_another_projects(mocker_test, tmp_path):
+def test_above_a_config_root_with_no_pyproject_above_it_nothing_is_read(
+    mocker_test, tmp_path
+):
     declare(tmp_path, "requirements.txt", "pytest-mock\n")
 
     assert analyze([mocker_test], Config(root=tmp_path / "tests")) == []
+
+
+def test_above_a_config_root_the_search_stops_at_the_nearest_pyproject(
+    mocker_test, tmp_path
+):
+    """The project's `pyproject.toml` is in `app/`, under `tmp_path`; a declaration
+    above it belongs to another project."""
+    declare(tmp_path, "requirements.txt", "pytest-mock\n")
+    declare(tmp_path, "app/pyproject.toml", '[project]\nname = "app"\n')
+    test = tmp_path / "app" / "tests" / "test_it.py"
+    test.parent.mkdir(parents=True)
+    test.write_text(mocker_test.read_text())
+
+    assert analyze([test], Config(root=test.parent)) == []
 
 
 def test_a_declaration_beside_the_tests_directory_is_not_on_its_way_up(
@@ -195,6 +211,16 @@ def test_cli_reads_the_declaration_beside_its_config(cli, tmp_path, unit_mark):
     (tmp_path / "test_it.py").write_text(MOCKER_TEST + unit_mark)
 
     assert "test_it.py:1: DS301" in cli("check", "test_it.py").output
+
+
+@pytest.mark.integration
+def test_cli_reads_the_pyproject_above_a_pytest_ini_below_it(cli, tmp_path, unit_mark):
+    (tmp_path / "pyproject.toml").write_text(DECLARING_CONFIG)
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "pytest.ini").write_text("[pytest]\n")
+    (tmp_path / "tests" / "test_it.py").write_text(MOCKER_TEST + unit_mark)
+
+    assert "test_it.py:1: DS301" in cli("check", "tests/test_it.py").output
 
 
 @pytest.mark.integration

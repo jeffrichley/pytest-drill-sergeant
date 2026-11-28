@@ -1,7 +1,10 @@
 """The project's declared dependencies: the packages its files name, sans pytest.
 
 A test file's project declares what the files in its directory, and in each directory
-above it up to the config root, name as dependencies:
+above it up to the config root, name as dependencies. When the config root holds no
+`pyproject.toml` (the config is a `tests/pytest.ini`, say), the search goes on up to
+the nearest directory that does, the project's; with none above, it stops at the
+root.
 
 - `pyproject.toml`: `[project]`'s `dependencies` and `optional-dependencies`,
   `[dependency-groups]`, `[tool.uv]`'s `dev-dependencies`, PDM's
@@ -134,15 +137,38 @@ class Dependencies:
         """The declarations of the project under a config root."""
         self._root = absolute(root)
         self._by_directory: dict[str, frozenset[str]] = {}
+        self._beyond = self._up_to_project()
+
+    def _up_to_project(self) -> list[str]:
+        """The directories above the config root to read, up to the project's.
+
+        Those up to the nearest one holding a `pyproject.toml`, it included; none
+        when the root holds one itself or no directory above does.
+        """
+        if os.path.isfile(os.path.join(self._root, _PYPROJECT)):
+            return []
+        parent = os.path.dirname(self._root)
+        if parent == self._root:
+            return []
+        beyond: list[str] = []
+        for directory in up_to(parent, None):
+            beyond.append(directory)
+            if os.path.isfile(os.path.join(directory, _PYPROJECT)):
+                return beyond
+        return []
 
     def declared(self, path: Path) -> frozenset[str]:
         """The packages a test file's project declares, normalised.
 
         Read from its directory and each directory above it, up to the config root
-        when it is under it.
+        when it is under it, and on from a root that holds no `pyproject.toml` (a
+        `tests/pytest.ini`) up to the nearest directory that does.
         """
         start = os.path.dirname(absolute(path))
-        return frozenset().union(*map(self._in, up_to(start, self._root)))
+        directories = list(up_to(start, self._root))
+        if directories[-1] == self._root:
+            directories.extend(self._beyond)
+        return frozenset().union(*map(self._in, directories))
 
     def _in(self, directory: str) -> frozenset[str]:
         known = self._by_directory.get(directory)
