@@ -85,6 +85,7 @@ ON_BY_DEFAULT = {
     "DS502": Level.WARN,
     "DS101": Level.WARN,
     "DS103": Level.WARN,
+    "DS104": Level.WARN,
     "DS107": Level.WARN,
     "DS303": Level.WARN,
     "DS102": Level.FAIL,

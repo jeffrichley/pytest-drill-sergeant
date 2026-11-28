@@ -17,7 +17,7 @@ suite/test_checkout.py
     "When this goes red, which act failed? NOBODY KNOWS! Split it up!"
     Found: `test_checkout_applies_and_removes_a_discount_code` acts and asserts 2 times: after the
            assertions on the act at line 13, `checkout.remove_code()` on line 15 acts again.
-    Why:   A test that acts and asserts more than once checks several behaviours: when it fails, its
+    Why:   A test that acts and asserts several times checks several behaviours: when it fails, its
            name doesn't say which one broke, and a failing early step hides every later one.
     Fix:   In `test_checkout_applies_and_removes_a_discount_code`, line 15: split the test into one
            test per act (lines 13, 15), each named for its behaviour, with any shared setup in a

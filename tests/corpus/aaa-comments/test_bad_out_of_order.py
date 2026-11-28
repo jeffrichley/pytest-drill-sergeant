@@ -24,7 +24,7 @@ def test_discount_code(basket):
     # Assert
     assert basket.discount == 10
     # Act - # expect: DS108
-    basket.remove_code()  # expect: DS104
+    basket.remove_code()
     # Assert - # expect: DS108
     assert basket.discount == 0
 
