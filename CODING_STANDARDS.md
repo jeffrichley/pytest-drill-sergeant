@@ -37,6 +37,11 @@ these rules started.
 - **A check's kind is argued, not assumed.** A new check, or one whose kind changes,
   says in its PR why it is that kind. Defect means a test it flags can't catch the bug
   or cheats; anything that only costs later is a Smell.
+- **A sometimes-legitimate pattern is split, not dropped.** When part of a check is
+  legitimate in some projects but still a real claim, it becomes its own check, off
+  until its own proof sets its level, and it and the parent never both report one
+  problem. When the variation is how much of one claim is too much, it is a threshold
+  instead. A pattern is dropped only when it is no claim worth making. (ADR 0002)
 - **One finding per problem.** When two checks report the same problem in a test, the
   more specific one wins, and only while it is enabled.
 - **A helper whose job is to refuse is `require_*`.** A new function named for what it
