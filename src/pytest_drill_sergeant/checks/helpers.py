@@ -39,7 +39,8 @@ own; a call the files don't show the definition of is not known.
 Which fixtures a test sees defined (`Assertions.sees_fixture`) is read the same way:
 a fixture `def`, or an import, of that name in the test's module, a `def` in a class
 around the test, or one in a `conftest.py` in the test's directory or a directory
-above it, up to the project root.
+above it, up to the project root. A `*` import may bring in any name, so it counts;
+an import from pytest-mock itself doesn't.
 
 Each function's answer is worked out once per run and kept with the modules it
 relied on, so a test file's result can name every module it followed (`followed`)
@@ -373,8 +374,15 @@ def _fixture_name(node: object, names: dict[str, str]) -> str | None:
 
 
 def _module_defines_fixture(module: _Module, name: str) -> bool:
-    """Whether a module's top level defines a fixture of a name, or imports one."""
-    if isinstance(module.bindings.get(name), _Import):
+    """Whether a module's top level may define a fixture of a name.
+
+    It does with a fixture `def`, an import of the name from anywhere but
+    pytest-mock itself, or a `*` import, which may bring in any name.
+    """
+    imported = module.bindings.get(name)
+    if isinstance(imported, _Import):
+        return imported.module.split(".")[0] != "pytest_mock"
+    if module.star:
         return True
     return any(
         _fixture_name(binding, module.names) == name

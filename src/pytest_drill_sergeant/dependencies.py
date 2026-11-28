@@ -4,10 +4,12 @@ A test file's project declares what the files in its directory, and in each dire
 above it up to the config root, name as dependencies:
 
 - `pyproject.toml`: `[project]`'s `dependencies` and `optional-dependencies`,
-  `[dependency-groups]`, `[tool.uv]`'s `dev-dependencies`, and Poetry's
-  `[tool.poetry.dependencies]`, `[tool.poetry.dev-dependencies]` and
-  `[tool.poetry.group.<name>.dependencies]`;
-- every `requirements*.txt`, and every `.txt` in a `requirements/` directory: one
+  `[dependency-groups]`, `[tool.uv]`'s `dev-dependencies`, PDM's
+  `[tool.pdm.dev-dependencies]`, Hatch's `dependencies` and `extra-dependencies`
+  in each `[tool.hatch.envs.<name>]`, and Poetry's `[tool.poetry.dependencies]`,
+  `[tool.poetry.dev-dependencies]` and `[tool.poetry.group.<name>.dependencies]`;
+- every `.txt` whose name holds `requirements` (`requirements_test.txt`,
+  `dev-requirements.txt`), and every `.txt` in a `requirements/` directory: one
   requirement per line, comments, blank lines and option lines (`-r`, `--index-url`)
   aside.
 
@@ -26,7 +28,7 @@ from pathlib import Path
 from pytest_drill_sergeant.paths import absolute, up_to
 
 _PYPROJECT = "pyproject.toml"
-_REQUIREMENTS = re.compile(r"requirements.*\.txt")
+_REQUIREMENTS = re.compile(r".*requirements.*\.txt")
 _REQUIREMENTS_DIR = "requirements"
 
 # A requirement's name, at the start of a PEP 508 string or a requirements line.
@@ -77,6 +79,11 @@ def _pyproject(path: Path) -> Iterator[str]:
     for group in _tables(data.get("dependency-groups")):
         yield from _strings(group)
     yield from _strings(_table(data, "tool", "uv", "dev-dependencies"))
+    for group in _tables(_table(data, "tool", "pdm", "dev-dependencies")):
+        yield from _strings(group)
+    for env in _tables(_table(data, "tool", "hatch", "envs")):
+        yield from _strings(_table(env, "dependencies"))
+        yield from _strings(_table(env, "extra-dependencies"))
     poetry = _table(data, "tool", "poetry")
     for table in (
         _table(poetry, "dependencies"),

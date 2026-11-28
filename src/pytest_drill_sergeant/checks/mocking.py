@@ -362,7 +362,7 @@ MOCK_ONLY_ASSERTION = Check(
         "mock is known from the file: made by `unittest.mock` or a pytest-mock "
         "fixture such as `mocker`, or handed in by a `patch` decorator. A `mocker` "
         "parameter is pytest-mock's only when the project declares pytest-mock "
-        "(in `pyproject.toml` or a `requirements*.txt`) and no `mocker` fixture of "
+        "(in `pyproject.toml` or a `requirements` file) and no `mocker` fixture of "
         "its own, in the module or a `conftest.py`, takes its place. A name such "
         "as `mock_db` never makes a value one, so a mock built in a fixture isn't "
         "seen. Assert on what the code under test returns or changes, best through "

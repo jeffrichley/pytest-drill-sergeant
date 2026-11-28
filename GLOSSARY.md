@@ -105,11 +105,11 @@ The step, after per-file analysis of every file in the run, that compares the pe
 _Avoid_: Global pass, project analysis
 
 **Mock**:
-A test double made by `unittest.mock` or a pytest-mock fixture such as `mocker` (`Mock()`, `create_autospec`, `patch`), as the file shows it: made in the test, handed in by a `patch` decorator, or reached from one. A parameter named for a pytest-mock fixture is one only when pytest-mock is a declared dependency and the test sees no fixture of that name defined in its module, a class around it or a `conftest.py` from its directory up to the config root. A name such as `mock_db` never makes a value one.
+A test double made by `unittest.mock` or a pytest-mock fixture such as `mocker` (`Mock()`, `create_autospec`, `patch`), as the file shows it: made in the test, handed in by a `patch` decorator, or reached from one. A parameter named for a pytest-mock fixture is one only when pytest-mock is a declared dependency and the test sees no fixture of that name defined (or brought in by an import other than pytest-mock's, or a `*` import) in its module, a class around it or a `conftest.py` from its directory up to the config root. A name such as `mock_db` never makes a value one.
 _Avoid_: Stub, fake (a fake is a working substitute, not a mock)
 
 **Declared dependency**:
-A package a test file's project names as one, in its directory or a directory above it up to the config root: in `pyproject.toml` (`[project]` dependencies and optional dependencies, `[dependency-groups]`, `[tool.uv]` dev-dependencies, Poetry's dependency tables) or in a `requirements*.txt` or `requirements/*.txt`, its name normalised as PEP 503 does. Read from the files, never from what is installed, so the plugin and the CLI agree.
+A package a test file's project names as one, in its directory or a directory above it up to the config root: in `pyproject.toml` (`[project]` dependencies and optional dependencies, `[dependency-groups]`, `[tool.uv]` dev-dependencies, PDM's dev-dependencies, Hatch's environment dependencies, Poetry's dependency tables) or in a `.txt` whose name holds `requirements` or one in `requirements/`, its name normalised as PEP 503 does. Read from the files, never from what is installed, so the plugin and the CLI agree.
 _Avoid_: Requirement, installed package
 
 **Stand-in**:

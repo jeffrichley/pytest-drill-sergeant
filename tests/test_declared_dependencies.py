@@ -39,7 +39,16 @@ DECLARATIONS = {
         "pyproject.toml",
         '[tool.poetry.group.test.dependencies]\npytest-mock = { version = "^3" }\n',
     ),
+    "pdm dev dependencies": (
+        "pyproject.toml",
+        '[tool.pdm.dev-dependencies]\ntest = ["pytest-mock"]\n',
+    ),
+    "hatch environment": (
+        "pyproject.toml",
+        '[tool.hatch.envs.test]\nextra-dependencies = ["pytest-mock"]\n',
+    ),
     "requirements.txt": ("requirements.txt", "pytest\npytest-mock\n"),
+    "dev-requirements.txt": ("dev-requirements.txt", "pytest-mock\n"),
     "requirements_test.txt": (
         "requirements_test.txt",
         "-r requirements.txt\npytest-mock==3.14.0  # pinned\n",
@@ -145,9 +154,25 @@ def test_a_conftest_mocker_fixture_added_since_a_cached_run_is_seen(
     assert findings == []
 
 
-def test_an_imported_mocker_is_the_tests_own_fixture(mocker_test, tmp_path):
+def test_mocker_imported_from_pytest_mock_is_still_its_fixture(mocker_test, tmp_path):
     declare(tmp_path, "requirements.txt", "pytest-mock\n")
-    declare(tmp_path, "tests/conftest.py", "from shop.testing import mocker\n")
+    declare(tmp_path, "tests/conftest.py", "from pytest_mock.plugin import mocker\n")
+
+    findings = analyze([mocker_test], Config(root=tmp_path))
+
+    assert [(f.code, f.line) for f in findings] == DS301_ON_THE_TEST
+
+
+@pytest.mark.parametrize(
+    "conftest",
+    ["from shop.testing import mocker\n", "from shop.fixtures import *\n"],
+    ids=["an import of the name", "a star import"],
+)
+def test_a_conftest_import_may_bring_the_tests_own_mocker(
+    mocker_test, tmp_path, conftest
+):
+    declare(tmp_path, "requirements.txt", "pytest-mock\n")
+    declare(tmp_path, "tests/conftest.py", conftest)
 
     assert analyze([mocker_test], Config(root=tmp_path)) == []
 
