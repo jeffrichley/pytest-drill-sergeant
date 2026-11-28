@@ -234,13 +234,47 @@ def _is_simple_assignment(name: ast.Name, parent: ast.AST) -> bool:
     return isinstance(parent, ast.AnnAssign) and parent.value is not None
 
 
-def _is_branch_bound(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> bool:
-    """Whether a node sits under an `if`, a loop, a `try` or a `match` in the test."""
+def _parents(test: TestFunction) -> dict[ast.AST, ast.AST]:
+    """Each node of the test's `def` mapped to the node it sits in."""
+    return {
+        child: parent
+        for parent in ast.walk(test.node)
+        for child in ast.iter_child_nodes(parent)
+    }
+
+
+def _enclosing(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> Iterator[ast.AST]:
+    """The nodes a node sits in, innermost first."""
     while node in parents:
         node = parents[node]
-        if isinstance(node, _BRANCHING):
-            return True
-    return False
+        yield node
+
+
+def _is_branch_bound(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> bool:
+    """Whether a node sits under an `if`, a loop, a `try` or a `match` in the test."""
+    return any(isinstance(n, _BRANCHING) for n in _enclosing(node, parents))
+
+
+def _runs_between(
+    node: ast.Name, start: ast.stmt, end: ast.stmt, parents: dict[ast.AST, ast.AST]
+) -> bool:
+    """Whether `node` may run after `start` finishes and before `end` runs.
+
+    It may when it stands after `start` and before `end` in the source, or when
+    it shares a loop with `end` that `start` is outside of: from the second pass
+    on, it ran before `end` again.
+    """
+    position = (node.lineno, node.col_offset)
+    finish = (start.end_lineno or 0, start.end_col_offset or 0)
+    if finish <= position < (end.lineno, end.col_offset):
+        return True
+    outside = set(_enclosing(start, parents))
+    return any(
+        isinstance(loop, ast.For | ast.AsyncFor | ast.While)
+        and loop not in outside
+        and loop in set(_enclosing(node, parents))
+        for loop in _enclosing(end, parents)
+    )
 
 
 def _aliases(test: TestFunction) -> dict[str, ast.Assign | ast.AnnAssign]:
@@ -253,11 +287,7 @@ def _aliases(test: TestFunction) -> dict[str, ast.Assign | ast.AnnAssign]:
     it. A name bound under an `if`, a loop, a `try` or a `match` is not one either:
     what it holds at the assert depends on the path the test took.
     """
-    parents = {
-        child: parent
-        for parent in ast.walk(test.node)
-        for child in ast.iter_child_nodes(parent)
-    }
+    parents = _parents(test)
     stores, loads = _names(test)
     assigns: dict[ast.AST, str] = {}
     for name, nodes in stores.items():
@@ -593,6 +623,7 @@ def _verdicts(test: TestFunction, calls: Assertions) -> list[_Verdict]:
     asserts = [node for node in walk_test(test) if isinstance(node, ast.Assert)]
     others = _state_changes(test, list(bindings.values()))
     stores, _ = _names(test)
+    parents = _parents(test)
 
     def rebound_before(name: str, node: ast.Assert) -> bool:
         """Whether a name an alias stands for is rebound between it and `node`.
@@ -600,10 +631,9 @@ def _verdicts(test: TestFunction, calls: Assertions) -> list[_Verdict]:
         `expected = result`, then `result = ...` again: `expected` holds the old
         value, so it no longer stands for `result`.
         """
-        after = bindings[name].end_lineno or 0
         read = _resolve(aliases[name], aliases)
         return any(
-            after < store.lineno < node.lineno
+            _runs_between(store, bindings[name], node, parents)
             for n in ast.walk(read)
             if isinstance(n, ast.Name)
             for store in stores[n.id]
@@ -720,10 +750,11 @@ def _raises_what_it_raises(test: TestFunction) -> Iterator[tuple[ast.With, ast.e
 
     The `raise` names the same expression as the expected class, compared
     structurally, bare or called (`raise OutOfStock`, `raise OutOfStock("x")`).
-    A `match=` makes the exception's message, which its class's code builds, what
-    the block checks, so a block given one can fail and isn't yielded. Yields the
-    `with` and the expected class.
+    A `match=`, or an `as` name the test reads afterwards, checks the exception
+    its class's code builds, so a block with one can fail and isn't yielded.
+    Yields the `with` and the expected class.
     """
+    _, loads = _names(test)
     for node in walk_test(test):
         if not (
             isinstance(node, ast.With)
@@ -733,6 +764,9 @@ def _raises_what_it_raises(test: TestFunction) -> Iterator[tuple[ast.With, ast.e
         ):
             continue
         call = node.items[0].context_expr
+        caught = node.items[0].optional_vars
+        if isinstance(caught, ast.Name) and loads[caught.id]:
+            continue
         if not (
             isinstance(call, ast.Call)
             and calls_to(call, PYTEST_RAISES, test.imports)
@@ -865,7 +899,7 @@ TAUTOLOGICAL_ASSERTION = Check(
     kind=Kind.DEFECT,
     default_level=Level.FAIL,
     voice=(
-        "You asserted that a thing equals itself. Congratulations, you discovered math!",
+        "You asserted that a thing IS itself. Congratulations, you discovered math!",
         "This assertion can't fail, recruit! An alarm that can't ring is a DOORSTOP!",
         "The code under test isn't even IN this assertion! What are you guarding?",
     ),
@@ -879,16 +913,16 @@ TAUTOLOGICAL_ASSERTION = Check(
         "`assert 2 == 2`), or one asking whether a bare name `is` itself (`assert "
         "order is order`), directly or through names bound to it; and a "
         "`pytest.raises(X)` block whose only statement raises `X` or `X(...)` "
-        "itself with no `match=`, which nothing but the test can raise (a "
-        "`match=` checks the message the exception's class builds, so it can "
-        "fail). A name stands for the value it "
+        "itself, which nothing but the test can raise; one with a `match=`, or an "
+        "`as` name read afterwards, checks the exception its class builds, so it "
+        "can fail. A name stands for the value it "
         "was bound to only when the test binds it once, outside any `if`, loop, "
         "`try` or `match`, passes it to no call, and rebinds nothing it names before "
         "the assert: a flag set in a loop's branch, a dict a call fills in "
         "(`index_map = {}`, then `paths(index_map=index_map)`), or `expected = "
         "result` before `result` is bound again holds what the code decided. `==` and "
         "`!=` call `__eq__`, which may be what is under test (`cfg == cfg`), and NaN "
-        "isn't equal to itself, so `x == x` is left to its own check; an attribute "
+        "isn't equal to itself, so `x == x` isn't flagged; an attribute "
         "or call on both sides (`obj.flags is obj.flags`) reads a property or calls "
         "code twice, so it is left alone. A bare `assert True` is "
         "no-real-assertion's to report. Assert on what the code under test returns, "

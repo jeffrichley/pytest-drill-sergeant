@@ -3,7 +3,7 @@ and `!=` call `__eq__`, which may be what is under test (networkx
 `utils/tests/test_config.py:85`, `cfg == cfg`; pandas `tests/test_flags.py:11`,
 `a == a`), and an attribute or call on both sides reads a property or calls code
 twice (pandas `tests/generic/test_generic.py:487`, `obj.flags is obj.flags`).
-`x == x` on a bare name has its own check, not this one. Analysed, never run."""
+`x == x` on a bare name isn't flagged either (#232). Analysed, never run."""
 
 import pytest
 from shop import Config, make_order

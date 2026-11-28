@@ -30,3 +30,9 @@ def test_raise_checked_against_its_message():
     # exception's class builds from its arguments.
     with pytest.raises(OutOfStock, match="apple is sold out"):
         raise OutOfStock("apple", 0)
+
+
+def test_raise_checked_through_what_it_caught():
+    with pytest.raises(OutOfStock) as caught:
+        raise OutOfStock("apple", 0)
+    assert caught.value.item == "apple"
