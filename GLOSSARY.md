@@ -41,7 +41,7 @@ The modules a test's calls are followed into for its real assertions: the run's 
 _Avoid_: Test suite (the tests alone), test package
 
 **Weak assertion**:
-An `assert` that holds for almost any value, wrong ones included: a bare name's truthiness, `is not None`, `isinstance`, `hasattr`, `callable`, `>= 0`, or a length that is merely non-zero.
+An `assert` that holds for almost any value, wrong ones included: a bare name's truthiness, `is not None`, `isinstance` against builtins only (`dict`, `(int, float)`), `hasattr` on anything but a module, `callable`, `>= 0`, or a length that is merely non-zero. `isinstance` against a project or library class is not weak: there the type is the behaviour. Nor is the truthiness of a name bound to a filtered comprehension, which asks whether anything matched, as `x in y` does. `hasattr` on a module its imports show asks whether the module publishes a name: like an attribute's truthiness, it is neither weak nor exact.
 _Avoid_: Loose assertion, shallow assertion
 
 **Tautological assertion**:
