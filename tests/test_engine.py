@@ -48,6 +48,38 @@ def test_max_mock_setup_sets_how_much_mock_setup_a_test_may_have(
     assert {f.code for f in findings} == codes
 
 
+@pytest.mark.parametrize(
+    ("raw", "codes"),
+    [
+        ({}, set()),
+        ({"drill_sergeant_max_act_assert_cycles": "1"}, {"DS104"}),
+        ({"drill_sergeant_max_act_assert_cycles": "0"}, {"DS104"}),
+    ],
+    ids=["default", "one-allowed", "zero-counts-as-one"],
+)
+def test_max_act_assert_cycles_sets_how_many_act_assert_cycles_a_test_may_have(
+    tmp_path, unit_mark, raw, codes
+):
+    """Two act-then-assert cycles are allowed by default and flagged when one is
+    allowed; one cycle is never flagged, as interleaving takes two."""
+    path = tmp_path / "test_cart.py"
+    path.write_text(
+        "def test_add(cart):\n"
+        "    cart.add('apple')\n"
+        "    assert cart.items == ['apple']\n"
+        "\n"
+        "def test_cart(cart):\n"
+        "    cart.add('apple')\n"
+        "    assert cart.items == ['apple']\n"
+        "    cart.remove('apple')\n"
+        "    assert cart.items == []\n" + unit_mark
+    )
+
+    findings = analyze([path], resolve(raw))
+
+    assert {f.code for f in findings} == codes
+
+
 def test_configured_level_overrides_the_default(unseeded_random_test):
     [finding] = analyze([unseeded_random_test], Config(levels={"DS803": Level.WARN}))
 
@@ -187,10 +219,11 @@ def test_unset_options_take_the_spec_defaults():
         config.max_file_lines,
         config.max_test_lines,
         config.max_mock_setup,
+        config.max_act_assert_cycles,
         config.duplicate_setup_min_statements,
         config.duplicate_setup_min_tests,
         config.max_findings,
-    ) == (500, 50, 10, 3, 3, 25)
+    ) == (500, 50, 10, 2, 3, 3, 25)
     assert config.category_markers == ("unit", "integration", "e2e")
     assert config.source_dirs == ()
     assert (config.voice, config.inline_waivers, config.cache) == (True, True, True)
@@ -208,6 +241,7 @@ def test_every_spec_option_is_known_and_typed(tmp_path):
             "drill_sergeant_max_file_lines": "800",
             "drill_sergeant_max_test_lines": "80",
             "drill_sergeant_max_mock_setup": "4",
+            "drill_sergeant_max_act_assert_cycles": "1",
             "drill_sergeant_duplicate_setup_min_statements": "5",
             "drill_sergeant_duplicate_setup_min_tests": "2",
             "drill_sergeant_category_markers": "unit slow",
@@ -224,10 +258,11 @@ def test_every_spec_option_is_known_and_typed(tmp_path):
         config.max_file_lines,
         config.max_test_lines,
         config.max_mock_setup,
+        config.max_act_assert_cycles,
         config.duplicate_setup_min_statements,
         config.duplicate_setup_min_tests,
         config.max_findings,
-    ) == (800, 80, 4, 5, 2, 0)
+    ) == (800, 80, 4, 1, 5, 2, 0)
     assert config.category_markers == ("unit", "slow")
     assert config.source_dirs == ("lib", "app")
     assert (config.voice, config.inline_waivers, config.cache) == (False, False, False)
