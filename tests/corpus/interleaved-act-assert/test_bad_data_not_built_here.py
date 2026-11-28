@@ -64,3 +64,14 @@ def test_helper_that_only_acts(store):
     assert store.ready
     store.reset()
     assert not store.ready
+
+
+def test_name_rebound_by_a_loop(store, batches):
+    jobs = []
+    for jobs in batches:
+        store.queue(jobs)
+    assert store.ready
+    jobs.append("job")  # expect: DS104
+    assert store.pending == ["job"]
+    store.flush()
+    assert store.pending == []

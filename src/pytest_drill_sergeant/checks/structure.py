@@ -635,10 +635,10 @@ ASSERT_BEFORE_ACT = Check(
 )
 
 
-def _checked_acts(steps: list[tuple[ast.stmt, _Step]]) -> list[ast.stmt]:
-    """The first act of each run of acts that an assertion then checks.
+def _cycles(steps: list[tuple[ast.stmt, _Step]]) -> list[ast.stmt]:
+    """The first act of each act-then-assert cycle, in order.
 
-    A run starts at an act with no act since the last assertion, and counts once
+    A cycle starts at an act with no act since the last assertion, and counts once
     an assertion follows it.
     """
     starts: list[ast.stmt] = []
@@ -654,17 +654,18 @@ def _checked_acts(steps: list[tuple[ast.stmt, _Step]]) -> list[ast.stmt]:
 
 def _find_interleaved_act_assert(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        acts = _checked_acts(_steps(test, file))
-        if len(acts) <= file.thresholds.max_act_assert_cycles:
+        cycles = _cycles(_steps(test, file))
+        # Interleaving takes two cycles, so a limit under one counts as one.
+        if len(cycles) <= max(file.thresholds.max_act_assert_cycles, 1):
             continue
-        second = acts[1]
-        lines = ", ".join(str(act.lineno) for act in acts)
+        second = cycles[1]
+        lines = ", ".join(str(act.lineno) for act in cycles)
         yield Hit.on(
             test,
             second.lineno,
             found=(
-                f"acts and asserts {len(acts)} times: after the assertions on the "
-                f"act at line {acts[0].lineno}, {_describe(second)} on line "
+                f"acts and asserts {len(cycles)} times: after the assertions on the "
+                f"act at line {cycles[0].lineno}, {_describe(second)} on line "
                 f"{second.lineno} acts again."
             ),
             fix=(
@@ -685,14 +686,14 @@ INTERLEAVED_ACT_ASSERT = Check(
         "When this goes red, which act failed? NOBODY KNOWS! Split it up!",
     ),
     why=(
-        "A test that acts and asserts more than once checks several behaviours: "
+        "A test that acts and asserts several times checks several behaviours: "
         "when it fails, its name doesn't say which one broke, and a failing early "
         "step hides every later one."
     ),
     explain=(
         "Flags a test with more act-then-assert cycles than "
         "`drill_sergeant_max_act_assert_cycles` (2 by default, so a test is "
-        "flagged at its third). A cycle is an act and the assertions that follow "
+        "flagged once it has a third). A cycle is an act and the assertions that follow "
         "it; acts in a row before an assertion are one cycle. An act is a bare "
         "call or `await` made for its effect, counted as DS103 counts it: known "
         "output such as `logging.info()`, or a method of a pytest built-in fixture "
@@ -707,8 +708,8 @@ INTERLEAVED_ACT_ASSERT = Check(
         "assertion before the only act is fine; but a setup call followed by "
         "assertions on the starting state counts as a cycle of its own, so move "
         "that setup into a fixture. Split the test into one test per act, with "
-        "shared setup in a fixture. Set the option to 1 to flag a test at its "
-        "second cycle. It warns rather than fails: a workflow or state test that "
+        "shared setup in a fixture. Set the option to 1 (the least it counts as) "
+        "to flag a test at its second cycle. It warns rather than fails: a workflow or state test that "
         "steps through a sequence is sometimes rightly shaped this way, and a "
         "waiver records that it is."
     ),

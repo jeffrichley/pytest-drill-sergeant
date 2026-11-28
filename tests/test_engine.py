@@ -50,15 +50,24 @@ def test_max_mock_setup_sets_how_much_mock_setup_a_test_may_have(
 
 @pytest.mark.parametrize(
     ("raw", "codes"),
-    [({}, set()), ({"drill_sergeant_max_act_assert_cycles": "1"}, {"DS104"})],
-    ids=["default", "lowered-to-two"],
+    [
+        ({}, set()),
+        ({"drill_sergeant_max_act_assert_cycles": "1"}, {"DS104"}),
+        ({"drill_sergeant_max_act_assert_cycles": "0"}, {"DS104"}),
+    ],
+    ids=["default", "one-allowed", "zero-counts-as-one"],
 )
 def test_max_act_assert_cycles_sets_how_many_act_assert_cycles_a_test_may_have(
     tmp_path, unit_mark, raw, codes
 ):
-    """Two act-then-assert cycles: under the default, flagged once lowered to two."""
+    """Two act-then-assert cycles are allowed by default and flagged when one is
+    allowed; one cycle is never flagged, as interleaving takes two."""
     path = tmp_path / "test_cart.py"
     path.write_text(
+        "def test_add(cart):\n"
+        "    cart.add('apple')\n"
+        "    assert cart.items == ['apple']\n"
+        "\n"
         "def test_cart(cart):\n"
         "    cart.add('apple')\n"
         "    assert cart.items == ['apple']\n"

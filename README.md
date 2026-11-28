@@ -190,7 +190,7 @@ drill_sergeant_voice = false
 | `drill_sergeant_max_file_lines` | whole number | 500 |
 | `drill_sergeant_max_test_lines` | whole number: the most lines of code a test may have; `drill-sergeant explain DS105` says what counts | 50 |
 | `drill_sergeant_max_mock_setup` | whole number | 10 |
-| `drill_sergeant_max_act_assert_cycles` | whole number: the most act-then-assert cycles a test may have before DS104 flags it; 1 flags a test at its second | 2 |
+| `drill_sergeant_max_act_assert_cycles` | whole number: the most act-then-assert cycles a test may have before DS104 flags it; 1, the least it counts as, flags a test at its second | 2 |
 | `drill_sergeant_duplicate_setup_min_statements` | whole number | 3 |
 | `drill_sergeant_duplicate_setup_min_tests` | whole number | 3 |
 | `drill_sergeant_category_markers` | marker names; with DS901 on, every test must carry one; the plugin registers them | `unit integration e2e` |

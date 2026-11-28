@@ -1,6 +1,7 @@
 """Near-misses: a bare call between the assertions goes into a helper whose body
-asserts, so it is an assertion, not a second act. Modelled on networkx's
-`test_single_source_shortest_path` and its `validate_grid_path`. Analysed, never run."""
+asserts, so it is an assertion, not an act. Counted as acts, the test would have four
+act-then-assert cycles. Modelled on networkx's `test_single_source_shortest_path` and
+its `validate_grid_path`. Analysed, never run."""
 
 import pytest
 
@@ -19,6 +20,7 @@ def _check_cycle(path):
 
 class TestShortestPath:
     def test_single_source_shortest_path(self, grid, cycle, nx):
+        grid.freeze()
         p = nx.shortest_path(cycle, 0)
         assert p[3] == [0, 1, 2, 3]
         p = nx.shortest_path(grid, 1)
@@ -27,5 +29,6 @@ class TestShortestPath:
         assert p[3] == [0, 1, 2, 3]
         p = nx.shortest_path(grid, 1, weight="weight")
         validate_grid_path(4, 4, 1, 12, p[12])
-        _check_cycle(p[3])
         assert p == nx.single_source_dijkstra_path(grid, 1)
+        _check_cycle(p[3])
+        assert p[3][0] == 0

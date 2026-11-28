@@ -1,5 +1,5 @@
-"""Near-misses: two act-then-assert cycles, under the default of three that
-`drill_sergeant_max_act_assert_cycles` sets. Analysed, never run."""
+"""Near-misses: two act-then-assert cycles, no more than the two
+`drill_sergeant_max_act_assert_cycles` allows by default. Analysed, never run."""
 
 import pytest
 
