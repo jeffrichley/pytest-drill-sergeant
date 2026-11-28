@@ -17,11 +17,11 @@ class TestCoverageBoost:
 
     def test_module_attributes_coverage(self) -> None:
         """Test module attributes to increase coverage."""
-        assert hasattr(pytest_drill_sergeant, "__version__")  # expect: DS201
+        assert hasattr(pytest_drill_sergeant, "__version__")
         assert hasattr(pytest_drill_sergeant, "__all__")
 
         version = pytest_drill_sergeant.__version__
-        assert isinstance(version, str)
+        assert isinstance(version, str)  # expect: DS201
 
     def test_string_operations(self) -> None:
         """Test string operations to increase coverage."""

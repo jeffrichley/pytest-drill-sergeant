@@ -329,6 +329,14 @@ def _is_builtin(name: str, scope: _Scope, node: FunctionNode) -> bool:
     )
 
 
+def _plainly_imported(name: str, scope: _Scope) -> bool:
+    """Whether a name is bound, where a scope reads it, by a plain `import`."""
+    if name in scope.params or name in scope.values or name in scope.functions:
+        return False
+    bound = scope.imports.get(name) or scope.module.bindings.get(name)
+    return isinstance(bound, _Import) and bound.attr is None
+
+
 def _binds(node: ast.AST, name: str) -> bool:
     """Whether a node binds a name: a target, a `def`, a `class` or `except ... as`."""
     if isinstance(node, ast.Name):
@@ -1023,6 +1031,31 @@ class TestTree:
             return Definition(kind, builtin=func.id), keys
         return _UNKNOWN, keys
 
+    def is_module(
+        self, test: TestFunction, module: _Module, expr: ast.expr
+    ) -> tuple[bool, set[str]]:
+        """Whether an expression in a test stands for a module, by its imports.
+
+        A name a plain `import` binds is a module, wherever it is installed.
+        Anything else is one only when the files show the module it resolves to
+        (`from package import module`), in the test tree or production code.
+
+        Returns:
+            The answer, and every module it relied on.
+        """
+        scope = self._test_scope(test, module)
+        if isinstance(expr, ast.Name) and _plainly_imported(expr.id, scope):
+            return True, set()
+        keys: set[str] = set()
+        self._deps.append(keys)
+        self._anywhere = True
+        try:
+            target = self._target(expr, scope, frozenset())
+        finally:
+            self._anywhere = False
+            self._deps.pop()
+        return isinstance(target, _Module), keys
+
     def overrides_inherited_test(
         self, test: TestFunction, module: _Module
     ) -> tuple[bool, set[str]]:
@@ -1175,6 +1208,16 @@ class Assertions:
         builtin; never from its name.
         """
         found, keys = self._tree.definition(test, self._module, call)
+        self._followed |= keys
+        return found
+
+    def is_module(self, test: TestFunction, expr: ast.expr) -> bool:
+        """Whether an expression in a test stands for a module.
+
+        Read from the imports: a plain `import`, or a module the files show;
+        never from a name.
+        """
+        found, keys = self._tree.is_module(test, self._module, expr)
         self._followed |= keys
         return found
 

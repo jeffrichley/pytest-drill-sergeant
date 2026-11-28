@@ -374,7 +374,21 @@ def _is_call_to(node: ast.AST, names: frozenset[str]) -> bool:
     )
 
 
-def _is_builtin_type_check(call: ast.Call, is_builtin: Callable[[str], bool]) -> bool:
+@dataclass(frozen=True)
+class _Lookup:
+    """What the files show of the names an assertion reads.
+
+    Attributes:
+        is_builtin: Whether a name is Python's builtin, rebound nowhere the test
+            can see.
+        is_module: Whether an expression stands for a module, by the imports.
+    """
+
+    is_builtin: Callable[[str], bool]
+    is_module: Callable[[ast.expr], bool]
+
+
+def _is_builtin_type_check(call: ast.Call, lookup: _Lookup) -> bool:
     """Whether an `isinstance` call checks only against builtins the file doesn't rebind.
 
     Its class, or every class in a tuple, must be one (`dict`, `(int, float)`). A
@@ -387,25 +401,48 @@ def _is_builtin_type_check(call: ast.Call, is_builtin: Callable[[str], bool]) ->
         for name in (classes.elts if isinstance(classes, ast.Tuple) else [classes])
     ]
     return bool(names) and all(
-        isinstance(n, ast.Name) and is_builtin(n.id) for n in names
+        isinstance(n, ast.Name) and lookup.is_builtin(n.id) for n in names
     )
 
 
-def _weak_subjects(
-    test: ast.expr, is_builtin: Callable[[str], bool]
-) -> list[ast.expr] | None:
+def _asks_module_for_name(node: ast.expr, lookup: _Lookup) -> bool:
+    """Whether an expression is `hasattr` on a module (`hasattr(mqtt, "publish")`).
+
+    It asks whether the module publishes a name: a flag, like an attribute's
+    truthiness, neither weak nor exact.
+    """
+    return (
+        isinstance(node, ast.Call)
+        and _is_call_to(node, frozenset({"hasattr"}))
+        and bool(node.args)
+        and lookup.is_module(node.args[0])
+    )
+
+
+def _is_weak_call(call: ast.Call, lookup: _Lookup) -> bool:
+    """Whether a call to one of `_WEAK_CALLS` is weak.
+
+    `isinstance` is, only against builtins (`_is_builtin_type_check`); `hasattr`,
+    only on something other than a module (`_asks_module_for_name`).
+    """
+    if _is_call_to(call, frozenset({"isinstance"})):
+        return _is_builtin_type_check(call, lookup)
+    return not _asks_module_for_name(call, lookup)
+
+
+def _weak_subjects(test: ast.expr, lookup: _Lookup) -> list[ast.expr] | None:
     """What a weak assertion is about, or `None` if the assertion is not weak.
 
     Weak means true for almost any value: a bare name's truthiness, `is not None`,
-    `isinstance` against builtins only, `hasattr`, `callable`, `>= 0`, or a length
-    that is merely non-zero. An attribute or item's truthiness (`assert worker.done`)
-    is usually a flag the code sets, so it is not weak on its own. `is_builtin` tells
-    whether a name is Python's builtin, rebound nowhere the test can see.
+    `isinstance` against builtins only, `hasattr` on anything but a module,
+    `callable`, `>= 0`, or a length that is merely non-zero. An attribute or item's
+    truthiness (`assert worker.done`) is usually a flag the code sets, and `hasattr`
+    on a module asks whether it publishes a name, so neither is weak on its own.
     """
     if isinstance(test, ast.BoolOp) and isinstance(test.op, ast.And):
         subjects: list[ast.expr] = []
         for value in test.values:
-            found = _weak_subjects(value, is_builtin)
+            found = _weak_subjects(value, lookup)
             if found is None:
                 return None
             subjects += found
@@ -413,10 +450,7 @@ def _weak_subjects(
     if isinstance(test, ast.Name):
         return [test]
     if isinstance(test, ast.Call) and _is_call_to(test, _WEAK_CALLS) and test.args:
-        weak_call = not _is_call_to(
-            test, frozenset({"isinstance"})
-        ) or _is_builtin_type_check(test, is_builtin)
-        return [test.args[0]] if weak_call else None
+        return [test.args[0]] if _is_weak_call(test, lookup) else None
     if not (isinstance(test, ast.Compare) and len(test.ops) == 1):
         return None
     left, op, right = _normalised(test)
@@ -502,6 +536,8 @@ def _verdicts(test: TestFunction, calls: Assertions) -> list[_Verdict]:
         call = ast.Call(func=ast.Name(id=name, ctx=ast.Load()), args=[], keywords=[])
         return calls.definition(test, call).builtin is not None
 
+    lookup = _Lookup(is_builtin, lambda expr: calls.is_module(test, expr))
+
     for node in sorted(asserts, key=lambda n: (n.lineno, n.col_offset)):
         test_expr = node.test
         if isinstance(test_expr, ast.Constant) or (
@@ -531,7 +567,7 @@ def _verdicts(test: TestFunction, calls: Assertions) -> list[_Verdict]:
         if call is not None:
             verdicts.append(_Verdict(node, _Kind.MIRROR, call))
             continue
-        subjects = _weak_subjects(test_expr, is_builtin)
+        subjects = _weak_subjects(test_expr, lookup)
         if isinstance(test_expr, ast.Name) and _is_any_match_query(
             values.get(test_expr.id)
         ):
@@ -540,7 +576,9 @@ def _verdicts(test: TestFunction, calls: Assertions) -> list[_Verdict]:
             names = tuple(f"`{ast.unparse(s)}`" for s in subjects)
             verdicts.append(_Verdict(node, _Kind.WEAK, subjects=names))
             continue
-        flag = isinstance(test_expr, ast.Attribute | ast.Subscript)
+        flag = isinstance(
+            test_expr, ast.Attribute | ast.Subscript
+        ) or _asks_module_for_name(test_expr, lookup)
         verdicts.append(_Verdict(node, _Kind.FLAG if flag else _Kind.STRONG))
     return verdicts
 
@@ -652,8 +690,9 @@ WEAK_ASSERTION = Check(
         "the type is the behaviour. One "
         "exact assertion beside them, `pytest.raises` or a mock verification makes the "
         "test fine. An attribute's truthiness (`assert worker.done`) is usually a flag "
-        "the code sets: it neither makes a test weak nor excuses weak assertions "
-        "beside it. Membership (`x in y`) and `> 0` on anything but a length are left "
+        "the code sets, and `hasattr` on a module its imports show (`hasattr(mqtt, "
+        "'publish')`) asks whether the module publishes a name: each neither makes a "
+        "test weak nor excuses weak assertions beside it. Membership (`x in y`) and `> 0` on anything but a length are left "
         "alone, and so is a name bound to a filtered comprehension (`matches = [i for "
         "i in issues if ...]`, then `assert matches`), which asks whether anything "
         "matched, and so is a name bound to a call that answers yes or no exactly "
@@ -663,7 +702,12 @@ WEAK_ASSERTION = Check(
         "always truthy, so it is weak whatever it is annotated. A call whose definition "
         "the files don't show, such as a third-party library's, may be one, so it is "
         "left alone too; a function's name never decides. Assert the exact value the "
-        "code should produce."
+        "code should produce. Off by default: in library suites written by people, "
+        "about half of what it flags is fine, mostly a lookup by an exact key "
+        "(`states.get('light.kitchen') is not None`) or a builtin type that is the "
+        "behaviour, and nothing in the file tells those apart from a weak check. In a "
+        "suite an AI agent writes, most of what it flags is weak: turn it on there "
+        "at `warn` (`DS201=warn`)."
     ),
     bad_example=(
         "def test_apply_discount():\n"
