@@ -6,6 +6,7 @@ import sys
 from collections import Counter
 from collections.abc import Iterator, Mapping
 from enum import Enum
+from functools import cached_property
 
 from pytest_drill_sergeant.checks.ast_tools import (
     KNOWN_PACKAGES,
@@ -341,13 +342,24 @@ class _Order:
     """What reading a test's statements in order needs to know about the test."""
 
     def __init__(
-        self, test: TestFunction, file: TestFile, *, follow: bool = False
+        self,
+        test: TestFunction,
+        file: TestFile,
+        *,
+        follow: bool = False,
+        unseen: bool = True,
     ) -> None:
-        """Read `test`; with `follow`, a bare call can assert (`asserts`)."""
+        """Read `test`; with `follow`, a bare call can assert (`asserts`).
+
+        Without `unseen`, a followed call asserts only when the files show a
+        function that does, never for going into a third-party package.
+        """
         self.test = test
+        self.file = file
         self.names = test.imports
         self.excinfos = excinfo_names(test)
-        self.assertions = file.assertions if follow else None
+        self.follow = follow
+        self.unseen = unseen
 
     def asserts(self, node: ast.AST) -> bool:
         """Whether a node asserts.
@@ -359,7 +371,8 @@ class _Order:
         it is called), or into a third-party package, code the check can't see,
         which may. A call whose value is kept, or passed on, makes a value: that
         is setup, even when the function may assert. Bare calls are read so only
-        when the order follows them (DS103); DS104 and DS108 don't yet.
+        when the order follows them: DS103 all of them, DS104 only into functions
+        the files show; DS108 doesn't yet.
         """
         if is_real_assertion(node, self.names):
             return True
@@ -367,8 +380,8 @@ class _Order:
             call = _bare_call(node)
             return (
                 call is not None
-                and self.assertions is not None
-                and self.assertions.holds(self.test, [call])
+                and self.follow
+                and self.file.assertions.holds(self.test, [call], unseen=self.unseen)
             )
         return (
             isinstance(node, ast.Call)
@@ -381,10 +394,10 @@ class _Order:
     def acts(self, node: ast.AST) -> bool:
         """Whether a statement is a call made for its effect: the act under test.
 
-        That is a bare call or awaited call that doesn't assert (`asserts`) and
-        isn't known output or a pytest instrument (`ast_tools.is_known_non_act`).
-        Cleanup is an act. An assignment from a call is setup or reads a result, so
-        it isn't one.
+        That is a bare call or awaited call that doesn't assert (`asserts`), isn't
+        known output or a pytest instrument (`ast_tools.is_known_non_act`) and
+        doesn't build data (`builds_data`). Cleanup is an act. An assignment from a
+        call is setup or reads a result, so it isn't one.
         """
         if not isinstance(node, ast.Expr):
             return False
@@ -394,6 +407,26 @@ class _Order:
             and not self.asserts(node)
             and not self.asserts(call)
             and not is_known_non_act(call, self.test)
+            and not self.builds_data(call)
+        )
+
+    @cached_property
+    def data(self) -> frozenset[str]:
+        """The names the test binds only to lists, dicts or sets it builds."""
+        return _built_data(self.test, self.file)
+
+    def builds_data(self, call: ast.Call) -> bool:
+        """Whether a call is a method of a list, dict or set the test built itself.
+
+        That is one whose receiver is a name every binding of which in the test
+        assigns it a list, dict or set literal, a comprehension, or a call to the
+        builtin `list()`, `dict()` or `set()` (`_built_data`).
+        """
+        func = call.func
+        return (
+            isinstance(func, ast.Attribute)
+            and isinstance(func.value, ast.Name)
+            and func.value.id in self.data
         )
 
     def classify(self, statement: ast.stmt) -> _Step:
@@ -427,9 +460,68 @@ class _Order:
         return steps
 
 
+_CONTAINER_LITERALS = (
+    ast.List,
+    ast.Dict,
+    ast.Set,
+    ast.ListComp,
+    ast.SetComp,
+    ast.DictComp,
+)
+_CONTAINER_BUILTINS = frozenset({"list", "dict", "set"})
+
+
+def _is_built_container(value: ast.expr, test: TestFunction, file: TestFile) -> bool:
+    """Whether a value is a new list, dict or set the test builds.
+
+    That is a literal, a comprehension, or a call to the builtin `list()`, `dict()`
+    or `set()`, read through the file's bindings, never from the name alone.
+    """
+    if isinstance(value, _CONTAINER_LITERALS):
+        return True
+    return (
+        isinstance(value, ast.Call)
+        and file.assertions.definition(test, value).builtin in _CONTAINER_BUILTINS
+    )
+
+
+def _built_data(test: TestFunction, file: TestFile) -> frozenset[str]:
+    """The names a test binds only to lists, dicts or sets it builds itself.
+
+    A name the test takes as a parameter, or binds anywhere in its own code to
+    anything else (another value, a `for` target, a `with ... as`, a `def`),
+    isn't one.
+    """
+    nodes = [node for statement in test.node.body for node in _walk_own(statement)]
+    built: dict[str, set[ast.Name]] = {}
+    for node in nodes:
+        if isinstance(node, ast.Assign | ast.AnnAssign) and node.value is not None:
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            if _is_built_container(node.value, test, file):
+                for target in targets:
+                    if isinstance(target, ast.Name):
+                        built.setdefault(target.id, set()).add(target)
+    other = set(value_params(test)) | {
+        node.id
+        for node in nodes
+        if isinstance(node, ast.Name)
+        and isinstance(node.ctx, ast.Store)
+        and node not in built.get(node.id, set())
+    }
+    other.update(
+        node.name
+        for node in nodes
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef)
+    )
+    return frozenset(built.keys() - other)
+
+
 def _steps(test: TestFunction, file: TestFile) -> list[tuple[ast.stmt, _Step]]:
-    """A test's statements in order, each with what it does."""
-    return _Order(test, file).steps(test.node.body)
+    """A test's statements in order, each with what it does.
+
+    A bare call into a function the files show that asserts is an assertion.
+    """
+    return _Order(test, file, follow=True, unseen=False).steps(test.node.body)
 
 
 def _runs(order: _Order, statement: ast.stmt) -> bool:
