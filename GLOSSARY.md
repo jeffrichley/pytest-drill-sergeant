@@ -117,7 +117,7 @@ A function, class or lambda a test defines and hands to the code under test with
 _Avoid_: Fake (a fake is a working substitute), helper (a helper is one the test calls)
 
 **Mock setup**:
-What a test scripts its mocks to do, counted once per target, a mock's name with its attribute path or a patch's target, however often a later phase rebuilds it: a mock made and bound to a name (`repo = mock.Mock(spec=Repo)`), a `patch` that makes a mock (a decorator, a `with` item or a call), a mock's `return_value` or `side_effect` set (`repo.get.return_value = ...`), and a mock's attribute assigned a mock (`repo.close = AsyncMock()`, `attach_mock`). A plain value assigned to a mock's attribute is data, not setup, and `reset_mock()` and a patch given `new` set up nothing.
+What a test scripts its mocks to do, counted once per target, a mock's name with its attribute path or a patch's target, however often a later phase rebuilds it: a mock made and bound to a name (`repo = mock.Mock(spec=Repo)`), a `patch` that makes a mock (a decorator, a `with` item or a call; each `DEFAULT` of a `patch.multiple`), a mock's `return_value` or `side_effect` set (`repo.get.return_value = ...`, also through `configure_mock`), and a mock's attribute assigned a mock in itself, one made there or a name bound to one (`repo.close = AsyncMock()`, `attach_mock`). A plain value assigned to a mock's attribute is data, not mock setup, and so is another mock's attribute copied onto it (`a.uuid = b.uuid`); `reset_mock()`, calling a mock and a patch given `new` are no mock setup either.
 _Avoid_: Mock configuration, arrange
 
 **Category marker**:

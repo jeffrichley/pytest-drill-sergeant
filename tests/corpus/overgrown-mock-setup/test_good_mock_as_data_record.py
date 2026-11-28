@@ -28,6 +28,8 @@ def test_list_users_hides_the_pin():
     credential.slot = 3
     credential.data = "1234"
     credential.owner = user.handle
+    handle = user.handle
+    credential.alias = handle
     api.get_credentials.return_value = [credential]
 
     assert list_users(api) == [{"id": 1, "name": "Alice", "credentials": ["pin"]}]

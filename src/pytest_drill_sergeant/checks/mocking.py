@@ -493,7 +493,7 @@ def _patch_target(call: ast.Call, api: str) -> str:
     return f"{api}({', '.join(ast.unparse(a) for a in taken)})"
 
 
-class _Setup:
+class _MockSetup:
     """A test's mock setup: each target it scripts, with the line it is first set up.
 
     A target is a mock's name with its attribute path (`repo.get.return_value`), or
@@ -504,29 +504,43 @@ class _Setup:
     def __init__(self, test: _Test) -> None:
         self.test = test
         self.mocks = _Mocks(test)
+        injected = len(_patch_decorators(test))
+        self.made = set(positional_params(test.of)[:injected]) | {
+            name
+            for node in walk_test(test.of)
+            for name, value in _bindings(node)
+            if isinstance(value, ast.Call) and _makes_mock(value, test)
+        }
         self.targets: dict[str, int] = {}
         for dec in test.of.node.decorator_list:
             if isinstance(dec, ast.Call):
-                self._patches(dec, dec.lineno)
+                self._count_patch(dec, dec.lineno)
         for node in walk_test(test.of):
-            if isinstance(node, ast.With | ast.AsyncWith):
-                for item in node.items:
-                    self._made(item.context_expr, item.optional_vars)
-            elif isinstance(node, ast.Assign | ast.AnnAssign):
-                targets = (
-                    node.targets if isinstance(node, ast.Assign) else [node.target]
-                )
-                for target in targets:
-                    if node.value is not None:
-                        self._assigned(target, node.value, node.lineno)
-            elif isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
-                self._called(node.value)
+            self._count_node(node)
+
+    def _count_node(self, node: ast.AST) -> None:
+        """Count the mock setup one statement or `with` does."""
+        if isinstance(node, ast.With | ast.AsyncWith):
+            for item in node.items:
+                self._count_made(item.context_expr, item.optional_vars)
+        elif isinstance(node, ast.Assign):
+            for lhs in node.targets:
+                for each, value in _pairs(lhs, node.value):
+                    self._count_assigned(each, value, node.lineno)
+        elif isinstance(node, ast.AnnAssign | ast.AugAssign):
+            if node.value is not None:
+                self._count_assigned(node.target, node.value, node.lineno)
+        elif isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+            self._count_called(node.value)
 
     def _add(self, target: str, line: int) -> None:
         self.targets.setdefault(target, line)
 
-    def _patches(self, call: ast.Call, line: int) -> bool:
-        """Count a patch that makes a mock, or `patch.multiple`'s `DEFAULT`s."""
+    def _count_patch(self, call: ast.Call, line: int) -> bool:
+        """Count a patch that makes a mock, or `patch.multiple`'s `DEFAULT`s.
+
+        Returns whether the call is a patch, counted or not.
+        """
         api = _mock_api(call.func, self.test)
         if api in _PATCHES and _makes_mock(call, self.test):
             self._add(_patch_target(call, api), line)
@@ -539,49 +553,74 @@ class _Setup:
             return True
         return False
 
-    def _made(self, value: ast.expr, bound: ast.expr | None) -> None:
-        """Count a value that makes a mock, as its patch target or the name it is bound to."""
-        if not isinstance(value, ast.Call) or self._patches(value, value.lineno):
+    def _count_made(self, value: ast.expr | None, bound: ast.expr | None) -> None:
+        """Count a value that makes a mock: its patch target, or the name it's bound to."""
+        if not isinstance(value, ast.Call) or self._count_patch(value, value.lineno):
             return
         if bound is not None and _makes_mock(value, self.test):
             self._add(ast.unparse(bound), value.lineno)
 
-    def _assigned(self, target: ast.expr, value: ast.expr, line: int) -> None:
+    def _count_assigned(self, lhs: ast.expr, value: ast.expr | None, line: int) -> None:
         """Count an assignment that makes a mock or scripts one."""
-        if isinstance(target, ast.Name):
-            self._made(value, target)
-        elif self.mocks.is_mock(target) and (
-            (isinstance(target, ast.Attribute) and target.attr in _SCRIPTING)
-            or self._a_mock(value)
-        ):
-            self._add(ast.unparse(target), line)
+        if isinstance(lhs, ast.Name):
+            self._count_made(value, lhs)
+        elif self.mocks.is_mock(lhs) and self._scripts(lhs, value):
+            self._add(ast.unparse(lhs), line)
 
-    def _a_mock(self, value: ast.expr) -> bool:
-        """Whether a value is a mock in itself: one made there, or a name bound to one.
+    def _scripts(self, lhs: ast.expr | str, value: ast.expr | None) -> bool:
+        """Whether setting a mock's attribute to a value scripts the mock.
 
-        An attribute of a mock (`info.uuid`) read and assigned on is a value copied,
-        not a mock set up.
+        It does when the attribute is `return_value` or `side_effect`, or the value
+        is a mock in itself: one made there, or a name bound to one made, or handed
+        in by a patch decorator. A mock's attribute read and assigned on
+        (`info.uuid`) is a value copied, not a mock set up.
         """
+        if isinstance(lhs, str):
+            last = lhs.rsplit(".", 1)[-1]
+        else:
+            last = lhs.attr if isinstance(lhs, ast.Attribute) else ""
+        if last in _SCRIPTING:
+            return True
         if isinstance(value, ast.Name):
-            return value.id in self.mocks.names
+            return value.id in self.made
         return isinstance(value, ast.Call) and _makes_mock(value, self.test)
 
-    def _called(self, call: ast.Call) -> None:
+    def _count_called(self, call: ast.Call) -> None:
         """Count a bare patch call, or a mock's own method that scripts it."""
-        if self._patches(call, call.lineno):
+        if self._count_patch(call, call.lineno):
             return
         func = call.func
         if not (isinstance(func, ast.Attribute) and self.mocks.is_mock(func.value)):
             return
         owner = ast.unparse(func.value)
-        if func.attr == "attach_mock" and len(call.args) > 1:
-            name = call.args[1]
+        if func.attr == "attach_mock":
+            name = call.args[1] if len(call.args) > 1 else None
+            name = next((k.value for k in call.keywords if k.arg == "attribute"), name)
             if isinstance(name, ast.Constant) and isinstance(name.value, str):
                 self._add(f"{owner}.{name.value}", call.lineno)
         elif func.attr == "configure_mock":
             for path, value in _configured(call):
-                if path.rsplit(".", 1)[-1] in _SCRIPTING or self._a_mock(value):
+                if self._scripts(path, value):
                     self._add(f"{owner}.{path}", call.lineno)
+
+
+def _pairs(
+    lhs: ast.expr, value: ast.expr | None
+) -> Iterator[tuple[ast.expr, ast.expr | None]]:
+    """Each target an assignment binds, with its value where the file shows it.
+
+    A tuple or list target takes the items of a tuple or list value of the same
+    length; otherwise its targets' values are unknown (`None`).
+    """
+    if not isinstance(lhs, ast.Tuple | ast.List):
+        yield lhs, value
+        return
+    if isinstance(value, ast.Tuple | ast.List) and len(value.elts) == len(lhs.elts):
+        items: list[ast.expr | None] = list(value.elts)
+    else:
+        items = [None] * len(lhs.elts)
+    for each, item in zip(lhs.elts, items, strict=True):
+        yield from _pairs(each, item)
 
 
 def _configured(call: ast.Call) -> Iterator[tuple[str, ast.expr]]:
@@ -601,7 +640,7 @@ def _configured(call: ast.Call) -> Iterator[tuple[str, ast.expr]]:
 def _find_overgrown_mock_setup(file: TestFile) -> Iterator[Hit]:
     limit = file.thresholds.max_mock_setup
     for function in file.tests:
-        targets = _Setup(_read(function, file)).targets
+        targets = _MockSetup(_read(function, file)).targets
         if len(targets) <= limit:
             continue
         where = ", ".join(str(n) for n in sorted(set(targets.values())))
@@ -639,18 +678,21 @@ OVERGROWN_MOCK_SETUP = Check(
         "Flags a test that sets up more mock targets than "
         "`drill_sergeant_max_mock_setup` (5 by default). A target is a mock's name "
         "with its attribute path, or a patch's target, counted once however often a "
-        "later phase rebuilds it. Setup is a mock made and bound to a name "
+        "later phase rebuilds it. Mock setup is a mock made and bound to a name "
         "(`repo = Mock(...)`, `create_autospec(...)`), a `patch` that makes a mock "
-        "(a decorator, a `with` item or `mocker.patch(...)`), a mock's `return_value` "
-        "or `side_effect` set (`repo.get.return_value = ...`), and a mock's attribute "
-        "assigned a mock (`repo.close = AsyncMock()`, `configure_mock`, "
-        "`attach_mock`). A plain value assigned to a mock's attribute is data, not "
-        "setup, and so is one copied from another mock's attribute; `reset_mock()`, "
-        "calling a mock and a patch given `new` set up nothing. A mock is known from "
-        "the file, as DS301 knows it: a fixture named `mock_repo` isn't one, and "
-        "setup in a fixture doesn't count against the test. Replace the mocks with "
-        "fakes built once in a fixture, or test one level up with real objects. It "
-        "warns rather than fails: a test of glue code may need several mocks."
+        "(a decorator, a `with` item or `mocker.patch(...)`; each `DEFAULT` of a "
+        "`patch.multiple`), a mock's `return_value` or `side_effect` set "
+        "(`repo.get.return_value = ...`, also through `configure_mock`), and a "
+        "mock's attribute assigned a mock in itself, one made there or a name bound "
+        "to one (`repo.close = AsyncMock()`, `attach_mock`). A plain value assigned "
+        "to a mock's attribute is data, not mock setup, and so is another mock's "
+        "attribute copied onto it (`a.uuid = b.uuid`); `reset_mock()`, calling a "
+        "mock and a patch given `new` are no mock setup either. A mock is known "
+        "from the file, as DS301 knows it: a fixture named `mock_repo` isn't one, "
+        "and mock setup in a fixture doesn't count against the test. Replace the "
+        "mocks with fakes built once in a fixture, or test one level up with real "
+        "objects. It warns rather than fails: a test of glue code may need several "
+        "mocks."
     ),
     bad_example=(
         "from unittest import mock\n"

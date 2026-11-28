@@ -41,9 +41,7 @@ def test_max_mock_setup_sets_how_much_mock_setup_a_test_may_have(
         "    assert total(repo) == 3\n" + unit_mark
     )
 
-    findings = analyze(
-        [path], Config(max_mock_setup=limit, levels={"DS303": Level.FAIL})
-    )
+    findings = analyze([path], Config(max_mock_setup=limit))
 
     assert {f.code for f in findings} == codes
 
