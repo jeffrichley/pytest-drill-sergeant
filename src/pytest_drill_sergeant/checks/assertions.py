@@ -1,8 +1,10 @@
 """The assertions family (DS2xx): assertions that prove nothing.
 
-Every check here reads only `assert` statements, and leaves a truthy constant or a
-non-empty tuple (`assert True`) to no-real-assertion. Each `assert` gets one kind,
-tautological before mirror before weak, so one assertion is never reported twice.
+Every check here reads `assert` statements, and leaves a truthy constant or a
+non-empty tuple (`assert True`) to no-real-assertion; tautological-assertion also
+reads a `pytest.raises` block that only raises what it expects. Each `assert` gets
+one kind, tautological before mirror before weak, so one assertion is never
+reported twice.
 """
 
 import ast
@@ -13,6 +15,9 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 from pytest_drill_sergeant.checks.ast_tools import (
+    PYTEST_RAISES,
+    calls_to,
+    expected_class,
     is_always_true,
     is_real_assertion,
     walk_test,
@@ -29,8 +34,11 @@ from pytest_drill_sergeant.checks.base import (
 from pytest_drill_sergeant.checks.helpers import Assertions, CallKind
 from pytest_drill_sergeant.findings import Level
 
-# Comparisons that hold whenever both sides are the same value.
-_TRUE_ON_IDENTITY = (ast.Eq, ast.Is, ast.LtE, ast.GtE)
+# The statements whose body may run once, many times or not at all: a name bound in
+# one holds what the path taken decided, not a value the test wrote.
+_BRANCHING = (
+    ast.If | ast.For | ast.AsyncFor | ast.While | ast.Try | ast.TryStar | ast.Match
+)
 
 # Builtins whose result is only a truthiness or type fact about their argument.
 _WEAK_CALLS = frozenset({"bool", "isinstance", "hasattr", "callable"})
@@ -91,10 +99,6 @@ class _Verdict:
 def _is_literal(node: ast.AST) -> bool:
     """Whether an expression is built from values alone, so it never changes."""
     return all(isinstance(n, _LITERAL_NODES) for n in ast.walk(node))
-
-
-def _has_call(node: ast.AST) -> bool:
-    return any(isinstance(n, ast.Call) for n in ast.walk(node))
 
 
 def _same(left: ast.AST, right: ast.AST) -> bool:
@@ -230,31 +234,82 @@ def _is_simple_assignment(name: ast.Name, parent: ast.AST) -> bool:
     return isinstance(parent, ast.AnnAssign) and parent.value is not None
 
 
+def _parents(test: TestFunction) -> dict[ast.AST, ast.AST]:
+    """Each node of the test's `def` mapped to the node it sits in."""
+    return {
+        child: parent
+        for parent in ast.walk(test.node)
+        for child in ast.iter_child_nodes(parent)
+    }
+
+
+def _enclosing(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> Iterator[ast.AST]:
+    """The nodes a node sits in, innermost first."""
+    while node in parents:
+        node = parents[node]
+        yield node
+
+
+def _is_branch_bound(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> bool:
+    """Whether a node sits under an `if`, a loop, a `try` or a `match` in the test."""
+    return any(isinstance(n, _BRANCHING) for n in _enclosing(node, parents))
+
+
+def _runs_between(
+    node: ast.Name, start: ast.stmt, end: ast.stmt, parents: dict[ast.AST, ast.AST]
+) -> bool:
+    """Whether `node` may run after `start` finishes and before `end` runs.
+
+    It may when it stands after `start` and before `end` in the source, or when
+    it shares a loop with `end` that `start` is outside of: from the second pass
+    on, it ran before `end` again.
+    """
+    position = (node.lineno, node.col_offset)
+    finish = (start.end_lineno or 0, start.end_col_offset or 0)
+    if finish <= position < (end.lineno, end.col_offset):
+        return True
+    outside = set(_enclosing(start, parents))
+    return any(
+        isinstance(loop, ast.For | ast.AsyncFor | ast.While)
+        and loop not in outside
+        and loop in set(_enclosing(node, parents))
+        for loop in _enclosing(end, parents)
+    )
+
+
 def _aliases(test: TestFunction) -> dict[str, ast.Assign | ast.AnnAssign]:
     """The names a test binds once and only reads in assertions, with their bindings.
 
     Such a name is an alias of its value: nothing in the test passes it to code
     that could change it. A name read anywhere else (a call argument, a method
-    receiver) is not one, and nor is a name only read to bind one of those.
+    receiver) is not one, and nor is a name only read to bind one of those, or
+    read in a call to bind one (`gen = paths(index_map=index_map)`): the call takes
+    it. A name bound under an `if`, a loop, a `try` or a `match` is not one either:
+    what it holds at the assert depends on the path the test took.
     """
-    parents = {
-        child: parent
-        for parent in ast.walk(test.node)
-        for child in ast.iter_child_nodes(parent)
-    }
+    parents = _parents(test)
     stores, loads = _names(test)
     assigns: dict[ast.AST, str] = {}
     for name, nodes in stores.items():
         parent = parents[nodes[0]]
-        if len(nodes) == 1 and _is_simple_assignment(nodes[0], parent):
+        if (
+            len(nodes) == 1
+            and _is_simple_assignment(nodes[0], parent)
+            and not _is_branch_bound(parent, parents)
+        ):
             assigns[parent] = name
 
     def reader(node: ast.AST) -> str | None:
-        """`assert` if the read is in an assertion, else the name it helps bind."""
+        """`assert` if the read is in an assertion, else the name it helps bind.
+
+        A read in a call, on the way to a binding, is the call's: `None`.
+        """
         while node is not test.node:
             node = parents[node]
             if isinstance(node, ast.Assert):
                 return "assert"
+            if isinstance(node, ast.Call):
+                return None
             if node in assigns:
                 return assigns[node]
         return None
@@ -294,26 +349,15 @@ def _resolve(expr: ast.expr, bindings: dict[str, ast.expr]) -> ast.expr:
     return resolved
 
 
-def _multiplies_by_zero(node: ast.AST) -> ast.expr | None:
-    """The operand a `* 0` in the expression throws away, if there is one."""
-    for n in ast.walk(node):
-        if isinstance(n, ast.BinOp) and isinstance(n.op, ast.Mult):
-            if _is_constant(n.right, 0) and not _is_literal(n.left):
-                return n.left
-            if _is_constant(n.left, 0) and not _is_literal(n.right):
-                return n.right
-    return None
-
-
-def _tautology(raw: ast.expr, aliased: ast.expr, resolved: ast.expr) -> str | None:
+def _tautology(aliased: ast.expr) -> str | None:
     """Why an assertion can't fail, if it can't.
 
-    `aliased` is `raw` with only names bound to literals or other names replaced;
-    `resolved` has every bound name replaced.
+    `aliased` is the assertion with names bound to literals or other names
+    replaced. It can't fail when it checks only literals, or asks whether one bare
+    name `is` itself: identity can't be overridden. `==` can (`__eq__` may be what
+    is under test, and NaN isn't equal to itself), and an attribute or a call on
+    both sides reads a property or calls code twice, so none of those is one.
     """
-    dropped = _multiplies_by_zero(raw) or _multiplies_by_zero(resolved)
-    if dropped is not None:
-        return f"it multiplies `{ast.unparse(dropped)}` by zero, so its value drops out"
     if not isinstance(aliased, ast.Compare):
         if _is_literal(aliased):
             return "it checks only values the test wrote itself"
@@ -322,13 +366,14 @@ def _tautology(raw: ast.expr, aliased: ast.expr, resolved: ast.expr) -> str | No
     if all(_is_literal(operand) for operand in operands):
         return "it compares only values the test wrote itself"
     [op] = aliased.ops if len(aliased.ops) == 1 else [None]
-    right = aliased.comparators[0]
+    left, right = aliased.left, aliased.comparators[0]
     if (
-        isinstance(op, _TRUE_ON_IDENTITY)
-        and _same(aliased.left, right)
-        and not _has_call(aliased.left)
+        isinstance(op, ast.Is)
+        and isinstance(left, ast.Name)
+        and isinstance(right, ast.Name)
+        and left.id == right.id
     ):
-        return f"it compares `{ast.unparse(aliased.left)}` with itself"
+        return f"it asks whether `{left.id}` is itself"
     return None
 
 
@@ -577,6 +622,22 @@ def _verdicts(test: TestFunction, calls: Assertions) -> list[_Verdict]:
     verdicts = []
     asserts = [node for node in walk_test(test) if isinstance(node, ast.Assert)]
     others = _state_changes(test, list(bindings.values()))
+    stores, _ = _names(test)
+    parents = _parents(test)
+
+    def rebound_before(name: str, node: ast.Assert) -> bool:
+        """Whether a name an alias stands for is rebound between it and `node`.
+
+        `expected = result`, then `result = ...` again: `expected` holds the old
+        value, so it no longer stands for `result`.
+        """
+        read = _resolve(aliases[name], aliases)
+        return any(
+            _runs_between(store, bindings[name], node, parents)
+            for n in ast.walk(read)
+            if isinstance(n, ast.Name)
+            for store in stores[n.id]
+        )
 
     def is_builtin(name: str) -> bool:
         call = ast.Call(func=ast.Name(id=name, ctx=ast.Load()), args=[], keywords=[])
@@ -597,19 +658,28 @@ def _verdicts(test: TestFunction, calls: Assertions) -> list[_Verdict]:
             kind = _Kind.IGNORED if is_always_true(test_expr) else _Kind.STRONG
             verdicts.append(_Verdict(node, kind))
             continue
-        # A value read from the code stands in for its name only if nothing that
+        # A name bound to a literal or another name stands in for it until what
+        # it names is rebound; a value read from the code, only if nothing that
         # may change state ran between the binding and this assert.
+        held = {
+            name: value
+            for name, value in aliases.items()
+            if not rebound_before(name, node)
+        }
         settled = {
             name: value
             for name, value in values.items()
-            if name in aliases
-            or not any(
-                (bindings[name].end_lineno or 0) < other.lineno < node.lineno
-                for other in others
+            if name in held
+            or (
+                name not in aliases
+                and not any(
+                    (bindings[name].end_lineno or 0) < other.lineno < node.lineno
+                    for other in others
+                )
             )
         }
         resolved = _resolve(test_expr, settled)
-        why = _tautology(test_expr, _resolve(test_expr, aliases), resolved)
+        why = _tautology(_resolve(test_expr, held))
         if why is not None:
             verdicts.append(_Verdict(node, _Kind.TAUTOLOGICAL, why))
             continue
@@ -675,21 +745,77 @@ def tautological_asserts(test: TestFunction, calls: Assertions) -> list[ast.Asse
     return [v.node for v in _verdicts(test, calls) if v.kind is _Kind.TAUTOLOGICAL]
 
 
+def _raises_what_it_raises(test: TestFunction) -> Iterator[tuple[ast.With, ast.expr]]:
+    """Each `pytest.raises` block whose only statement raises what it expects.
+
+    The `raise` names the same expression as the expected class, compared
+    structurally, bare or called (`raise OutOfStock`, `raise OutOfStock("x")`).
+    A `match=`, or an `as` name the test reads afterwards, checks the exception
+    its class's code builds, so a block with one can fail and isn't yielded.
+    Yields the `with` and the expected class.
+    """
+    _, loads = _names(test)
+    for node in walk_test(test):
+        if not (
+            isinstance(node, ast.With)
+            and len(node.items) == 1
+            and len(node.body) == 1
+            and isinstance(node.body[0], ast.Raise)
+        ):
+            continue
+        call = node.items[0].context_expr
+        caught = node.items[0].optional_vars
+        if isinstance(caught, ast.Name) and loads[caught.id]:
+            continue
+        if not (
+            isinstance(call, ast.Call)
+            and calls_to(call, PYTEST_RAISES, test.imports)
+            and not any(k.arg == "match" for k in call.keywords)
+        ):
+            continue
+        expected = expected_class(call, test.imports)
+        raised = node.body[0].exc
+        if isinstance(raised, ast.Call):
+            raised = raised.func
+        if expected is not None and raised is not None and _same(expected, raised):
+            yield node, expected
+
+
 def _find_tautological_assertion(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
+        hits = []
         for verdict in _verdicts(test, file.assertions):
             if verdict.kind is not _Kind.TAUTOLOGICAL:
                 continue
             source = ast.unparse(verdict.node.test)
-            yield Hit.on(
-                test,
-                verdict.node.lineno,
-                found=f"has `assert {source}`, which can't fail: {verdict.detail}.",
-                fix=(
-                    f"replace `assert {source}` with an assertion on what the code "
-                    "under test returns, against a value worked out by hand."
-                ),
+            hits.append(
+                Hit.on(
+                    test,
+                    verdict.node.lineno,
+                    found=f"has `assert {source}`, which can't fail: {verdict.detail}.",
+                    fix=(
+                        f"replace `assert {source}` with an assertion on what the code "
+                        "under test returns, against a value worked out by hand."
+                    ),
+                )
             )
+        for block, expected in _raises_what_it_raises(test):
+            name = ast.unparse(expected)
+            hits.append(
+                Hit.on(
+                    test,
+                    block.lineno,
+                    found=(
+                        f"expects `{name}` from a `pytest.raises` block whose only "
+                        f"statement raises `{name}` itself, so it can't fail."
+                    ),
+                    fix=(
+                        f"replace the `raise` with the call to the code under test "
+                        f"that should raise `{name}`."
+                    ),
+                )
+            )
+        yield from sorted(hits, key=lambda hit: hit.line)
 
 
 def _find_mirror_assertion(file: TestFile) -> Iterator[Hit]:
@@ -771,9 +897,9 @@ TAUTOLOGICAL_ASSERTION = Check(
     code="DS202",
     name="tautological-assertion",
     kind=Kind.DEFECT,
-    default_level=Level.OFF,
+    default_level=Level.FAIL,
     voice=(
-        "You asserted that a thing equals itself. Congratulations, you discovered math!",
+        "You asserted that a thing IS itself. Congratulations, you discovered math!",
         "This assertion can't fail, recruit! An alarm that can't ring is a DOORSTOP!",
         "The code under test isn't even IN this assertion! What are you guarding?",
     ),
@@ -782,12 +908,26 @@ TAUTOLOGICAL_ASSERTION = Check(
         "proves nothing while looking like it does."
     ),
     explain=(
-        "Flags an `assert` that can't fail: one comparing an expression with itself "
-        "(`assert x == x`), one comparing only values the test wrote itself "
-        "(`expected = 1; actual = expected; assert actual == expected`, `assert 2 == "
-        "2`), or one multiplying the result away (`assert 5 + f(x) * 0 == 5`). A bare "
-        "`assert True` is no-real-assertion's to report. Assert on what the code "
-        "under test returns, against a value worked out by hand."
+        "Flags an `assert` that can't fail: one comparing only values the test "
+        "wrote itself (`expected = 1; actual = expected; assert actual == expected`, "
+        "`assert 2 == 2`), or one asking whether a bare name `is` itself (`assert "
+        "order is order`), directly or through names bound to it; and a "
+        "`pytest.raises(X)` block whose only statement raises `X` or `X(...)` "
+        "itself, which nothing but the test can raise; one with a `match=`, or an "
+        "`as` name read afterwards, checks the exception its class builds, so it "
+        "can fail. A name stands for the value it "
+        "was bound to only when the test binds it once, outside any `if`, loop, "
+        "`try` or `match`, passes it to no call, and rebinds nothing it names before "
+        "the assert: a flag set in a loop's branch, a dict a call fills in "
+        "(`index_map = {}`, then `paths(index_map=index_map)`), or `expected = "
+        "result` before `result` is bound again holds what the code decided. `==` and "
+        "`!=` call `__eq__`, which may be what is under test (`cfg == cfg`), and NaN "
+        "isn't equal to itself, so `x == x` isn't flagged; an attribute "
+        "or call on both sides (`obj.flags is obj.flags`) reads a property or calls "
+        "code twice, so it is left alone. A bare `assert True` is "
+        "no-real-assertion's to report. Assert on what the code under test returns, "
+        "against a value worked out by hand, and call the code that should raise "
+        "inside `pytest.raises`."
     ),
     bad_example=(
         "def test_config_loads():\n"
