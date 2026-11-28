@@ -97,7 +97,7 @@ What per-file analysis records of each test in a file for cross-file analysis: i
 _Avoid_: File index, digest
 
 **Cache**:
-Each test file's per-file analysis result, kept between runs in `d/drill-sergeant/` under pytest's cache directory and shared by the plugin and the CLI. A file is analysed again only when its key changes: the hash of its bytes, drill-sergeant's own code, or a config option per-file analysis reads (thresholds, category markers, source dirs, inline waivers); or when a module of the test tree its analysis followed, or looked for there, or a production module it read a definition in, has changed, appeared, gone or left the test tree since. Levels, mode and per-file ignores apply after it, so changing them reuses every entry. Cross-file analysis always reruns, from the cached summaries.
+Each test file's per-file analysis result, kept between runs in `d/drill-sergeant/` under pytest's cache directory and shared by the plugin and the CLI. A file is analysed again only when its key changes: the hash of its bytes, drill-sergeant's own code, or a config option per-file analysis reads (thresholds, category markers, source dirs, inline waivers), or its declared dependencies; or when a module of the test tree its analysis followed, or looked for there, or a production module it read a definition in, has changed, appeared, gone or left the test tree since. Levels, mode and per-file ignores apply after it, so changing them reuses every entry. Cross-file analysis always reruns, from the cached summaries.
 _Avoid_: Memo, store
 
 **Cross-file analysis**:
@@ -105,8 +105,12 @@ The step, after per-file analysis of every file in the run, that compares the pe
 _Avoid_: Global pass, project analysis
 
 **Mock**:
-A test double made by `unittest.mock` or a pytest-mock fixture such as `mocker` (`Mock()`, `create_autospec`, `patch`), as the file shows it: made in the test, handed in by a `patch` decorator, or reached from one. A name such as `mock_db` never makes a value one.
+A test double made by `unittest.mock` or a pytest-mock fixture such as `mocker` (`Mock()`, `create_autospec`, `patch`), as the file shows it: made in the test, handed in by a `patch` decorator, or reached from one. A parameter named for a pytest-mock fixture is one only when pytest-mock is a declared dependency and the test sees no fixture of that name defined (or brought in by an import other than pytest-mock's, or a `*` import) in its module, a class around it or a `conftest.py` from its directory up to the config root. A name such as `mock_db` never makes a value one.
 _Avoid_: Stub, fake (a fake is a working substitute, not a mock)
+
+**Declared dependency**:
+A package a test file's project names as one, in its directory or a directory above it up to the config root, or, when the config root holds no `pyproject.toml`, on up to the nearest directory that does: in `pyproject.toml` (`[project]` dependencies and optional dependencies, `[dependency-groups]`, `[tool.uv]` dev-dependencies, PDM's dev-dependencies, Hatch's environment dependencies, Poetry's dependency tables) or in a `.txt` whose name holds `requirements` or one in `requirements/`, its name normalised as PEP 503 does. Read from the files, never from what is installed, so the plugin and the CLI agree.
+_Avoid_: Requirement, installed package
 
 **Stand-in**:
 A function, class or lambda a test defines and hands to the code under test without calling it itself, such as a slow callback passed in or a `side_effect`. What runs inside it is the stand-in's behaviour, not the test's.

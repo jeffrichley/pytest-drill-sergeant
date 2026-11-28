@@ -15,7 +15,7 @@ def test_mangled_balance():
 
 
 def test_private_method_was_called(mocker):
-    service = Service(client=mocker.Mock())  # expect: DS302
+    service = Service(client=mocker.Mock())
     service.run()
     service._client.send.assert_called_once()  # expect: DS602
 

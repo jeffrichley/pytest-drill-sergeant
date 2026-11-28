@@ -36,7 +36,7 @@ def test_smoke_with_a_try():
 
 
 def test_mock_configured_but_never_checked(mocker):  # expect: DS101
-    mocker.patch("pytest_drill_sergeant.cli.main", return_value=0)  # expect: DS302
+    mocker.patch("pytest_drill_sergeant.cli.main", return_value=0)
     pytest_drill_sergeant.cli.main()
 
 
