@@ -136,6 +136,10 @@ _Avoid_: Severity
 Said of a check whose findings, over a fresh hand-judged sample of real suites, hold few enough false positives for a level: none allows `fail`; under 15%, with each remaining one waived, allows `warn`; 15% or more keeps it off. Only a proven check is on by default, at the lower of that level and its kind's highest; the rest come on one by one as each is proven.
 _Avoid_: Stable, trusted
 
+**Split**:
+A check carved out of another check's failure mode: a pattern legitimate in some projects but still a real claim, given its own code, kind and default level by its own proof instead of being dropped. It and the check it came from never both report one problem (ADR 0002).
+_Avoid_: Sub-check, variant, fork
+
 **Mode**:
 The run-wide setting over every level: `fail` (each check at its level), `warn` (every finding reported as `warn`) or `off` (no check runs). Set by `drill_sergeant_mode`.
 _Avoid_: Global level, strictness
