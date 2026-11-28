@@ -117,7 +117,7 @@ A function, class or lambda a test defines and hands to the code under test with
 _Avoid_: Fake (a fake is a working substitute), helper (a helper is one the test calls)
 
 **Mock setup**:
-A statement in a test that makes, patches in or configures a mock: `repo = mock.Mock(spec=Repo)`, a `patch` decorator or `with` item, `repo.get.return_value = ...`.
+What a test scripts its mocks to do, counted once per target, a mock's name with its attribute path or a patch's target, however often a later phase rebuilds it: a mock made and bound to a name (`repo = mock.Mock(spec=Repo)`), a `patch` that makes a mock (a decorator, a `with` item or a call), a mock's `return_value` or `side_effect` set (`repo.get.return_value = ...`), and a mock's attribute assigned a mock (`repo.close = AsyncMock()`, `attach_mock`). A plain value assigned to a mock's attribute is data, not setup, and `reset_mock()` and a patch given `new` set up nothing.
 _Avoid_: Mock configuration, arrange
 
 **Category marker**:

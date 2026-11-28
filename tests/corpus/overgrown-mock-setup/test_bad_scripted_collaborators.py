@@ -1,5 +1,6 @@
-"""A test that scripts its collaborators' every call: eleven mock-setup statements
-against the default threshold of ten. Analysed, never run."""
+"""A test that scripts its collaborators' every call: ten mock targets against the
+default threshold of five; its `configure_mock` of a plain value is data. Analysed,
+never run."""
 
 from unittest import mock
 

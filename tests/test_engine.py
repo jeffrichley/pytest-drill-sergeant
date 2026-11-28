@@ -190,7 +190,7 @@ def test_unset_options_take_the_spec_defaults():
         config.duplicate_setup_min_statements,
         config.duplicate_setup_min_tests,
         config.max_findings,
-    ) == (500, 50, 10, 3, 3, 25)
+    ) == (500, 50, 5, 3, 3, 25)
     assert config.category_markers == ("unit", "integration", "e2e")
     assert config.source_dirs == ()
     assert (config.voice, config.inline_waivers, config.cache) == (True, True, True)

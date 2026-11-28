@@ -51,7 +51,7 @@ class Config:
             to: the config file's.
         max_file_lines: The most lines a test file may have.
         max_test_lines: The most lines of code a test function may have.
-        max_mock_setup: The most mock-setup statements a test may have.
+        max_mock_setup: The most mock targets a test may set up.
         duplicate_setup_min_statements: The fewest statements a copy-pasted setup
             block has.
         duplicate_setup_min_tests: The fewest tests a copy-pasted setup block is in.
@@ -70,7 +70,7 @@ class Config:
     root: Path = Path()
     max_file_lines: int = 500
     max_test_lines: int = 50
-    max_mock_setup: int = 10
+    max_mock_setup: int = 5
     duplicate_setup_min_statements: int = 3
     duplicate_setup_min_tests: int = 3
     category_markers: tuple[str, ...] = ("unit", "integration", "e2e")
@@ -136,7 +136,7 @@ OPTIONS: tuple[Option, ...] = (
         "drill_sergeant_max_mock_setup",
         "int",
         _DEFAULT.max_mock_setup,
-        "the most mock-setup statements a test may have",
+        "the most mock targets a test may set up",
     ),
     Option(
         "drill_sergeant_duplicate_setup_min_statements",

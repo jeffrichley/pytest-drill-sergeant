@@ -75,7 +75,7 @@ On by default, at `fail`: DS001 malformed-waiver, DS102 no-action-under-test, DS
 mock-only-assertion, DS401 skip-without-reason, DS402 unconditional-skip, DS603 source-text-grep, DS801
 sleep-in-test, DS802 wall-clock-read and DS803 unseeded-random. At `warn`: DS101
 no-real-assertion, DS103 assert-before-act, DS105 long-test, DS106 long-file, DS107
-conditional-logic and DS502 near-duplicate-tests. Every other check is off: DS104, DS201-DS203, DS302, DS303, DS403,
+conditional-logic, DS303 overgrown-mock-setup and DS502 near-duplicate-tests. Every other check is off: DS104, DS201-DS203, DS302, DS403,
 DS501, DS601, DS602, DS701 and DS702 until each is proven, and the two conventions:
 DS108 (AAA comments) and DS901 (category markers).
 
@@ -188,7 +188,7 @@ drill_sergeant_voice = false
 | `drill_sergeant_per_file_ignores` | `glob: codes` lines, globs relative to the config file; a glob with no `/` also matches file names | none |
 | `drill_sergeant_max_file_lines` | whole number | 500 |
 | `drill_sergeant_max_test_lines` | whole number: the most lines of code a test may have; `drill-sergeant explain DS105` says what counts | 50 |
-| `drill_sergeant_max_mock_setup` | whole number | 10 |
+| `drill_sergeant_max_mock_setup` | whole number: the most mock targets a test may set up; `drill-sergeant explain DS303` says what counts | 5 |
 | `drill_sergeant_duplicate_setup_min_statements` | whole number | 3 |
 | `drill_sergeant_duplicate_setup_min_tests` | whole number | 3 |
 | `drill_sergeant_category_markers` | marker names; with DS901 on, every test must carry one; the plugin registers them | `unit integration e2e` |
