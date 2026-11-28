@@ -863,7 +863,7 @@ TAUTOLOGICAL_ASSERTION = Check(
     code="DS202",
     name="tautological-assertion",
     kind=Kind.DEFECT,
-    default_level=Level.OFF,
+    default_level=Level.FAIL,
     voice=(
         "You asserted that a thing equals itself. Congratulations, you discovered math!",
         "This assertion can't fail, recruit! An alarm that can't ring is a DOORSTOP!",

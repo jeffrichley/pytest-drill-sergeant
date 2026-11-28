@@ -71,12 +71,12 @@ A check's default level is the lower of two answers
   ([#171](https://github.com/jeffrichley/pytest-drill-sergeant/issues/171) tracks
   them).
 
-On by default, at `fail`: DS001 malformed-waiver, DS102 no-action-under-test, DS301
-mock-only-assertion, DS401 skip-without-reason, DS402 unconditional-skip, DS603 source-text-grep, DS801
+On by default, at `fail`: DS001 malformed-waiver, DS102 no-action-under-test, DS202
+tautological-assertion, DS301 mock-only-assertion, DS401 skip-without-reason, DS402 unconditional-skip, DS603 source-text-grep, DS801
 sleep-in-test, DS802 wall-clock-read and DS803 unseeded-random. At `warn`: DS101
 no-real-assertion, DS103 assert-before-act, DS104 interleaved-act-assert, DS105
 long-test, DS106 long-file, DS107 conditional-logic, DS303 overgrown-mock-setup and
-DS502 near-duplicate-tests. Every other check is off: DS202, DS203, DS302, DS403, DS501,
+DS502 near-duplicate-tests. Every other check is off: DS203, DS302, DS403, DS501,
 DS601, DS602, DS701 and DS702 until each is proven; DS201 weak-assertion, whose findings
 in library suites written by people are about half fine (turn it on at `warn` for a
 suite an AI agent writes); and the two conventions:
