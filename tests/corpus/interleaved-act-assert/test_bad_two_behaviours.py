@@ -1,5 +1,5 @@
-"""Tests that act, assert, then act and assert again: two behaviours in one test.
-Analysed, never run."""
+"""Tests that act and assert, then act and assert again, three times over: several
+behaviours in one test. Analysed, never run."""
 
 import logging
 
@@ -13,6 +13,8 @@ def test_cart(cart):
     assert cart.items == ["apple"]
     cart.remove("apple")  # expect: DS104
     assert cart.items == []
+    cart.add("pear")
+    assert cart.items == ["pear"]
 
 
 def test_user_lifecycle(users):
@@ -31,3 +33,6 @@ def test_log_cleared_then_add_again(caplog, cart):
     caplog.clear()
     cart.add("b")  # expect: DS104
     assert "added b" in caplog.text
+    caplog.clear()
+    cart.add("c")
+    assert "added c" in caplog.text

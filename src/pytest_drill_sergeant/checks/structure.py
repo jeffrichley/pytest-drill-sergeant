@@ -6,6 +6,7 @@ import sys
 from collections import Counter
 from collections.abc import Iterator, Mapping
 from enum import Enum
+from functools import cached_property
 
 from pytest_drill_sergeant.checks.ast_tools import (
     KNOWN_PACKAGES,
@@ -341,13 +342,24 @@ class _Order:
     """What reading a test's statements in order needs to know about the test."""
 
     def __init__(
-        self, test: TestFunction, file: TestFile, *, follow: bool = False
+        self,
+        test: TestFunction,
+        file: TestFile,
+        *,
+        follow: bool = False,
+        unseen: bool = True,
     ) -> None:
-        """Read `test`; with `follow`, a bare call can assert (`asserts`)."""
+        """Read `test`; with `follow`, a bare call can assert (`asserts`).
+
+        Without `unseen`, a followed call asserts only when the files show a
+        function that does, never for going into a third-party package.
+        """
         self.test = test
+        self.file = file
         self.names = test.imports
         self.excinfos = excinfo_names(test)
-        self.assertions = file.assertions if follow else None
+        self.follow = follow
+        self.unseen = unseen
 
     def asserts(self, node: ast.AST) -> bool:
         """Whether a node asserts.
@@ -359,7 +371,8 @@ class _Order:
         it is called), or into a third-party package, code the check can't see,
         which may. A call whose value is kept, or passed on, makes a value: that
         is setup, even when the function may assert. Bare calls are read so only
-        when the order follows them (DS103); DS104 and DS108 don't yet.
+        when the order follows them: DS103 all of them, DS104 only into functions
+        the files show; DS108 doesn't yet.
         """
         if is_real_assertion(node, self.names):
             return True
@@ -367,8 +380,8 @@ class _Order:
             call = _bare_call(node)
             return (
                 call is not None
-                and self.assertions is not None
-                and self.assertions.holds(self.test, [call])
+                and self.follow
+                and self.file.assertions.holds(self.test, [call], unseen=self.unseen)
             )
         return (
             isinstance(node, ast.Call)
@@ -381,10 +394,10 @@ class _Order:
     def acts(self, node: ast.AST) -> bool:
         """Whether a statement is a call made for its effect: the act under test.
 
-        That is a bare call or awaited call that doesn't assert (`asserts`) and
-        isn't known output or a pytest instrument (`ast_tools.is_known_non_act`).
-        Cleanup is an act. An assignment from a call is setup or reads a result, so
-        it isn't one.
+        That is a bare call or awaited call that doesn't assert (`asserts`), isn't
+        known output or a pytest instrument (`ast_tools.is_known_non_act`) and
+        doesn't build data (`builds_data`). Cleanup is an act. An assignment from a
+        call is setup or reads a result, so it isn't one.
         """
         if not isinstance(node, ast.Expr):
             return False
@@ -394,6 +407,26 @@ class _Order:
             and not self.asserts(node)
             and not self.asserts(call)
             and not is_known_non_act(call, self.test)
+            and not self.builds_data(call)
+        )
+
+    @cached_property
+    def data(self) -> frozenset[str]:
+        """The names the test binds only to lists, dicts or sets it builds."""
+        return _built_data(self.test, self.file)
+
+    def builds_data(self, call: ast.Call) -> bool:
+        """Whether a call is a method of a list, dict or set the test built itself.
+
+        That is one whose receiver is a name every binding of which in the test
+        assigns it a list, dict or set literal, a comprehension, or a call to the
+        builtin `list()`, `dict()` or `set()` (`_built_data`).
+        """
+        func = call.func
+        return (
+            isinstance(func, ast.Attribute)
+            and isinstance(func.value, ast.Name)
+            and func.value.id in self.data
         )
 
     def classify(self, statement: ast.stmt) -> _Step:
@@ -427,9 +460,68 @@ class _Order:
         return steps
 
 
+_CONTAINER_LITERALS = (
+    ast.List,
+    ast.Dict,
+    ast.Set,
+    ast.ListComp,
+    ast.SetComp,
+    ast.DictComp,
+)
+_CONTAINER_BUILTINS = frozenset({"list", "dict", "set"})
+
+
+def _is_built_container(value: ast.expr, test: TestFunction, file: TestFile) -> bool:
+    """Whether a value is a new list, dict or set the test builds.
+
+    That is a literal, a comprehension, or a call to the builtin `list()`, `dict()`
+    or `set()`, read through the file's bindings, never from the name alone.
+    """
+    if isinstance(value, _CONTAINER_LITERALS):
+        return True
+    return (
+        isinstance(value, ast.Call)
+        and file.assertions.definition(test, value).builtin in _CONTAINER_BUILTINS
+    )
+
+
+def _built_data(test: TestFunction, file: TestFile) -> frozenset[str]:
+    """The names a test binds only to lists, dicts or sets it builds itself.
+
+    A name the test takes as a parameter, or binds anywhere in its own code to
+    anything else (another value, a `for` target, a `with ... as`, a `def`),
+    isn't one.
+    """
+    nodes = [node for statement in test.node.body for node in _walk_own(statement)]
+    built: dict[str, set[ast.Name]] = {}
+    for node in nodes:
+        if isinstance(node, ast.Assign | ast.AnnAssign) and node.value is not None:
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            if _is_built_container(node.value, test, file):
+                for target in targets:
+                    if isinstance(target, ast.Name):
+                        built.setdefault(target.id, set()).add(target)
+    other = set(value_params(test)) | {
+        node.id
+        for node in nodes
+        if isinstance(node, ast.Name)
+        and isinstance(node.ctx, ast.Store)
+        and node not in built.get(node.id, set())
+    }
+    other.update(
+        node.name
+        for node in nodes
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef)
+    )
+    return frozenset(built.keys() - other)
+
+
 def _steps(test: TestFunction, file: TestFile) -> list[tuple[ast.stmt, _Step]]:
-    """A test's statements in order, each with what it does."""
-    return _Order(test, file).steps(test.node.body)
+    """A test's statements in order, each with what it does.
+
+    A bare call into a function the files show that asserts is an assertion.
+    """
+    return _Order(test, file, follow=True, unseen=False).steps(test.node.body)
 
 
 def _runs(order: _Order, statement: ast.stmt) -> bool:
@@ -543,10 +635,10 @@ ASSERT_BEFORE_ACT = Check(
 )
 
 
-def _checked_acts(steps: list[tuple[ast.stmt, _Step]]) -> list[ast.stmt]:
-    """The first act of each run of acts that an assertion then checks.
+def _cycles(steps: list[tuple[ast.stmt, _Step]]) -> list[ast.stmt]:
+    """The first act of each act-then-assert cycle, in order.
 
-    A run starts at an act with no act since the last assertion, and counts once
+    A cycle starts at an act with no act since the last assertion, and counts once
     an assertion follows it.
     """
     starts: list[ast.stmt] = []
@@ -562,17 +654,18 @@ def _checked_acts(steps: list[tuple[ast.stmt, _Step]]) -> list[ast.stmt]:
 
 def _find_interleaved_act_assert(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
-        acts = _checked_acts(_steps(test, file))
-        if len(acts) < 2:  # noqa: PLR2004 -- two acts are what interleaving means
+        cycles = _cycles(_steps(test, file))
+        # Interleaving takes two cycles, so a limit under one counts as one.
+        if len(cycles) <= max(file.thresholds.max_act_assert_cycles, 1):
             continue
-        second = acts[1]
-        lines = ", ".join(str(act.lineno) for act in acts)
+        second = cycles[1]
+        lines = ", ".join(str(act.lineno) for act in cycles)
         yield Hit.on(
             test,
             second.lineno,
             found=(
-                f"acts and asserts {len(acts)} times: after the assertions on the "
-                f"act at line {acts[0].lineno}, {_describe(second)} on line "
+                f"acts and asserts {len(cycles)} times: after the assertions on the "
+                f"act at line {cycles[0].lineno}, {_describe(second)} on line "
                 f"{second.lineno} acts again."
             ),
             fix=(
@@ -586,31 +679,39 @@ INTERLEAVED_ACT_ASSERT = Check(
     code="DS104",
     name="interleaved-act-assert",
     kind=Kind.SMELL,
-    default_level=Level.OFF,
+    default_level=Level.WARN,
     voice=(
         "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!",
         "One test, one mission! You're running three operations in one, maggot!",
         "When this goes red, which act failed? NOBODY KNOWS! Split it up!",
     ),
     why=(
-        "A test that acts and asserts more than once checks several behaviours: "
+        "A test that acts and asserts several times checks several behaviours: "
         "when it fails, its name doesn't say which one broke, and a failing early "
         "step hides every later one."
     ),
     explain=(
-        "Flags a test that acts, asserts, then acts and asserts again. An act is a "
-        "bare call or `await` made for its effect, counted as DS103 counts it: "
-        "known output such as `logging.info()`, or a method of a pytest built-in "
-        "fixture the test takes such as `caplog.clear()`, is not one, and a name "
-        "such as `reset_mock()` or `close()` never makes a call anything but an "
-        "act. An assignment that reads "
-        "a result between assertions isn't one, and a guard assertion before the "
-        "only act is fine. Split the test into one test per act, with shared setup "
-        "in a fixture. Off by default until it is proven; turn it on with "
-        "`drill_sergeant_levels` (`DS104=warn`). It warns rather than fails: a "
-        "workflow or state "
-        "test that steps through a sequence is sometimes rightly shaped this way, and "
-        "a waiver records that it is."
+        "Flags a test with more act-then-assert cycles than "
+        "`drill_sergeant_max_act_assert_cycles` (2 by default, so a test is "
+        "flagged once it has a third). A cycle is an act and the assertions that follow "
+        "it; acts in a row before an assertion are one cycle. An act is a bare "
+        "call or `await` made for its effect, counted as DS103 counts it: known "
+        "output such as `logging.info()`, or a method of a pytest built-in fixture "
+        "the test takes such as `caplog.clear()`, is not one, nor is a method of a "
+        "list, dict or set the test built itself (from a literal, a comprehension "
+        "or the builtin `list()`, `dict()` or `set()`), which builds data. A bare "
+        "call into a function the files show that holds a real assertion (a "
+        "helper in the file or imported, a method through `self`) is an "
+        "assertion; a call into a third-party package stays an act. A name such "
+        "as `reset_mock()` or `close()` never makes a call anything but an act. An "
+        "assignment that reads a result between assertions isn't one, and a guard "
+        "assertion before the only act is fine; but a setup call followed by "
+        "assertions on the starting state counts as a cycle of its own, so move "
+        "that setup into a fixture. Split the test into one test per act, with "
+        "shared setup in a fixture. Set the option to 1 (the least it counts as) "
+        "to flag a test at its second cycle. It warns rather than fails: a workflow or state test that "
+        "steps through a sequence is sometimes rightly shaped this way, and a "
+        "waiver records that it is."
     ),
     bad_example=(
         "def test_cart(cart):\n"
@@ -618,6 +719,8 @@ INTERLEAVED_ACT_ASSERT = Check(
         "    assert cart.items == ['apple']\n"
         "    cart.remove('apple')\n"
         "    assert cart.items == []\n"
+        "    cart.add('pear')\n"
+        "    assert cart.items == ['pear']\n"
     ),
     good_example=(
         "def test_add_puts_the_item_in_the_cart(cart):\n"

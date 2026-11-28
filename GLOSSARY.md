@@ -69,8 +69,12 @@ A test's statements before the first one that holds a real assertion, its docstr
 _Avoid_: Arrange block, preamble
 
 **Act**:
-A statement of a test that is a bare call or `await` made for its effect, not an assertion, output known from the code (`print()`, `logging`) or a method of a pytest built-in fixture the test takes (`caplog.clear()`); cleanup is one. An assignment from a call sets up or reads a result, so it isn't one. For DS103, a bare call into a test-tree function that holds a real assertion is an assertion, and a bare call into a third-party package may assert, so neither is an act; DS104 doesn't follow calls yet. The act-and-assert order checks (DS103, DS104) count acts; DS102 asks a wider question, whether a test runs code under test at all, and never calls what it counts an act.
+A statement of a test that is a bare call or `await` made for its effect, not an assertion, output known from the code (`print()`, `logging`) or a method of a pytest built-in fixture the test takes (`caplog.clear()`); cleanup is one. An assignment from a call sets up or reads a result, so it isn't one. A method call on a list, dict or set the test built itself (from a literal, a comprehension or the builtin `list()`, `dict()` or `set()`) builds data, so it isn't one. For DS103 and DS104, a bare call into a function the files show that holds a real assertion is an assertion; for DS103, a bare call into a third-party package may assert, so it isn't an act either, while for DS104 it stays one. The act-and-assert order checks (DS103, DS104) count acts; DS102 asks a wider question, whether a test runs code under test at all, and never calls what it counts an act.
 _Avoid_: Exercise step, when step
+
+**Act-then-assert cycle**:
+An act, or acts in a row, and the assertions that follow them, in a test's statements in order. DS104 counts a test's cycles and flags it past `drill_sergeant_max_act_assert_cycles` (2 by default).
+_Avoid_: Step, phase
 
 **Deliberate repeat**:
 A loop in a test that runs the same pass a fixed number of times on purpose: `for _ in range(2)`, Python's own `range` (by the file's bindings) over a positive whole number written out, whose body never reads its target and carries nothing from one pass to the next. Every pass checks the same outcome, so DS107 leaves it alone.
@@ -117,7 +121,7 @@ A function, class or lambda a test defines and hands to the code under test with
 _Avoid_: Fake (a fake is a working substitute), helper (a helper is one the test calls)
 
 **Mock setup**:
-A statement in a test that makes, patches in or configures a mock: `repo = mock.Mock(spec=Repo)`, a `patch` decorator or `with` item, `repo.get.return_value = ...`.
+What a test scripts its mocks to do, counted once per target, a mock's name with its attribute path or a patch's target, however often a later phase rebuilds it: a mock made and bound to a name (`repo = mock.Mock(spec=Repo)`), a `patch` that makes a mock (a decorator, a `with` item or a call; each `DEFAULT` of a `patch.multiple`), a mock's `return_value` or `side_effect` set (`repo.get.return_value = ...`, also through `configure_mock`), and a mock's attribute assigned a mock in itself, one made there or a name bound to one (`repo.close = AsyncMock()`, `attach_mock`). A plain value assigned to a mock's attribute is data, not mock setup, and so is another mock's attribute copied onto it (`a.uuid = b.uuid`); `reset_mock()`, calling a mock and a patch given `new` are no mock setup either.
 _Avoid_: Mock configuration, arrange
 
 **Category marker**:

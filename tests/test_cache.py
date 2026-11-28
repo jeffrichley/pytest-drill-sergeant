@@ -19,8 +19,6 @@ MOCK_SETUP_OF_THREE = (
     "    repo.count.return_value = 2\n"
     "    assert total(repo) == 3\n"
 )
-# DS303 is off by default until it is proven.
-MOCK_SETUP_ON = {"DS303": Level.FAIL}
 
 
 def test_warm_run_finds_what_an_uncached_run_finds(golden_suite, cache_dir):
@@ -118,11 +116,9 @@ def test_warm_run_applies_the_per_file_ignores_configured_now(
 
 def test_changed_threshold_analyses_files_again(write_test_file, cache_dir):
     path = write_test_file(MOCK_SETUP_OF_THREE)
-    inspect([path], Config(max_mock_setup=3, levels=MOCK_SETUP_ON), cache_dir=cache_dir)
+    inspect([path], Config(max_mock_setup=3), cache_dir=cache_dir)
 
-    findings = inspect(
-        [path], Config(max_mock_setup=2, levels=MOCK_SETUP_ON), cache_dir=cache_dir
-    ).findings
+    findings = inspect([path], Config(max_mock_setup=2), cache_dir=cache_dir).findings
 
     assert [f.code for f in findings] == ["DS303"]
 

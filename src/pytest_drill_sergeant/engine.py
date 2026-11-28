@@ -162,6 +162,7 @@ def _thresholds(config: Config) -> Thresholds:
         max_file_lines=config.max_file_lines,
         max_test_lines=config.max_test_lines,
         max_mock_setup=config.max_mock_setup,
+        max_act_assert_cycles=config.max_act_assert_cycles,
         duplicate_setup_min_statements=config.duplicate_setup_min_statements,
         duplicate_setup_min_tests=config.duplicate_setup_min_tests,
     )

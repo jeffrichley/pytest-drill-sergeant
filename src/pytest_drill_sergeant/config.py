@@ -51,7 +51,8 @@ class Config:
             to: the config file's.
         max_file_lines: The most lines a test file may have.
         max_test_lines: The most lines of code a test function may have.
-        max_mock_setup: The most mock-setup statements a test may have.
+        max_mock_setup: The most mock targets a test may set up.
+        max_act_assert_cycles: The most act-then-assert cycles a test may have.
         duplicate_setup_min_statements: The fewest statements a copy-pasted setup
             block has.
         duplicate_setup_min_tests: The fewest tests a copy-pasted setup block is in.
@@ -70,7 +71,8 @@ class Config:
     root: Path = Path()
     max_file_lines: int = 500
     max_test_lines: int = 50
-    max_mock_setup: int = 10
+    max_mock_setup: int = 5
+    max_act_assert_cycles: int = 2
     duplicate_setup_min_statements: int = 3
     duplicate_setup_min_tests: int = 3
     category_markers: tuple[str, ...] = ("unit", "integration", "e2e")
@@ -136,7 +138,13 @@ OPTIONS: tuple[Option, ...] = (
         "drill_sergeant_max_mock_setup",
         "int",
         _DEFAULT.max_mock_setup,
-        "the most mock-setup statements a test may have",
+        "the most mock targets a test may set up",
+    ),
+    Option(
+        "drill_sergeant_max_act_assert_cycles",
+        "int",
+        _DEFAULT.max_act_assert_cycles,
+        "the most act-then-assert cycles a test may have",
     ),
     Option(
         "drill_sergeant_duplicate_setup_min_statements",
@@ -357,6 +365,7 @@ def _resolve(raw: Mapping[str, RawValue], root: Path) -> Config:
         max_file_lines=get(_int, "max_file_lines"),
         max_test_lines=get(_int, "max_test_lines"),
         max_mock_setup=get(_int, "max_mock_setup"),
+        max_act_assert_cycles=get(_int, "max_act_assert_cycles"),
         duplicate_setup_min_statements=get(_int, "duplicate_setup_min_statements"),
         duplicate_setup_min_tests=get(_int, "duplicate_setup_min_tests"),
         category_markers=tuple(get(_args, "category_markers")),
