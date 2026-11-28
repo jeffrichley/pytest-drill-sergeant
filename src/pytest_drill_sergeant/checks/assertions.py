@@ -8,7 +8,7 @@ tautological before mirror before weak, so one assertion is never reported twice
 import ast
 import copy
 from collections import defaultdict
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -34,6 +34,9 @@ _TRUE_ON_IDENTITY = (ast.Eq, ast.Is, ast.LtE, ast.GtE)
 
 # Builtins whose result is only a truthiness or type fact about their argument.
 _WEAK_CALLS = frozenset({"bool", "isinstance", "hasattr", "callable"})
+
+# The comprehensions a filter (`if`) can turn into an any-match query.
+_COMPREHENSIONS = ast.ListComp | ast.SetComp | ast.GeneratorExp
 
 # Node types a literal is built from: values, containers and operators, no names.
 _LITERAL_NODES = (
@@ -371,18 +374,38 @@ def _is_call_to(node: ast.AST, names: frozenset[str]) -> bool:
     )
 
 
-def _weak_subjects(test: ast.expr) -> list[ast.expr] | None:
+def _is_builtin_type_check(call: ast.Call, is_builtin: Callable[[str], bool]) -> bool:
+    """Whether an `isinstance` call checks only against builtins the file doesn't rebind.
+
+    Its class, or every class in a tuple, must be one (`dict`, `(int, float)`). A
+    project or library class means the type is the behaviour, and a class read from
+    anything else (a parameter, an attribute) is not known to be a builtin.
+    """
+    names = [
+        name
+        for classes in call.args[1:2]
+        for name in (classes.elts if isinstance(classes, ast.Tuple) else [classes])
+    ]
+    return bool(names) and all(
+        isinstance(n, ast.Name) and is_builtin(n.id) for n in names
+    )
+
+
+def _weak_subjects(
+    test: ast.expr, is_builtin: Callable[[str], bool]
+) -> list[ast.expr] | None:
     """What a weak assertion is about, or `None` if the assertion is not weak.
 
     Weak means true for almost any value: a bare name's truthiness, `is not None`,
-    `isinstance`, `hasattr`, `callable`, `>= 0`, or a length that is merely non-zero.
-    An attribute or item's truthiness (`assert worker.done`) is usually a flag the
-    code sets, so it is not weak on its own.
+    `isinstance` against builtins only, `hasattr`, `callable`, `>= 0`, or a length
+    that is merely non-zero. An attribute or item's truthiness (`assert worker.done`)
+    is usually a flag the code sets, so it is not weak on its own. `is_builtin` tells
+    whether a name is Python's builtin, rebound nowhere the test can see.
     """
     if isinstance(test, ast.BoolOp) and isinstance(test.op, ast.And):
         subjects: list[ast.expr] = []
         for value in test.values:
-            found = _weak_subjects(value)
+            found = _weak_subjects(value, is_builtin)
             if found is None:
                 return None
             subjects += found
@@ -390,7 +413,10 @@ def _weak_subjects(test: ast.expr) -> list[ast.expr] | None:
     if isinstance(test, ast.Name):
         return [test]
     if isinstance(test, ast.Call) and _is_call_to(test, _WEAK_CALLS) and test.args:
-        return [test.args[0]]
+        weak_call = not _is_call_to(
+            test, frozenset({"isinstance"})
+        ) or _is_builtin_type_check(test, is_builtin)
+        return [test.args[0]] if weak_call else None
     if not (isinstance(test, ast.Compare) and len(test.ops) == 1):
         return None
     left, op, right = _normalised(test)
@@ -448,6 +474,14 @@ def _state_changes(test: TestFunction, known: list[ast.stmt]) -> list[ast.stmt]:
     ]
 
 
+def _is_any_match_query(value: ast.expr | None) -> bool:
+    """Whether a value is a filtered comprehension: what matched, asked if any did.
+
+    Its truthiness answers a question as exactly as `x in y` does.
+    """
+    return isinstance(value, _COMPREHENSIONS) and any(g.ifs for g in value.generators)
+
+
 def _verdicts(test: TestFunction, calls: Assertions) -> list[_Verdict]:
     """Every `assert` in the test, in source order, with its kind.
 
@@ -463,6 +497,11 @@ def _verdicts(test: TestFunction, calls: Assertions) -> list[_Verdict]:
     verdicts = []
     asserts = [node for node in walk_test(test) if isinstance(node, ast.Assert)]
     others = _state_changes(test, list(bindings.values()))
+
+    def is_builtin(name: str) -> bool:
+        call = ast.Call(func=ast.Name(id=name, ctx=ast.Load()), args=[], keywords=[])
+        return calls.definition(test, call).builtin is not None
+
     for node in sorted(asserts, key=lambda n: (n.lineno, n.col_offset)):
         test_expr = node.test
         if isinstance(test_expr, ast.Constant) or (
@@ -492,7 +531,11 @@ def _verdicts(test: TestFunction, calls: Assertions) -> list[_Verdict]:
         if call is not None:
             verdicts.append(_Verdict(node, _Kind.MIRROR, call))
             continue
-        subjects = _weak_subjects(test_expr)
+        subjects = _weak_subjects(test_expr, is_builtin)
+        if isinstance(test_expr, ast.Name) and _is_any_match_query(
+            values.get(test_expr.id)
+        ):
+            subjects = None
         if subjects is not None and not _is_exact_answer(resolved, test, calls):
             names = tuple(f"`{ast.unparse(s)}`" for s in subjects)
             verdicts.append(_Verdict(node, _Kind.WEAK, subjects=names))
@@ -602,13 +645,18 @@ WEAK_ASSERTION = Check(
     ),
     explain=(
         "Flags a test whose only assertions are weak: a bare name's truthiness "
-        "(`assert x`, `bool(x) is True`), `is not None`, `isinstance`, `hasattr`, "
-        "`callable`, `>= 0`, or a length that is merely non-zero (`len(x) > 0`). One "
+        "(`assert x`, `bool(x) is True`), `is not None`, `isinstance` against "
+        "builtins only (`dict`, `(int, float)`), `hasattr`, `callable`, `>= 0`, or a "
+        "length that is merely non-zero (`len(x) > 0`). `isinstance` against a project "
+        "or library class, or a class the file doesn't show is a builtin, is not weak: "
+        "the type is the behaviour. One "
         "exact assertion beside them, `pytest.raises` or a mock verification makes the "
         "test fine. An attribute's truthiness (`assert worker.done`) is usually a flag "
         "the code sets: it neither makes a test weak nor excuses weak assertions "
         "beside it. Membership (`x in y`) and `> 0` on anything but a length are left "
-        "alone, and so is a name bound to a call that answers yes or no exactly "
+        "alone, and so is a name bound to a filtered comprehension (`matches = [i for "
+        "i in issues if ...]`, then `assert matches`), which asks whether anything "
+        "matched, and so is a name bound to a call that answers yes or no exactly "
         "(`ok = in_stock(...)`, then `assert ok`): one whose definition is annotated "
         "`-> bool` or returns only comparisons and booleans, or `any` or `all`. An "
         "`async def` called without `await`, or a generator, gives a value that is "
