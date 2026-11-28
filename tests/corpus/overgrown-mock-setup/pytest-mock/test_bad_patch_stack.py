@@ -1,5 +1,6 @@
-"""Stacks of patches, as decorators and as `with` items, each counting as setup.
-Analysed, never run."""
+"""Stacks of patches, as decorators and as `with` items, each patch that makes a mock
+counting as a target; `patch.dict` puts values, so it doesn't. Analysed, never
+run."""
 
 import os
 from unittest import mock

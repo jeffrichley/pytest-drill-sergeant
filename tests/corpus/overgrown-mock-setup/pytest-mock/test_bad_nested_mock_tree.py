@@ -1,5 +1,5 @@
-"""Configuring a tree of child mocks, through aliases and subscripts. Analysed,
-never run."""
+"""Scripting a tree of child mocks, through an alias and `attach_mock`; the plain
+values set on its attributes and items are data. Analysed, never run."""
 
 import pytest
 from shop import Client, sync

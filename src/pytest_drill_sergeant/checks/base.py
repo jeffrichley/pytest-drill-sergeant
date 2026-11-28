@@ -73,7 +73,7 @@ class Thresholds:
     Attributes:
         max_file_lines: The most lines a test file may have.
         max_test_lines: The most lines of code a test function may have.
-        max_mock_setup: The most mock-setup statements a test may have.
+        max_mock_setup: The most mock targets a test may set up.
         max_act_assert_cycles: The most act-then-assert cycles a test may have.
         duplicate_setup_min_statements: The fewest statements a copy-pasted setup
             block has.
