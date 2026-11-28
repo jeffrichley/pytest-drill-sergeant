@@ -21,3 +21,8 @@ def test_names_from_a_comprehension_without_a_filter():
     settings = load_settings("shop.toml")
     names = [key for key in settings]
     assert names  # expect: DS201
+
+
+def test_amount_parses_as_a_union_of_builtins():
+    amount = parse_amount("10.50")
+    assert isinstance(amount, int | float)  # expect: DS201

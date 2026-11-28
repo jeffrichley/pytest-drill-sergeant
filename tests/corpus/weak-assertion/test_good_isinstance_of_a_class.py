@@ -40,3 +40,24 @@ def test_validation_reports_the_missing_price():
     issues = validate(load_settings("shop.toml"))
     matches = [issue for issue in issues if issue.field == "price"]
     assert matches
+
+
+def test_socks_url_selects_the_socks_proxy_through_bool():
+    assert bool(isinstance(make_proxy("socks5://localhost:1080"), SocksProxy)) is True
+
+
+def test_amount_parses_as_a_union_with_a_library_class():
+    assert isinstance(parse_amount("10.50"), int | Decimal)
+
+
+def test_validation_reports_a_missing_price_by_count():
+    issues = validate(load_settings("shop.toml"))
+    matches = [issue for issue in issues if issue.field == "price"]
+    assert len(matches) > 0
+
+
+def test_validation_reports_a_missing_price_it_also_prints():
+    issues = validate(load_settings("shop.toml"))
+    matches = [issue for issue in issues if issue.field == "price"]
+    print(matches)
+    assert matches

@@ -329,10 +329,17 @@ def _is_builtin(name: str, scope: _Scope, node: FunctionNode) -> bool:
     )
 
 
+def _bound_as_value(name: str, scope: _Scope, node: FunctionNode) -> bool:
+    """Whether a function binds a name other than by import.
+
+    That is a parameter, an assignment, a loop or `with ... as` target, a `def`
+    or `except ... as`: there the name is not what an import made it.
+    """
+    return name in scope.params or any(_binds(child, name) for child in _body(node))
+
+
 def _plainly_imported(name: str, scope: _Scope) -> bool:
     """Whether a name is bound, where a scope reads it, by a plain `import`."""
-    if name in scope.params or name in scope.values or name in scope.functions:
-        return False
     bound = scope.imports.get(name) or scope.module.bindings.get(name)
     return isinstance(bound, _Import) and bound.attr is None
 
@@ -1044,8 +1051,11 @@ class TestTree:
             The answer, and every module it relied on.
         """
         scope = self._test_scope(test, module)
-        if isinstance(expr, ast.Name) and _plainly_imported(expr.id, scope):
-            return True, set()
+        if isinstance(expr, ast.Name):
+            if _bound_as_value(expr.id, scope, test.node):
+                return False, set()
+            if _plainly_imported(expr.id, scope):
+                return True, set()
         keys: set[str] = set()
         self._deps.append(keys)
         self._anywhere = True

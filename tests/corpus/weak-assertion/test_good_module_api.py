@@ -14,4 +14,4 @@ def test_pricing_publishes_its_api(attr):
 
 
 def test_orders_publishes_in_stock():
-    assert hasattr(orders, "in_stock")
+    assert hasattr(orders, "in_stock") and hasattr(orders, "overdue")
