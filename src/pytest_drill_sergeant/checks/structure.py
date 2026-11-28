@@ -655,7 +655,7 @@ def _checked_acts(steps: list[tuple[ast.stmt, _Step]]) -> list[ast.stmt]:
 def _find_interleaved_act_assert(file: TestFile) -> Iterator[Hit]:
     for test in file.tests:
         acts = _checked_acts(_steps(test, file))
-        if len(acts) < 2:  # noqa: PLR2004 -- two acts are what interleaving means
+        if len(acts) <= file.thresholds.max_act_assert_cycles:
             continue
         second = acts[1]
         lines = ", ".join(str(act.lineno) for act in acts)
@@ -678,7 +678,7 @@ INTERLEAVED_ACT_ASSERT = Check(
     code="DS104",
     name="interleaved-act-assert",
     kind=Kind.SMELL,
-    default_level=Level.OFF,
+    default_level=Level.WARN,
     voice=(
         "Act, assert, act, assert! That's not a test, it's a SCRIPT, recruit!",
         "One test, one mission! You're running three operations in one, maggot!",
@@ -690,19 +690,27 @@ INTERLEAVED_ACT_ASSERT = Check(
         "step hides every later one."
     ),
     explain=(
-        "Flags a test that acts, asserts, then acts and asserts again. An act is a "
-        "bare call or `await` made for its effect, counted as DS103 counts it: "
-        "known output such as `logging.info()`, or a method of a pytest built-in "
-        "fixture the test takes such as `caplog.clear()`, is not one, and a name "
-        "such as `reset_mock()` or `close()` never makes a call anything but an "
-        "act. An assignment that reads "
-        "a result between assertions isn't one, and a guard assertion before the "
-        "only act is fine. Split the test into one test per act, with shared setup "
-        "in a fixture. Off by default until it is proven; turn it on with "
-        "`drill_sergeant_levels` (`DS104=warn`). It warns rather than fails: a "
-        "workflow or state "
-        "test that steps through a sequence is sometimes rightly shaped this way, and "
-        "a waiver records that it is."
+        "Flags a test with more act-then-assert cycles than "
+        "`drill_sergeant_max_act_assert_cycles` (2 by default, so a test is "
+        "flagged at its third). A cycle is an act and the assertions that follow "
+        "it; acts in a row before an assertion are one cycle. An act is a bare "
+        "call or `await` made for its effect, counted as DS103 counts it: known "
+        "output such as `logging.info()`, or a method of a pytest built-in fixture "
+        "the test takes such as `caplog.clear()`, is not one, nor is a method of a "
+        "list, dict or set the test built itself (from a literal, a comprehension "
+        "or the builtin `list()`, `dict()` or `set()`), which builds data. A bare "
+        "call into a function the files show that holds a real assertion (a "
+        "helper in the file or imported, a method through `self`) is an "
+        "assertion; a call into a third-party package stays an act. A name such "
+        "as `reset_mock()` or `close()` never makes a call anything but an act. An "
+        "assignment that reads a result between assertions isn't one, and a guard "
+        "assertion before the only act is fine; but a setup call followed by "
+        "assertions on the starting state counts as a cycle of its own, so move "
+        "that setup into a fixture. Split the test into one test per act, with "
+        "shared setup in a fixture. Set the option to 1 to flag a test at its "
+        "second cycle. It warns rather than fails: a workflow or state test that "
+        "steps through a sequence is sometimes rightly shaped this way, and a "
+        "waiver records that it is."
     ),
     bad_example=(
         "def test_cart(cart):\n"
@@ -710,6 +718,8 @@ INTERLEAVED_ACT_ASSERT = Check(
         "    assert cart.items == ['apple']\n"
         "    cart.remove('apple')\n"
         "    assert cart.items == []\n"
+        "    cart.add('pear')\n"
+        "    assert cart.items == ['pear']\n"
     ),
     good_example=(
         "def test_add_puts_the_item_in_the_cart(cart):\n"
